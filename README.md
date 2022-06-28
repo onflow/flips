@@ -1,7 +1,7 @@
 # FLIPS
 Flow Improvement Proposals
 
-This repository will hold FLIPS to separate them from the onflow/flow repository. This is currently a work in progress!
+This repository will hold FLIPS to separate them from the onflow/flow repository. This is currently a work in progress, and legacy flips are all in the [flips directory](https://github.com/onflow/flips/tree/main/flips). These flips will be moved into the appropriate sub-directories over time.
 
 ## Application
 Application FLIPs are standards for applications built on top of FLOW. This could be token standards, contract interface standards, common design patterns that can benefit from social consensus etc. Application standards should not create protocol changes in themselves, and if they rely on any new protocol features that feature should be written up in its own protocol flip.
