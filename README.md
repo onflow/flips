@@ -1,5 +1,5 @@
 # FLIPS
-Flow Improvement Proposals
+FLIPS are Flow Improvement Proposals. Each FLIP describes a protocol change, governance change, or application level standard meant to improve the Flow protocol or ecosystem. Proposals can be submitted by anyone, and should follow the [TDB] style guide for each category.
 
 This repository will hold FLIPS to separate them from the onflow/flow repository. This is currently a work in progress, and legacy flips are all in the [flips directory](https://github.com/onflow/flips/tree/main/flips). These flips will be moved into the appropriate sub-directories over time.
 
