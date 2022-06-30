@@ -1,9 +1,11 @@
-----
-Status: Draft
-"FLIP #": TBD
-Forum:
-Author(s): Kristin Smith (kristin@flowfoundation.com)
-----
+---
+status: Draft
+flip: GOV-1
+title: Maintain Staking Rewards
+forum: https://forum.onflow.org/t/flip-gov-1-maintain-staking-rewards/3340
+authors: Kristin Smith (kristin@flowfoundation.com)
+editor: Paul Gebheim (paul.gebheim@dapperlabs.com)
+---
 
 ## Abstract
 
