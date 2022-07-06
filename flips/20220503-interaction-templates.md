@@ -231,7 +231,7 @@ Here is an example `InteractionTemplate` for a "Transfer FLOW" transaction:
 These fields declare the data structure type and data structure version. The version instructs consumers of this data structure how to operate on it. It also allows the data structure to change in future versions.
 
 #### `id`
-This is a unique, content derived identifier for this interaction interface. Each ID is unique for each interaction template. The portion of information within the `data` field of this data structure is used to create the data structures identifier.
+This is a unique, content-derived identifier for this interaction interface. Each ID is unique for each interaction template. The portion of information within the `data` field of this data structure is used to create the data structures identifier.
 
 Generating the identifier is done using the process outlined in the [Data Structure Serialization & Identifier Generation](#Data-Structure-Serialization--Identifier-Generation) section of this document.
 
