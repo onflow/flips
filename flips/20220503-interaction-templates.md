@@ -233,7 +233,7 @@ These fields declare the data structure type and data structure version. The ver
 #### `id`
 This is a unique, content derived identifier for this interaction interface. Each ID is unique for each interaction template. The portion of information within the `data` field of this data structure is used to create the data structures identifier.
 
-Generating the identifier is done using the process outlined in the [Data Structure Serialization & Identifier Generation](##Data-Structure-Serialization-&-Identifier-Generation) section of this document.
+Generating the identifier is done using the process outlined in the [Data Structure Serialization & Identifier Generation](#Data-Structure-Serialization--Identifier-Generation) section of this document.
 
 #### `data`
 The content of the interaction template.
