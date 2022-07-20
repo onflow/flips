@@ -1,6 +1,6 @@
 ---
 status: Draft
-flip: TBD
+flip: FLIP-1057
 title: Automated Slot Assignment
 forum: TBD
 authors: Paul Gebheim (paul.gebheim@dapperlabs.com)
