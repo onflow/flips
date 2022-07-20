@@ -2,9 +2,9 @@
 status: Draft
 flip: FLIP-1057
 title: Automated Slot Assignment
-forum: TBD
+forum: https://forum.onflow.org/t/flip-1057-automated-slot-assignment/3447
 authors: Paul Gebheim (paul.gebheim@dapperlabs.com)
-editor: 
+editor: Jose Meija (jose.mejia@dapperlabs.com)
 ---
 
 # Automated Slot Assignment
