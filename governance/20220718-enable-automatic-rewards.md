@@ -1,10 +1,10 @@
 ---
-status: Draft
+status: Proposed
 flip: GOV-2
 title: Enable Automatic Rewards Payouts
-forum: TBD
+forum: https://forum.onflow.org/t/flip-gov-2-enable-automatic-staking-rewards/3438
 authors: Paul Gebheim (paul.gebheim@dapperlabs.com)
-editor: 
+editor: Jose Mejia (jose.mejia@dapperlabs.com)
 ---
 
 ## Abstract
@@ -22,7 +22,7 @@ We propose a staged rollout for automatic reward payouts on Flow mainnet as foll
 
 | Date | Action | Status |
 |-|-|-|
-| Wednesday, July 20th | Set [reward rate for automatic rewards](https://github.com/onflow/service-account/pull/152) using $1.05^\frac{1}{52} - 1= 0.00093871$| :hourglass_flowing_sand: Pending |
+| Wednesday, July 20th | Set [reward rate for automatic rewards](https://github.com/onflow/service-account/pull/152) using $1.05^\frac{1}{52} - 1= 0.00093871$| ✅ Done |
 | Thursday, July 28th | Service account will initiate transaction which calculates and pays out rewards. | :hourglass_flowing_sand: Pending |
 | Thursday, August 4th | Service account will initiate transaction which calculates and pays out rewards, and [enable automatic payouts](https://github.com/onflow/flow-core-contracts/blob/master/transactions/epoch/admin/set_automatic_rewards.cdc) in the future |:hourglass_flowing_sand: Pending|
 | Wednesday, August 10th | First automatic reward payout will occur during the epoch end |:hourglass_flowing_sand: Pending|
