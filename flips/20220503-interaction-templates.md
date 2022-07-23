@@ -67,7 +67,6 @@ Here is an example of an `InteractionTemplateInterface` for "Fungible Token Tran
     f_version: "1.0.0",
     id: "asadf23234...fas234234", // Unique ID for the data structure.
     data: {
-        version: "1.0.1",
         flip: "FLIP-XXXX",
         title: "Fungible Token Transfer",
         arguments: {
@@ -88,11 +87,9 @@ Here is an example of an `InteractionTemplateInterface` for "Fungible Token Tran
 These fields declare the data structure type and data structure version. The version instructs consumers of this data structure how to operate on it. It also allows the data structure to change in future versions.
 
 #### `id`
-This is a unique, content derived identifier for this interaction interface. Each ID is unique for each interaction interface.
-This is created by hashing (SHA3-256 hash represented as hex string) (TODO: Define serialization process of the data structure prior to hashing) over the `data` portion of the interaction template.
+This is a unique, content derived identifier for this interaction interface. Each ID is unique for each interaction interface. The portion of information within the `data` field of this data structure is used to create the data structures identifier.
 
-#### `data.version`
-The SemVer version of the interface.
+Generating the identifier is done using the process outlined in the [Data Structure Serialization & Identifier Generation](##Data-Structure-Serialization-&-Identifier-Generation) section of this document.
 
 #### `data.flip`
 The FLIP number that this interface was established.
@@ -129,7 +126,6 @@ Here is an example `InteractionTemplate` for a "Transfer FLOW" transaction:
     data: {
         type: "transaction", // "transaction" || "script"
         interface: "asadf23234...fas234234", // ID of InteractionTemplateInterface this conforms to.
-        version: "1.23.0", // Semver version of this Interaction
         messages: {
             title: {
                 i18n: { // Internationalised (BCP-47) set of human readable messages about the interaction
@@ -235,8 +231,9 @@ Here is an example `InteractionTemplate` for a "Transfer FLOW" transaction:
 These fields declare the data structure type and data structure version. The version instructs consumers of this data structure how to operate on it. It also allows the data structure to change in future versions.
 
 #### `id`
-This is a unique, content derived identifier for this interaction. Each ID is unique for each interaction.
-This is created by hashing (SHA3-256 hash represented as hex string) (TODO: Define serialization process of the data structure prior to hashing) over the `data` portion of the interaction template.
+This is a unique, content-derived identifier for this interaction interface. Each ID is unique for each interaction template. The portion of information within the `data` field of this data structure is used to create the data structures identifier.
+
+Generating the identifier is done using the process outlined in the [Data Structure Serialization & Identifier Generation](#Data-Structure-Serialization--Identifier-Generation) section of this document.
 
 #### `data`
 The content of the interaction template.
@@ -248,9 +245,6 @@ Either `transaction` or `script` , defining what type of interaction this corres
 
 #### `data.interface`
 The identifier of the interface this interaction template implements. Not all interaction templates should implement an interface, so this is field optional.
-
-#### `data.version`
-The SemVer version of the interaction.
 
 #### `data.messages`
 Internationalized, human readable messages explaining the interaction. For each message, there can be any number of translations provided. Translations should use [BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) language tags. Messages may also consume arguments, which correspond to the arguments supplied to the transaction.
@@ -403,32 +397,37 @@ The following diagram illustrates how a Contract Developer, Auditor, Application
 
 ![ixtemplate-entity-diagram-2](https://user-images.githubusercontent.com/14852344/166585075-5894a27d-a344-4526-9370-0b93445873e7.png)
 
+Wallets may choose to trust the same auditor, which makes `InteractionTemplateAudit` produced by such an auditor usable by as many entities that choose to trust it. This presents a more scalable pattern than exists prior to this FLIP, where each wallet independently audits transactions should they choose to do so.
+
+![ixtemplates-sharedauditor](https://user-images.githubusercontent.com/14852344/177349302-9c1ecb51-b054-4719-b26c-9a86ac0758c0.png)
+
+Should a wallet trust multiple auditors, they can query from each for any `InteractionTemplateAudit` produced for a given `InteractionTemplate`. Since auditors may not have each audited the same InteractionTemplate, trusting multiple auditors can allow wallets to have greater audit coverage over possible InteractionTemplate they may receive.
+
+![IxTemplates-Multiauditor](https://user-images.githubusercontent.com/14852344/177350587-2fc5a37a-3b0c-4f96-be51-312e50ab16b4.png)
 
 ## Dependencies
 Interaction Templates depend on contract developers producing and making available Interaction Templates for their contracts. Interaction Template Interfaces depend on the Flow developer community coming to consensus on interfaces for interactions they implement. Interaction Template Audits depend on trusted entities producing and making available audits of Interaction Templates.
 
 ### Template, Interface and Audit Tooling
-To make the production of InteractionTemplate, InteractionTemplateInterface and InteractionTemplateAudit simpler for developers, support for generating these could be added to a CLI tool or webapp interface. Making these data structures easily constructible will be essential for promoting this new development pattern.
+To make the production of InteractionTemplate, InteractionTemplateInterface and InteractionTemplateAudit simpler for developers, support for generating these could be added to a CLI tool or webapp interface. Making these data structures easy to create will be essential for promoting this new pattern.
 
 ### Auditor Support
 Audits will need to create a mechanic for contract developers to submit their Interaction Templates for review.
 
-Once reviewed, auditors will then make available their Interaction Template Audits in some queryable way.
-
-For example, an auditor may choose to host a web-server which can return audits produced for a given template id:
+Once reviewed, auditors will then make available their Interaction Template Audits in some queryable way. For example, an auditor may choose to host a web-server which can return audits produced for a given template id:
 
 ```
 GET audits.trusted-auditor.com/id/{template_id} -> InteractionTemplateAudit
 ```
 
 ### FCL Integration
-FCL `exec` and `query` could be modified to accept an Interaction Template, and use the Interaction Template to execute the underlying transaction or script:
+FCL `mutate` and `query` could be modified to accept an Interaction Template, and use the Interaction Template to execute the underlying transaction or script:
 
 EXAMPLE:
 ```javascript
 import transferFLOWTemplate from "./transfer-flow-template.json"
 
-await fcl.exec({
+await fcl.mutate({
     template: transferFLOWTemplate,
     args: (arg, t) => [arg("1.0", t.UFix64), arg("0xABC123DEF456", t.Address)]
 })
@@ -446,11 +445,11 @@ await fcl.query({
 
 ```
 
-Instead, if the templates are made available on an external location, developers may chose to request them when needed by querying for them from their location:
+Instead, if templates are made available at an external location, developers may chose to request them when needed by querying for them from their location:
 
 EXAMPLE:
 ```javascript
-await fcl.exec({
+await fcl.mutate({
     template: "dns://transfer-flow.interactions.onflow.org",
     args: (arg, t) => [arg("1.0", t.UFix64), arg("0xABC123DEF456", t.Address)]
 })
@@ -480,8 +479,168 @@ Wallets who chose to support Interaction Templates will need to modify their aut
 - Do viable alternatives to this proposal exist?
 - Could the emergence of use of common Cadence contract & resource interfaces across projects reduce the ecosystems dependency on this solution?
 
-## FLIP TODOs:
-- Define serialization process prior to hashing when generating identifiers for `InteractionTemplate` and `InteractionTemplateInterface`.
+## Data Structure Serialization & Identifier Generation
+
+A deterministic serialization algorithm is required to be applied prior to hashing its result to produce identifiers for the `InteractionTemplate`, `InteractionTemplateInterface` and `InteractionTemplateAudit` data structures.
+
+By serializing each data structure into a specific format, then [RLP encoding](https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp/) that format, then hashing that encoding, we can generate identifiers for each data structure.
+
+### `InteractionTemplate`
+
+```text
+template-message-key-content   = UTF-8 string content of the message
+template-message-key-bcp47-tag = BCP-47 language tag
+template-message-translation   = [ template-message-key-bcp47-tag, template-message-key-content ]
+template-message-key           = Key for a template message (eg: "title", "description" etc)
+template-message               = [ template-message-key, [ ...template-message-translation ] ]
+
+template-dependency-contract-pin-block-height = Network block height the pin was generated against.
+template-dependency-contract-pin              = Pin of contract
+template-dependency-contract-fq-addr          = Fully qualified contract identifier
+template-dependency-network-address           = Address of an account
+template-dependency-network                   = "mainnet" | "testnet" | "emulator" | Custom Network Tag
+template-dependency-contract-network          = [ 
+    template-dependency-network, 
+    [ 
+        template-dependency-network-address,
+        template-dependency-contract-name,
+        template-dependency-contract-fq-address,
+        template-dependency-contract-pin,
+        template-dependency-contract-pin-block-height 
+    ]
+]
+template-dependency-contract-name    = Name of a contract
+template-dependency-contract         = [ 
+    template-dependency-contract-name, 
+    [ ...template-dependency-contract-network ]
+]
+template-dependency-addr-placeholder = Placeholder address
+template-dependency                  = [ 
+    template-dependency-addr-placeholder, 
+    [ ...template-dependency-contract ]
+]
+
+
+template-argument-content-message-key-content   = UTF-8 string content of the message
+template-argument-content-message-key-bcp47-tag = BCP-47 language tag
+template-argument-content-message-translation   = [ template-argument-content-message-key-bcp47-tag, template-argument-content-message-key-content ]
+template-argument-content-message-key           = Key for a template message (eg: "title", "description" etc)
+template-argument-content-message = [
+    template-argument-content-message-key,
+    [ ...template-argument-content-message-translation ]
+]
+template-argument-content-index   = Cadence type of argument
+template-argument-content-index   = Index of argument in cadence transaction or script
+template-argument-content-balance = Fully qualified contract identifier of a token this argument acts upon | ""
+template-argument-content         = [ 
+    template-argument-content-index,
+    template-argument-content-type,
+    template-argument-content-balance, 
+    [ ...template-argument-content-message ]
+]
+template-argument-label         = Label for an argument
+template-argument               = [ template-argument-label, [ ...template-argument-content ]]
+
+template-type                 = "transaction" | "script"
+template-interface            = ID of the InteractionTemplateInterface this template implements | ""
+template-messages             = [ ...template-message ] | []
+template-cadence              = Cadence content of the template
+template-dependencies         = [ ...template-dependency ] | []
+template-arguments            = [ ...template-argument ] | []
+
+template-encoded              = RLP([ 
+    template-type , 
+    template-interface, 
+    template-messages, 
+    template-cadence, 
+    template-dependencies, 
+    template-arguments
+])
+
+template-encoded-hex          = hex( template-encoded )
+
+template-id                   = sha3( template-encoded-hex )
+
+WHERE:
+
+X | Y
+    Denotes either X or Y.
+RLP([ X, Y, Z, ... ])
+    Denotes RLP encoding of [X, Y, Z, ...]
+hex(MESSAGE)
+    Denotes transform of message into Hex string.
+sha3(MESSAGE)
+    Is the Keccak256 hash function.
+...
+    Denotes multiple of a symbol
+```
+
+### `InteractionTemplateInterface`
+
+```text
+interface-argument-type        = Cadence type of the argument
+interface-argument-index       = Index of the argument
+interface-argument-label       = Label of the argument
+interface-argument             = [ 
+    interface-argument-label,
+    interface-argument-index,
+    interface-argument-type 
+]
+
+interface-flip                 = FLIP the interface was established in (eg: "FLIP-XXXX")
+interface-arguments            = [ ...interface-argument ] | [] 
+
+interface-encoded              = RLP([ 
+    interface-flip, 
+    interface-arguments
+])
+
+interface-encoded-hex          = hex( interface-encoded )
+
+interface-id                   = sha3( interface-encoded-hex )
+
+WHERE:
+
+X | Y
+    Denotes either X or Y.
+RLP([ X, Y, Z, ... ])
+    Denotes RLP encoding of [X, Y, Z, ...]
+hex(MESSAGE)
+    Denotes transform of message into Hex string.
+sha3(MESSAGE)
+    Is the Keccak256 hash function.
+...
+    Denotes multiple of a symbol
+```
+
+### `InteractionTemplateAudit`
+
+```text
+audit-signature            = Audit signature
+auditor-account-key-id     = Key ID of the public key on the auditor account that can be used to verify the audit 
+auditor-account            = Address of the auditors account
+template-id                = ID of the InteractionTemplate this audit was produced for
+
+audit-encoded              = RLP([ 
+    template-id,
+    auditor-account,
+    auditor-account-key-id,
+    audit-signature
+])
+
+audit-encoded-hex          = hex( audit-encoded )
+
+audit-id                   = sha3( audit-encoded-hex )
+
+WHERE:
+
+RLP([ X, Y, Z, ... ])
+    Denotes RLP encoding of [X, Y, Z, ...]
+hex(MESSAGE)
+    Denotes transform of message into Hex string.
+sha3(MESSAGE)
+    Is the Keccak256 hash function.
+```
 
 ## Data Structure JSON Schemas
 
