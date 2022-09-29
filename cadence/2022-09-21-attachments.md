@@ -258,6 +258,10 @@ This is backwards compatible, as it does not invalidate any existing Cadence cod
 implementing interfaces. Is this a valuable feature to have, or is it not necessary? Support for it could be added
 in the future, but would require separate discussion. 
 
+* This proposal does not include a static type to express the type of a resource with attachments, despite this existing
+in the previous proposal. This could be added later, along with a method to get a non-optional reference to an attachment
+on resources that we can statically guarantee have that attachment. 
+
 ## Alternatives
 
 In a previous [FLIP](https://github.com/onflow/flow/pull/1101), a solution to the extensibility
