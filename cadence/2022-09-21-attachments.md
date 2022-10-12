@@ -5,7 +5,7 @@
 | **FLIP #**    | [NNN](Link to FLIP)                                  |
 | **Author(s)** | Daniel Sainati (daniel.sainati@dapperlabs.com)       |
 | **Sponsor**   | Daniel Sainati (daniel.sainati@dapperlabs.com)       |
-| **Updated**   | 2022-09-21                                           |
+| **Updated**   | 2022-10-12                                           |
 
 ## Objective
 
@@ -17,7 +17,7 @@ original declaration. This feature is purely additive, i.e. no existing function
 
 It is currently not possible to extend existing types unless the original author explicitly made provisions for future functionality.
 
-For example, to make a resource declaration extensible, its author may add a field that allows any other code to store an extension. However, this requires a lot of boilerplate and is brittle. The original type must be prepared to store additional data with potentially additional functionality.
+For example, to make a resource declaration extensible, its author may add a field that allows any other code to store an attachment. However, this requires a lot of boilerplate and is brittle. The original type must be prepared to store additional data with potentially additional functionality.
 
 Instead, this would allow users to extend existing types whether or not the original author planned for that use case. 
 
@@ -43,12 +43,11 @@ priv attachment Bar for MyResource {
 }
 ```
 
-Specifying the kind (struct or resource) of an attachment is not necessary, as its kind will necessarily be the same as the type it is extending. At this time,
-extensions can only be defined for a resource composite type. 
+Specifying the kind (struct or resource) of an attachment is not necessary, as its kind will necessarily be the same as the type it is extending.
 
 The access modifier defines the scope in which the `attachment` can be used: a `pub attachment` can be attached to its original type anywhere that imports it, 
 while an `access(contract) attachment` can only be used within the contract that defines it. Note that this access is different than the access 
-of the fields or methods within the `attachment` itself; a `pub` extension can declare a `priv` field, for example. It is also worth noting that this access
+of the fields or methods within the `attachment` itself; a `pub` attachment can declare a `priv` field, for example. It is also worth noting that this access
 modifier only applies to the "attaching" of the `attachment`; an `attachment` can be removed from a resource by the owner of that resource in any context. 
 
 Within the attachment declaration, fields and methods can be defined the same way they would be in a struct or resource declaration, with an access modifier and 
@@ -85,11 +84,10 @@ pub attachment A for R {
 
 Any fields that are declared in an attachment must be initialized, just as any fields declared in a composite must be. An attachment
 that declares fields must declare an initializer, which is run when the attachment is created. The `init` function on an attachment is run after
-the attachment is attached to the base type, so `super` will have a non-`nil` value and the fields and methods of the base types that are accessible to
-the base type will be present on that reference. 
+the attachment is attached to the base type, so `super` is accessible in the initializer.
 
-The same checks on normal initializers apply to attachment initializers; namely that all the fields declared in the attachment must receive a value in the
-extension's initializer. So, the following would be a legal attachment:
+The same checks on normal initializers apply to attachment initializers; namely that all the fields declared in the attachment must be initialized with a value in the
+attachment's initializer. So, the following would be a legal attachment:
 
 ```cadence
 pub resource R {}
@@ -117,7 +115,7 @@ pub attachment E for R {
 ```
 
 Any resource fields (which are only legal in resource attachments) must also be explicitly handled in a `destroy` method, which is run when
-the extension is destroyed/removed from its base type. Like `init`, because `destroy` will be before the attachment is actually removed from the base
+the attachment is destroyed/removed from its base type. Like `init`, because `destroy` will be before the attachment is actually removed from the base
 type, `super` will be populated and accessible in the method body. 
 
 If a resource with attachments on it is `destroy`ed, the `destroy` methods of all its attachments are all run in an unspecified order; `destroy` should not
@@ -151,6 +149,7 @@ let r2 <- attach A() to <-create R()
 ```
 
 An attachment can only be created in the same statement in which it is attached; so the `A()` expression is only legal inside an `attach` expression. 
+For this reason, resource attachments do not need an expliict `<-` move operator when they appear in an `attach` expression. 
 If the attachment has an initializer, the arguments to that initializer are provided in the creation of the attachment like so:
 
 ```cadence
@@ -180,6 +179,8 @@ such that `T1` is the intended base type for `T2`. Before the expression execute
 Attachments may be removed from a type in any order, so users should take care not to design any attachments that rely on specific behaviors of other attachments, as there is no
 way in this proposal to require that an attachment depend on another or to require that a type has a given attachment when another attachment is present. 
 
+If a resource containing attachments is `destroy`ed, all its attachments will be `destroy`ed in an arbitrary order. 
+
 ### Accessing Attachments
 
 Once an attachment has been added to a resource, it can be accessed using the `getAttachment` method, which is implicitly present on all resources, with the
@@ -202,7 +203,7 @@ r.getAttachment<A>()!.foo()
 All resource types will contain a new function `forEachAttachment` that iterates over all the attachments present on that resource, with the following signature:
 
 ```cadence
-fun forEachAttachment(_ f: ((AnyAttachment): Void)): Void 
+fun forEachAttachment(_ f: ((&AnyAttachment): Void)): Void 
 ```
 
 `AnyAttachment` is a new type that expresses the supertype of all attachments, 
@@ -227,7 +228,7 @@ pub resource R {
     priv let descriptionString: String
     pub fun description(): String {
         let description = descriptionString
-        self.forEachAttachment(f: fun ((attachment: AnyAttachment): Void {
+        self.forEachAttachment(f: fun ((attachment: &AnyAttachment): Void {
             let descriptionFunction = attachment.getMethod<(():String)>("description")
             if descriptionFunction != nil {
                 description.concat(descriptionFunction!())
