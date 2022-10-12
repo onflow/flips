@@ -93,3 +93,7 @@ None
 ## Questions and Discussion Topics
 
 None
+
+## Implementation
+
+An implementation is available in https://github.com/onflow/cadence/pull/2024
