@@ -2,10 +2,10 @@
 
 | Status        | Proposed                                             |
 :-------------- |:---------------------------------------------------- |
-| **FLIP #**    | [NNN](https://github.com/onflow/flow/pull/NNN) (update when you have PR #)|
+| **FLIP #**    | [13](https://github.com/onflow/flips/pull/13)        |
 | **Author(s)** | Bastian Müller (bastian@dapperlabs.com)              |
 | **Sponsor**   | Bastian Müller (bastian@dapperlabs.com)              |
-| **Updated**   | 2011-10-11                                           |
+| **Updated**   | 2022-10-11                                           |
 
 ## Objective
 
