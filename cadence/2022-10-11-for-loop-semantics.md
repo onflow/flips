@@ -17,7 +17,7 @@ Iteration variables should be defined for each loop iteration, instead of once f
 Currently, Cadence introduces one variable for the value, and one variable for the index (if given), for the whole loop.
 
 Capturing these variables has surprising behaviour.
-For example, this program repeatedly logs 3, instead of the items of the array, as 3 is the last value assigned to the value variable:
+For example, this program repeatedly logs `3`, instead of the items of the array, as `3` is the last value assigned to the value variable:
 
 ```cadence
 let fs: [((): Int)] = []
