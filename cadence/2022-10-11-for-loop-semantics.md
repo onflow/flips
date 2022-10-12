@@ -73,20 +73,16 @@ This change is trivial in the implementation.
 
 ### Compatibility
 
-* Does the design conform to the backwards & forwards compatibility [requirements](../docs/compatibility.md)?
-* How will this proposal interact with other parts of the Flow Ecosystem?
-    - How will it work with FCL?
-    - How will it work with the Emulator?
-    - How will it work with existing Flow SDKs?
+This change has no impact on compatibility between systems (e.g. SDKs).
 
 ### User Impact
 
-* What are the user-facing changes? How will this feature be rolled out?
+Existing contracts' and new transactions' behaviour will change.
+Given that capturing variables is uncommon, this change should only affect few users' programs.
 
 ## Related Issues
 
-What related issues do you consider out of scope for this proposal,
-but could be addressed independently in the future?
+None
 
 ## Prior Art
 
