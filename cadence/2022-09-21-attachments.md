@@ -5,7 +5,7 @@
 | **FLIP #**    | [NNN](Link to FLIP)                                  |
 | **Author(s)** | Daniel Sainati (daniel.sainati@dapperlabs.com)       |
 | **Sponsor**   | Daniel Sainati (daniel.sainati@dapperlabs.com)       |
-| **Updated**   | 2022-10-12                                           |
+| **Updated**   | 2022-10-13                                           |
 
 ## Objective
 
@@ -30,7 +30,7 @@ This enables a number of uses cases that were previously difficult or impossible
 ### Attachment Declarations
 
 The new attachment feature would be used with a new `attachment` keyword, which would be declared using a new form of composite declaration:
-`<access modifier> attachment <Name> for <Type> { ... }`, where the attachment methods and fields are declared in the body. As such, 
+`<access modifier> attachment <Name> for <Type>: <Conformances> { ... }`, where the attachment methods and fields are declared in the body. As such, 
 the following would be examples of legal declarations of attachments:
 
 ```cadence
@@ -38,12 +38,18 @@ pub attachment Foo for MyStruct {
     ...
 }
 
-priv attachment Bar for MyResource {
+priv attachment Bar for MyResource: MyResourceInterface {
+    ...
+}
+
+access(contract) attachment Baz for MyInterface: MyOtherInterface {
     ...
 }
 ```
 
-Specifying the kind (struct or resource) of an attachment is not necessary, as its kind will necessarily be the same as the type it is extending.
+Specifying the kind (struct or resource) of an attachment is not necessary, as its kind will necessarily be the same as the type it is extending. Note that
+the base type may be either a concrete composite type or an interface. In the former case, the attachment is only usable on values specifically of that
+base type, while in the case of an interface the attachment is usable on any type that conforms to that interface. 
 
 The access modifier defines the scope in which the `attachment` can be used: a `pub attachment` can be attached to its original type anywhere that imports it, 
 while an `access(contract) attachment` can only be used within the contract that defines it. Note that this access is different than the access 
@@ -124,10 +130,14 @@ is that the base type will be the last thing destroyed.
 
 An attachment declared with `pub attachment A for C { ... }` will have a nominal type `A`.
 
+If an attachment `A` is declared to conform to an interface `I`, `A` will be a subtype of `{I}`, and the checker will enforce that `A` implements all the methods 
+and fields of `I`. Note that an attachment must implement all the methods and fields of `I` itself; it may reference its base type with `super` but it cannot inherit 
+from that type. 
+
 ### Adding Attachments to a Type
 
 An attachment can be attached to a base type using the `attach e1 to e2` expression. This expression requires that `e1` have an attachment type, 
-and that `e2` have the composite type to which `e1` is intended to be attached. It will fail to typecheck otherwise. 
+and that `e2` be a subtype of `e1`'s intended base type. It will fail to typecheck otherwise. 
 
 ```cadence
 resource R {}
@@ -203,7 +213,7 @@ r.getAttachment<A>()!.foo()
 All resource types will contain a new function `forEachAttachment` that iterates over all the attachments present on that resource, with the following signature:
 
 ```cadence
-fun forEachAttachment(_ f: ((&AnyAttachment): Void)): Void 
+fun forEachAttachment<T: &AnyAttachment>(_ f: ((T): Void)): Void 
 ```
 
 `AnyAttachment` is a new type that expresses the supertype of all attachments, 
@@ -236,6 +246,32 @@ pub resource R {
         }))
     }
 }
+```
+
+The `forEachAttachment` method also can take a type argument `T` that is some interface type or attachment type. If this type argument is provided, the iteration 
+funtion will filter the attachments on the resource to include only those attachments that are subtypes of `T`. So, the above example could also be written this way, 
+in which the attachments being described also implement an interface `Description`:
+
+```cadence
+pub resource interface Description {
+    pub fun description(): String
+}
+pub resource R: Description {
+    ...
+    priv let descriptionString: String
+    pub fun description(): String {
+        let description = descriptionString
+        // only considers attachments that were declared to implement Description
+        self.forEachAttachment(f: fun ((attachment: &{Description}): Void {
+            description.concat(descriptionFunction!())
+        }))
+    }
+}
+```
+
+The above method avoids the additional runtime cost of introspection and checking of every attachment on `R`, but will only work on attachments that explicitly
+declare themselves to implement `Description`. In particular, an attachment that possesses the `description` function but does not explicitly include `Description`
+in its conformance list will not be included in the iteration. 
 
 ### Drawbacks
 
@@ -254,10 +290,6 @@ it is not necessary to be understood for core use-cases of the language, i.e. th
 This is backwards compatible, as it does not invalidate any existing Cadence code. 
 
 ## Related Issues
-
-* The previous extensions proposal (see the Alternatives section below) had support for extensions/attachments
-implementing interfaces. Is this a valuable feature to have, or is it not necessary? Support for it could be added
-in the future, but would require separate discussion. 
 
 * This proposal does not include a static type to express the type of a resource with attachments, despite this existing
 in the previous proposal. This could be added later, along with a method to get a non-optional reference to an attachment
