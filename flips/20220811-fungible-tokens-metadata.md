@@ -1,11 +1,11 @@
+---
+status: Proposed
+flip: 1087
+author: Álvaro Lillo Igualada (alvaro.lillo@dapperlabs.com)
+sponsor: Josh Hannan (joshua.hannan@dapperlabs.com)
+updated: 2022-08-16
+--- 
 # Fungible Tokens Metadata
-
-| Status        | Draft       |
-:-------------- |:---------------------------------------------------- |
-| **FLIP #1087**    | [1087](https://github.com/onflow/flow/pull/1087)|
-| **Author** | Álvaro Lillo Igualada (alvaro.lillo@dapperlabs.com) |
-| **Sponsor**   | Josh Hannan (joshua.hannan@dapperlabs.com)             |
-| **Updated**   | 2022-08-16                                           | 
 
 ## Objective
 
