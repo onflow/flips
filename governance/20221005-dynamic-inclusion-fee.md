@@ -1,10 +1,12 @@
 ## Dynamic Inclusion Fees
 
-| Status        | Proposed         |
+|               |         |
 :-------------- |:---------------------------------------------------- |
+| **Status**    | Proposed         |
 | **Author(s)** | Tony Zhang (tony.zhang@dapperlabs.com)   |
 | **Editor(s)** | Janez Podhostnik  (janez.podhostnik@dapperlabs.com),<br> Jan Bernatik (jan.bernatik@dapperlabs.com)   |
 | **Updated**   | 2022-10-06                                           |
+| **Forum**     | https://forum.onflow.org/t/flip-dynamic-inclusion-fees/3700 |
 
 #### Motivation
 
