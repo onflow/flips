@@ -1,11 +1,12 @@
-# Optional References to Indexed Accesses
+--
+status: Finalized
+flip: 722
+author: Daniel Sainati (daniel.sainati@dapperlabs.com)
+sponsor: Daniel Sainati (daniel.sainati@dapperlabs.com)
+updated: 2021-12-09
+---
 
-| Status        | (Approved)       |
-:-------------- |:---------------------------------------------------- |
-| **FLIP #**    | [722](https://github.com/onflow/flow/pull/722) |
-| **Author(s)** | Daniel Sainati (daniel.sainati@dapperlabs.com)       |
-| **Sponsor**   | Daniel Sainati (daniel.sainati@dapperlabs.com)       |
-| **Updated**   | 2021-12-09                                           |
+# Optional References to Indexed Accesses
 
 ## Objective
 
