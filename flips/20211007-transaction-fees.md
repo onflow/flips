@@ -87,7 +87,7 @@ The transaction fees equation can then be written in the following form:
 
 $$F = s \left[ F_I + F_E \right] = s \left[ p_I(I) + p_E(E) \right]$$
 
-The maximum fees a transaction can incur can be written with the equation below: 
+The maximum fees a transaction can incur can be written with the equation below:
 
 $$F^{\text{max}} = s \left[ p_I(I) + p_E(E^{\text{max}}) \right]$$
 
@@ -108,7 +108,7 @@ In general, there would be two different effort cost functions, one for inclusio
 
 In the first iteration of variable transaction fees, the effort cost functions can simply be constant coefficients: $F_E = p_E * E$ and $F_I = p_I * I$. The coefficients are referred to as the inclusion effort cost parameter and the execution effort cost parameter, or together as effort cost parameters.
 
-The effort cost parameters should be defined on a smart contract and adjustable via the service account admin resource and should be accessible for everyone to read. 
+The effort cost parameters should be defined on a smart contract and adjustable via the service account admin resource and should be accessible for everyone to read.
 
 The effort cost parameters would need to be adjusted infrequently. The reasons for adjusting them would be:
 
@@ -149,7 +149,7 @@ This model should be replaced so that the execution effort better correlates wit
 
 The way execution effort is defined means that the lower bound for execution effort is 0. Any constant part would just get counted under the inclusion effort.
 
-The upper bound of the execution fees (and thus also for transaction fees; assuming the inclusion fees are known) is indirectly set in the transaction by setting the maximum execution effort limit ( $E_c^\text{max}$ ) (in the current implementation, this is known as the gas limit or computation limit). 
+The upper bound of the execution fees (and thus also for transaction fees; assuming the inclusion fees are known) is indirectly set in the transaction by setting the maximum execution effort limit ( $E_c^\text{max}$ ) (in the current implementation, this is known as the gas limit or computation limit).
 
 If the transaction execution effort limit is reached during the execution of the transaction, the execution stops and the state changes made up to that point are dropped. The transaction fees for this transaction are still collected at the maximum execution effort limit.
 
@@ -191,12 +191,12 @@ There are a few reasons why a transaction fails, which can be split into four ca
 1. Transaction failed because the payer's signature was incorrect, or the payer does not have enough funds to cover maximum transaction costs (transaction costs with the execution effort set to the execution effort limit).
 
     This transaction should have been rejected at the access node level. However, since it was not and there is no way to charge the payer, the access node account is charged with the transaction fees. The transaction fees are computed with the execution effort set to 0.
-    
+
 2. Transaction failed before the transaction script execution started (some non-payer signature was incorrect, or the sequence number was incorrect)
 
     In this scenario, the payer is charged for the transaction fees with the execution effort set to 0.
 
-3. Transaction failed during transaction script parsing or during script execution, during fee deduction or during the storage used check. 
+3. Transaction failed during transaction script parsing or during script execution, during fee deduction or during the storage used check.
 
     In this case, the fees are charged normally with the execution effort set to the actual usage before the error was produced.
 
@@ -247,11 +247,11 @@ In order to estimate the minimum transaction fees needed for a transaction, some
 - The effort cost parameters.
 - The surge factor.
 
-The calculation of inclusion effort can be done locally. 
+The calculation of inclusion effort can be done locally.
 
 If we assume execution effort is 0 we get the minimum possible transaction fees. The maximum possible transaction fees can be computed with the execution effort set to the chosen execution effort limit.
 
-This estimation could be done by the SDK or a possibly over a dedicated endpoint on the access nodes. 
+This estimation could be done by the SDK or a possibly over a dedicated endpoint on the access nodes.
 
 Due to the surge factor changing over time, this calculation will inherently be an estimation.
 
@@ -261,7 +261,7 @@ If the user is unsure of what execution effort limit is good enough for their tr
 
 Users are already aware of the execution effort limit (a.k.a. gas limit or computation limit). The change is only that they will now need to pay more attention to it, as setting the execution effort limit has a few implications:
 
-- Setting a high execution effort limit will mean that the payer needs to have more funds in their account before sending the transaction. 
+- Setting a high execution effort limit will mean that the payer needs to have more funds in their account before sending the transaction.
 - Using more execution effort will result in more expensive transactions.
 
 The second thing for the user to keep in mind is that the surge factor will slowly change over time. If the price is currently high, the user might want to wait for a less busy (and cheaper) time to send a transaction if possible.
