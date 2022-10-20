@@ -1,0 +1,21 @@
+on:
+  issues:
+    types:
+      - opened
+      - labeled
+      
+jobs:
+  add-to-project:
+    name: Add to FLIP Project
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/add-to-project@v0.3.0
+        with:
+          # URL of the project to add issues to
+          project-url: https://github.com/orgs/onflow/projects/5
+          # A GitHub personal access token with write access to the project
+          github-token: ${{ secrets.ADD_TO_PROJECT_PAT }}
+          # A comma-separated list of labels to use as a filter for issue to be added
+          labeled: "flip: cadence, flip: governance, flip: protocol, flip: application"
+          # The behavior of the labels filter, AND to match all labels, OR to match any label, NOT to exclude any listed label (default is OR)
+          label-operator: or
