@@ -1,4 +1,4 @@
-# Change Cadence for-loop semantics
+# Interface inheritance in Cadence
 
 | Status         | Proposed                                     |
 |:---------------|:---------------------------------------------|
