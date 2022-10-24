@@ -30,7 +30,7 @@ This enables a number of uses cases that were previously difficult or impossible
 ### Attachment Declarations
 
 The new attachment feature would be used with a new `attachment` keyword, which would be declared using a new form of composite declaration:
-`<access modifier> attachment <Name> for <Type>: <Conformances> { ... }`, where the attachment methods and fields are declared in the body. As such, 
+`pub? attachment <Name> for <Type>: <Conformances> { ... }`, where the attachment methods and fields are declared in the body. As such, 
 the following would be examples of legal declarations of attachments:
 
 ```cadence
@@ -38,11 +38,11 @@ pub attachment Foo for MyStruct {
     ...
 }
 
-priv attachment Bar for MyResource: MyResourceInterface {
+attachment Bar for MyResource: MyResourceInterface {
     ...
 }
 
-access(contract) attachment Baz for MyInterface: MyOtherInterface {
+attachment Baz for MyInterface: MyOtherInterface {
     ...
 }
 ```
@@ -51,10 +51,8 @@ Specifying the kind (struct or resource) of an attachment is not necessary, as i
 the base type may be either a concrete composite type or an interface. In the former case, the attachment is only usable on values specifically of that
 base type, while in the case of an interface the attachment is usable on any type that conforms to that interface. 
 
-The access modifier defines the scope in which the `attachment` can be used: a `pub attachment` can be attached to its original type anywhere that imports it, 
-while an `access(contract) attachment` can only be used within the contract that defines it. Note that this access is different than the access 
-of the fields or methods within the `attachment` itself; a `pub` attachment can declare a `priv` field, for example. It is also worth noting that this access
-modifier only applies to the "attaching" of the `attachment`; an `attachment` can be removed from a resource by the owner of that resource in any context. 
+As with other type declarations, attachments may only have a `pub` access modifier (if one is present). A future proposal may define behavior for private type declarations,
+but until such a proposal exists and is accepted, the access modifier on an attachment declaration must be `pub`. 
 
 Within the attachment declaration, fields and methods can be defined the same way they would be in a struct or resource declaration, with an access modifier and 
 a declaration kind. The fields of the base type for which the attachment are accessible to the attachment using the `super` value, which is an implicit field 
@@ -159,6 +157,7 @@ let r2 <- attach A() to <-create R()
 ```
 
 An attachment can only be created in the same statement in which it is attached; so the `A()` expression is only legal inside an `attach` expression. 
+In general, attachments are not first class values in Cadence, they can only be added, removed and accessed from composite values, and are not true values themselves. 
 For this reason, resource attachments do not need an expliict `<-` move operator when they appear in an `attach` expression. 
 If the attachment has an initializer, the arguments to that initializer are provided in the creation of the attachment like so:
 
@@ -180,11 +179,15 @@ attachment A for S {
 let sa = attach A(y: 3) to S(x: "foo")
 ```
 
+If a users attempts to `attach` an attachment to a value that already possesses an attachment of that type, Cadence will raise an error at runtime. For this
+reason, if a user has reason to believe that an attachment of the type they wish to add already exists on a value, they should use the `remove` statement 
+first to guarantee that the value does not have that attachment before they attempt to attach it again.
+
 ### Removing Attachments from a Type
 
-Attachments can be removed with a new statement: `remove t from e`. The `t` value here is a type name, rather than a value, 
+Attachments can be removed with a new statement: `remove t from e`. Here, `t` refers to an attachment type name, rather than a value, 
 as the attachment being removed cannot be referenced as a value. In order to typecheck, if `t` is the name of some attachment type `T2`, `e` must have some composite type `T1`
-such that `T1` is the intended base type for `T2`. Before the expression executes, `T2`'s `destroy` method (if present) will be executed. After the expression executes, the composite denoted by `e` will no longer contain the attachment `T1`. If the value denoted by `e` does not contain `t`, this statement is a no-op.
+such that `T1` is the intended base type for `T2`. Before the statement executes, `T2`'s `destroy` method (if present) will be executed. After the statement executes, the composite denoted by `e` will no longer contain the attachment `T1`. If the value denoted by `e` does not contain `t`, this statement is a no-op.
 
 Attachments may be removed from a type in any order, so users should take care not to design any attachments that rely on specific behaviors of other attachments, as there is no
 way in this proposal to require that an attachment depend on another or to require that a type has a given attachment when another attachment is present. 
@@ -193,15 +196,15 @@ If a resource containing attachments is `destroy`ed, all its attachments will be
 
 ### Accessing Attachments
 
-Once an attachment has been added to a resource, it can be accessed using the `getAttachment` method, which is implicitly present on all resources, with the
+Once an attachment has been added to a composite value, it can be accessed using the `getAttachment` method, which is implicitly present on all composites, with the
 following signature:
 
 ```cadence
 fun getAttachment<T: AnyAttachment>(): &T? 
 ```
 
-See the below section for a description of the new `AnyAttachment` type. `getAttachment` will query the resource for an attachment with that type, 
-returning a reference to it if it is present, while returning `nil` otherwise. So, given a resource `r` with an attachment of type `A`, accessing `A`'s `foo` method
+See the below section for a description of the new `AnyAttachment` type. `getAttachment` will query the composite for an attachment with that type, 
+returning a reference to it if it is present, while returning `nil` otherwise. So, given a composite `r` with an attachment of type `A`, accessing `A`'s `foo` method
 would be done like so:
 
 ```cadence
@@ -210,7 +213,7 @@ r.getAttachment<A>()!.foo()
 
 ### Iterating over Attachments
 
-All resource types will contain a new function `forEachAttachment` that iterates over all the attachments present on that resource, with the following signature:
+All composite types will contain a new function `forEachAttachment` that iterates over all the attachments present on that composites, with the following signature:
 
 ```cadence
 fun forEachAttachment<T: &AnyAttachment>(_ f: ((T): Void)): Void 
@@ -221,8 +224,8 @@ and contains two methods (that are implicitly present on all attachments): `getF
 with the following signatures:
 
 ```cadence
-getField<T: Any>(_  name: String): &T?
-getMethod<T: Any>(_  name: String): T?
+getField<T>(_  name: String): &T?
+getMethod<T>(_  name: String): T?
 ```
 
 This functions takes the `name` of a member on an attachment and checks whether a member with that `name` exists on the attachment with the provided type argument. If it does, 
@@ -238,7 +241,7 @@ pub resource R {
     priv let descriptionString: String
     pub fun description(): String {
         let description = descriptionString
-        self.forEachAttachment(f: fun ((attachment: &AnyAttachment): Void {
+        self.forEachAttachment(f: fun (attachment: &AnyAttachment) {
             let descriptionFunction = attachment.getMethod<(():String)>("description")
             if descriptionFunction != nil {
                 description.concat(descriptionFunction!())
@@ -262,7 +265,7 @@ pub resource R: Description {
     pub fun description(): String {
         let description = descriptionString
         // only considers attachments that were declared to implement Description
-        self.forEachAttachment(f: fun ((attachment: &{Description}): Void {
+        self.forEachAttachment(fun (attachment: &{Description}) {
             description.concat(descriptionFunction!())
         }))
     }
@@ -290,10 +293,6 @@ it is not necessary to be understood for core use-cases of the language, i.e. th
 This is backwards compatible, as it does not invalidate any existing Cadence code. 
 
 ## Related Issues
-
-* This proposal does not include a static type to express the type of a resource with attachments, despite this existing
-in the previous proposal. This could be added later, along with a method to get a non-optional reference to an attachment
-on resources that we can statically guarantee have that attachment. 
 
 ## Alternatives
 
