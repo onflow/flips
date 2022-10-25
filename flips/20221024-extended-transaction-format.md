@@ -86,8 +86,8 @@ Here is an example of how FCL-JS might be used to execute such a transaction:
 const txId = await fcl.mutate({
   cadence: `...`,
   authorizers: [
-    appAuthzWallet({ role: “Seller”}), // Authorizer (wallet) for first prepare block (#Seller)
-    fcl.currentUser.authz({ role: “Buyer”}) // Authorizer (wallet) for second prepare block (#Buyer)
+    appAuthzWallet({ role: “Seller” }), // Authorizer (wallet) for first prepare block (#Seller)
+    fcl.currentUser.authz({ role: “Buyer” }) // Authorizer (wallet) for second prepare block (#Buyer)
   ]
 })
 ```
@@ -104,7 +104,7 @@ This proposal involves complex changes to multiple areas of Flow, including:
 
 The benefits of this proposal should be appropriately weighed against the effort required to implement and cordinate this proposals changes among the affected areas and parties.
 
-For wallets, considerable complexity needs to be addressed in how the wallet can interpret a cadence transaction, and understand how to produce the cadence code required to properly assign the varaiables they are responsible for in their assiend prepare statement.
+For wallets, considerable complexity needs to be addressed in how the wallet can interpret a cadence transaction, and understand how to produce the cadence code required to properly assign the varaiables they are responsible for in their assigned prepare statement.
 
 ## Questions and Discussion Topics
 
