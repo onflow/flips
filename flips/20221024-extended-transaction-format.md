@@ -86,7 +86,7 @@ Here is an example of how FCL-JS might be used to execute such a transaction:
 const txId = await fcl.mutate({
   cadence: `...`,
   authorizers: [
-    appAuthzWallet({ role: “Seller”}), // Authorizer (wallet) for first prepare block (@Seller)
+    appAuthzWallet({ role: “Seller”}), // Authorizer (wallet) for first prepare block (#Seller)
     fcl.currentUser.authz({ role: “Buyer”}) // Authorizer (wallet) for second prepare block (#Buyer)
   ]
 })
