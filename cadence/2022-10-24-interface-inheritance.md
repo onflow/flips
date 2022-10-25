@@ -105,12 +105,12 @@ If two fields with identical-names have identical types, then it will be valid.
 
 ```cadence
 pub resource interface Receiver {
-    pub fun id: UInt64
+    pub var id: UInt64
 }
 
 pub resource interface Vault: Receiver {
     // `id` field has same type as the `Receiver.id`. Hence this is valid.
-    pub fun id: UInt64
+    pub var id: UInt64
 }
 ```
 
@@ -118,12 +118,12 @@ Otherwise, interface conformance is not valid.
 
 ```cadence
 pub resource interface Receiver {
-    pub fun id: Int
+    pub var id: Int
 }
 
 pub resource interface Vault: Receiver {
     // `id` field has a different type than the `Receiver.id`. Hence this is invalid.
-    pub fun id: UInt64
+    pub var id: UInt64
 }
 ```
 
