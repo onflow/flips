@@ -101,7 +101,7 @@ When an interface implements another interface, it is possible for the two inter
 
 #### Fields
 
-If the two conflicting fields have identical types, then it will be valid.
+If two fields with identical-names have identical types, then it will be valid.
 
 ```cadence
 pub resource interface Receiver {
@@ -129,7 +129,7 @@ pub resource interface Vault: Receiver {
 
 #### Functions
 
-If the two conflicting functions have identical signatures then it will be valid.
+If two functions with identical names also have identical signatures, then it will be valid.
 
 ```cadence
 pub resource interface Receiver {
@@ -161,7 +161,7 @@ pub resource interface Vault: Receiver {
 
 #### Functions with conditions
 
-If the two conflicting functions with identical signatures have pre/post conditions, then it will still be valid.
+If the two functions with identical names and signatures have pre/post conditions, then it will still be valid.
 However, the pre/post conditions would be linearized (TBD - refer [questions and discussion topics section](#questions-and-discussion-topics)) 
 to determine the order of the execution of the conditions.
 Given the pre/post conditions are `view` only, the order of execution would not have an impact on the conditions.
@@ -186,7 +186,7 @@ pub resource interface Vault: Receiver {
 
 #### Default functions
 
-It is also possible for two conflicting functions with identical signatures to have default implementations.
+It is also possible for two functions with identical signatures to have default implementations.
 The priority will be given to the default implementation at the bottom of the inheritance chain.
 i.e: Inherited default methods will be shadowed.
 
@@ -281,6 +281,86 @@ pub resource interface Provider: Logger {}
 // Invalid: The default implementation of the `log` function provided by the `Logger`
 // interface is visible to the `Vault` via the `Provider` interface.
 // Another default implementation of `log` function is visible to the `Vault` via the `Receiver` interface.
+// This creates ambiguity.
+pub resource interface Vault: Receiver, Provider {}
+```
+
+#### Types and event definitions
+
+Type and event definitions would also behave similarly to the default functions.
+Inherited interfaces can override type definitions and event definitions.
+
+```cadence
+pub resource interface Receiver {
+    pub struct Foo {}
+}
+
+pub resource interface Vault: Receiver {
+    pub struct Foo {}
+}
+
+pub resource MyVault: Vault {
+    pub fun test() {
+        let foo = Foo()  // This will create a value from `Vault.Foo`
+    }
+}
+```
+
+If a user needed to access the `Foo` struct coming from the super interface `Receiver`, then they can
+access it using the fully qualified name. e.g: `let foo = Receiver.Foo()`.
+
+However, it is not allowed to have two or more inherited type/events definitions with identical names for an interface.
+
+```cadence
+pub resource interface Receiver {
+    pub struct Foo {}
+}
+
+pub resource interface Provider {
+    pub struct Foo {}
+}
+
+// Invalid: Two type definitions with the same name from two interfaces.
+pub resource Vault: Receiver, Provider {
+}
+```
+Similar to default functions, there can be situations where the same type/event definition can be available
+via different inheritance paths.
+
+```cadence
+pub resource interface Logger {
+    pub struct Foo {}
+}
+
+pub resource interface Receiver: Logger {}
+
+pub resource interface Provider: Logger {}
+
+// Valid: `Logger.Foo` struct is visible to the `Vault` interface via both `Receiver` and `Provider`.
+pub resource interface Vault: Receiver, Provider {}
+```
+
+In the above example, `Logger.Foo` type definition is visible to the `Vault` interface via both `Receiver`
+and `Provider`. Even though it is available from two different interfaces, they are both referring to the same
+type definition. Therefore, the above code is valid.
+
+However, if at least one of the interfaces in the middle of the chain also overrides the type definition `Foo`,
+then the code becomes invalid, as there are multiple implementations present now, which leads to ambiguity.
+
+```cadence
+pub resource interface Logger {
+    pub struct Foo {}
+}
+
+pub resource interface Receiver: Logger {
+    pub struct Foo {}
+}
+
+pub resource interface Provider: Logger {}
+
+// Invalid: The default implementation of the `Foo` struct by the `Logger`
+// interface is visible to the `Vault` via the `Provider` interface.
+// Another implementation of `Foo` struct is visible to the `Vault` via the `Receiver` interface.
 // This creates ambiguity.
 pub resource interface Vault: Receiver, Provider {}
 ```
