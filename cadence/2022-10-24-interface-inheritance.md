@@ -285,6 +285,33 @@ pub resource interface Provider: Logger {}
 pub resource interface Vault: Receiver, Provider {}
 ```
 
+#### Conditions with Default functions
+
+A more complex situation is where a default function is available via one inheritance path and a pre/post condition
+is available via another inheritance path.
+
+```cadence
+pub resource interface Receiver {
+    pub fun log(_ message: String) {
+        log(message.append("from Receiver"))
+    }
+}
+
+pub resource interface Provider {
+    pub fun log(_ message: String) {
+        pre{ message != "" }
+    }
+}
+
+// Valid: Both the default function and the condition would be available.
+pub resource interface Vault: Receiver, Provider {}
+```
+
+In such situations, all rules applicable for default functions inheritance as well as condition inheritance
+would be applied.
+Thus, the default function from coming from the `Receiver` interface, and the condition comes from the `Provider`
+interface would be made available for the inherited interface.
+
 #### Types and event definitions
 
 Type and event definitions would also behave similarly to the default functions.
