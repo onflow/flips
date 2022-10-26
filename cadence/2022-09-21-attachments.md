@@ -5,7 +5,7 @@
 | **FLIP #**    | [NNN](Link to FLIP)                                  |
 | **Author(s)** | Daniel Sainati (daniel.sainati@dapperlabs.com)       |
 | **Sponsor**   | Daniel Sainati (daniel.sainati@dapperlabs.com)       |
-| **Updated**   | 2022-10-13                                           |
+| **Updated**   | 2022-10-26                                           |
 
 ## Objective
 
@@ -132,6 +132,10 @@ If an attachment `A` is declared to conform to an interface `I`, `A` will be a s
 and fields of `I`. Note that an attachment must implement all the methods and fields of `I` itself; it may reference its base type with `super` but it cannot inherit 
 from that type. 
 
+Important note: because attachments are not first class values in Cadence, their types cannot appear outside of a reference type. So, for example, given an 
+attachment declaration `attachment A for X {}`, `A`, `A?`, `[A]` and `((): A)` are not valid type annotations, while `&A`, `A?`, `[&A]` and `((): &A)` are valid. 
+For this reason as well, `self` inside an attachment has a reference type; in `A` above, the type of self would be `&A` rather than `A`. 
+
 ### Adding Attachments to a Type
 
 An attachment can be attached to a base type using the `attach e1 to e2` expression. This expression requires that `e1` have an attachment type, 
@@ -187,7 +191,9 @@ first to guarantee that the value does not have that attachment before they atte
 
 Attachments can be removed with a new statement: `remove t from e`. Here, `t` refers to an attachment type name, rather than a value, 
 as the attachment being removed cannot be referenced as a value. In order to typecheck, if `t` is the name of some attachment type `T2`, `e` must have some composite type `T1`
-such that `T1` is the intended base type for `T2`. Before the statement executes, `T2`'s `destroy` method (if present) will be executed. After the statement executes, the composite denoted by `e` will no longer contain the attachment `T1`. If the value denoted by `e` does not contain `t`, this statement is a no-op.
+such that `T1` is the intended base type for `T2`.
+
+Before the statement executes, `T2`'s `destroy` method (if present) will be executed. After the statement executes, the composite denoted by `e` will no longer contain the attachment `T1`. If the value denoted by `e` does not contain `t`, this statement is a no-op.
 
 Attachments may be removed from a type in any order, so users should take care not to design any attachments that rely on specific behaviors of other attachments, as there is no
 way in this proposal to require that an attachment depend on another or to require that a type has a given attachment when another attachment is present. 
@@ -196,30 +202,30 @@ If a resource containing attachments is `destroy`ed, all its attachments will be
 
 ### Accessing Attachments
 
-Once an attachment has been added to a composite value, it can be accessed using the `getAttachment` method, which is implicitly present on all composites, with the
-following signature:
+Once an attachment has been added to a composite value, it can be accessed using indexing syntax: `v[T]`, where `v` is a resource or struct composite value, 
+and `T` is the name of an attachment type. This indexing syntax returns an optional reference to the attachment of type `T` (`&T?`); if no such attachment exists on `v`, 
+the expression will return `nil`. So, given a composite `r` with an attachment of type `A`, accessing `A`'s `foo` method would be done like so:
 
 ```cadence
-fun getAttachment<T: AnyAttachment>(): &T? 
-```
-
-See the below section for a description of the new `AnyAttachment` type. `getAttachment` will query the composite for an attachment with that type, 
-returning a reference to it if it is present, while returning `nil` otherwise. So, given a composite `r` with an attachment of type `A`, accessing `A`'s `foo` method
-would be done like so:
-
-```cadence
-r.getAttachment<A>()!.foo()
+r[A]!.foo()
 ```
 
 ### Iterating over Attachments
 
-All composite types will contain a new function `forEachAttachment` that iterates over all the attachments present on that composites, with the following signature:
+All composite types will contain a new function `forEachAttachment` that iterates over all the attachments present on that composite. On a resource, this function 
+will have the following signature:
 
 ```cadence
-fun forEachAttachment<T: &AnyAttachment>(_ f: ((T): Void)): Void 
+fun forEachAttachment(_ f: ((&AnyResourceAttachment): Void)): Void 
 ```
 
-`AnyAttachment` is a new type that expresses the supertype of all attachments, 
+On a structure, it will have 
+
+```cadence
+fun forEachAttachment(_ f: ((&AnyStructAttachment): Void)): Void 
+```
+
+`AnyResourceAttachment`/`AnyStructAttachment` are new types that expresses the supertype of all attachments, 
 and contains two methods (that are implicitly present on all attachments): `getField` and `getMethod`, 
 with the following signatures:
 
@@ -227,6 +233,9 @@ with the following signatures:
 getField<T>(_  name: String): &T?
 getMethod<T>(_  name: String): T?
 ```
+
+The difference between these two types is only in the kind; as might be expected from the name `AnyResourceAttachment` is resource-kinded, while
+`AnyStructAttachment` is struct-kinded. 
 
 This functions takes the `name` of a member on an attachment and checks whether a member with that `name` exists on the attachment with the provided type argument. If it does, 
 `getField` will return a reference to that member is it is a field, but `nil` if it is a method, while `getMethod` will return that function if it is a method but `nil` if it is a field. If the type does not match or the member is not present, then both will return nil. These functions must be separate in order to support resource fields on attachments; 
@@ -241,7 +250,7 @@ pub resource R {
     priv let descriptionString: String
     pub fun description(): String {
         let description = descriptionString
-        self.forEachAttachment(f: fun (attachment: &AnyAttachment) {
+        self.forEachAttachment(f: fun (attachment: &AnyResourceAttachment) {
             let descriptionFunction = attachment.getMethod<(():String)>("description")
             if descriptionFunction != nil {
                 description.concat(descriptionFunction!())
@@ -250,31 +259,6 @@ pub resource R {
     }
 }
 ```
-
-The `forEachAttachment` method also can take a type argument `T` that is some interface type or attachment type. If this type argument is provided, the iteration 
-funtion will filter the attachments on the resource to include only those attachments that are subtypes of `T`. So, the above example could also be written this way, 
-in which the attachments being described also implement an interface `Description`:
-
-```cadence
-pub resource interface Description {
-    pub fun description(): String
-}
-pub resource R: Description {
-    ...
-    priv let descriptionString: String
-    pub fun description(): String {
-        let description = descriptionString
-        // only considers attachments that were declared to implement Description
-        self.forEachAttachment(fun (attachment: &{Description}) {
-            description.concat(descriptionFunction!())
-        }))
-    }
-}
-```
-
-The above method avoids the additional runtime cost of introspection and checking of every attachment on `R`, but will only work on attachments that explicitly
-declare themselves to implement `Description`. In particular, an attachment that possesses the `description` function but does not explicitly include `Description`
-in its conformance list will not be included in the iteration. 
 
 ### Drawbacks
 
