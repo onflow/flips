@@ -10,7 +10,7 @@
 ## Objective
 
 This FLIP proposes to add a new `attachment` feature to Cadence, allowing users to extend existing
-composite types (structs and resources) with additional fields and methods, without modifying the
+composite types (structs and resources) with additional fields and functions, without modifying the
 original declaration. This feature is purely additive, i.e. no existing functionality is changed or removed.
 
 ## Motivation
@@ -30,7 +30,7 @@ This enables a number of uses cases that were previously difficult or impossible
 ### Attachment Declarations
 
 The new attachment feature would be used with a new `attachment` keyword, which would be declared using a new form of composite declaration:
-`pub? attachment <Name> for <Type>: <Conformances> { ... }`, where the attachment methods and fields are declared in the body. As such, 
+`pub? attachment <Name> for <Type>: <Conformances> { ... }`, where the attachment functions and fields are declared in the body. As such, 
 the following would be examples of legal declarations of attachments:
 
 ```cadence
@@ -54,10 +54,10 @@ base type, while in the case of an interface the attachment is usable on any typ
 As with other type declarations, attachments may only have a `pub` access modifier (if one is present). A future proposal may define behavior for private type declarations,
 but until such a proposal exists and is accepted, the access modifier on an attachment declaration must be `pub`. 
 
-Within the attachment declaration, fields and methods can be defined the same way they would be in a struct or resource declaration, with an access modifier and 
+Within the attachment declaration, fields and functions can be defined the same way they would be in a struct or resource declaration, with an access modifier and 
 a declaration kind. The fields of the base type for which the attachment are accessible to the attachment using the `super` value, which is an implicit field 
 of the attachment that is a reference to the base type. So, for an attachment declared `pub attachment Foo for Bar`, the `super` field of `Foo` would have type `&Bar`.
-The fields and methods defined on the attachment itself would be accessible using the `self` value as normal. Note, however, that attachments only have access to the same fields and functions on the `super` field as other code declared in the same place would have; i.e. an attachment defined in the same contract as its original type would have access to `pub` and `access(contract)` fields and methods on `super`, but not `priv` fields or methods, while an attachment defined in a different contract and account to its original type would only be able to reference `pub` fields and methods on the `super` field. 
+The fields and functions defined on the attachment itself would be accessible using the `self` value as normal. Note, however, that attachments only have access to the same fields and functions on the `super` field as other code declared in the same place would have; i.e. an attachment defined in the same contract as its original type would have access to `pub` and `access(contract)` fields and functions on `super`, but not `priv` fields or functions, while an attachment defined in a different contract and account to its original type would only be able to reference `pub` fields and functions on the `super` field. 
 
 So, for example, this would be a valid declaration of an attachment:
 
@@ -118,18 +118,18 @@ pub attachment E for R {
 }
 ```
 
-Any resource fields (which are only legal in resource attachments) must also be explicitly handled in a `destroy` method, which is run when
+Any resource fields (which are only legal in resource attachments) must also be explicitly handled in a `destroy` function, which is run when
 the attachment is destroyed/removed from its base type. Like `init`, because `destroy` will be before the attachment is actually removed from the base
-type, `super` will be populated and accessible in the method body. 
+type, `super` will be populated and accessible in the function body. 
 
-If a resource with attachments on it is `destroy`ed, the `destroy` methods of all its attachments are all run in an unspecified order; `destroy` should not
+If a resource with attachments on it is `destroy`ed, the `destroy` functions of all its attachments are all run in an unspecified order; `destroy` should not
 rely on the presence of other attachments on the base type in its implementation. The only guarantee about the order in which attachments are destroyed in this case
 is that the base type will be the last thing destroyed. 
 
 An attachment declared with `pub attachment A for C { ... }` will have a nominal type `A`.
 
-If an attachment `A` is declared to conform to an interface `I`, `A` will be a subtype of `{I}`, and the checker will enforce that `A` implements all the methods 
-and fields of `I`. Note that an attachment must implement all the methods and fields of `I` itself; it may reference its base type with `super` but it cannot inherit 
+If an attachment `A` is declared to conform to an interface `I`, `A` will be a subtype of `{I}`, and the checker will enforce that `A` implements all the functions 
+and fields of `I`. Note that an attachment must implement all the functions and fields of `I` itself; it may reference its base type with `super` but it cannot inherit 
 from that type. 
 
 Important note: because attachments are not first class values in Cadence, their types cannot appear outside of a reference type. So, for example, given an 
@@ -194,7 +194,7 @@ Attachments can be removed with a new statement: `remove t from e`. Here, `t` re
 as the attachment being removed cannot be referenced as a value. In order to typecheck, if `t` is the name of some attachment type `T2`, `e` must have some composite type `T1`
 such that `T1` is the intended base type for `T2`.
 
-Before the statement executes, `T2`'s `destroy` method (if present) will be executed. After the statement executes, the composite denoted by `e` will no longer contain the attachment `T1`. If the value denoted by `e` does not contain `t`, this statement is a no-op.
+Before the statement executes, `T2`'s `destroy` function (if present) will be executed. After the statement executes, the composite denoted by `e` will no longer contain the attachment `T1`. If the value denoted by `e` does not contain `t`, this statement is a no-op.
 
 Attachments may be removed from a type in any order, so users should take care not to design any attachments that rely on specific behaviors of other attachments, as there is no
 way in this proposal to require that an attachment depend on another or to require that a type has a given attachment when another attachment is present. 
@@ -205,7 +205,7 @@ If a resource containing attachments is `destroy`ed, all its attachments will be
 
 Once an attachment has been added to a composite value, it can be accessed using indexing syntax: `v[T]`, where `v` is a resource or struct composite value, 
 and `T` is the name of an attachment type. This indexing syntax returns an optional reference to the attachment of type `T`: `&T?`; if no such attachment exists on `v`, 
-the expression will return `nil`. So, given a composite `r` with an attachment of type `A`, accessing `A`'s `foo` method would be done like so:
+the expression will return `nil`. So, given a composite `r` with an attachment of type `A`, accessing `A`'s `foo` function would be done like so:
 
 ```cadence
 r[A]!.foo()
@@ -232,7 +232,7 @@ with the following signatures:
 
 ```cadence
 getField<T>(_  name: String): &T?
-getMethod<T>(_  name: String): T?
+getFunction<T>(_  name: String): T?
 ```
 
 The difference between these two types is only in the kind; as might be expected from the name `AnyResourceAttachment` is resource-kinded, while
@@ -240,10 +240,10 @@ The difference between these two types is only in the kind; as might be expected
 is important because only resource-kinded attachments may contain resource-kinded fields.
 
 This functions takes the `name` of a member on an attachment and checks whether a member with that `name` exists on the attachment with the provided type argument. If it does, 
-`getField` will return a reference to that member is it is a field, but `nil` if it is a method, while `getMethod` will return that function if it is a method but `nil` if it is a field. If the type does not match or the member is not present, then both will return nil. These functions must be separate in order to support resource fields on attachments; 
-`getField` must return a reference to prevent duplicating any resource fields, while `getMethod` cannot return a reference because references to functions cannot be called. 
+`getField` will return a reference to that member is it is a field, but `nil` if it is a function, while `getFunction` will return that function if it is a function but `nil` if it is a field. If the type does not match or the member is not present, then both will return nil. These functions must be separate in order to support resource fields on attachments; 
+`getField` must return a reference to prevent duplicating any resource fields, while `getFunction` cannot return a reference because references to functions cannot be called. 
 
-So, for example, if the creator of a resource would like to have a method that returns the a descriptive string describing that resource and all its attachments, 
+So, for example, if the creator of a resource would like to have a function that returns the a descriptive string describing that resource and all its attachments, 
 they may implement it this way:
 
 ```
@@ -253,7 +253,7 @@ pub resource R {
     pub fun description(): String {
         let description = descriptionString
         self.forEachAttachment(f: fun (attachment: &AnyResourceAttachment) {
-            let descriptionFunction = attachment.getMethod<(():String)>("description")
+            let descriptionFunction = attachment.getFunction<(():String)>("description")
             if descriptionFunction != nil {
                 description.concat(descriptionFunction!())
             }
@@ -284,9 +284,9 @@ This is backwards compatible, as it does not invalidate any existing Cadence cod
 
 In a previous [FLIP](https://github.com/onflow/flow/pull/1101), a solution to the extensibility
 problems was proposed that suggested adding extensions to Cadence a la Swift or Scala. In this proposal, 
-extending a base type would create a subtype of that original type with the fields and methods of the 
+extending a base type would create a subtype of that original type with the fields and functions of the 
 extension added to it, and had strong static typing guarantees at the expense of strict rules about
-field/method name conflicts. The feedback about this proposal (summarized in comments on that FLIP as 
+field/function name conflicts. The feedback about this proposal (summarized in comments on that FLIP as 
 well as in the [notes](https://github.com/onflow/cadence/blob/master/meetings/2022-09-20-Extensions.md) 
 from a meeting about it raised a number of concerns about this 
 design; in particular concerns about how name conflicts would be handled if contracts are updated, 
@@ -298,7 +298,7 @@ proposal, with some fundamental changes that result in a different system.
 ## Prior Art
 
 This has the same prior art mentioned in https://github.com/onflow/flow/pull/1101, although the style of 
-inspecting attachment methods and types is inspired by runtime reflection in langauges like Java or JavaScript.  
+inspecting attachment functions and types is inspired by runtime reflection in langauges like Java or JavaScript.  
 
 ## Questions and Discussion Topics
 
