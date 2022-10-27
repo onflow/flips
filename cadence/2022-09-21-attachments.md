@@ -133,8 +133,9 @@ and fields of `I`. Note that an attachment must implement all the methods and fi
 from that type. 
 
 Important note: because attachments are not first class values in Cadence, their types cannot appear outside of a reference type. So, for example, given an 
-attachment declaration `attachment A for X {}`, `A`, `A?`, `[A]` and `((): A)` are not valid type annotations, while `&A`, `A?`, `[&A]` and `((): &A)` are valid. 
-For this reason as well, `self` inside an attachment has a reference type; in `A` above, the type of self would be `&A` rather than `A`. 
+attachment declaration `attachment A for X {}`, the types `A`, `A?`, `[A]` and `((): A)` are not valid type annotations, while `&A`, `&A?`, `[&A]` and `((): &A)` are valid. 
+For this reason as well, `self` inside an attachment has a reference type. 
+In the attachment declaration `A` above, the type of `self` would be `&A`, rather than `A` like in other composite declarations.
 
 ### Adding Attachments to a Type
 
@@ -203,7 +204,7 @@ If a resource containing attachments is `destroy`ed, all its attachments will be
 ### Accessing Attachments
 
 Once an attachment has been added to a composite value, it can be accessed using indexing syntax: `v[T]`, where `v` is a resource or struct composite value, 
-and `T` is the name of an attachment type. This indexing syntax returns an optional reference to the attachment of type `T` (`&T?`); if no such attachment exists on `v`, 
+and `T` is the name of an attachment type. This indexing syntax returns an optional reference to the attachment of type `T`: `&T?`; if no such attachment exists on `v`, 
 the expression will return `nil`. So, given a composite `r` with an attachment of type `A`, accessing `A`'s `foo` method would be done like so:
 
 ```cadence
@@ -225,8 +226,8 @@ On a structure, it will have
 fun forEachAttachment(_ f: ((&AnyStructAttachment): Void)): Void 
 ```
 
-`AnyResourceAttachment`/`AnyStructAttachment` are new types that expresses the supertype of all attachments, 
-and contains two methods (that are implicitly present on all attachments): `getField` and `getMethod`, 
+`AnyResourceAttachment`/`AnyStructAttachment` are new types that expresses the supertypes of all struct/resource attachments.
+They contains two functions (that are implicitly present on all attachments): `getField` and `getFunction`, 
 with the following signatures:
 
 ```cadence
