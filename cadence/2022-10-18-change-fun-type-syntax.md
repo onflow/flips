@@ -1,10 +1,10 @@
-# Title of FLIP
+# Change the syntax for function types.
 
 | Status        | (Proposed / Rejected / Accepted / Implemented)       |
 :-------------- |:---------------------------------------------------- |
-| **FLIP #**    | [NNN](https://github.com/onflow/flip/pull/NNN) (update when you have PR #)|
+| **FLIP #**    | [43](https://github.com/onflow/flips/pull/43)        |
 | **Author(s)** | Naomi Liu (naomi.liu@dapperlabs.com)                 |
-| **Updated**   | 2022-10-18                                           |
+| **Updated**   | 2022-10-27                                           |
 
 ## Objective
 
