@@ -235,7 +235,8 @@ getMethod<T>(_  name: String): T?
 ```
 
 The difference between these two types is only in the kind; as might be expected from the name `AnyResourceAttachment` is resource-kinded, while
-`AnyStructAttachment` is struct-kinded. 
+`AnyStructAttachment` is struct-kinded. They must be separate types as attachments themselves are resource or struct kinded depending on their base type. This distinction
+is important because only resource-kinded attachments may contain resource-kinded fields.
 
 This functions takes the `name` of a member on an attachment and checks whether a member with that `name` exists on the attachment with the provided type argument. If it does, 
 `getField` will return a reference to that member is it is a field, but `nil` if it is a method, while `getMethod` will return that function if it is a method but `nil` if it is a field. If the type does not match or the member is not present, then both will return nil. These functions must be separate in order to support resource fields on attachments; 
