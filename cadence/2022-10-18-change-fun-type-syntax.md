@@ -105,7 +105,7 @@ An alternative to using `fun` to denote function types is to introduce another k
 
 ```cadence
 // before
-fun call(f: ((AnyStruct): Void), x: AnyStruct) {...}
+fun call(f: ((AnyStruct): Void), x: AnyStruct): Void {...}
 let _call: (((AnyStruct): Void, AnyStruct): Void) = call
 
 // after
