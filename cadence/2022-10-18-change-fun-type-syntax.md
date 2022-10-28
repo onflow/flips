@@ -24,7 +24,7 @@ let bar = fun(x: Int): String {...}
 let baz: ((Int): String) = foo
 ```
 
-This convention for representing functions gets even more confusing when currying or higher-order functions are brought into the mix:
+This convention for representing functions gets even more confusing when higher-order functions are brought into the mix:
 
 ```cadence
 // cadence type: ((Int): ((Int): ((Int): Int)))
@@ -101,7 +101,7 @@ Additionally, if the user intends to write a restricted type with multiple inter
 
 ### Alternatives Considered
 
-An alternative to using `fun` to denote function types is to introduce another keyword, such as `=>` or `->`. This would be more familiar to users coming from languages such as Javascript or Haskell, while remaining as a non-breaking change due to these operators being unreserved currently. For example, 
+An alternative to using `fun` to denote function types is to introduce another keyword, such as `=>` or `->`. This would be more familiar to users coming from languages such as JavaScript, Swift, and Kotlin, while remaining as a non-breaking change due to these operators being unreserved currently. For example, 
 
 ```cadence
 // before
