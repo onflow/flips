@@ -58,27 +58,56 @@ Given that `fun` is already a reserved keyword for declaring functions, requirin
 
     ```cadence
     // (AnyStruct -> Void) -> AnyStruct -> Void
-    fun call(f: ((AnyStruct): Void), x: AnyStruct) {...}
+    fun apply(f: ((AnyStruct): Void), x: AnyStruct) {...}
 
     // after
-    fun call(f: (fun(AnyStruct): Void), x: AnyStruct) {...}
+    fun apply(f: (fun(AnyStruct): Void), x: AnyStruct) {...}
     ```
 
 This could be implemented as a non-breaking change by still allowing the old syntax of omitting `fun`, but preferring the keyword in new contracts and transactions. The stringification of function types should be updated to use the new syntax.
 
-### Drawbacks
-
-As @turbolent mentioned in an internal discussion, there is some ambiguity in the language grammar regarding the distinction between functions and restricted types. This is what motivated the choice to use the existing syntax without the `fun` keyword.
-
-For example,
+For type signatures ascribed to variables, we currently rely on the colon `:` token in order to parse the type as a function. This requires the type to be wrapped up in parentheses to avoid parsing ambiguity. Reusing a previous example:
 
 ```cadence
-fun(): T{}
+let bar = fun(x: Int): String {...}
+
+// a reference to a function
+let baz: ((Int): String) = foo
 ```
 
-Is this a function that returns a `T` but has an empty body? Or does it return a restricted type `T{}` and is missing its body?
+If we continued to elide the `fun` keyword in function types, parentheses could still be eliminated by making `:` a right-associative operator with a higher precedence than `=`. 
 
-One potential route is to give functions a higher priority in the parser than restricted types, so the above expression is parsed as a function returning  `T` with an empty body. Let's take a more complex example:
+```ebnf
+func-type = '(' [type {, type}] ')' ':' type
+type = func-type | identifier | ...
+assignment = identifier [':' type] '=' expression
+```
+
+At the same time however, how do we express a function that returns `Void` (`()`) with this syntax? We can omit a return type in function declarations, which causes the type to default to `Void`, but referencing the function requires one to explicitly name `Void`:
+
+```cadence
+fun noop() {}
+
+let noop_: ((): Void) = noop
+```
+
+Using the `fun` keyword would simplify parsing rules and also allow for return type elision on procedures:
+
+```cadence
+let noop_: fun() = noop // unambiguous, since `fun` is our marker now instead of `:`
+
+let baz: fun(Int): String = bar
+```
+
+The adjusted grammar would only affect `func-type`:
+
+```ebnf
+func-type = 'fun' '(' [type {, type}] ')' [':' type]
+```
+
+### Drawbacks
+
+To the best of my knowledge, this change should not introduce any ambiguities into the language grammar. There is currently an ambiguous case for function expressions that return restricted types:
 
 ```cadence
 interface Foo {...}
@@ -86,18 +115,18 @@ interface Foo {...}
 let f = fun(): AnyStruct{Foo}
 ```
 
-In this case, `f` can be parsed either as a function returning `AnyStruct` whose body only contains the expression `Foo`, or as a function returning a restricted type `AnyStruct{Foo}` but is missing a body. Assume that we prefer to follow the first parsing rule. Since the "body" of the function is missing an explicit `return`, its return type is inferred to be `Void`. However, the stray `Foo` exists in the type namespace instead of the value namespace, so it will result in an unknown name error unless a variable with the same name exists in scope. A lint could be added that ensures statements are either function calls, assignments, declarations, or moves. For instance,
+In this case, it is unclear to the parser whether `f` is a function that returns a restricted `AnyStruct{Foo}` without a body, or if it returns an unrestricted `AnyStruct` and whose body is the single expression `Foo`. We currently step around this issue by requiring restricted types' curly brackets to follow immediately after the parent type without any whitespace:
 
-```
-var x = 0 // declaration, ok
-fun f(): Int {log("hi"); return 42} // declaration, ok
-x = f() // assignment, ok
-f() // function call with unused return, ok
-x = x + 1 // ok
-x // noop, should throw a lint error
+```cadence
+fun(): AnyStruct{Foo} // return type is a restricted type, no body
+fun(): AnyStruct {Foo} // return type is AnyStruct, body is Foo
 ```
 
-Additionally, if the user intends to write a restricted type with multiple interfaces like `AnyStruct{Foo, Bar}`, the parser will throw an error at the use of bare commas outside of a function call or composite literal. It's akin to writing an expression `Foo, Bar`. It seems that the only cases where this ambiguity doesn't throw an error is when the unrestricted return type is parsed as a supertype of `Void`, and the restricting interface is shadowed by a value. 
+This ambiguity does not extend to types however, and is outside the scope of this FLIP. Using the proposed syntax, we could still write
+
+```cadence 
+let f: fun(): AnyStruct{Foo} = fun(): AnyStruct{Foo} {...}
+```
 
 ### Alternatives Considered
 
@@ -105,15 +134,27 @@ An alternative to using `fun` to denote function types is to introduce another k
 
 ```cadence
 // before
-fun call(f: ((AnyStruct): Void), x: AnyStruct): Void {...}
-let _call: (((AnyStruct): Void, AnyStruct): Void) = call
+fun apply(f: ((AnyStruct): Void), x: AnyStruct): Void {...}
+let _apply: (((AnyStruct): Void, AnyStruct): Void) = apply
 
-// after
-fun call(f: AnyStruct -> Void, x: AnyStruct): Void {...}
-let _call: (AnyStruct -> Void, AnyStruct) -> Void = call
+// proposed syntax with `fun`
+fun apply(f: fun(AnyStruct): Void, x: AnyStruct): Void {...}
+let _apply: fun(fun(AnyStruct): Void, AnyStruct): Void = apply
+
+// alternative syntax with '->'
+fun apply(f: AnyStruct -> Void, x: AnyStruct): Void {...}
+let _apply: (AnyStruct -> Void, AnyStruct) -> Void = apply
 ```
 
 The main benefit of this alternative syntax would be the unambiguous parsing and lower visual noise compared to using `fun`. This would still introduce another inconsistency between how functions are declared and how they're typed, but it's more intuitive at a glance to unfamiliar readers. Introducing function arrows in this way also opens the door to an alternative syntax for denoting closures that doesn't require an annotated return type or `return` statement, which could be useful for simple one-liner functions.
+
+Introducing a separate operator for return types still does not eliminate the previously-mentioned ambiguity in parsing function expressions, however:
+
+```cadence
+// still ambiguous, but looks cleaner because ':' in declarations 
+// now only indicates a type assignment to a variable
+let f: fun() -> AnyStruct{Foo} = fun() -> AnyStruct{Foo} 
+```
 
 ### Performance Implications
 
@@ -156,8 +197,7 @@ This can be implemented as a non-breaking change, requiring no intervention from
 
 * What are the user-facing changes? How will this feature be rolled out?
 
-Function types will be printed using the new syntax in the REPL, error messages, and language server. No migrations or inverventions are needed, and this change can be rolled out with any spork before, during, or after Stable Cadence's release.
-
+Function types will be printed using the new syntax in the REPL, error messages, and language server. If we still continue to allow the old syntax, then no migrations or inverventions are needed and this change can be rolled out independently of Stable Cadence.
 ## Related Issues
 
 What related issues do you consider out of scope for this proposal,
@@ -181,8 +221,8 @@ let f: Int -> Int = \n -> n * 2
 
 ```swift
 // swift
-// cadence's existing syntax is similar,
-// but we use the colon (:) in other places leading to confusion
+// note that using the arrow allows for the `func` keyword 
+// to be omitted from function types
 let f: (Int) -> Int = func(_ n: Int) -> Int {
     return n * 2
 }
@@ -191,6 +231,13 @@ let f: (Int) -> Int = func(_ n: Int) -> Int {
 ```typescript
 // typescript
 let f: (n: number) => number = n => n * 2;
+```
+
+```go
+// go
+var f func(int) int = func(int) int {
+    return 2
+}
 ```
 
 ## Questions and Discussion Topics
