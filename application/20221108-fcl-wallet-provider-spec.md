@@ -1,4 +1,4 @@
-# Flow Client Library (FCL) Specification v1.0
+# Flow Client Library (FCL) Specification
 
 | Status        | Proposed                                    |
 | :------------ | :------------------------------------------ |
@@ -13,7 +13,7 @@ This FLIP proposes a v1.0 specification for FCL Wallet Providers and dApps to tr
 
 The goal of this FLIP is to solidify existing implementation patterns and data definitions in a generalized way. Additionally it should open discussion to potential improvements for future versions of the spec in order to simplify and support Flow dApp and wallet development.
 
-In short, this spec describes what data dApps and wallets should send and expect, and how they should perform in order to interoperate with each other.
+In short, this spec describes the data dApps and wallets should send and expect, and how they should perform in order to interoperate with each other.
 
 ## Motivation
 
@@ -21,13 +21,18 @@ The problem now is that prospective wallet and SDK developers have only a DRAFT 
 
 Developers will benefit from the assurances of a formalized specification and users from improved experiences and greater choice of wallets and platforms.
 
-Examples implementations of the FCL Wallet Provider Spec can be found here:
-
-- [fcl-js]()
-
 ## User Benefit
 
 Formalizing a specification for FCL will improve developer and user experience, support creation of applications and sdks, and help broaden support for Flow by more service providers across more platforms.
+
+#### Existing SDKs and example implementations of the FCL Wallet Provider Spec
+
+- [Flow Client Library (FCL) JS](https://github.com/onflow/fcl-js)
+- [Flow JS SDK](https://github.com/onflow/fcl-js/tree/master/packages/sdk)
+- [Flow Go SDK](https://github.com/onflow/flow-go-sdk)
+- [FCL Swift](https://github.com/Outblock/fcl-swift)
+- [Flow JVM SDK](https://github.com/onflow/flow-jvm-sdk)
+- [Flow .NET](https://github.com/tyronbrand/flow.net)
 
 ## Design Proposal
 
@@ -42,7 +47,6 @@ Formalizing a specification for FCL will improve developer and user experience, 
   - [Definitions](#definitions)
   - [Data Types](#datatypes)
   - [Data Structures](#datastructures)
-  - [Protocol Schema Definitions](#protocolschemadefinitions)
     - [Service Objects](#serviceobjects)
     - [Service Methods](#servicemethods)
       - [Base Service Methods](#baseservicemethods)
@@ -58,9 +62,10 @@ Formalizing a specification for FCL will improve developer and user experience, 
 
 ## <a id="abstract"></a>Abstract
 
-This Specification proposes a standard protocol and schema definition that applications, wallets, libraries, and SDKs can use to interact with the Flow blockchain. This Specification defines a standard, language-agnostic interface to...
+This specification proposes a standard protocol and schema definition that applications, wallets, libraries, and SDKs can use to interact with the Flow blockchain. It defines a standard, language-agnostic interface for dApps and wallets to communicate with each other. This specification is intended to be a living document, and will be updated as needed to keep up with changes in the Flow protocol and ecosystem.
+This document describes the data types, data structures, and methods that an FCL compatible wallet must implement in order to be compatible with the Flow Client Library.
 
-An FCL compatible wallet uses and conforms to the Flow Client Library (FCL) Specification
+An FCL compatible wallet uses and conforms to the **Flow Client Library (FCL) Specification**.
 
 ## <a id="background"></a>Background / Overview
 
@@ -68,15 +73,11 @@ Flow Client Library (FCL) approaches the idea of blockchain wallets on Flow in a
 
 FCL acts in many ways as a protocol to facilitate communication and configuration between the different parties involved in a blockchain application. An _Application_ can use FCL to _authenticate_ users, and request _authorizations_ for transactions, as well as mutate and query the _Blockchain_. An application using FCL offers its _Users_ a way to connect and select any number of Wallet Providers and their Wallet Services. A selected _Wallet_ provides an Application's instance of FCL with configuration information about itself and its Wallet Services, allowing the _User_ and _Application_ to interact with them.
 
-In the following paragraphs we'll explore ways in which you can integrate with FCL by providing implementations of various FCL services.
-
 ## <a id="specification"></a> Specification
 
-This section provides a basic overview of the major components of FCL Wallet Provider Spec, it's core architecture, data model, and representation.
+This section provides a basic overview of the major components of **FCL Wallet Provider Spec**, it's core architecture, data model, and representation.
 
 ### <a id="format"></a> Format
-
-A Service document that conforms to the FCL Service Specification is itself a JSON object, which may be represented either in JSON or YAML format.
 
 For example, if a field has an array value, the JSON array representation will be used:
 
@@ -103,17 +104,15 @@ The following services will be covered:
 
 ### <a id="datatypes"></a> Data Types
 
-Primitive data types in the FCL WPS are based on the types supported by the [JSON Schema Specification Wright Draft 00](https://tools.ietf.org/html/draft-wright-json-schema-00#section-4.2).
+FCL Primitive data types are based on the types supported by the [JSON Schema Specification Wright Draft 00](https://tools.ietf.org/html/draft-wright-json-schema-00#section-4.2).
 Note that `integer` as a type is also supported and is defined as a JSON number without a fraction or exponent part.
-Services are defined using the [Service Object](#serviceobject), which is an extended subset of JSON Schema Specification Wright Draft 00.
+Services are defined using the [Service Object](#serviceobject),
 
 ### <a id="datastructures"></a> Data Structures
 
-## <a id="protocolschemadefinitions"></a> Protocol Schema Definitions
-
 In the following description, if a field is not explicitly **REQUIRED** or described with a MUST or SHALL, it can be considered OPTIONAL.
 
-### <a id="serviceobjects"></a> Service Objects
+#### <a id="serviceobjects"></a> `Service Object`
 
 This is the
 
