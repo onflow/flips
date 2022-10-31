@@ -21,6 +21,7 @@ fun foo(_ x: Int): String {...}
 let bar = fun(x: Int): String {...}
 
 // a reference to a function
+// note the lack of the `fun` keyword when referring to its type
 let baz: ((Int): String) = foo
 ```
 
@@ -61,7 +62,7 @@ Given that `fun` is already a reserved keyword for declaring functions, requirin
     fun apply(f: ((AnyStruct): Void), x: AnyStruct) {...}
 
     // after
-    fun apply(f: (fun(AnyStruct): Void), x: AnyStruct) {...}
+    fun apply(f: fun(AnyStruct): Void, x: AnyStruct) {...}
     ```
 
 This could be implemented as a non-breaking change by still allowing the old syntax of omitting `fun`, but preferring the keyword in new contracts and transactions. The stringification of function types should be updated to use the new syntax.
@@ -77,32 +78,50 @@ let baz: ((Int): String) = foo
 
 If we continued to elide the `fun` keyword in function types, parentheses could still be eliminated by making `:` a right-associative operator with a higher precedence than `=`. 
 
+Currently, a function type signature is defined by the following grammar:
+
 ```ebnf
-func-type = '(' [type {, type}] ')' ':' type
-type = func-type | identifier | ...
-assignment = identifier [':' type] '=' expression
+functionType
+    : '(' 
+         '(' ( typeAnnotation ( ',' typeAnnotation )* )? ')'
+         ':' typeAnnotation
+      ')'
+
+(* example: ((Int, @AnyResource): @AnyResource) *)
 ```
 
-At the same time however, how do we express a function that returns `Void` (`()`) with this syntax? We can omit a return type in function declarations, which causes the type to default to `Void`, but referencing the function requires one to explicitly name `Void`:
+Where the surrounding parentheses are required. By instead treating `:` as an operator, the rule is simplified to:
+
+```ebnf
+functionType
+    : '(' ( typeAnnotation ( ',' typeAnnotation )* )? ')'
+      ':' typeAnnotation
+```
+
+At the same time however, how do we express a function that returns `Void` (`()`) with this syntax? We currently allow authors to omit a return type in function declarations, which causes the type to default to `Void`. Typing the function still requires one to explicitly name `Void`:
 
 ```cadence
-fun noop() {}
+fun noop() {} // return type is inferred to be `Void`
 
-let noop_: ((): Void) = noop
+let noop_: ((): Void) = noop // return type is required because we use `:` as a marker token
 ```
 
-Using the `fun` keyword would simplify parsing rules and also allow for return type elision on procedures:
+Using the `fun` keyword would simplify parsing rules and also allow for an author to omit the return type when writing signatures for procedures, as we already permit when declaring them.
 
 ```cadence
 let noop_: fun() = noop // unambiguous, since `fun` is our marker now instead of `:`
 
+fun apply2(f: fun(Int), g: fun(Int), x: Int) {...}
+
 let baz: fun(Int): String = bar
 ```
 
-The adjusted grammar would only affect `func-type`:
+The adjusted grammar would only affect `functionType`:
 
 ```ebnf
-func-type = 'fun' '(' [type {, type}] ')' [':' type]
+functionType:
+    'fun' '(' ( typeAnnotation ( ',' typeAnnotation )* )? ')' 
+         ( ':' typeAnnotation )?
 ```
 
 ### Drawbacks
@@ -162,46 +181,24 @@ Function types written with either syntax will create identical parse trees, so 
 
 ### Engineering Impact
 
-* Do you expect changes to binary size / build time / test times?
-* Who will maintain this code? Is this code in its own buildable unit?
-Can this code be tested in its own?
-Is visibility suitably restricted to only a small API surface for others to use?
-
 Given that first-class functions are a very small part of onchain contracts and the standard library in its current form, no significant impacts should occur. Any required changes are expected to be unit-testable and relatively encapsulated. 
 
 ### Best Practices
-
-* Does this proposal change best practices for some aspect of using/developing Flow?
-How will these changes be communicated/enforced?
 
 If we decide to still allow the old syntactic forms, then the new syntax should be reocommended for any new code.
 
 ### Tutorials and Examples
 
-* If design changes existing API or creates new ones, the design owner should create
-end-to-end examples (ideally, a tutorial) which reflects how new feature will be used.
-
 Tutorials and documentation should be updated to use the new syntax.
 
 ### Compatibility
-
-* Does the design conform to the backwards & forwards compatibility [requirements](../docs/compatibility.md)?
-* How will this proposal interact with other parts of the Flow Ecosystem?
-    - How will it work with FCL?
-    - How will it work with the Emulator?
-    - How will it work with existing Flow SDKs?
 
 This can be implemented as a non-breaking change, requiring no intervention from developers to update existing code.
 
 ### User Impact
 
-* What are the user-facing changes? How will this feature be rolled out?
-
 Function types will be printed using the new syntax in the REPL, error messages, and language server. If we still continue to allow the old syntax, then no migrations or inverventions are needed and this change can be rolled out independently of Stable Cadence.
 ## Related Issues
-
-What related issues do you consider out of scope for this proposal,
-but could be addressed independently in the future?
 
 If we use a syntax other than `fun` for denoting function types, such as an arrow `->`, the new keyword could be used to implement a shorthand for declaring closures.
 
@@ -216,7 +213,8 @@ val f: Int => Int = {n => n * 2}
 
 ```haskell
 -- haskell
-let f: Int -> Int = \n -> n * 2
+let f :: Int -> Int 
+    f = \n -> n * 2
 ```
 
 ```swift
@@ -238,6 +236,52 @@ let f: (n: number) => number = n => n * 2;
 var f func(int) int = func(int) int {
     return 2
 }
+```
+
+In the case of omitting a return type in the signatures of procedures, the main distinction between languages that provide this feature and languages that don't, is whether they denote function types with an infix arrow (`->`) or a prefixed keyword (`fun`, `func`, `fn`, etc). Some languages allow the return type to be omitted in a function's declaration, but still require it to be annotation in its corresponding type signature.
+
+For instance:
+
+```scala
+// scala
+def noop() = {}
+// with return type:
+def noop(): Unit = {}
+// type written out
+val noop_: () => Unit = noop
+```
+
+```haskell
+-- haskell
+noop :: () -> ()
+noop _ = ()
+```
+
+```rust
+// rust
+fn noop() {}
+// with return type
+fn noop() -> () {}
+// type written out
+let noop_: fn() = noop
+// the return type can be explicitly supplied
+let noop_: fn() -> () = noop
+```
+
+```swift
+// swift
+func noop() {}
+// with return type:
+func noop() -> Void {}
+// type written out
+let noop_: () -> Void = noop
+```
+
+```go
+// go
+func noop() {}
+// the only way to denote procedures in golang is to omit a return type
+var noop_ func() = noop
 ```
 
 ## Questions and Discussion Topics
