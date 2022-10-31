@@ -18,7 +18,7 @@ Currently, functions are declared and referred to with differing syntax. For ins
 // function declaration
 fun foo(_ x: Int): String {...}
 // function expression bound to a name
-let bar = fun(x: Int): String {...}
+let bar = fun (x: Int): String {...}
 
 // a reference to a function
 // note the lack of the `fun` keyword when referring to its type
@@ -32,8 +32,8 @@ This convention for representing functions gets even more confusing when higher-
 // pretty type: Int -> Int -> Int -> Int
 
 fun add3(_ x: Int): ((Int): ((Int): Int)) {
-    return fun(y: Int): ((Int): Int) {
-        return fun(z: Int): Int {
+    return fun (y: Int): ((Int): Int) {
+        return fun (z: Int): Int {
             return x + y + z
         }
     }
@@ -62,7 +62,7 @@ Given that `fun` is already a reserved keyword for declaring functions, requirin
     fun apply(f: ((AnyStruct): Void), x: AnyStruct) {...}
 
     // after
-    fun apply(f: fun(AnyStruct): Void, x: AnyStruct) {...}
+    fun apply(f: fun (AnyStruct): Void, x: AnyStruct) {...}
     ```
 
 This could be implemented as a non-breaking change by still allowing the old syntax of omitting `fun`, but preferring the keyword in new contracts and transactions. The stringification of function types should be updated to use the new syntax.
@@ -70,7 +70,7 @@ This could be implemented as a non-breaking change by still allowing the old syn
 For type signatures ascribed to variables, we currently rely on the colon `:` token in order to parse the type as a function. This requires the type to be wrapped up in parentheses to avoid parsing ambiguity. Reusing a previous example:
 
 ```cadence
-let bar = fun(x: Int): String {...}
+let bar = fun (x: Int): String {...}
 
 // a reference to a function
 let baz: ((Int): String) = foo
@@ -111,9 +111,9 @@ Using the `fun` keyword would simplify parsing rules and also allow for an autho
 ```cadence
 let noop_: fun() = noop // unambiguous, since `fun` is our marker now instead of `:`
 
-fun apply2(f: fun(Int), g: fun(Int), x: Int) {...}
+fun apply2(f: fun (Int), g: fun (Int), x: Int) {...}
 
-let baz: fun(Int): String = bar
+let baz: fun (Int): String = bar
 ```
 
 The adjusted grammar would only affect `functionType`:
@@ -131,20 +131,20 @@ To the best of my knowledge, this change should not introduce any ambiguities in
 ```cadence
 interface Foo {...}
 
-let f = fun(): AnyStruct{Foo}
+let f = fun (): AnyStruct{Foo}
 ```
 
 In this case, it is unclear to the parser whether `f` is a function that returns a restricted `AnyStruct{Foo}` without a body, or if it returns an unrestricted `AnyStruct` and whose body is the single expression `Foo`. We currently step around this issue by requiring restricted types' curly brackets to follow immediately after the parent type without any whitespace:
 
 ```cadence
-fun(): AnyStruct{Foo} // return type is a restricted type, no body
-fun(): AnyStruct {Foo} // return type is AnyStruct, body is Foo
+fun (): AnyStruct{Foo} // return type is a restricted type, no body
+fun (): AnyStruct {Foo} // return type is AnyStruct, body is Foo
 ```
 
 This ambiguity does not extend to types however, and is outside the scope of this FLIP. Using the proposed syntax, we could still write
 
 ```cadence 
-let f: fun(): AnyStruct{Foo} = fun(): AnyStruct{Foo} {...}
+let f: fun (): AnyStruct{Foo} = fun (): AnyStruct{Foo} {...}
 ```
 
 ### Alternatives Considered
@@ -157,8 +157,8 @@ fun apply(f: ((AnyStruct): Void), x: AnyStruct): Void {...}
 let _apply: (((AnyStruct): Void, AnyStruct): Void) = apply
 
 // proposed syntax with `fun`
-fun apply(f: fun(AnyStruct): Void, x: AnyStruct): Void {...}
-let _apply: fun(fun(AnyStruct): Void, AnyStruct): Void = apply
+fun apply(f: fun (AnyStruct): Void, x: AnyStruct): Void {...}
+let _apply: fun (fun (AnyStruct): Void, AnyStruct): Void = apply
 
 // alternative syntax with '->'
 fun apply(f: AnyStruct -> Void, x: AnyStruct): Void {...}
@@ -172,7 +172,7 @@ Introducing a separate operator for return types still does not eliminate the pr
 ```cadence
 // still ambiguous, but looks cleaner because ':' in declarations 
 // now only indicates a type assignment to a variable
-let f: fun() -> AnyStruct{Foo} = fun() -> AnyStruct{Foo} 
+let f: fun () -> AnyStruct{Foo} = fun () -> AnyStruct{Foo} 
 ```
 
 ### Performance Implications
