@@ -1,4 +1,4 @@
-# Flow Client Library (FCL) Specification
+# Flow Client Library (FCL) Wallet Provider Specification
 
 | Status        | Proposed                                    |
 | :------------ | :------------------------------------------ |
@@ -17,7 +17,7 @@ In short, this spec describes the data dApps and wallets should send and expect,
 
 ## Motivation
 
-The problem now is that prospective wallet and SDK developers have only a DRAFT Specification and several Flow and community maintained implementations to refer to. Formalizing an FCL Spec will make it easier and safer to code libraries in any language, build dApps and wallets, and release on more environments and platforms (mobile, Unity, .NET, etc.).
+The problem now is that prospective wallet and SDK developers have only a [Draft Specification](https://github.com/onflow/fcl-js/blob/master/packages/fcl/src/wallet-provider-spec/draft-v4.md) and several Flow and community maintained implementations to refer to. Formalizing an FCL Spec will make it easier and safer to code libraries in any language, build dApps and wallets, and release on more environments and platforms (mobile, Unity, .NET, etc.).
 
 Developers will benefit from the assurances of a formalized specification and users from improved experiences and greater choice of wallets and platforms.
 
@@ -25,7 +25,7 @@ Developers will benefit from the assurances of a formalized specification and us
 
 Formalizing a specification for FCL will improve developer and user experience, support creation of applications and sdks, and help broaden support for Flow by more service providers across more platforms.
 
-#### Existing SDKs and example implementations of the FCL Wallet Provider Spec
+**Existing SDKs and example implementations of the FCL Wallet Provider Spec**
 
 - [Flow Client Library (FCL) JS](https://github.com/onflow/fcl-js)
 - [Flow JS SDK](https://github.com/onflow/fcl-js/tree/master/packages/sdk)
@@ -36,7 +36,7 @@ Formalizing a specification for FCL will improve developer and user experience, 
 
 ## Design Proposal
 
-### Flow Client Library (FCL) Specification v1.0
+### Flow Client Library (FCL) Wallet Provider Specification v1.0
 
 #### Table of Contents
 
@@ -48,17 +48,27 @@ Formalizing a specification for FCL will improve developer and user experience, 
   - [Data Structures](#datastructures)
     - [FCL Objects](#fclobjects)
       - [Service](#service)
-       - [Service Methods](#servicemethods)
-       - [Service `data` and `params`](#dataparams)
       - [PollingResponse](#pollingresponse)
-      - [Service Method Plugins](#servicemethodplugins)
-    - [ErrorResponse](#errorresponse)
-  - [Services](#services) 
-    - [Authn Service](#authnservice)
-    - [Authz Service](#authzservice)
-    - [PreAuthz Service](#preauthzservice)
-    - [AuthnRefresh Service](#authnrefreshservice)
-    - [OpenID Service](#openidservice)
+      - [Identity](#identity)
+      - [ServiceProvider](#serviceprovider)
+      - [AuthnResponse](#authnresponse)
+      - [Signable](#signable)
+      - [CompositeSignature](#compositesignature)
+    - [Miscellaneous Objects](#miscellaneousobjects)
+      - [ErrorResponse](#errorresponse)
+  - [Supported Services and Methods](#supportedservices)
+    - [Service Methods](#servicemethods)
+      - [HTTP/POST](#httppost)
+      - [IFRAME/RPC](#iframerpc)
+      - [POP/RPC | TAB/RPC](#poprpc)
+      - [EXT/RPC](#extrpc)
+    - [Service Types](#servicetypes)
+      - [Authn Service](#authnservice)
+      - [Authz Service](#authzservice)
+      - [PreAuthz Service](#preauthzservice)
+      - [AuthnRefresh Service](#authnrefreshservice)
+      - [OpenID Service](#openidservice)
+    - [Service data and params](#dataparams)
 
 ## <a id="abstract"></a> Abstract
 
@@ -68,6 +78,12 @@ This document describes the data types, data structures, and methods that an FCL
 An FCL compatible wallet uses and conforms to the **Flow Client Library (FCL) Specification**.
 
 ## <a id="background"></a> Background / Overview
+
+Flow Client Library (FCL) enables applications to easily integrate with all FCL-compatible wallets and other services (e.g. profiles, private information, notifications). This offers developers a strong foundation to compose their apps with existing building blocks.
+
+A Wallet Provider handles Authentications and Authorizations. They play a very important role of being the place the users control their information and approve transactions.
+
+One of FCLs core ideals is for the user to be in control of their data, a wallet provider is where many users will do just that.
 
 Flow Client Library (FCL) approaches the idea of blockchain wallets on Flow in a different way than how wallets may be supported on other blockchains. For example, with FCL, a wallet is not necessarily limited to being a browser extension or even a native application on a users device. FCL offers wallet developers the flexibility and freedom to build many different types of applications. Since wallet applications can take on many forms, we needed to create a way for these varying applications to be able to communicate and work together.
 
@@ -143,20 +159,7 @@ type FclObject =
   | OpenID
 ```
 
-### <a id="service"></a> `Service`
-
-Services are defined using the Service Object which has the following structure:
-
-| Field Name |   Type   | Description   |
-| ---------- | :------: | ------------- |
-| f_type     | `string` | **REQUIRED**. |
-| type       | `string` | **REQUIRED**. |
-| method     | `string` | **REQUIRED**  |
-| endpoint   | `string` | **REQUIRED**. |
-| id         | `string` | **REQUIRED**. |
-| identity   | `string` |               |
-| provider   | `string` | **REQUIRED**. |
-| data       | `string` |               |
+##### <a id="service"></a> `Service`
 
 ```typescript
 type ServiceType =
@@ -226,7 +229,7 @@ See also:
 - [open-id](https://github.com/onflow/fcl-js/blob/master/packages/fcl/src/normalizers/service/open-id.js)
 - [back-channel-rpc](https://github.com/onflow/fcl-js/blob/master/packages/fcl/src/normalizers/service/back-channel-rpc.js)
 
-#### <a id="pollingresponse"></a> `PollingResponse`
+##### <a id="pollingresponse"></a> `PollingResponse`
 
 ```typescript
 interface PollingResponse extends ObjectBase {
@@ -329,7 +332,7 @@ const reason = "User declined to authenticate."
 WalletUtils.decline(reason)
 ```
 
-#### <a id="identity"></a> `Identity`
+##### <a id="identity"></a> `Identity`
 
 This object is used to define the identity of the user.
 
@@ -346,7 +349,7 @@ The meaning of the fields is as follows.
 - `address`: The flow account address of the user.
 - `keyId`: The id of the key associated with this account that will be used for signing.
 
-#### `ServiceProvider`
+##### <a id="serviceprovider"></a> `ServiceProvider`
 
 This object is used to communicate information about a wallet.
 
@@ -373,7 +376,7 @@ The meaning of the fields is as follows.
 - `supportUrl`: A URL the user can use to get support with the wallet.
 - `supportEmail`: An e-mail address the user can use to get support with the wallet.
 
-#### <a id="authnresponse"></a> `AuthnResponse`
+##### <a id="authnresponse"></a> `AuthnResponse`
 
 This object is used to inform FCL about the services a wallet provides.
 
@@ -390,7 +393,7 @@ The meaning of the fields is as follows.
 - `addr`: The flow account address of the user.
 - `services`: The list of services provided by the wallet.
 
-#### `Signable`
+##### <a id="signable"></a> `Signable`
 
 ```typescript
 interface Signable extends ObjectBase<"1.0.1"> {
@@ -418,7 +421,7 @@ interface Signable extends ObjectBase<"1.0.1"> {
 
 The `WalletUtils.encodeMessageFromSignable` function can be used to calculate the message that needs to be signed.
 
-#### <a id="compositesignature"></a> CompositeSignature
+##### <a id="compositesignature"></a> `CompositeSignature`
 
 ```typescript
 interface CompositeSignature extends ObjectBase {
@@ -433,7 +436,19 @@ See also [CompositeSignature](https://github.com/onflow/flow-js-sdk/blob/master/
 
 #### <a id="miscellaneousobjects"></a> Miscellaneous Objects
 
-### <a id="message"></a> Message
+##### <a id="errorresponse"></a> `ErrorResponse`
+
+```typescript
+interface ErrorResponse {
+  id: number
+  error: {
+    code: number
+    message: string
+  }
+}
+```
+
+##### <a id="message"></a> `Message`
 
 ```typescript
 type MessageType =
@@ -451,7 +466,7 @@ A message that indicates the status of the protocol invocation.
 
 This type is sometimes used as part of an _intersection type_. For example, the type `Message & PollingResponse` means a `PollingResponse` extended with the `type` field from `Message`.
 
-#### `ExtensionServiceInitiationMessage`
+##### `ExtensionServiceInitiationMessage`
 
 ```typescript
 type ExtensionServiceInitiationMessage = {
@@ -461,33 +476,28 @@ type ExtensionServiceInitiationMessage = {
 
 This object is used to invoke a service when the `EXT/RPC` service method is used.
 
-## See also
+##### `open-id`
 
-- [local-view](https://github.com/onflow/flow-js-sdk/blob/master/packages/fcl/src/current-user/normalize/local-view.js)
-- [frame](https://github.com/onflow/flow-js-sdk/blob/master/packages/fcl/src/current-user/normalize/frame.js)
+TODO
+https://github.com/onflow/fcl-js/blob/master/packages/fcl/src/normalizers/service/open-id.js
 
-#### <a id="pollingresponse"></a> `PollingResponse`
+##### `frame`
 
-```typescript
-type PollingResponse = {
-  status: "APPROVED" | "DECLINED" | "PENDING" | "UNKNOWN"
-  reason?: string
-}
-```
+TODO
+[frame](https://github.com/onflow/flow-js-sdk/blob/master/packages/fcl/src/current-user/normalize/frame.js)
 
-#### <a id="errorresponse"></a> `ErrorResponse`
+##### `local-view`
 
-```typescript
-interface ErrorResponse {
-  id: number
-  error: {
-    code: number
-    message: string
-  }
-}
-```
+TODO
+[local-view](https://github.com/onflow/flow-js-sdk/blob/master/packages/fcl/src/current-user/normalize/local-view.js)
 
-### <a id="servicemethods"></a> Service Methods
+[FCL Normalizers](https://github.com/onflow/fcl-js/tree/master/packages/fcl/src/normalizers/service)
+
+### <a id="supportedservices"></a> Supported Services and Methods
+
+---
+
+#### <a id="servicemethods"></a> Service Methods
 
 FCL Services are your way as a Wallet Provider of configuring FCL with information about what your wallet can do. FCL uses what it calls `Service Methods` to perform your supported FCL services. Service Methods are the ways FCL can talk to your wallet. Your wallet gets to decide which of these service methods each of your supported services use to communicate with you.
 
@@ -501,8 +511,6 @@ Ultimately we want to do this back and forth via a secure back-channel (https re
 
 Where possible, you should aim to provide a back-channel support for services, and only fall back to a front-channel if absolutely necessary.
 
-#### <a id="baseservicemethods"></a> Base Service Methods
-
 Back-channel communications use `method: "HTTP/POST"`, while front-channel communications use `method: "IFRAME/RPC"`, `method: "POP/RPC"`, `method: "TAB/RPC` and `method: "EXT/RPC"`.
 
 | Service Method | Front | Back |
@@ -515,7 +523,7 @@ Back-channel communications use `method: "HTTP/POST"`, while front-channel commu
 
 It's important to note that regardless of the method of communication, the data that is sent back and forth between the parties involved is the same.
 
-### <a id="iframerpc"></a> IFRAME/RPC (Front Channel)
+##### <a id="iframerpc"></a> IFRAME/RPC (Front Channel)
 
 `IFRAME/RPC` is the easiest to explain, so we will start with it:
 
@@ -551,7 +559,7 @@ export const WalletUtils.decline = reason => {
 
 ![IFRAME/RPC Diagram](https://raw.githubusercontent.com/onflow/flow-js-sdk/master/packages/fcl/assets/service-method-diagrams/iframe-rpc.png)
 
-### <a id="poprpc"></a> POP/RPC | TAB/RPC (Front Channel)
+##### <a id="poprpc"></a> POP/RPC | TAB/RPC (Front Channel)
 
 `POP/RPC` and `TAB/RPC` work in an almost entirely similar way to `IFRAME/RPC`, except instead of rendering the `method` in an iframe, we render it in a popup or new tab. The same communication protocol between the rendered view and FCL applies.
 
@@ -559,7 +567,7 @@ export const WalletUtils.decline = reason => {
 
 ![TAB/RPC Diagram](https://raw.githubusercontent.com/onflow/flow-js-sdk/master/packages/fcl/assets/service-method-diagrams/tab-rpc.png)
 
-### <a id="httppost"></a> HTTP/POST (Back Channel)
+##### <a id="httppost"></a> HTTP/POST (Back Channel)
 
 `HTTP/POST` initially sends a post request to the `endpoint` specified in the service, which should immediately return a `f_type: "PollingResponse"`.
 
@@ -575,7 +583,7 @@ This optional feature is the ability for FCL to render an iframe, popup or new t
 
 ![HTTP/POST Diagram](https://raw.githubusercontent.com/onflow/flow-js-sdk/master/packages/fcl/assets/service-method-diagrams/http-post.png)
 
-### <a id="extrpc"></a> EXT/RPC (Front Channel)
+##### <a id="extrpc"></a> EXT/RPC (Front Channel)
 
 `EXT/RPC` is used to enable and communicate between FCL and an installed web browser extension. (Though this specification is geared towards Chromium based browsers, it should be implementable in any browser with similar extension APIs available. From now on we will be using the word _Chrome_ to refer to Chromium based browsers.)
 
@@ -623,31 +631,25 @@ chrome.tabs.sendMessage(tabs[0].id, {
 
 ![EXT/RPC Diagram](https://raw.githubusercontent.com/onflow/flow-js-sdk/master/packages/fcl/assets/service-method-diagrams/ext-rpc.png)
 
-#### <a id="dataparams"></a> Service `data` and `params`
-
-`data` and `params` are information that the wallet can provide in the service config that FCL will pass back to the service.
-
-- `params` will be added onto the `endpoint` as query params.
-- `data` will be included in the body of the `HTTP/POST` request or in the `FCL:VIEW:READY:RESPONSE` for a `IFRAME/RPC`, `POP/RPC`, `TAB/RPC` or `EXT/RPC`.
-
 #### <a id="servicemethodplugins"></a> Service Method Plugins
 
 TODO
 
-## <a id="services"></a> Services
+#### <a id="servicetypes"></a> Service Types
 
-### Types of Services
+Here we explore ways in which you can integrate with FCL by providing implementations of various FCL services.
 
 The following services will be covered:
 
-| Service                | type             |
-| :--------------------- | :--------------- |
-| Authentication Service | `authn`          |
-| Pre-Authz Service      | `pre-authz`      |
-| Authorization Service  | `authz`          |
-| User Signature Service | `user-signature` |
+| Service                        | type             |
+| :----------------------------- | :--------------- |
+| Authentication Service         | `authn`          |
+| Pre-Authz Service              | `pre-authz`      |
+| Authorization Service          | `authz`          |
+| User Signature Service         | `user-signature` |
+| Authentication Refresh Service | `authn-refresh`  |
 
-### <a id="authnservice"></a> Authentication Service
+##### <a id="authnservice"></a> Authentication Service `authn`
 
 In the following examples, we'll walk you through the process of building an authentication service.
 
@@ -724,7 +726,7 @@ Whether your authentication process happens using a webpage with the `IFRAME/RPC
 
 As always, you must never trust anything you receive from an application. Always do your due-diligence and be alert as you are the user's first line of defense against potentially malicious applications.
 
-### Authenticate your User
+###### Authenticate your User
 
 It's important that you are confident that the user is who the user claims to be.
 
@@ -732,7 +734,7 @@ Have them provide enough proof to you that you are okay with passing their detai
 Using Blocto as an example, an authentication code is sent to the email a user enters at login.
 This code can be used as validation and is everything Blocto needs to be confident in the user's identity.
 
-### Once you know who your User is
+###### Once you know who your User is
 
 Once you're confident in the user's identity, we can complete the authentication process.
 
@@ -842,7 +844,7 @@ WalletUtils.approve({
 })
 ```
 
-### Stopping an Authentication Process
+###### Stopping an Authentication Process
 
 From any frame, you can send a `FCL:VIEW:CLOSE` post message to FCL, which will halt FCL's current routine and close the frame.
 
@@ -852,7 +854,7 @@ import {WalletUtils} from "@onflow/fcl"
 WalletUtils.sendMsgToFCL("FCL:VIEW:CLOSE")
 ```
 
-### <a id="authorizationservice"></a> Authorization Service
+##### <a id="authorizationservice"></a> Authorization Service `authz`
 
 Authorization services are depicted with with a `type: "authz"`, and a `method` of either `HTTP/POST`, `IFRAME/RPC`, `POP/RPC`, `TAB/RPC` or `EXT/RPC`.
 They are expected to eventually return a `f_type: "CompositeSignature"`.
@@ -921,7 +923,7 @@ WalletUtils.CompositeSignature(addr: String, keyId: Number, signature: Hex)
 
 ```
 
-### <a id="usersignatureservice"></a> User Signature Service
+##### <a id="usersignatureservice"></a> User Signature Service `user-signature`
 
 User Signature services are depicted with a `type: "user-signature"` and a `method` of either `HTTP/POST`, `IFRAME/RPC`, `POP/RPC`, `TAB/RPC` or `EXT/RPC`.
 They are expected to eventually return an array of `f_type: "CompositeSignature"`.
@@ -985,7 +987,7 @@ The eventual response back from the user signature service should resolve to som
 }
 ```
 
-### <a id="preauthzservice"></a> PreAuthz Service
+##### <a id="preauthzservice"></a> PreAuthz Service `pre-authz`
 
 This is a strange one, but extremely powerful. This service should be used when a wallet is responsible for an account that's signing as multiple roles of a transaction, and wants the ability to change the accounts on a per role basis.
 
@@ -1050,7 +1052,7 @@ The eventual response back from the pre-authz service should resolve to somethin
 }
 ```
 
-### <a id="authnrefreshservice"></a> Authentication Refresh Service
+##### <a id="authnrefreshservice"></a> Authentication Refresh Service `authn-refresh`
 
 Since synchronization of a user's session is important to provide a seamless user experience when using an app and transacting with the Flow Blockchain, a way to confirm, extend, and refresh a user session can be provided by the wallet.
 
@@ -1118,34 +1120,49 @@ The eventual response back from the `authn-refresh` service should resolve to an
 }
 ```
 
-### <a id="openidservice"></a> OpenIDService
+##### <a id="openidservice"></a> OpenIDService
 
 TODO
 
-### Dependencies
+- FCL allows wallet to act as identity provider
+- Sign message as identity token
+- provide verifiable user claims
 
-- Dependencies: does this proposal add any new dependencies to Flow?
-- Dependent projects: are there other areas of Flow or things that use Flow
-  (Access API, Wallets, SDKs, etc.) that this affects?
+#### <a id="dataparams"></a> Service `data` and `params`
 
-### Engineering Impact
+`data` and `params` are information that the wallet can provide in the service config that FCL will pass back to the service.
 
-### Best Practices
+- `params` will be added onto the `endpoint` as query params.
+- `data` will be included in the body of the `HTTP/POST` request or in the `FCL:VIEW:READY:RESPONSE` for a `IFRAME/RPC`, `POP/RPC`, `TAB/RPC` or `EXT/RPC`.
 
-### Tutorials and Examples
+#### Integrating with FCL Discovery
 
-### Compatibility
+TODO
 
-- Does the design conform to the backwards & forwards compatibility [requirements](../docs/compatibility.md)?
-- How will this proposal interact with other parts of the Flow Ecosystem?
-  - How will it work with FCL?
-  - How will it work with the Emulator?
-  - How will it work with existing Flow SDKs?
+When building an dApp on Flow using `@onflow/fcl`, Discovery eliminates the need for dApp developers to write code to integrate their user's preferred wallet into their application. Instead, `@onflow/fcl` and this repo uses a secure discovery protocol that wallets can implement to connect to `@onflow/fcl`. The end result is dApp using `@onflow/fcl` automatically integrate all compatible wallets without their developers needing to write any custom code!
 
-### User Impact
+To read more about consuming/using this repo via FCL, visit the [Discovery docs](https://developers.flow.com/tools/fcl-js/reference/discovery).
 
-## Related Issues
+[Wallet Compliance Guide](https://github.com/onflow/fcl-discovery/blob/master/README.md)
 
-## Prior Art
+---
 
-## Questions and Discussion Topics
+#### Dependencies
+
+This proposal adds no new dependencies to Flow and is backwards compatible with existing implementations.
+
+#### Engineering Impact
+
+#### Best Practices
+
+#### Tutorials and Examples
+
+#### Compatibility
+
+#### User Impact
+
+#### Related Issues
+
+#### Prior Art
+
+#### Questions and Discussion Topics
