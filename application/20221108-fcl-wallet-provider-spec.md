@@ -43,49 +43,39 @@ Formalizing a specification for FCL will improve developer and user experience, 
 - [Abstract](#abstract)
 - [Background / Overview](#background)
 - [Specification](#specification)
-  - [Format](#format)
   - [Definitions](#definitions)
   - [Data Types](#datatypes)
   - [Data Structures](#datastructures)
-    - [Service Objects](#serviceobjects)
-    - [Service Methods](#servicemethods)
-      - [Base Service Methods](#baseservicemethods)
+    - [FCL Objects](#fclobjects)
+      - [Service](#service)
+       - [Service Methods](#servicemethods)
+       - [Service `data` and `params`](#dataparams)
+      - [PollingResponse](#pollingresponse)
       - [Service Method Plugins](#servicemethodplugins)
-    - [PollingResponse](#pollingresponse)
     - [ErrorResponse](#errorresponse)
-    - [Service `data` and `params`](#dataparams)
-  - [Services](#services) - [Authn Service](#authnservice)
+  - [Services](#services) 
+    - [Authn Service](#authnservice)
     - [Authz Service](#authzservice)
     - [PreAuthz Service](#preauthzservice)
     - [AuthnRefresh Service](#authnrefreshservice)
     - [OpenID Service](#openidservice)
 
-## <a id="abstract"></a>Abstract
+## <a id="abstract"></a> Abstract
 
 This specification proposes a standard protocol and schema definition that applications, wallets, libraries, and SDKs can use to interact with the Flow blockchain. It defines a standard, language-agnostic interface for dApps and wallets to communicate with each other. This specification is intended to be a living document, and will be updated as needed to keep up with changes in the Flow protocol and ecosystem.
 This document describes the data types, data structures, and methods that an FCL compatible wallet must implement in order to be compatible with the Flow Client Library.
 
 An FCL compatible wallet uses and conforms to the **Flow Client Library (FCL) Specification**.
 
-## <a id="background"></a>Background / Overview
+## <a id="background"></a> Background / Overview
 
 Flow Client Library (FCL) approaches the idea of blockchain wallets on Flow in a different way than how wallets may be supported on other blockchains. For example, with FCL, a wallet is not necessarily limited to being a browser extension or even a native application on a users device. FCL offers wallet developers the flexibility and freedom to build many different types of applications. Since wallet applications can take on many forms, we needed to create a way for these varying applications to be able to communicate and work together.
 
-FCL acts in many ways as a protocol to facilitate communication and configuration between the different parties involved in a blockchain application. An _Application_ can use FCL to _authenticate_ users, and request _authorizations_ for transactions, as well as mutate and query the _Blockchain_. An application using FCL offers its _Users_ a way to connect and select any number of Wallet Providers and their Wallet Services. A selected _Wallet_ provides an Application's instance of FCL with configuration information about itself and its Wallet Services, allowing the _User_ and _Application_ to interact with them.
+FCL acts in many ways as a protocol to facilitate communication and configuration between the different parties involved in a blockchain application. An _Application_ can use FCL to _authenticate_ users, and request _authorizations_ for transactions, as well as mutate and query the _Blockchain_. An application using FCL offers its _Users_ a way to connect and select any number of Wallet Providers and their Wallet Services. A selected _Wallet_ provides an Application's instance of FCL with configuration information about itself and it's Wallet Services, allowing the _User_ and _Application_ to interact with them.
 
 ## <a id="specification"></a> Specification
 
 This section provides a basic overview of the major components of **FCL Wallet Provider Spec**, it's core architecture, data model, and representation.
-
-### <a id="format"></a> Format
-
-For example, if a field has an array value, the JSON array representation will be used:
-
-```json
-{
-  "field": [1, 2, 3]
-}
-```
 
 All field names in the specification are **case sensitive**.
 
@@ -93,53 +83,14 @@ All field names in the specification are **case sensitive**.
 
 This document is written with the perspective that _you_ who are reading this right now are an FCL Wallet Developer. All references to _you_ in this doc are done with this perspective in mind.
 
-The following services will be covered:
-
-| Service                | type             |
-| :--------------------- | :--------------- |
-| Authentication Service | `authn`          |
-| Pre-Authz Service      | `pre-authz`      |
-| Authorization Service  | `authz`          |
-| User Signature Service | `user-signature` |
-
 ### <a id="datatypes"></a> Data Types
 
 FCL Primitive data types are based on the types supported by the [JSON Schema Specification Wright Draft 00](https://tools.ietf.org/html/draft-wright-json-schema-00#section-4.2).
 Note that `integer` as a type is also supported and is defined as a JSON number without a fraction or exponent part.
-Services are defined using the [Service Object](#serviceobject),
 
 ### <a id="datastructures"></a> Data Structures
 
 In the following description, if a field is not explicitly **REQUIRED** or described with a MUST or SHALL, it can be considered OPTIONAL.
-
-#### <a id="serviceobjects"></a> `Service Object`
-
-This is the
-
-| Field Name |               Type               | Description                                                                                                                                                                                                                                                                                                                                                                |
-| ---------- | :------------------------------: | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| f_type     |             `string`             | **REQUIRED**. This string MUST be the [semantic version number](https://semver.org/spec/v2.0.0.html) of the [OpenAPI Specification version](#versions) that the OpenAPI document uses. The `openapi` field SHOULD be used by tooling specifications and clients to interpret the OpenAPI document. This is _not_ related to the API [`info.version`](#infoVersion) string. |
-| type       |    [Info Object](#infoObject)    | **REQUIRED**. Provides metadata about the API. The metadata MAY be used by tooling as required.                                                                                                                                                                                                                                                                            |
-| method     | [[Server Object](#serverObject)] | An                                                                                                                                                                                                                                                                                                                                                                         |
-| endpoint   |   [Paths Object](#pathsObject)   | **REQUIRED**. The available paths and operations for the API.                                                                                                                                                                                                                                                                                                              |
-
-This object MAY be extended with [Specification Extensions](#specificationExtensions).
-
-#### Service Object Example
-
-```json
-{
-  "f_type": "Service"
-  "type": "ServiceType"
-  "method": "ServiceMethod"
-  "uid": "string"
-  "endpoint": "string"
-  "id": "string"
-  "identity": "Identity"
-  "provider": "ServiceProvider"
-  "data": "FclObject"
-}
-```
 
 In this section we define the schema of objects used in the protocol. While they are JavaScript objects, only features supported by JSON should be used. (Meaning that conversion of an object to and from JSON should not result in any loss.)
 
@@ -147,69 +98,16 @@ For the schema definition language we choose TypeScript, so that the schema clos
 
 **Note that currently there are no official type definitions available for FCL. If you are using TypeScript, you will have to create your own type definitions (possibly based on the schema definitions presented in this document).**
 
-#### <a id="pollingresponse"></a> `PollingResponse`
+#### <a id="fclobjects"></a> FCL Objects
 
-```typescript
-type PollingResponse = {
-  status: "APPROVED" | "DECLINED" | "PENDING" | "UNKNOWN"
-  reason?: string
-}
-```
-
-#### <a id="pollingresponse"></a> `ErrorResponse`
-
-```typescript
-interface ErrorResponse {
-  id: number
-  error: {
-    code: number
-    message: string
-  }
-}
-```
-
-## <a id="servicemethods"></a> Service Methods
-
-FCL Services are your way as a Wallet Provider of configuring FCL with information about what your wallet can do. FCL uses what it calls `Service Methods` to perform your supported FCL services. Service Methods are the ways FCL can talk to your wallet. Your wallet gets to decide which of these service methods each of your supported services use to communicate with you.
-
-Sometimes services just configure FCL and that's it. An example of this can be seen with the Authentication Service and the OpenID Service.
-With those two services you are simply telling FCL "here is a bunch of info about the current user". (You will see that those two services both have a `method: "DATA"` field in them.
-Currently these are the only two cases that can be a data service.)
-
-Other services can be a little more complex. For example, they might require a back and forth communication between FCL and the Service in question.
-
-Ultimately we want to do this back and forth via a secure back-channel (https requests to servers), **but in some situations that isn't a viable option, so there is also a front-channel option**.
-
-Where possible, you should aim to provide a back-channel support for services, and only fall back to a front-channel if absolutely necessary.
-
-### <a id="baseservicemethods"></a> Base Service Methods
-
-Back-channel communications use `method: "HTTP/POST"`, while front-channel communications use `method: "IFRAME/RPC"`, `method: "POP/RPC"`, `method: "TAB/RPC` and `method: "EXT/RPC"`.
-
-| Service Method | Front | Back |
-| -------------- | ----- | ---- |
-| HTTP/POST      | ⛔    | ✅   |
-| IFRAME/RPC     | ✅    | ⛔   |
-| POP/RPC        | ✅    | ⛔   |
-| TAB/RPC        | ✅    | ⛔   |
-| EXT/RPC        | ✅    | ⛔   |
-
-It's important to note that regardless of the method of communication, the data that is sent back and forth between the parties involved is the same.
-
-### <a id="servicemethodplugins"></a> Service Method Plugins
-
-#### TODO
-
-## <a id="commondefinitions"></a> Common definitions
-
-In this section we introduce some common definitions that the individual object definitions will be deriving from.
+In this section we introduce some common definitions that the individual object definitions will be deriving from and define the FCL objects with each `ObjectType`.
 
 First, let us define the kinds of FCL objects available:
 
 ```typescript
 type ObjectType =
-  | "PollingResponse"
   | "Service"
+  | "PollingResponse"
   | "Identity"
   | "ServiceProvider"
   | "AuthnResponse"
@@ -231,10 +129,6 @@ The `f_vsn` field is usually `1.0.0` for this specification, but some exceptions
 
 All FCL objects carry an `f_type` field so that their types can be identified at runtime.
 
-## <a id="fclobjects"></a> FCL objects
-
-In this section we will define the FCL objects with each `ObjectType`.
-
 We also define the union of them to mean any FCL object:
 
 ```typescript
@@ -250,6 +144,19 @@ type FclObject =
 ```
 
 ### <a id="service"></a> `Service`
+
+Services are defined using the Service Object which has the following structure:
+
+| Field Name |   Type   | Description   |
+| ---------- | :------: | ------------- |
+| f_type     | `string` | **REQUIRED**. |
+| type       | `string` | **REQUIRED**. |
+| method     | `string` | **REQUIRED**  |
+| endpoint   | `string` | **REQUIRED**. |
+| id         | `string` | **REQUIRED**. |
+| identity   | `string` |               |
+| provider   | `string` | **REQUIRED**. |
+| data       | `string` |               |
 
 ```typescript
 type ServiceType =
@@ -294,6 +201,22 @@ The meaning of the fields is as follows.
 - `provider`: Information about the wallet.
 - `data`: Additional information used with a service of type `open-id`.
 
+#### Service Object Example
+
+```json
+{
+  "f_type": "Service"
+  "type": "ServiceType"
+  "method": "ServiceMethod"
+  "uid": "string"
+  "endpoint": "string"
+  "id": "string"
+  "identity": "Identity"
+  "provider": "ServiceProvider"
+  "data": "FclObject"
+}
+```
+
 See also:
 
 - [authn](https://github.com/onflow/fcl-js/blob/master/packages/fcl/src/normalizers/service/authn.js)
@@ -303,7 +226,7 @@ See also:
 - [open-id](https://github.com/onflow/fcl-js/blob/master/packages/fcl/src/normalizers/service/open-id.js)
 - [back-channel-rpc](https://github.com/onflow/fcl-js/blob/master/packages/fcl/src/normalizers/service/back-channel-rpc.js)
 
-### <a id="pollingresponse"></a> `PollingResponse`
+#### <a id="pollingresponse"></a> `PollingResponse`
 
 ```typescript
 interface PollingResponse extends ObjectBase {
@@ -406,7 +329,7 @@ const reason = "User declined to authenticate."
 WalletUtils.decline(reason)
 ```
 
-### <a id="identity"></a> `Identity`
+#### <a id="identity"></a> `Identity`
 
 This object is used to define the identity of the user.
 
@@ -423,7 +346,7 @@ The meaning of the fields is as follows.
 - `address`: The flow account address of the user.
 - `keyId`: The id of the key associated with this account that will be used for signing.
 
-### `ServiceProvider`
+#### `ServiceProvider`
 
 This object is used to communicate information about a wallet.
 
@@ -450,7 +373,7 @@ The meaning of the fields is as follows.
 - `supportUrl`: A URL the user can use to get support with the wallet.
 - `supportEmail`: An e-mail address the user can use to get support with the wallet.
 
-### <a id="authnresponse"></a> `AuthnResponse`
+#### <a id="authnresponse"></a> `AuthnResponse`
 
 This object is used to inform FCL about the services a wallet provides.
 
@@ -467,7 +390,7 @@ The meaning of the fields is as follows.
 - `addr`: The flow account address of the user.
 - `services`: The list of services provided by the wallet.
 
-### `Signable`
+#### `Signable`
 
 ```typescript
 interface Signable extends ObjectBase<"1.0.1"> {
@@ -495,7 +418,7 @@ interface Signable extends ObjectBase<"1.0.1"> {
 
 The `WalletUtils.encodeMessageFromSignable` function can be used to calculate the message that needs to be signed.
 
-### <a id="compositesignature"></a> CompositeSignature
+#### <a id="compositesignature"></a> CompositeSignature
 
 ```typescript
 interface CompositeSignature extends ObjectBase {
@@ -508,7 +431,7 @@ interface CompositeSignature extends ObjectBase {
 
 See also [CompositeSignature](https://github.com/onflow/flow-js-sdk/blob/master/packages/fcl/src/current-user/normalize/composite-signature.js).
 
-## <a id="miscellaneousobjects"></a> Miscellaneous Objects
+#### <a id="miscellaneousobjects"></a> Miscellaneous Objects
 
 ### <a id="message"></a> Message
 
@@ -528,7 +451,7 @@ A message that indicates the status of the protocol invocation.
 
 This type is sometimes used as part of an _intersection type_. For example, the type `Message & PollingResponse` means a `PollingResponse` extended with the `type` field from `Message`.
 
-### `ExtensionServiceInitiationMessage`
+#### `ExtensionServiceInitiationMessage`
 
 ```typescript
 type ExtensionServiceInitiationMessage = {
@@ -543,7 +466,54 @@ This object is used to invoke a service when the `EXT/RPC` service method is use
 - [local-view](https://github.com/onflow/flow-js-sdk/blob/master/packages/fcl/src/current-user/normalize/local-view.js)
 - [frame](https://github.com/onflow/flow-js-sdk/blob/master/packages/fcl/src/current-user/normalize/frame.js)
 
-## <a id="servicemethods"></a> Service Methods
+#### <a id="pollingresponse"></a> `PollingResponse`
+
+```typescript
+type PollingResponse = {
+  status: "APPROVED" | "DECLINED" | "PENDING" | "UNKNOWN"
+  reason?: string
+}
+```
+
+#### <a id="errorresponse"></a> `ErrorResponse`
+
+```typescript
+interface ErrorResponse {
+  id: number
+  error: {
+    code: number
+    message: string
+  }
+}
+```
+
+### <a id="servicemethods"></a> Service Methods
+
+FCL Services are your way as a Wallet Provider of configuring FCL with information about what your wallet can do. FCL uses what it calls `Service Methods` to perform your supported FCL services. Service Methods are the ways FCL can talk to your wallet. Your wallet gets to decide which of these service methods each of your supported services use to communicate with you.
+
+Sometimes services just configure FCL and that's it. An example of this can be seen with the `Authentication Service` and the `OpenID Service`.
+With those two services you are simply telling FCL "here is a bunch of info about the current user". (You will see that those two services both have a `method: "DATA"` field in them.
+Currently these are the only two cases that can be a data service.)
+
+Other services can be a little more complex. For example, they might require a back and forth communication between FCL and the Service in question.
+
+Ultimately we want to do this back and forth via a secure back-channel (https requests to servers), **but in some situations that isn't a viable option, so there is also a front-channel option**.
+
+Where possible, you should aim to provide a back-channel support for services, and only fall back to a front-channel if absolutely necessary.
+
+#### <a id="baseservicemethods"></a> Base Service Methods
+
+Back-channel communications use `method: "HTTP/POST"`, while front-channel communications use `method: "IFRAME/RPC"`, `method: "POP/RPC"`, `method: "TAB/RPC` and `method: "EXT/RPC"`.
+
+| Service Method | Front | Back |
+| -------------- | ----- | ---- |
+| HTTP/POST      | ⛔    | ✅   |
+| IFRAME/RPC     | ✅    | ⛔   |
+| POP/RPC        | ✅    | ⛔   |
+| TAB/RPC        | ✅    | ⛔   |
+| EXT/RPC        | ✅    | ⛔   |
+
+It's important to note that regardless of the method of communication, the data that is sent back and forth between the parties involved is the same.
 
 ### <a id="iframerpc"></a> IFRAME/RPC (Front Channel)
 
@@ -653,14 +623,29 @@ chrome.tabs.sendMessage(tabs[0].id, {
 
 ![EXT/RPC Diagram](https://raw.githubusercontent.com/onflow/flow-js-sdk/master/packages/fcl/assets/service-method-diagrams/ext-rpc.png)
 
-## <a id="dataparams"></a> Service `data` and `params`
+#### <a id="dataparams"></a> Service `data` and `params`
 
 `data` and `params` are information that the wallet can provide in the service config that FCL will pass back to the service.
 
 - `params` will be added onto the `endpoint` as query params.
 - `data` will be included in the body of the `HTTP/POST` request or in the `FCL:VIEW:READY:RESPONSE` for a `IFRAME/RPC`, `POP/RPC`, `TAB/RPC` or `EXT/RPC`.
 
+#### <a id="servicemethodplugins"></a> Service Method Plugins
+
+TODO
+
 ## <a id="services"></a> Services
+
+### Types of Services
+
+The following services will be covered:
+
+| Service                | type             |
+| :--------------------- | :--------------- |
+| Authentication Service | `authn`          |
+| Pre-Authz Service      | `pre-authz`      |
+| Authorization Service  | `authz`          |
+| User Signature Service | `user-signature` |
 
 ### <a id="authnservice"></a> Authentication Service
 
