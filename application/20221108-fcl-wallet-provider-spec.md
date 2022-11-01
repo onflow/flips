@@ -854,7 +854,7 @@ import {WalletUtils} from "@onflow/fcl"
 WalletUtils.sendMsgToFCL("FCL:VIEW:CLOSE")
 ```
 
-##### <a id="authorizationservice"></a> Authorization Service `authz`
+##### <a id="authzservice"></a> Authorization Service `authz`
 
 Authorization services are depicted with with a `type: "authz"`, and a `method` of either `HTTP/POST`, `IFRAME/RPC`, `POP/RPC`, `TAB/RPC` or `EXT/RPC`.
 They are expected to eventually return a `f_type: "CompositeSignature"`.
