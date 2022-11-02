@@ -9,7 +9,7 @@
 
 ## Objective
 
-This FLIP proposes a v1.0 specification for FCL Wallet Providers and dApps to trustlessly interact for the purposes of authentication, and transaction and message signing on Flow. It aims to provide a comprehensive description of the communication protocol and the required features and functionality expected to perform these functions.
+This FLIP proposes a v1.0 specification for FCL Wallet Providers and dApps to trustlessly interact for the purposes of authentication and producing signatures on Flow. It aims to provide a comprehensive description of the communication protocol and the required features and functionality expected to perform these functions.
 
 The goal of this FLIP is to solidify existing implementation patterns and data definitions in a generalized way. Additionally it should open discussion to potential improvements for future versions of the spec in order to simplify and support Flow dApp and wallet development.
 
