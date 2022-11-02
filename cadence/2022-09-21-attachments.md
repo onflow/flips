@@ -260,6 +260,8 @@ pub resource R {
 }
 ```
 
+Attempting to attach new attachments to `R` or remove attachments from `R` while iterating over it is a runtime error. 
+
 ### Drawbacks
 
 Adding a new language feature has the downside of complexity: users have to learn yet another 
