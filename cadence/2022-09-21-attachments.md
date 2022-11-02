@@ -188,6 +188,11 @@ If a users attempts to `attach` an attachment to a value that already possesses 
 reason, if a user has reason to believe that an attachment of the type they wish to add already exists on a value, they should use the `remove` statement 
 first to guarantee that the value does not have that attachment before they attempt to attach it again.
 
+The `attach` expression creates a new value, rather than modifying the old one; thus if the base is a struct, the result of the expression will have the attachment,
+while the original value will not. In the case of a resource, the old resource will be moved into the new one, which will have the attachment present. It is also worth
+noting that while `super` does point to the base during the attachment's constructor, that base does not yet have the attachment present on it during the execution
+of that constructor; that only occurs after the attachment expresion successfully executes. 
+
 ### Removing Attachments from a Type
 
 Attachments can be removed with a new statement: `remove t from e`. Here, `t` refers to an attachment type name, rather than a value, 
