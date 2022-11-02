@@ -20,7 +20,7 @@ fun foo(_ x: Int): String {...}
 // function expression bound to a name
 let bar = fun (x: Int): String {...}
 
-// a reference to a function
+// a variable declaration with a function value
 // note the lack of the `fun` keyword when referring to its type
 let baz: ((Int): String) = foo
 ```
@@ -72,7 +72,7 @@ For type signatures ascribed to variables, we currently rely on the colon `:` to
 ```cadence
 let bar = fun (x: Int): String {...}
 
-// a reference to a function
+// a variable declaration with a function value
 let baz: ((Int): String) = foo
 ```
 
