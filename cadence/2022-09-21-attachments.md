@@ -203,9 +203,7 @@ If a resource containing attachments is `destroy`ed, all its attachments will be
 
 ### Accessing Attachments
 
-Once an attachment has been added to a composite value, it can be accessed using indexing syntax: `v[T]`, where `v` is a resource or struct composite value, 
-and `T` is the name of an attachment type. This indexing syntax returns an optional reference to the attachment of type `T`: `&T?`; if no such attachment exists on `v`, 
-the expression will return `nil`. So, given a composite `r` with an attachment of type `A`, accessing `A`'s `foo` function would be done like so:
+Once an attachment has been added to a composite value, it can be accessed using indexing syntax: `v[T]`, where `v` is a resource or struct composite value, or a reference to a struct or resource composite value, and `T` is the name of an attachment type. This indexing syntax returns an optional non-auth reference to the attachment of type `T`: `&T?`; if no such attachment exists on `v`, the expression will return `nil`. So, given a composite `r` with an attachment of type `A`, accessing `A`'s `foo` function would be done like so:
 
 ```cadence
 r[A]!.foo()
