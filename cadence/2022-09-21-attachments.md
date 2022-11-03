@@ -191,7 +191,10 @@ first to guarantee that the value does not have that attachment before they atte
 The `attach` expression creates a new value, rather than modifying the old one; thus if the base is a struct, the result of the expression will have the attachment,
 while the original value will not. In the case of a resource, the old resource will be moved into the new one, which will have the attachment present. It is also worth
 noting that while `super` does point to the base during the attachment's constructor, that base does not yet have the attachment present on it during the execution
-of that constructor; that only occurs after the attachment expresion successfully executes. 
+of that constructor; that only occurs after the attachment expresion successfully executes. To see why, consider what would happen if a user accessed that attachment 
+through super; if in `A`'s initializer they wrote `super[A]!.foo?`. This could potentially allow `A`'s `foo` field to be accessed before it has been initialized, and
+would require analysis of statement ordering within the initializer itself to determine when it was safe to access which fields of `A` through super. Rather than add
+this additional complexity, we simply do not attach `A` to the base until after the initializer has finished executing. 
 
 ### Removing Attachments from a Type
 
