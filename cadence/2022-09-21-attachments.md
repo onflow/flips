@@ -217,7 +217,7 @@ Once an attachment has been added to a composite value, it can be accessed using
 r[A]!.foo()
 ```
 
-This syntax is only valid if `A` is a valid attachment type for `v`; i.e. if `A`'s declared base type is a subtype of the type of `v`. What this means is that the owner
+This syntax is only valid if `A` is a valid attachment type for `v`; i.e. if `A`'s declared base type is a supertype of the type of `v`. What this means is that the owner
 of a resource can restrict which attachments can be accessed on references to their resource using restricted types, much like they would do with any other field or function. E.g.
 
 ```
