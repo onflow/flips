@@ -217,6 +217,18 @@ Once an attachment has been added to a composite value, it can be accessed using
 r[A]!.foo()
 ```
 
+This syntax is only valid if `A` is a valid attachment type for `v`; i.e. if `A`'s declared base type is a subtype of the type of `v`. What this means is that the owner
+of a resource can restrict which attachments can be accessed on references to their resource using restricted types, much like they would do with any other field or function. E.g.
+
+```
+struct R: I {}
+struct interface I {}
+attachment A for R {}
+fun foo(r: &{I}) {
+    r[A] // fails to type check, because `{I}` is not a subtype of `R`
+}
+```
+
 ### Iterating over Attachments
 
 All composite types will contain a new function `forEachAttachment` that iterates over all the attachments present on that composite. On a resource, this function 
