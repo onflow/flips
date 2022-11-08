@@ -1,4 +1,4 @@
-# Flow Client Library (FCL) Wallet Provider Specification
+# Flow Client Library (FCL) Specification
 
 | Status        | Proposed                                    |
 | :------------ | :------------------------------------------ |
@@ -17,7 +17,7 @@ In short, this spec describes the data dApps and wallets should send and expect,
 
 ## Motivation
 
-The problem now is that prospective wallet and SDK developers have only a [Draft Specification](https://github.com/onflow/fcl-js/blob/master/packages/fcl/src/wallet-provider-spec/draft-v4.md) and several Flow and community maintained implementations to refer to. Formalizing an FCL Spec will make it easier and safer to code libraries in any language, build dApps and wallets, and release on more environments and platforms (mobile, Unity, .NET, etc.).
+The problem now is that prospective wallet and SDK developers have only a [Draft Specification](https://github.com/onflow/fcl-js/blob/master/packages/fcl/src/wallet-provider-spec/draft-v4.md) and several Flow and community maintained implementations to refer to. Formalizing an FCL Specification will make it easier and safer to code libraries in any language, build dApps and wallets, and release on more environments and platforms (mobile, Unity, .NET, etc.).
 
 Developers will benefit from the assurances of a formalized specification and users from improved experiences and greater choice of wallets and platforms.
 
@@ -25,7 +25,7 @@ Developers will benefit from the assurances of a formalized specification and us
 
 Formalizing a specification for FCL will improve developer and user experience, support creation of applications and sdks, and help broaden support for Flow by more service providers across more platforms.
 
-**Existing SDKs and example implementations of the FCL Wallet Provider Spec**
+**Existing SDKs and example implementations of the FCL Specification**
 
 - [Flow Client Library (FCL) JS](https://github.com/onflow/fcl-js)
 - [Flow JS SDK](https://github.com/onflow/fcl-js/tree/master/packages/sdk)
@@ -36,7 +36,7 @@ Formalizing a specification for FCL will improve developer and user experience, 
 
 ## Design Proposal
 
-### Flow Client Library (FCL) Wallet Provider Specification v1.0
+### Flow Client Library (FCL) Specification v1.0
 
 #### Table of Contents
 
@@ -91,7 +91,7 @@ FCL acts in many ways as a protocol to facilitate communication and configuratio
 
 ## <a id="specification"></a> Specification
 
-This section provides a basic overview of the major components of **FCL Wallet Provider Spec**, it's core architecture, data model, and representation.
+This section provides a basic overview of the major components of the **FCL Specification**, it's core architecture, data model, and representation.
 
 All field names in the specification are **case sensitive**.
 
