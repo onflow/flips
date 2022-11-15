@@ -1,6 +1,6 @@
 # Change the syntax for function types.
 
-| Status        | (Proposed / Rejected / Accepted / Implemented)       |
+| Status        | Accepted                                             |
 :-------------- |:---------------------------------------------------- |
 | **FLIP #**    | [43](https://github.com/onflow/flips/pull/43)        |
 | **Author(s)** | Naomi Liu (naomi.liu@dapperlabs.com)                 |
