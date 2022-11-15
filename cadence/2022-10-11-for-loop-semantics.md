@@ -1,6 +1,6 @@
 # Change Cadence for-loop semantics
 
-| Status        | Proposed                                             |
+| Status        | Accepted                                             |
 :-------------- |:---------------------------------------------------- |
 | **FLIP #**    | [13](https://github.com/onflow/flips/pull/13)        |
 | **Author(s)** | Bastian Müller (bastian@dapperlabs.com)              |
