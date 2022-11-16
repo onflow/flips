@@ -339,78 +339,78 @@ Type and event definitions would also behave similarly to the default functions.
 Inherited interfaces can override type definitions and event definitions.
 
 ```cadence
-pub resource interface Receiver {
+pub contract interface Token {
     pub struct Foo {}
 }
 
-pub resource interface Vault: Receiver {
+pub contract interface NonFungibleToken: Token {
     pub struct Foo {}
 }
 
-pub resource MyVault: Vault {
+pub contract MyToken: NonFungibleToken {
     pub fun test() {
-        let foo = Foo()  // This will create a value from `Vault.Foo`
+        let foo: Foo  // This will refer to the `NonFungibleToken.Foo`
     }
 }
 ```
 
-If a user needed to access the `Foo` struct coming from the super interface `Receiver`, then they can
-access it using the fully qualified name. e.g: `let foo = Receiver.Foo()`.
+If a user needed to access the `Foo` struct coming from the super interface `Token`, then they can
+access it using the fully qualified name. e.g: `let foo: Token.Foo`.
 
 However, it is not allowed to have two or more inherited type/events definitions with identical names for an interface.
 
 ```cadence
-pub resource interface Receiver {
+pub contract interface Token {
     pub struct Foo {}
 }
 
-pub resource interface Provider {
+pub contract interface Collectible {
     pub struct Foo {}
 }
 
 // Invalid: Two type definitions with the same name from two interfaces.
-pub resource Vault: Receiver, Provider {
+pub contract NonFungibleToken: Token, Collectible {
 }
 ```
 Similar to default functions, there can be situations where the same type/event definition can be available
 via different inheritance paths.
 
 ```cadence
-pub resource interface Logger {
+pub contract interface Logger {
     pub struct Foo {}
 }
 
-pub resource interface Receiver: Logger {}
+pub contract interface Token: Logger {}
 
-pub resource interface Provider: Logger {}
+pub contract interface Collectible: Logger {}
 
-// Valid: `Logger.Foo` struct is visible to the `Vault` interface via both `Receiver` and `Provider`.
-pub resource interface Vault: Receiver, Provider {}
+// Valid: `Logger.Foo` struct is visible to the `NonFungibleToken` interface via both `Token` and `Collectible`.
+pub contract interface NonFungibleToken: Token, Collectible {}
 ```
 
-In the above example, `Logger.Foo` type definition is visible to the `Vault` interface via both `Receiver`
-and `Provider`. Even though it is available from two different interfaces, they are both referring to the same
+In the above example, `Logger.Foo` type definition is visible to the `NonFungibleToken` interface via both `Token`
+and `Collectible`. Even though it is available from two different interfaces, they are both referring to the same
 type definition. Therefore, the above code is valid.
 
 However, if at least one of the interfaces in the middle of the chain also overrides the type definition `Foo`,
 then the code becomes invalid, as there are multiple implementations present now, which leads to ambiguity.
 
 ```cadence
-pub resource interface Logger {
+pub contract interface Logger {
     pub struct Foo {}
 }
 
-pub resource interface Receiver: Logger {
+pub contract interface Token: Logger {
     pub struct Foo {}
 }
 
-pub resource interface Provider: Logger {}
+pub contract interface Collectible: Logger {}
 
 // Invalid: The default implementation of the `Foo` struct by the `Logger`
-// interface is visible to the `Vault` via the `Provider` interface.
-// Another implementation of `Foo` struct is visible to the `Vault` via the `Receiver` interface.
+// interface is visible to the `NonFungibleToken` via the `Collectible` interface.
+// Another implementation of `Foo` struct is visible to the `NonFungibleToken` via the `Token` interface.
 // This creates ambiguity.
-pub resource interface Vault: Receiver, Provider {}
+pub resource interface NonFungibleToken: Token, Provider {}
 ```
 
 Many other languages that support multiple-inheritance also follow similar approaches, where inheritances that
