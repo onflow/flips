@@ -245,6 +245,8 @@ pub resource interface Provider {
 pub resource interface Vault: Receiver, Provider {}
 ```
 
+To resolve this ambiguity, the `Vault` interface would need to add a default implementation for the `log` function.
+
 Having said that, there can be situations where the same default function can be available via different
 inheritance paths.
 
@@ -300,6 +302,9 @@ pub resource interface Provider: Logger {}
 // This creates ambiguity.
 pub resource interface Vault: Receiver, Provider {}
 ```
+
+Like in the previous scenario, to resolve this ambiguity, the `Vault` interface would need to add a default
+implementation for the `log` function.
 
 #### Conditions with Default functions
 
