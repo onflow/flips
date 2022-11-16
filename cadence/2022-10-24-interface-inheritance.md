@@ -190,6 +190,10 @@ It is also possible for two functions with identical signatures to have default 
 The priority will be given to the default implementation at the bottom of the inheritance chain.
 i.e: Inherited default methods will be shadowed.
 
+<div style="text-align: left;">
+<img height="300" src="2022-11-16-interface-inheritance/img1.jpg"/>
+</div>
+
 ```cadence
 pub resource interface Receiver {
     pub fun log(_ message: String) {
@@ -220,6 +224,10 @@ In the above example, invoking the `log` method of `MyVault` will call the defau
 
 However, it is not allowed to have two or more inherited default implementations for an interface.
 
+<div style="text-align: left;">
+<img height="200" src="2022-11-16-interface-inheritance/img2.jpg"/>
+</div>
+
 ```cadence
 pub resource interface Receiver {
     pub fun log(_ message: String) {
@@ -239,6 +247,10 @@ pub resource interface Vault: Receiver, Provider {}
 
 Having said that, there can be situations where the same default function can be available via different
 inheritance paths.
+
+<div style="text-align: left;">
+<img height="300" src="2022-11-16-interface-inheritance/img3.jpg"/>
+</div>
 
 ```cadence
 pub resource interface Logger {
@@ -262,6 +274,10 @@ default implementation. Therefore, the above code is valid.
 
 However, if at least one of the interfaces in the middle of the chain also adds a default implementation to the `log`
 function, then the code becomes invalid, as there are multiple implementations present now, which leads to ambiguity.
+
+<div style="text-align: left;">
+<img height="300" src="2022-11-16-interface-inheritance/img4.jpg"/>
+</div>
 
 ```cadence
 pub resource interface Logger {
