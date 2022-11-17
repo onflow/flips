@@ -5,7 +5,7 @@
 | **FLIP #**     |                                              |
 | **Author(s)**  | Supun Setunga (supun.setunga@dapperlabs.com) |
 | **Sponsor**    | Supun Setunga (supun.setunga@dapperlabs.com) |
-| **Updated**    | 2022-10-24                                   |
+| **Updated**    | 2022-11-17                                   |
 
 ## Objective
 
@@ -98,6 +98,9 @@ Therefore, below restrictions apply for any interface inheritance.
 
 When an interface implements another interface, it is possible for the two interfaces to have members
 (functions, fields, and type requirements) with the same name.
+It is important to resolve these ambiguities at the time of interface declaration (i.e: as early as possible),
+rather than waiting for a concrete type declaration to face them when implementing that particular interface.
+The following sections explain how to resolve these ambiguities for different scenarios.
 
 #### Fields
 
@@ -191,7 +194,7 @@ The priority will be given to the default implementation at the bottom of the in
 i.e: Inherited default methods will be shadowed.
 
 <div style="text-align: left;">
-<img height="300" src="2022-11-16-interface-inheritance/img1.jpg"/>
+<img height="300" src="2022-11-16-interface-inheritance/simple-override.jpg"/>
 </div>
 
 ```cadence
@@ -225,7 +228,7 @@ In the above example, invoking the `log` method of `MyVault` will call the defau
 However, it is not allowed to have two or more inherited default implementations for an interface.
 
 <div style="text-align: left;">
-<img height="200" src="2022-11-16-interface-inheritance/img2.jpg"/>
+<img height="200" src="2022-11-16-interface-inheritance/two-default-implelentations-direct.jpg"/>
 </div>
 
 ```cadence
@@ -251,7 +254,7 @@ Having said that, there can be situations where the same default function can be
 inheritance paths.
 
 <div style="text-align: left;">
-<img height="300" src="2022-11-16-interface-inheritance/img3.jpg"/>
+<img height="300" src="2022-11-16-interface-inheritance/same-default-implementation-two-paths.jpg"/>
 </div>
 
 ```cadence
@@ -278,7 +281,7 @@ However, if at least one of the interfaces in the middle of the chain also adds 
 function, then the code becomes invalid, as there are multiple implementations present now, which leads to ambiguity.
 
 <div style="text-align: left;">
-<img height="300" src="2022-11-16-interface-inheritance/img4.jpg"/>
+<img height="300" src="2022-11-16-interface-inheritance/two-default-implementations-indirect.jpg"/>
 </div>
 
 ```cadence
@@ -428,7 +431,22 @@ dependencies.
 
 ### Alternatives Considered
 
-None
+#### Function with conditions
+
+Another way to handle multiple inherited functions with conditions is to let a function at a lower level of the
+inheritance chain override a condition at a higher level. However, it may not be safe to do so, as some
+interfaces enforce certain restrictions through pre/post conditions, and overriding them is not desired.
+
+#### Ambiguous default functions
+
+An alternative solution for resolving ambiguity caused by having multiple default implementations is to order/linearize
+the default functions in some way, and pick the 'closest' one to the current interface/concrete-type (i.e: the type that
+faces the ambiguity). However, this has some disadvantages:
+ - If the default functions in question have side effects (e.g: mutate state), then picking only one of them may result
+   in unintended behaviors.
+ - The chosen default implementation may not be obvious to the user. That will lead to surprising behaviors for the user.
+ - Already disregarded this option for default functions ambiguity resolution in concrete type implementations.
+   (They also behave very similarly to what is proposed in this FLIP)
 
 ### Performance Implications
 
