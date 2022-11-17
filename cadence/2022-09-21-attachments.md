@@ -245,21 +245,27 @@ fun forEachAttachment(_ f: ((&AnyStructAttachment): Void)): Void
 ```
 
 `AnyResourceAttachment`/`AnyStructAttachment` are new types that expresses the basetypes of all struct/resource attachments.
-They contains two functions (that are implicitly present on all attachments): `getField` and `getFunction`, 
+They contains two functions (that are implicitly present on all attachments): `getField` and `invokeFunction`, 
 with the following signatures:
 
 ```cadence
 getField<T>(_  name: String): &T?
-getFunction<T>(_  name: String): T?
+invokeFunction<(Args...): Ret>(_  name: String, args: Args...): Ret?
 ```
 
 The difference between these two types is only in the kind; as might be expected from the name `AnyResourceAttachment` is resource-kinded, while
 `AnyStructAttachment` is struct-kinded. They must be separate types as attachments themselves are resource or struct kinded depending on their base type. This distinction
 is important because only resource-kinded attachments may contain resource-kinded fields.
 
-This functions takes the `name` of a member on an attachment and checks whether a member with that `name` exists on the attachment with the provided type argument. If it does, 
-`getField` will return a reference to that member is it is a field, but `nil` if it is a function, while `getFunction` will return that function if it is a function but `nil` if it is a field. If the type does not match or the member is not present, then both will return nil. These functions must be separate in order to support resource fields on attachments; 
-`getField` must return a reference to prevent duplicating any resource fields, while `getFunction` cannot return a reference because references to functions cannot be called. 
+Here, `invokeFunction` should take some function type as its type parameter, which will be used to typecheck the variadic arguments passed to the function call
+after the `name`. If a function member exists on the attachment with that `name` and type, it will be called with the provided arguments, and the return value
+of that function will be returne from `invokeFunction`. Otherwise, `invokeFunction` returns `nil`. 
+
+`getField` takes the `name` and a type of a field on an attachment, returning a reference to that field if it is present with that type, but `nil` if the member
+does not exist or is a function. 
+
+Note that `getField` and `invokeFunction` cannot be used to circumvent access control. I.e. a field declared `priv` cannot be accessed outside of the body of that
+`attachment`, and a function declared with `access(contract)` cannot be invoked outside of the contract in which the attachment was defined. 
 
 So, for example, if the creator of a resource would like to have a function that returns the a descriptive string describing that resource and all its attachments, 
 they may implement it this way:
@@ -271,9 +277,9 @@ pub resource R {
     pub fun description(): String {
         let description = descriptionString
         self.forEachAttachment(f: fun (attachment: &AnyResourceAttachment) {
-            let descriptionFunction = attachment.getFunction<(():String)>("description")
-            if descriptionFunction != nil {
-                description.concat(descriptionFunction!())
+            let attachmentDescription = attachment.invokeFunction<(():String)>("description")
+            if attachmentDescription != nil {
+                description.concat(attachmentDescription!)
             }
         }))
     }
