@@ -264,13 +264,14 @@ of that function will be returne from `invokeFunction`. Otherwise, `invokeFuncti
 `getField` takes the `name` and a type of a field on an attachment, returning a reference to that field if it is present with that type, but `nil` if the member
 does not exist or is a function. 
 
-Note that `getField` and `invokeFunction` cannot be used to circumvent access control. I.e. a field declared `priv` cannot be accessed outside of the body of that
-`attachment`, and a function declared with `access(contract)` cannot be invoked outside of the contract in which the attachment was defined. For similar reasons, 
-`forEachAttachment` will only iterate over those attachments on the receiver that could be accessed on that receiver using the normal access syntax; that is, 
-if a receiver has a static type that is larger than its runtime time, any attachments present on it declared for a type smaller than its static type will be 
-skipped during the call. For example, if an attachment `A` is created for `Vault` and attached to a `Vault` object, if a `&{Receiver}` reference is exposed
-to that `Vault`, when iterating over that restricted reference's attachments, `A` will be skipped, as it should not be possible to access `Vault` attachments
-with only a `Receiver` value.  
+Note that in order to prevent `getField` and `invokeFunction` from being used to circumvent access control, these functions can only be used to access 
+attachment members that were declared to have `pub` access. 
+
+For similar reasons, `forEachAttachment` will only iterate over those attachments on the receiver that could be accessed on that receiver using the normal 
+access syntax; that is, if a receiver has a static type that is larger than its runtime time, any attachments present on it declared for a type smaller than 
+its static type will be skipped during the call. For example, if an attachment `A` is created for `Vault` and attached to a `Vault` object, if a `&{Receiver}` 
+reference is exposed to that `Vault`, when iterating over that restricted reference's attachments, `A` will be skipped, as it should not be possible to access 
+`Vault` attachments with only a `Receiver` value.  
 
 So, for example, if the creator of a resource would like to have a function that returns the a descriptive string describing that resource and all its attachments, 
 they may implement it this way:
