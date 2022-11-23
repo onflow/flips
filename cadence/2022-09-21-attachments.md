@@ -1,11 +1,10 @@
 # Attachments
 
-| Status        | (Proposed)                                           |
+| Status        | (Approved)                                           |
 :-------------- |:---------------------------------------------------- |
-| **FLIP #**    | [NNN](Link to FLIP)                                  |
 | **Author(s)** | Daniel Sainati (daniel.sainati@dapperlabs.com)       |
 | **Sponsor**   | Daniel Sainati (daniel.sainati@dapperlabs.com)       |
-| **Updated**   | 2022-10-26                                           |
+| **Updated**   | 2022-11-23                                           |
 
 ## Objective
 
@@ -229,6 +228,23 @@ fun foo(r: &{I}) {
 }
 ```
 
+### Drawbacks
+
+Adding a new language feature has the downside of complexity: users have to learn yet another 
+concept, and it also complicates the language implementation.
+
+However, this language feature can be disclosed progressively, users can discover and use it when needed, 
+it is not necessary to be understood for core use-cases of the language, i.e. the target audience is mostly “power-users”.
+
+### Compatibility
+
+This is backwards compatible, as it does not invalidate any existing Cadence code. 
+
+## Related Issues
+
+There is a plan to add support for iterating over and reflecting on attachments in a future FLIP. 
+A summary of the future proposed changes (which used to be part of this FLIP) are included below:
+
 ### Iterating over Attachments
 
 All composite types will contain a new function `forEachAttachment` that iterates over all the attachments present on that composite. On a resource, this function 
@@ -293,25 +309,6 @@ pub resource R {
 ```
 
 Attempting to attach new attachments to `R` or remove attachments from `R` while iterating over it is a runtime error. 
-
-### Drawbacks
-
-Adding a new language feature has the downside of complexity: users have to learn yet another 
-concept, and it also complicates the language implementation.
-
-However, this language feature can be disclosed progressively, users can discover and use it when needed, 
-it is not necessary to be understood for core use-cases of the language, i.e. the target audience is mostly “power-users”.
-
-### Tutorials and Examples
-
-* TODO: fill in later once the details of the design are decided
-
-### Compatibility
-
-This is backwards compatible, as it does not invalidate any existing Cadence code. 
-
-## Related Issues
-
 ## Alternatives
 
 In a previous [FLIP](https://github.com/onflow/flow/pull/1101), a solution to the extensibility
