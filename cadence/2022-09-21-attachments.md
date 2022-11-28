@@ -1,11 +1,10 @@
 # Attachments
 
-| Status        | (Proposed)                                           |
+| Status        | (Approved)                                           |
 :-------------- |:---------------------------------------------------- |
-| **FLIP #**    | [NNN](Link to FLIP)                                  |
 | **Author(s)** | Daniel Sainati (daniel.sainati@dapperlabs.com)       |
 | **Sponsor**   | Daniel Sainati (daniel.sainati@dapperlabs.com)       |
-| **Updated**   | 2022-10-26                                           |
+| **Updated**   | 2022-11-23                                           |
 
 ## Objective
 
@@ -229,6 +228,23 @@ fun foo(r: &{I}) {
 }
 ```
 
+### Drawbacks
+
+Adding a new language feature has the downside of complexity: users have to learn yet another 
+concept, and it also complicates the language implementation.
+
+However, this language feature can be disclosed progressively, users can discover and use it when needed, 
+it is not necessary to be understood for core use-cases of the language, i.e. the target audience is mostly “power-users”.
+
+### Compatibility
+
+This is backwards compatible, as it does not invalidate any existing Cadence code. 
+
+## Related Issues
+
+There is a plan to add support for iterating over and reflecting on attachments in a future FLIP. 
+A summary of the future proposed changes (which used to be part of this FLIP) are included below:
+
 ### Iterating over Attachments
 
 All composite types will contain a new function `forEachAttachment` that iterates over all the attachments present on that composite. On a resource, this function 
@@ -245,21 +261,33 @@ fun forEachAttachment(_ f: ((&AnyStructAttachment): Void)): Void
 ```
 
 `AnyResourceAttachment`/`AnyStructAttachment` are new types that expresses the basetypes of all struct/resource attachments.
-They contains two functions (that are implicitly present on all attachments): `getField` and `getFunction`, 
+They contains two functions (that are implicitly present on all attachments): `getField` and `invokeFunction`, 
 with the following signatures:
 
 ```cadence
 getField<T>(_  name: String): &T?
-getFunction<T>(_  name: String): T?
+invokeFunction<(Args...): Ret>(_  name: String, args: Args...): Ret?
 ```
 
 The difference between these two types is only in the kind; as might be expected from the name `AnyResourceAttachment` is resource-kinded, while
 `AnyStructAttachment` is struct-kinded. They must be separate types as attachments themselves are resource or struct kinded depending on their base type. This distinction
 is important because only resource-kinded attachments may contain resource-kinded fields.
 
-This functions takes the `name` of a member on an attachment and checks whether a member with that `name` exists on the attachment with the provided type argument. If it does, 
-`getField` will return a reference to that member is it is a field, but `nil` if it is a function, while `getFunction` will return that function if it is a function but `nil` if it is a field. If the type does not match or the member is not present, then both will return nil. These functions must be separate in order to support resource fields on attachments; 
-`getField` must return a reference to prevent duplicating any resource fields, while `getFunction` cannot return a reference because references to functions cannot be called. 
+Here, `invokeFunction` should take some function type as its type parameter, which will be used to typecheck the variadic arguments passed to the function call
+after the `name`. If a function member exists on the attachment with that `name` and type, it will be called with the provided arguments, and the return value
+of that function will be returne from `invokeFunction`. Otherwise, `invokeFunction` returns `nil`. 
+
+`getField` takes the `name` and a type of a field on an attachment, returning a reference to that field if it is present with that type, but `nil` if the member
+does not exist or is a function. 
+
+Note that in order to prevent `getField` and `invokeFunction` from being used to circumvent access control, these functions can only be used to access 
+attachment members that were declared to have `pub` access. 
+
+For similar reasons, `forEachAttachment` will only iterate over those attachments on the receiver that could be accessed on that receiver using the normal 
+access syntax; that is, if a receiver has a static type that is larger than its runtime time, any attachments present on it declared for a type smaller than 
+its static type will be skipped during the call. For example, if an attachment `A` is created for `Vault` and attached to a `Vault` object, if a `&{Receiver}` 
+reference is exposed to that `Vault`, when iterating over that restricted reference's attachments, `A` will be skipped, as it should not be possible to access 
+`Vault` attachments with only a `Receiver` value.  
 
 So, for example, if the creator of a resource would like to have a function that returns the a descriptive string describing that resource and all its attachments, 
 they may implement it this way:
@@ -271,9 +299,9 @@ pub resource R {
     pub fun description(): String {
         let description = descriptionString
         self.forEachAttachment(f: fun (attachment: &AnyResourceAttachment) {
-            let descriptionFunction = attachment.getFunction<(():String)>("description")
-            if descriptionFunction != nil {
-                description.concat(descriptionFunction!())
+            let attachmentDescription = attachment.invokeFunction<(():String)>("description")
+            if attachmentDescription != nil {
+                description.concat(attachmentDescription!)
             }
         }))
     }
@@ -281,25 +309,6 @@ pub resource R {
 ```
 
 Attempting to attach new attachments to `R` or remove attachments from `R` while iterating over it is a runtime error. 
-
-### Drawbacks
-
-Adding a new language feature has the downside of complexity: users have to learn yet another 
-concept, and it also complicates the language implementation.
-
-However, this language feature can be disclosed progressively, users can discover and use it when needed, 
-it is not necessary to be understood for core use-cases of the language, i.e. the target audience is mostly “power-users”.
-
-### Tutorials and Examples
-
-* TODO: fill in later once the details of the design are decided
-
-### Compatibility
-
-This is backwards compatible, as it does not invalidate any existing Cadence code. 
-
-## Related Issues
-
 ## Alternatives
 
 In a previous [FLIP](https://github.com/onflow/flow/pull/1101), a solution to the extensibility
