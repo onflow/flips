@@ -271,80 +271,80 @@ The existing behavior preventing downcasting of non-`auth` references would prev
 would have access to functions like `withdraw` via the `base` reference) if they only possessed a `&{Balance}`, since only `Balance`-attachments
 would be visible with such a reference. 
 
-One simple approach would be to allow attachments to be accessed only on values that have `auth` access to the attachment's `base` type. 
-I.e. given an `attachment A for I`, `v[A]` would be permissable when `v` has type `auth{I} &R` but not when `v` is just a regular `&R`, 
-or even an `&{I}`. Functionally this would mean that attachments would become `auth` fields in the mental model described above. 
+    One simple approach would be to allow attachments to be accessed only on values that have `auth` access to the attachment's `base` type. 
+    I.e. given an `attachment A for I`, `v[A]` would be permissable when `v` has type `auth{I} &R` but not when `v` is just a regular `&R`, 
+    or even an `&{I}`. Functionally this would mean that attachments would become `auth` fields in the mental model described above. 
 
-This approach is simple but very restrictive. In the motivating `KittyHat` use case for example, only users with an `auth`-reference 
-to the `Kitty` resource would be able to use the `Hat`. This would either make the `KittyHat` almost unusable without giving out
-an unreasonable amount of authority to users, or require the author of the `Kitty` to write a specific interface describing the set of 
-features they would want an attachment to be able to use. This latter case would completely defeat the point of attachments in the first place,
-since they are designed to be usable with no prior planning from the base value's author. 
+    This approach is simple but very restrictive. In the motivating `KittyHat` use case for example, only users with an `auth`-reference 
+    to the `Kitty` resource would be able to use the `Hat`. This would either make the `KittyHat` almost unusable without giving out
+    an unreasonable amount of authority to users, or require the author of the `Kitty` to write a specific interface describing the set of 
+    features they would want an attachment to be able to use. This latter case would completely defeat the point of attachments in the first place,
+    since they are designed to be usable with no prior planning from the base value's author. 
 
-An alternative would be to implicitly parameterize the attachment's `auth` access over the `auth` access of its base value. In this model, 
-attachments would remain `pub` accessible, but would themselves permit the declaration of `auth` members. The `base` value, 
-which currently is simply a `&R` reference for an attachment `attachment A for R` in any of `A`'s member functions, would now have it's `auth`-ness
-depend on the `auth`-ness of the member function in question. In a member declaration `access(auth) fun foo()` in `A`, the `base` variable would have
-type `auth &R`, while in a member declaration in `A` `pub fun bar()`, `base` would just be an `&R`. This would effectively mean that the `auth`-access
-members of the `base` would only be available to the attachment author in `auth`-access members on the attachment. Similarly, in an `auth`-access 
-member, the `self` reference of the attachment `A` would be `auth &A`, while in a `pub`-access member it would just be `&A`.
+    An alternative would be to implicitly parameterize the attachment's `auth` access over the `auth` access of its base value. In this model, 
+    attachments would remain `pub` accessible, but would themselves permit the declaration of `auth` members. The `base` value, 
+    which currently is simply a `&R` reference for an attachment `attachment A for R` in any of `A`'s member functions, would now have it's `auth`-ness
+    depend on the `auth`-ness of the member function in question. In a member declaration `access(auth) fun foo()` in `A`, the `base` variable would have
+    type `auth &R`, while in a member declaration in `A` `pub fun bar()`, `base` would just be an `&R`. This would effectively mean that the `auth`-access
+    members of the `base` would only be available to the attachment author in `auth`-access members on the attachment. Similarly, in an `auth`-access 
+    member, the `self` reference of the attachment `A` would be `auth &A`, while in a `pub`-access member it would just be `&A`.
 
-This would then be combined with a change to the attachment access rules: rather than `v[A]` always returning an `&A?` value, the type of the returned
-attachment reference would depend on the type of `v`. If `v` is not a reference, or a reference with `auth` access to `A`'s `base` type, then `v[A]` would return
-an `(auth &A)?` typed, while if the reference did not have access to `A`'s `base`, then the access would be a regular `&A?` type. This would prevent 
-the attachment from accessing `auth` members on its `base` unless the specific instance of that base to which it is attached has the proper `auth` access.
+    This would then be combined with a change to the attachment access rules: rather than `v[A]` always returning an `&A?` value, the type of the returned
+    attachment reference would depend on the type of `v`. If `v` is not a reference, or a reference with `auth` access to `A`'s `base` type, then `v[A]` would return
+    an `(auth &A)?` typed, while if the reference did not have access to `A`'s `base`, then the access would be a regular `&A?` type. This would prevent 
+    the attachment from accessing `auth` members on its `base` unless the specific instance of that base to which it is attached has the proper `auth` access.
 
-So, for example, given the following declaration:
-```cadence
-attachment CurrencyConverter for Provider {
-    pub fun convert(_ amount: UFix64): UFix64 {
-        // ...
-    }
+    So, for example, given the following declaration:
+    ```cadence
+    attachment CurrencyConverter for Provider {
+        pub fun convert(_ amount: UFix64): UFix64 {
+            // ...
+        }
 
-    pub fun convertVault(_ vault: @Vault): @Vault {
-        vault.balance = self.convert(vault.balance)
-        return <-vault
-    }
+        pub fun convertVault(_ vault: @Vault): @Vault {
+            vault.balance = self.convert(vault.balance)
+            return <-vault
+        }
 
-    access(auth) fun withdraw(_ amount: UFix64): @Vault {
-        let convertedAmount = self.convert(amount) 
-        // this is permitted because this function has `auth` access
-        // on the attachment, and thus `base` has type `auth{Provider} &{Provider}`
-        return <-base.withdraw(amount: amount) 
-    }
+        access(auth) fun withdraw(_ amount: UFix64): @Vault {
+            let convertedAmount = self.convert(amount) 
+            // this is permitted because this function has `auth` access
+            // on the attachment, and thus `base` has type `auth{Provider} &{Provider}`
+            return <-base.withdraw(amount: amount) 
+        }
 
-    pub fun deposit (from: @Vault) {
-        // cast is permissable under the new reference casting rules
-        let baseReceiverOptional = base as? &{Receiver}
-        if let baseReceiver = baseReceiverOptional {
-            let convertedVault <- self.convertVault(<-from) 
-            // this is ok because `deposit` has `pub` access
-            baseReceiver.deposit(from: <-convertedVault)
+        pub fun deposit (from: @Vault) {
+            // cast is permissable under the new reference casting rules
+            let baseReceiverOptional = base as? &{Receiver}
+            if let baseReceiver = baseReceiverOptional {
+                let convertedVault <- self.convertVault(<-from) 
+                // this is ok because `deposit` has `pub` access
+                baseReceiver.deposit(from: <-convertedVault)
+            }
+        }
+
+        pub fun maliciousStealingFunctionA(_ amount: UFix64): @Vault {
+            // This fails statically, as `self` here is just an `&A` 
+            // because `maliciousStealingFunctionA`'s access is `pub`,
+            // and therefore `self` does not have access to `withdraw`
+            return <-self.withdraw(amount)
+        }
+
+        pub fun maliciousStealingFunctionB(_ amount: UFix64): @Vault {
+            // This fails statically, as `base` here is just an `&{Provider}` 
+            // because `maliciousStealingFunctionB`'s access is `pub`,
+            // and therefore `base` does not have access to `withdraw`
+            return <-base.withdraw(amount: amount) 
         }
     }
 
-    pub fun maliciousStealingFunctionA(_ amount: UFix64): @Vault {
-        // This fails statically, as `self` here is just an `&A` 
-        // because `maliciousStealingFunctionA`'s access is `pub`,
-        // and therefore `self` does not have access to `withdraw`
-        return <-self.withdraw(amount)
-    }
+    let vault <- attach CurrencyConverter() to <-create Vault(balance: /*...*/)
+    let authVaultReference = &vault as auth{Provider} &Vault
+    let converterRef = authVaultReference[CurrencyConverter]! // has type auth &CurrencyConverter, can call `withdraw`
 
-    pub fun maliciousStealingFunctionB(_ amount: UFix64): @Vault {
-         // This fails statically, as `base` here is just an `&{Provider}` 
-        // because `maliciousStealingFunctionB`'s access is `pub`,
-        // and therefore `base` does not have access to `withdraw`
-        return <-base.withdraw(amount: amount) 
-    }
-}
-
-let vault <- attach CurrencyConverter() to <-create Vault(balance: /*...*/)
-let authVaultReference = &vault as auth{Provider} &Vault
-let converterRef = authVaultReference[CurrencyConverter]! // has type auth &CurrencyConverter, can call `withdraw`
-
-let otherVaultReference = &vault as auth{Balance} &Vault
-let otheConverterRef = otherVaultReference[CurrencyConverter]! // has type &CurrencyConverter, cannot call `withdraw`
-```
+    let otherVaultReference = &vault as auth{Balance} &Vault
+    let otheConverterRef = otherVaultReference[CurrencyConverter]! // has type &CurrencyConverter, cannot call `withdraw`
+    ```
 
 * One potential change this unlocks would be to restrict the creation of Capabilities based on the `auth`-ness of the reference
 they contain. We could restrict the `public` domain to be only for non-`auth` Capabilities, while the `private` domain would be only
