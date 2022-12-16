@@ -247,23 +247,23 @@ for `auth` refrences, as it would no longer be sufficient to compare the sets fo
 The membership check would still exist, but it would function as a width subtyping rule, in addition to a depth rule based on
 interface chains. I.e. it would be the case that for two auth references, `auth{U} &X <: auth{T1} &X`, if `U <: T`. 
 
-We can combine this depth rule with the already existing width rule to yield a combined subtyping rule: `auth{U1, U2, ... } &X <: auth{T1, T2, ... } &X`, 
+    We can combine this depth rule with the already existing width rule to yield a combined subtyping rule: `auth{U1, U2, ... } &X <: auth{T1, T2, ... } &X`, 
 whenever `∀T ∈ {T1, T2, ... }, ∃U ∈ {U1, U2, ... }, U <: T`. 
 
-So, for example, given an interface heirarchy: 
+    So, for example, given an interface heirarchy: 
 
-```cadence
-pub resource interface A {}
-pub resource interface B {}
-pub resource interface C: A {}
-pub resource interface D: B {}
-pub resource interface E: C, D {}
-pub resource R: E {}
-```
+    ```cadence
+    pub resource interface A {}
+    pub resource interface B {}
+    pub resource interface C: A {}
+    pub resource interface D: B {}
+    pub resource interface E: C, D {}
+    pub resource R: E {}
+    ```
 
-we would have `auth{E} &R <: auth{C} &R <: auth{A} &R <: &R` and `auth{E} &R <: auth{D} &R <: auth{B} &R <: &R`.
-It would also be the case that `auth{D, C} &R <: auth{A} &R` as well, because `C <: A`, and that `auth{E} &R <: auth{B, C} &R`, 
-beacuse `E <: B` and `E <: C`. 
+    we would have `auth{E} &R <: auth{C} &R <: auth{A} &R <: &R` and `auth{E} &R <: auth{D} &R <: auth{B} &R <: &R`.
+    It would also be the case that `auth{D, C} &R <: auth{A} &R` as well, because `C <: A`, and that `auth{E} &R <: auth{B, C} &R`, 
+    beacuse `E <: B` and `E <: C`. 
 
 * It is unclear how this should interact with the new attachments feature. Prior to this proposal a functional mental model 
 for attachments was to treat them as implicit type-disambiguated `pub` fields on the resource or struct to which they were attached.
