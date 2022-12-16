@@ -3,7 +3,7 @@ status: draft
 flip: NNN (do not set)
 authors: Daniel Sainati (daniel.sainati@dapperlabs.com)
 sponsor: Daniel Sainati (daniel.sainati@dapperlabs.com)
-updated: 2022-12-14
+updated: 2022-12-16
 ---
 
 # `auth` model changes
@@ -80,6 +80,38 @@ r.foo()
 let ref: auth &R = &r
 ref.foo()
 ```
+
+Note also that the interface implementation rules allow a composite to implement an `access(auth)` interface member with a `pub` 
+composite member, as this is less restrictive, but not the other way around, as this would allow the interface type to gain more access 
+to the composite than should be possible. So this would be acceptable:
+
+```cadence
+pub resource interface I {
+  access(auth) fun foo() 
+}
+
+pub resource R: I {
+  pub fun foo() {}
+}
+```
+
+since upcasting a value of type `&R` to type `&{I}` would not allow the reference to call any more functions. There is no similar concern 
+with downcasting a `&{I}` to a `&R` and gaining the ability to call `foo`, because `foo` is declared as `pub` on `R`, and we treat the
+access control declarations on the concrete composite as the "source of truth" for the value's access control at runtime. 
+
+while this is not:
+
+```cadence
+pub resource interface I {
+  pub fun foo() 
+}
+
+pub resource R: I {
+  access(auth) fun foo() {}
+}
+```
+
+since if this were to typecheck, anybody with a `&R` reference could upcast it to `&{I}` and thus gain the ability to call `foo`. 
 
 ### Safely Downcastable References
 
@@ -206,15 +238,7 @@ to call `pub` members like `withdraw` unless those methods were updated to be `a
 
 ## Prior Art
 
-Does the proposed idea/feature exist in other systems and 
-what experience has their community had?
-
-This section is intended to encourage you as an author to think about the 
-lessons learned from other projects and provide readers of the proposal 
-with a fuller picture.
-
-It's fine if there is no prior art; your ideas are interesting regardless of 
-whether or not they are based on existing work.
+* This section needs filling out; would love to know if there are any languages out there doing something similar to this. 
 
 ## Questions and Discussion Topics
 
