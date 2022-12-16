@@ -291,7 +291,7 @@ would be visible with such a reference.
 
     This would then be combined with a change to the attachment access rules: rather than `v[A]` always returning an `&A?` value, the type of the returned
     attachment reference would depend on the type of `v`. If `v` is not a reference, or a reference with `auth` access to `A`'s `base` type, then `v[A]` would return
-    an `(auth &A)?` typed, while if the reference did not have access to `A`'s `base`, then the access would be a regular `&A?` type. This would prevent 
+    an `(auth &A)?` type, while if the reference did not have access to `A`'s `base`, then the access would be a regular `&A?` type. This would prevent 
     the attachment from accessing `auth` members on its `base` unless the specific instance of that base to which it is attached has the proper `auth` access.
 
     So, for example, given the following declaration:
