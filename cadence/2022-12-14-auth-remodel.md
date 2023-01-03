@@ -118,7 +118,7 @@ since if this were to typecheck, anybody with a `&R` reference could upcast it t
 The second, more complex part of this proposal, is a change to the behavior of references to allow the `auth` modifier not to 
 refer to the entire referenced value, but to the specific set of interfaces to which the referenced value has `auth` permissions. 
 To express this, the `auth` keyword can now be used with similar syntax to that of restricted types: `auth{T1, T2, ...}`, where the `T`s
-in the curly braces denote the interface types to which that reference has `auth` acccess. This permits these references
+in the curly braces denote the interface types to which that reference has `auth` access. This permits these references
 to access `auth` members on the interfaces to which they have `auth` access. So, for example, given three interface definitions and 
 a composite definition:
 
@@ -219,7 +219,7 @@ pub resource Vault: Provider, Receiver, Balance {
 ```
 
 Then, someone with a `&{Balance}` reference would be able to cast this to a `&{Receiver}` and call `deposit` on it. 
-They would also be able to cast this to a `&Vault` refrence, but because this reference is non-`auth` for `Provider`,
+They would also be able to cast this to a `&Vault` reference, but because this reference is non-`auth` for `Provider`,
 they would be unable to call the `withdraw` function. However, if a user possessed a `auth{Provider} &{Balance}` reference, 
 they would be able to cast this to `auth{Provider} &{Provider}` and call `withdraw`.
 
@@ -243,7 +243,7 @@ to call `pub` members like `withdraw` unless those methods were updated to be `a
 ## Questions and Discussion Topics
 
 * The upcoming proposed changes to permit interfaces to conform to other interfaces will necessarily change the subtyping rules
-for `auth` refrences, as it would no longer be sufficient to compare the sets for the two `auth` references just based on membership. 
+for `auth` references, as it would no longer be sufficient to compare the sets for the two `auth` references just based on membership. 
 The membership check would still exist, but it would function as a width subtyping rule, in addition to a depth rule based on
 interface chains. I.e. it would be the case that for two auth references, `auth{U} &X <: auth{T1} &X`, if `U <: T`. 
 
@@ -263,7 +263,7 @@ whenever `∀T ∈ {T1, T2, ... }, ∃U ∈ {U1, U2, ... }, U <: T`.
 
     we would have `auth{E} &R <: auth{C} &R <: auth{A} &R <: &R` and `auth{E} &R <: auth{D} &R <: auth{B} &R <: &R`.
     It would also be the case that `auth{D, C} &R <: auth{A} &R` as well, because `C <: A`, and that `auth{E} &R <: auth{B, C} &R`, 
-    beacuse `E <: B` and `E <: C`. 
+    because `E <: B` and `E <: C`. 
 
 * It is unclear how this should interact with the new attachments feature. Prior to this proposal a functional mental model 
 for attachments was to treat them as implicit type-disambiguated `pub` fields on the resource or struct to which they were attached.
@@ -272,7 +272,7 @@ would have access to functions like `withdraw` via the `base` reference) if they
 would be visible with such a reference. 
 
     One simple approach would be to allow attachments to be accessed only on values that have `auth` access to the attachment's `base` type. 
-    I.e. given an `attachment A for I`, `v[A]` would be permissable when `v` has type `auth{I} &R` but not when `v` is just a regular `&R`, 
+    I.e. given an `attachment A for I`, `v[A]` would be permissible when `v` has type `auth{I} &R` but not when `v` is just a regular `&R`, 
     or even an `&{I}`. Functionally this would mean that attachments would become `auth` fields in the mental model described above. 
 
     This approach is simple but very restrictive. In the motivating `KittyHat` use case for example, only users with an `auth`-reference 
@@ -283,7 +283,7 @@ would be visible with such a reference.
 
     An alternative would be to implicitly parameterize the attachment's `auth` access over the `auth` access of its base value. In this model, 
     attachments would remain `pub` accessible, but would themselves permit the declaration of `auth` members. The `base` value, 
-    which currently is simply a `&R` reference for an attachment `attachment A for R` in any of `A`'s member functions, would now have it's `auth`-ness
+    which currently is simply a `&R` reference for an attachment `attachment A for R` in any of `A`'s member functions, would now have its `auth`-ness
     depend on the `auth`-ness of the member function in question. In a member declaration `access(auth) fun foo()` in `A`, the `base` variable would have
     type `auth &R`, while in a member declaration in `A` `pub fun bar()`, `base` would just be an `&R`. This would effectively mean that the `auth`-access
     members of the `base` would only be available to the attachment author in `auth`-access members on the attachment. Similarly, in an `auth`-access 
