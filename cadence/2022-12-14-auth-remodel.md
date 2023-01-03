@@ -240,6 +240,36 @@ to call `pub` members like `withdraw` unless those methods were updated to be `a
 
 * This section needs filling out; would love to know if there are any languages out there doing something similar to this. 
 
+## Alternatives Considered
+
+A previous version of this idea involved having the implementors of concrete types like `Vault` specify in their interface conformance list
+which interfaces were `auth` for that concrete type. So, for example, one would write something like (using strawman syntax):
+
+```cadence
+pub resource interface A {
+    pub fun foo()
+}
+pub resource interface B {
+    pub fun bar()
+}
+pub resource R: auth A, B {
+    pub fun foo() {}
+    pub fun bar() {}
+}
+```
+
+Then, given a reference of type `&R`, only the functions and fields defined on `B` would be accessible, since the reference is non-`auth`. In 
+order to access the fields and functions on `A`, one would need an `auth` reference to `R`, since `A` was declared as `auth` in `R`'s conformances. 
+
+The upside of this proposal was that there was a single decision point, in that the implementor of the concrete type needed to decide which interfaces
+would be `auth` and which would be not, and the creators of the interfaces and the users of the concrete types would have no decisions to make other than 
+whether or not the reference they are creating should be `auth` or not.
+
+The drawback of this compared to the proposal in this FLIP is that it lacks granularity; an entire interface must be made `auth` or not, whereas in the 
+FLIP's proposal individual functions can be declared with `auth` access or `pub` access. This allows the creator of the interface (and then later, the
+creator of the reference type) to exert more fine-grained control over what is accessible. By contrast, the implementor of the concrete type has little
+to no say in the access-control on their value beyond selecting which interfaces they wish to conform to. 
+
 ## Questions and Discussion Topics
 
 * The upcoming proposed changes to permit interfaces to conform to other interfaces will necessarily change the subtyping rules
