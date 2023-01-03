@@ -28,7 +28,7 @@ that there would be no safety concerns in doing so; it should be possible to cal
 reference a user possesses. 
 
 The proposed change is designed to overcome this limitation by allowing developers to directly mark which fields and functions
-are dangerous and should be access-limited (using the new `auth` keyword), and which should be generally available to anyone. 
+should be access-limited (using the new `auth` keyword), and which should be generally available to anyone. 
  
 ## User Benefit
 
@@ -156,8 +156,8 @@ be expandable via casting. The subtyping rules for `auth` references is that `au
 is a superset of `{T1, T2, ... }`, or equivalently `∀T ∈ {T1, T2, ... }, ∃U ∈ {U1, U2, ... }, T = U`.
 
 As such, `auth{A, B} &R` would be statically upcastable to `auth{A} &R`, since this decreases the permissions on the 
-reference, it would require a runtime cast to go from `auth{A} &R` to `auth{A, B} &R`, as this cast would only succeed if the underlying 
-runtime value was `auth` for both `A` and `B`. So in the code below:
+reference, it would require a runtime cast to go from `auth{A} &R` to `auth{A, B} &R`, as this cast would only succeed if the 
+runtime type of the reference was `auth` for both `A` and `B`. So in the code below:
 
 ```cadence
 fun foo(ref: &R): Bool {
