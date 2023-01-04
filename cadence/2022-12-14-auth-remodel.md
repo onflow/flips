@@ -153,7 +153,8 @@ downcast. With the proposed change, all reference types can be downcast or upcas
 
 However, the `auth`-ness (and the set of interfaces for which the reference is `auth`) would not change on downcasting, nor would that set
 be expandable via casting. The subtyping rules for `auth` references is that `auth {U1, U2, ... } &X <: auth {T1, T2, ... } &X` whenever `{U1, U2, ... }`
-is a superset of `{T1, T2, ... }`, or equivalently `∀T ∈ {T1, T2, ... }, ∃U ∈ {U1, U2, ... }, T = U`.
+is a superset of `{T1, T2, ... }`, or equivalently `∀T ∈ {T1, T2, ... }, ∃U ∈ {U1, U2, ... }, T = U`. Of course, all `auth` reference types
+would remain subtypes of all non-`auth` reference types as before. 
 
 As such, `auth{A, B} &R` would be statically upcastable to `auth{A} &R`, since this decreases the permissions on the 
 reference, it would require a runtime cast to go from `auth{A} &R` to `auth{A, B} &R`, as this cast would only succeed if the 
