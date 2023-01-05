@@ -1,4 +1,4 @@
-# Title of FLIP
+# Identify Errant Access Nodes
 
 | Status        | WIP                                            |
 :-------------- |:---------------------------------------------------- |
@@ -13,27 +13,27 @@ Define an off-chain process to alert node operators of potentially malicious nod
 
 ## Motivation
 
-The launch of permissionless Access nodes is an important step in the continued decentralization of Flow, but creates an opportunity for byzantine nodes on the staking identity table to send malicious traffic to staked nodes.
+The launch of permissionless Access nodes is an important step in the continued decentralization of Flow, but creates an opportunity for byzantine nodes on the [staking identity table](https://github.com/onflow/flow-core-contracts/blob/master/contracts/FlowIDTableStaking.cdc) to send malicious traffic to staked nodes.
 
-This FLIP is focused on how to inform node operators of potentially errant behavior at the network layer of registered nodes, while achieving the following goals:  
+**This FLIP is focused on how to inform node operators of potentially errant behavior at the network layer of registered nodes, while achieving the following goals:**  
 
 1. Preserve the neutrality of node operators
 2. Provide clarity on channels of communication
 3. Define expectations of the service account admin resource
 4. Define a process that is resistant to an ongoing attack vector
 
-Currently, during the registration for all node types, the network address must be defined and is publicly shared to facilitate network communication. As this information is known, the potential exists for any node to be subjected to general malicious behavior such as DDoS attacks from any IP. This concern is mitigated through best practices based on the infrastructure setup of individual nodes.
+Currently, during the registration for all node types, the network address must be defined and is [publicly shared](https://flowscan.org/staking/nodes) to facilitate network communication. As this information is known, the potential exists for any node to be subjected to general malicious behavior such as DDoS attacks from any IP. This concern is mitigated through best practices based on the infrastructure setup of individual nodes.
 
 The registration of nodes to the identity table allows node software to determine how incoming traffic should be handled by other nodes, with two possible scenarios:
 
 1. The sender is not registered on the identity table, and no further processing will take place.
 2. The sender is registered on the identity table, and the node software will attempt to process network traffic through the application layer, performing tasks such as confirming proper tx construction and signature verification.
 
-Because network traffic from a registered node is granted further access down the application layer, errant behavior may cause performance degradation for all users or potential liveness failures.
+**Because network traffic from a registered node is granted further access down the application layer, errant behavior may cause performance degradation for all users or potential liveness failures.**
 
 Depending on the severity and responsiveness of the errant node, separate adjudication by the community and action from the service account may be required.
 
-It should be clearly noted that defining or addressing potentially malicious behavior at the application layer, such as spamming transactions with invalid signatures or that lead to invalid state transitions, is out of scope. The proposed changes in FLIP-660 would better serve to mitigate those concerns.
+_It should be clearly noted that defining or addressing potentially malicious behavior at the application layer, such as spamming transactions with invalid signatures or that lead to invalid state transitions, is out of scope. The proposed changes in [FLIP-660](https://github.com/onflow/flow/blob/master/flips/20211007-transaction-fees.md) would better serve to mitigate those concerns._
 
 ## User Benefit
 
@@ -43,24 +43,24 @@ By providing this framework, inadvertent issues can be communicated to network p
 
 The primary purpose of this design is to inform the community of errant network traffic that may be causing performance degradation or liveness issues. 
 
-It is very possible that network traffic that might be considered spam is actually a result of a misconfigured node, or a bug in the node software, rather than intentionally malicious behavior. As such, it is important to clarify that this process does not intend to assign intent, and instead focuses on presenting the community with relevant information.
+It is very possible that network traffic that might be considered spam is actually a result of a misconfigured node, or a bug in the node software, rather than intentionally malicious behavior. **As such, it is important to clarify that this process does not intend to assign intent, and instead focuses on presenting the community with relevant information.**
 
-Definition of errant networking traffic: Unusually large amounts of network traffic that is unrelated to expected application layer data. 
+**Definition of errant networking traffic:** Unusually large amounts of network traffic that is unrelated to expected application layer data. 
 
 This excludes improperly formed transactions or transactions that lead to an invalid state transition, as these may be economically rational in a permissionless system, and should be addressed through other means, such as variable inclusion fees.
 
 In the instance where a registered node is sending errant network traffic to other nodes the following steps may be taken:
 
 1. Individual node operators can take action to protect network liveness through standard network monitoring and infrastructure best practices. This may include blocking specific network addresses through firewall rules, rate-limiting, etc. until the issue can be resolved.
-2. Node Operators can attempt to contact the errant node through any available channels and communicate the concern to be resolved. 
-3. In the case of an unresponsive node operator, a governance FLIP can be created by a node operator, providing information such as:
-    a. The Network Address of the Reporting Node
-    b. The Network Address of the Errant Node
-    c. If feasible, provide evidence of the errant network traffic
-    d. Attempts at resolution with the errant node.
-Based on this information, the administrator of the service account should create a proposal where the community can decide if the errant node should be removed from the identity table.
+2. Node Operators can attempt to contact the errant node through any available channels and communicate the concern to be resolved.
+3. In the case of an unresponsive node, a governance FLIP can be created by a node operator, providing information such as:
+    + The Network Address of the Reporting Node
+    + The Network Address of the Errant Node
+    + If feasible, provide evidence of the errant network traffic
+    + Attempts at resolution with the errant node.
+4. Based on this information, the administrator of the service account should create a proposal where the community can decide if the errant node should be removed from the identity table. This is to prevent the currently limited number of Access Node slots available from being occupied by errant nodes. 
 
-Only the service account has the authority to remove nodes from the identity table. If the service account removes a node from the identity table, it will not take effect until the next epoch, which could be up to 7 days. After the removal is complete, other nodes in the network will automatically stop attempting to process traffic from the removed node in the application layer.
+**Only the service account has the authority to remove nodes from the identity table.** If the service account removes a node from the identity table, it will not take effect until the next epoch, which could be up to 7 days. After the removal is complete, other nodes in the network will automatically stop attempting to process traffic from the removed node in the application layer. This removal also creates space for a new Access Node to join the identity table.
 
 
 ### Drawbacks
