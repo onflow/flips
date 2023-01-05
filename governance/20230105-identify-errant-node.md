@@ -26,8 +26,8 @@ Currently, during the registration for all node types, the network address must 
 
 The registration of nodes to the identity table allows node software to determine how incoming traffic should be handled by other nodes, with two possible scenarios:
 
-The sender is not registered on the identity table, and no further processing will take place.
-The sender is registered on the identity table, and the node software will attempt to process network traffic through the application layer, performing tasks such as confirming proper tx construction and signature verification.
+1. The sender is not registered on the identity table, and no further processing will take place.
+2. The sender is registered on the identity table, and the node software will attempt to process network traffic through the application layer, performing tasks such as confirming proper tx construction and signature verification.
 
 Because network traffic from a registered node is granted further access down the application layer, errant behavior may cause performance degradation for all users or potential liveness failures.
 
@@ -51,13 +51,13 @@ This excludes improperly formed transactions or transactions that lead to an inv
 
 In the instance where a registered node is sending errant network traffic to other nodes the following steps may be taken:
 
-Individual node operators can take action to protect network liveness through standard network monitoring and infrastructure best practices. This may include blocking specific network addresses through firewall rules, rate-limiting, etc. until the issue can be resolved.
-Node Operators can attempt to contact the errant node through any available channels and communicate the concern to be resolved. 
-In the case of an unresponsive node operator, a governance FLIP can be created by a node operator, providing information such as:
-The Network Address of the Reporting Node
-The Network Address of the Errant Node
-If feasible, provide evidence of the errant network traffic
-Attempts at resolution with the errant node.
+1. Individual node operators can take action to protect network liveness through standard network monitoring and infrastructure best practices. This may include blocking specific network addresses through firewall rules, rate-limiting, etc. until the issue can be resolved.
+2. Node Operators can attempt to contact the errant node through any available channels and communicate the concern to be resolved. 
+3. In the case of an unresponsive node operator, a governance FLIP can be created by a node operator, providing information such as:
+    a. The Network Address of the Reporting Node
+    b. The Network Address of the Errant Node
+    c. If feasible, provide evidence of the errant network traffic
+    d. Attempts at resolution with the errant node.
 Based on this information, the administrator of the service account should create a proposal where the community can decide if the errant node should be removed from the identity table.
 
 Only the service account has the authority to remove nodes from the identity table. If the service account removes a node from the identity table, it will not take effect until the next epoch, which could be up to 7 days. After the removal is complete, other nodes in the network will automatically stop attempting to process traffic from the removed node in the application layer.
