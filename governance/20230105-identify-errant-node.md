@@ -17,10 +17,10 @@ The launch of permissionless Access nodes is an important step in the continued 
 
 This FLIP is focused on how to inform node operators of potentially errant behavior at the network layer of registered nodes, while achieving the following goals:  
 
-Preserve the neutrality of node operators
-Provide clarity on channels of communication
-Define expectations of the service account admin resource
-Define a process that is resistant to an ongoing attack vector
+1. Preserve the neutrality of node operators
+2. Provide clarity on channels of communication
+3. Define expectations of the service account admin resource
+4. Define a process that is resistant to an ongoing attack vector
 
 Currently, during the registration for all node types, the network address must be defined and is publicly shared to facilitate network communication. As this information is known, the potential exists for any node to be subjected to general malicious behavior such as DDoS attacks from any IP. This concern is mitigated through best practices based on the infrastructure setup of individual nodes.
 
