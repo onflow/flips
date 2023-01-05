@@ -122,7 +122,7 @@ in the curly braces denote the interface types to which that reference has `auth
 to access `auth` members on the interfaces to which they have `auth` access. So, for example, given three interface definitions and 
 a composite definition:
 
-```cadecnce
+```cadence
 pub resource interface A { 
     access(auth) fun foo()
 }
@@ -381,7 +381,7 @@ would be visible with such a reference.
 they contain. We could restrict the `public` domain to be only for non-`auth` Capabilities, while the `private` domain would be only
 for `auth`-references, which would prevent accidentally allowing anybody to get access to your `withdraw` function, for example.
 
-* After this chnage, it is unclear whether restricted type would still have a place in the type system of Cadence. Consider that
+* After this change, it is unclear whether restricted type would still have a place in the type system of Cadence. Consider that
 now, with interface types specified both in the `auth` portion of the reference as well in the actual referenced type, there is an
 element of redundancy in a type like `auth{T} &{T}` which is unnecessary. Users will be likely to instead specify reference with something like
 `let ref = &r as auth{Provider} &Vault` instead of `let ref = &r as auth{Provider} &{Provider, Receiver}` given that downcasting is now possible.
@@ -389,4 +389,4 @@ element of redundancy in a type like `auth{T} &{T}` which is unnecessary. Users 
     Restricted types would now only really be used as "interface sets", rather than restrictions, to specify that that a type should have a certain set
     of functionality; e.g. writing a function that operates over all `Provider` types, for example. We can support this use case without restricted types,
     however, the outside part `T` of the restricted type `T{Us}` is no longer necessary. One improvement we could make as part of this change would be to
-    remove "restriced types" and replace them with a "interface set" or "intersection" type that only contains the `{Us}`.
+    remove "restricted types" and replace them with a "interface set" or "intersection" type that only contains the `{Us}`.
