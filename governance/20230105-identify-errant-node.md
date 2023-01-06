@@ -72,27 +72,12 @@ Opens the opportunity for censorship of valid traffic or griefing of honest netw
 1. Node operators continue to individually address network spamming, and no further action is taken.
 
 **Pros:** 
-+ As the majority of the network is currently permissioned, if an issue did occur the identity may be known and addresed directly
-+ No additional 
++ As the majority of the network is currently permissioned, if an issue did occur the identity may be known and addresed directly, without requiring additional steps.
 
 **Cons:**
 + As the number of permissionless nodes increases, there should not be an expectation of known identities or proper behavior from node operators
 + If there is a [limited number](https://github.com/onflow/flips/blob/main/protocol/20220719-automated-slot-assignment.md) of slots available for Access Nodes, without staking requirements or a process for potential removal, these slots may be taken by operators who have no intention of performing their tasks properly.
-+ In extreme cases, node operators may find it eassier to rotate their network address, but this requires submitting a tx and does not take place until the next epoch.
 
-2. Use only application layer disincentives to address potential liveness attacks
-**Pros:**
-
-**Cons:**
-+ There would be no way to levy inclusion fees on Access Nodes sending bad network data to collection or consensus nodes because execution must occur to actually change state.
-
-
-
-3. Using an on-chain alerting mechanism.
-The ability to use an on-chain reporting tool could be restricted by the same attack it is trying to report
-
-Network peering on other protocols is limited to a subset of the overall network.
-Not currently enough nodes to 
 
 ### Note
 
@@ -106,7 +91,6 @@ The proposal would be an off-chain process, and would not have an impact on the 
 
 Example of FLIP for errant node:
 
-
 ### User Impact
 
 Prior to permissionless Access Nodes, the identity of node providers was always known to the Flow team. Having a trusted set greatly mitigated the concerns of errant nodes, and if there were an issue this could be relayed directly to the Flow team for follow-up with other node operators.
@@ -115,8 +99,7 @@ With the launch of permissionless Access nodes, the node operator is neither kno
 
 ## Related Issues
 
-What related issues do you consider out of scope for this proposal, 
-but could be addressed independently in the future?
+[FLIP-1057](https://forum.onflow.org/t/flip-1057-automated-slot-assignment/3447/) addressing how Access Nodes join the identity table when the number of intentions have exceeded the number of slots available.  
 
 ## Prior Art
 
@@ -124,8 +107,6 @@ but could be addressed independently in the future?
 
 In general, protocols often rely on public communication channels to coordinate network actions. 
 + [Example](https://twitter.com/SolanaStatus/status/1520508697100926977)
-
-This proposal would be similar, though through a different channel.
 
 **Protocol Changes:**
 
