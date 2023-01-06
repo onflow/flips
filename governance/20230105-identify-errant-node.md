@@ -65,18 +65,20 @@ In the instance where a registered node is sending errant network traffic to oth
 
 ### Drawbacks
 
-Opens the opportunity for censorship of valid traffic or griefing of honest network participants.
+This process does not propose any bonded fee by staked nodes to report an errant node. This could create an opportunity for the censorship of valid traffic or grieifing of honest network participants by other nodes without penalty. This is the primary reason this FLIP focuses on informing the network of behavior, rather than on enforcing behavior directly.
+
+When staked nodes become fully permissionless, it should be a consideration to require a minimum bond amount when raising an alert on an errant node.  
 
 ### Alternatives Considered
 
 1. Node operators continue to individually address network spamming, and no further action is taken.
 
-**Pros:** 
-+ As the majority of the network is currently permissioned, if an issue did occur the identity may be known and addresed directly, without requiring additional steps.
+    **Pros:** 
+    + As the majority of the network is currently permissioned, if an issue did occur the identity may be known and addresed directly, without requiring additional steps.
 
-**Cons:**
-+ As the number of permissionless nodes increases, there should not be an expectation of known identities or proper behavior from node operators
-+ If there is a [limited number](https://github.com/onflow/flips/blob/main/protocol/20220719-automated-slot-assignment.md) of slots available for Access Nodes, without staking requirements or a process for potential removal, these slots may be taken by operators who have no intention of performing their tasks properly.
+    **Cons:**
+    + As the number of permissionless nodes increases, there should not be an expectation of known identities or proper behavior from node operators
+    + If there is a [limited number](https://github.com/onflow/flips/blob/main/protocol/20220719-automated-slot-assignment.md) of slots available for Access Nodes, without staking requirements or a process for potential removal, these slots may be taken by operators who have no intention of performing their tasks properly.
 
 
 ### Note
