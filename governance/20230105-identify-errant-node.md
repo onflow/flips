@@ -91,7 +91,7 @@ The proposal would be an off-chain process, and would not have an impact on the 
 
 ### Tutorials and Examples
 
-Example of FLIP for errant node:
+Example of FLIP for errant node: (coming soon)
 
 ### User Impact
 
