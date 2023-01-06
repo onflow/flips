@@ -26,8 +26,8 @@ Currently, during the registration for all node types, the network address must 
 
 The registration of nodes to the identity table allows node software to determine how incoming traffic should be handled by other nodes, with two possible scenarios:
 
-1. The sender is not registered on the identity table, and no further processing will take place.
-2. The sender is registered on the identity table, and the node software will attempt to process network traffic through the application layer, performing tasks such as confirming proper tx construction and signature verification.
+1. The sender **is not** registered on the identity table, and no further processing will take place.
+2. The sender **is** registered on the identity table, and the node software will attempt to process network traffic through the application layer, performing tasks such as confirming proper tx construction and signature verification.
 
 **Because network traffic from a registered node is granted further access down the application layer, errant behavior may cause performance degradation for all users or potential liveness failures.**
 
@@ -60,42 +60,35 @@ In the instance where a registered node is sending errant network traffic to oth
     + Attempts at resolution with the errant node.
 4. Based on this information, the administrator of the service account should create a proposal where the community can decide if the errant node should be removed from the identity table. This is to prevent the currently limited number of Access Node slots available from being occupied by errant nodes. 
 
-**Only the service account has the authority to remove nodes from the identity table.** If the service account removes a node from the identity table, it will not take effect until the next epoch, which could be up to 7 days. After the removal is complete, other nodes in the network will automatically stop attempting to process traffic from the removed node in the application layer. This removal also creates space for a new Access Node to join the identity table.
+**Only the service account has the authority to remove nodes from the identity table.** If the service account removes a node from the identity table, it will not take effect until the next epoch, which could be up to 7 days. After the removal is complete, other nodes in the network will automatically stop attempting to process traffic from the removed node in the application layer. This removal also creates space for a new Access Node to join the identity table if there is only a limited number of slots available. 
 
 
 ### Drawbacks
 
-Why should this *not* be done? What negative impact does it have?
-
-Opens the opportunity for censorship of valid traffic or griefing of network participants.
-
-Distinguishing spam from economically rational actions assumes intent and threatens the credible neutrality of the network. (example here).
-
-The launch of permissionless deployment of smart contracts increases the complexity of distinguishing spam, as a bad contract design may encourage behavior that is unexpected. 
-
-NFT drops, Maximum Extractable Value (MEV), 
-
-And inclusion fees should be dynamic and include surge pricing to mitigate this concern.
-
-This proposal does not resolve the underlying concern that dynamic inclusion fees are meant to address.
+Opens the opportunity for censorship of valid traffic or griefing of honest network participants.
 
 ### Alternatives Considered
 
-* Make sure to discuss the relative merits of alternatives to your proposal.
+1. Node operators continue to individually address network spamming, and no further action is taken.
 
-Node operators continue to individually address network spamming.
-As the majority of the network is currently permissioned, if an issue did occur the identity may be known, and it is possible that the network spam is unintentionally being sent.
-Blocking network traffic outright would need to be some firewall rule based on the infrastructure setup.
-Potential rate limiting
-As the majority of the network is currently permissioned, if an issue did occur the identity may be known. 
-Use only application layer disincentives to effectively address potential liveness attacks
-There would be no way to levy inclusion fees at the collection or consensus level because execution must occur to change state
+**Pros:** 
++ As the majority of the network is currently permissioned, if an issue did occur the identity may be known and addresed directly
++ No additional 
 
-How far down the stack can you get before encountering inclusion fees? At least until the execution node.
+**Cons:**
++ As the number of permissionless nodes increases, there should not be an expectation of known identities or proper behavior from node operators
++ If there is a [limited number](https://github.com/onflow/flips/blob/main/protocol/20220719-automated-slot-assignment.md) of slots available for Access Nodes, without staking requirements or a process for potential removal, these slots may be taken by operators who have no intention of performing their tasks properly.
++ In extreme cases, node operators may find it eassier to rotate their network address, but this requires submitting a tx and does not take place until the next epoch.
 
-Changing IP address, requires submitting a tx and does not take place until the next epoch.This will take time, and it’s better to be prepared in case an issue does occur.
+2. Use only application layer disincentives to address potential liveness attacks
+**Pros:**
 
-An on-chain alerting mechanism.
+**Cons:**
++ There would be no way to levy inclusion fees on Access Nodes sending bad network data to collection or consensus nodes because execution must occur to actually change state.
+
+
+
+3. Using an on-chain alerting mechanism.
 The ability to use an on-chain reporting tool could be restricted by the same attack it is trying to report
 
 Network peering on other protocols is limited to a subset of the overall network.
@@ -127,34 +120,19 @@ but could be addressed independently in the future?
 
 ## Prior Art
 
-Does the proposed idea/feature exist in other systems and 
-what experience has their community had?
+**Methods of Communication:**
 
-This section is intended to encourage you as an author to think about the 
-lessons learned from other projects and provide readers of the proposal 
-with a fuller picture.
+In general, protocols often rely on public communication channels to coordinate network actions. 
++ [Example](https://twitter.com/SolanaStatus/status/1520508697100926977)
 
-It's fine if there is no prior art; your ideas are interesting regardless of 
-whether or not they are based on existing work.
+This proposal would be similar, though through a different channel.
 
-https://twitter.com/SolanaStatus/status/1520508697100926977 
-https://twitter.com/SolanaStatus/status/1520554250803236867 
-https://twitter.com/SolanaStatus/status/1520579688648876042
+**Protocol Changes:**
 
-Solana Stake-Weighted Quality of Service: https://github.com/solana-labs/solana/pull/25406 
+In some networks, protocol changes have been implemented to prioritize and filter traffic based on the stake weight of nodes. As Access Nodes do not currently require stake, this method could not be used, but may be an option if Access Nodes were to require some stake in the future. 
++ [Solana Stake-Weighted Quality of Service](https://github.com/solana-labs/solana/pull/25406)
 
 
 ## Questions and Discussion Topics
 
-This proposal is meant to serve as a starting point for community discussions on how potential liveness issues can be identified and addressed at the networking layer. We strongly encourage feedback and 
-
-Reference Links
-Permissionless Access Nodes
-Static inclusion fee 
-Flow Fees
-Identity Table
-FLIP-660
-Node software confirms node entry into the identity table
-Epoch
-Function to update network address
-Publicly known address
+This proposal is meant to serve as a starting point for community discussions on how potential liveness issues can be identified and addressed at the networking layer. We strongly encourage feedback from the Flow community and other node operators.
