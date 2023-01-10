@@ -237,6 +237,30 @@ by the authors in order to be used. This is because all code previously written 
 a `&{Balance}` would prevent them from calling `pub` functions on `Provider` like `withdraw`), would become invalidated, allowing everyone 
 to call `pub` members like `withdraw` unless those methods were updated to be `auth`.  
 
+### Rollout
+
+There are two cases that need handling to migrate to this new paradigm: contracts and data. 
+
+Existing references in storage (i.e. `Capability` values) would need to be migrated, as they would no longer be semantically valid under the new system. 
+The simplest way to do this would be to ensure existing capabilities stay usable by converting existing capabilities and links' reference types to auth references, 
+e.g. `Capability<&Vault{Provider}>` -> `Capability<auth{Provider} &Vault>`. Specifically, all existing references would become `auth` with regard to their entire borrow type,
+as this does not add any additional power to these `Capability` values that did not previously exist. For example, `&Vault{Provider}` previously had the ability to call `withdraw`,
+which was `pub` on `Provider`. After this change, it will still have the ability to call `withdraw`, as it is now `access(auth)` on `Provider`, but the reference now has `auth`
+access to that type.
+
+However, this does not handle the previously mentioned problem wherein existing contracts become vulnerable to exploitation, as all their `pub` functions would become
+accessible to anybody with any kind of reference to a contract or resource. 
+
+One option to handle this case would be to "freeze" all existing contracts, preventing calling any code defined in them or interacting with their data until they are updated
+at least once after the release of this feature (it's also possible that given the large number of breaking changes being released with Cadence 1.0, this restriction would happen
+automatically and would not need special handling). Developers would be encouraged to give their contracts and resource the proper `auth` access modifiers. The concern here is that this would
+require a large amount of coordination between developers; if Alice defined an interface that needed a function to be made `auth`, Bob's contract that implemented Alice's interface would 
+not be updatable to the new `auth` model until after Alice's contract was updated.
+
+Another option would be to implement a "versioning" system for references. In this solution, legacy references created prior to Cadence 1.0 would retain the old behavior; they would be 
+unable to be downcast, and would become `auth` for their borrow type as described above. New references created after the release of 1.0 would have the new behavior described in this FLIP. 
+However, we would likely want some way to "upgrade" a legacy reference to a new reference, and the method for doing so is not clear at this time. 
+
 ## Prior Art
 
 * This section needs filling out; would love to know if there are any languages out there doing something similar to this. 
