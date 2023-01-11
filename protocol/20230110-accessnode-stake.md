@@ -33,7 +33,7 @@ that reflects its importance to the network and prevents certain vulnerabilities
 in the smart contract that are a result of having a zero minimum stake requirement.
 
 The Flow community is getting ready [to allow anyone to run access nodes
-without permission from the consensus committee](https://github.com/onflow/flips/blob/main/protocol/20220719-automated-slot-assignment.md). As part of these changes,
+without permission from the service account committee](https://github.com/onflow/flips/blob/main/protocol/20220719-automated-slot-assignment.md). As part of these changes,
 the staking smart contract will be updated to remove the approval restriction
 for access nodes and introduce the concept of a candidate node list,
 which refers to nodes who have registered and committed sufficient stake
@@ -70,8 +70,7 @@ This change would benefit users operating Access Node by preventing attackers fr
 
 ## Design Proposal
 
-Remove any restrictions in the contract that do not count access nodes
-as staked or prevent them from staking, such as in
+Remove any restrictions in the contract that do not account for access nodes committing tokens as stake, such as in
 `getTotalStaked`](https://github.com/onflow/flow-core-contracts/blob/master/contracts/FlowIDTableStaking.cdc#L1406)
 
 The service account committee runs a transaction, 
