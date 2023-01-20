@@ -251,15 +251,14 @@ access to that type.
 However, this does not handle the previously mentioned problem wherein existing contracts become vulnerable to exploitation, as all their `pub` functions would become
 accessible to anybody with any kind of reference to a contract or resource. 
 
-One option to handle this case would be to "freeze" all existing contracts, preventing calling any code defined in them or interacting with their data until they are updated
+To handle this case we woukld "freeze" all existing contracts, preventing calling any code defined in them or interacting with their data until they are updated
 at least once after the release of this feature (it's also possible that given the large number of breaking changes being released with Cadence 1.0, this restriction would happen
-automatically and would not need special handling). Developers would be encouraged to give their contracts and resource the proper `auth` access modifiers. The concern here is that this would
-require a large amount of coordination between developers; if Alice defined an interface that needed a function to be made `auth`, Bob's contract that implemented Alice's interface would 
-not be updatable to the new `auth` model until after Alice's contract was updated.
+automatically and would not need special handling). Developers would be encouraged to give their contracts and resource the proper `auth` access modifiers. 
 
-Another option would be to implement a "versioning" system for references. In this solution, legacy references created prior to Cadence 1.0 would retain the old behavior; they would be 
-unable to be downcast, and would become `auth` for their borrow type as described above. New references created after the release of 1.0 would have the new behavior described in this FLIP. 
-However, we would likely want some way to "upgrade" a legacy reference to a new reference, and the method for doing so is not clear at this time. 
+There are a few ways we could encourage developers to update their code and prevent security issues in the mean time. One would be to change subtyping such that `auth` methods 
+cannot subtype `pub` methods, so that when the NFT standards are updated to use `auth`, any concrete NFTs implementing them will need to change their implementations to use `auth` 
+in order to type check. An even more extreme option would be to remove support for the `pub` alias for `access(all)`, essentially breaking every single existing contract in 
+order to guarantee nothing is implicitly broken.
 
 ## Prior Art
 
