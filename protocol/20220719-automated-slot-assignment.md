@@ -1,5 +1,5 @@
 ---
-status: Draft
+status: Proposed
 flip: FLIP-1057
 title: Automated Slot Assignment
 forum: https://forum.onflow.org/t/flip-1057-automated-slot-assignment/3447
