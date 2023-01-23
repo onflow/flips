@@ -37,7 +37,7 @@ The changes required to allow automatic staking slot assignment will be within t
 
 ### Access Nodes
 
-- Minimum stake: 100
+- Minimum stake: 0
 - Maximum slots per epoch: 20
 - Maximum total slots: TBD
 - Allowlist: empty
@@ -58,12 +58,6 @@ Items this proposal doesn’t address:
 - Automated Slashing - Under this proposal, nodes will only be removed from the staking list when they are manually slashed by the Flow service account, or when that operator removes their stake. Research into opportunities for automated slashing conditions will come in the future.
 - Expansion of the number of nodes in the network per node type. Adding more nodes to the network is still primarily bottlenecked by the specifics of current Flow implementation. The structure proposed allows the maximum counts of nodes to be set by the service account to match the number of nodes feasible supported by the current implementation.
 - Staking Auctions - As more node types become byzantine fault-tolerant it will become important that node selection is done in a fully permissionless manner. At that time this proposal can be extended with a proposal for implementing an Auction mechanic, where instead of nodes being randomly assigned to free staking slots, the slots can be auctioned off.
-
-## Implementation changes
-- Instead of a per-week admission of new nodes, the current implementation would just have a fixed maximum number of available slots.
-- The current implementation has one large allow list and a single registration list across all node types.
-- Access nodes have been coded to skip the allow-list check.
-- The minimum stake for Access Nodes has been increased to 100 FLOW (see [FLIP](https://github.com/onflow/flips/pull/57)), while the maximum slots per epoch for access nodes has been fixed at 5.
 
 ## **Resources**
 
