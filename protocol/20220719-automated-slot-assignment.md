@@ -38,7 +38,7 @@ The changes required to allow automatic staking slot assignment will be within t
 ### Access Nodes
 
 - Minimum stake: 100
-- Maximum slots per epoch: 20
+- Maximum slots per epoch: 5
 - Maximum total slots: TBD
 - Allowlist: empty
 
