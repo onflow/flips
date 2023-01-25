@@ -25,7 +25,7 @@ of the network, they serve an important role of being the point
 of access for transaction submission, state querying, and more.
 They are also capable of malicious behavior that can negatively affect
 users and the network. Until now, access nodes have been staked
-in the identity table, but haven't been required
+in the identity table (i.e. they register their node ID, address and keys with the network), but haven't been required
 to actually stake any FLOW to participate.
 
 This FLIP proposes increasing the access node staking minimum to a value
@@ -40,7 +40,7 @@ which refers to nodes who have registered and committed sufficient stake
 to be a node operator for the next epoch,
 but aren't currently in the identity table.
 
-The protocol uses this list to randomly select nodes to be node operators,
+The protocol uses this list to randomly select nodes to participate in the network,
 and there is a limit to the number of nodes who can be candidate nodes for each role.
 Because access nodes' minimum stake requirement is currently zero,
 an attacker can register any number of nodes until the limit is reached,
@@ -71,7 +71,7 @@ This change would benefit users operating Access Node by preventing attackers fr
 ## Design Proposal
 
 Remove any restrictions in the contract that do not account for access nodes committing tokens as stake, such as in
-`getTotalStaked`](https://github.com/onflow/flow-core-contracts/blob/master/contracts/FlowIDTableStaking.cdc#L1406)
+[`getTotalStaked`](https://github.com/onflow/flow-core-contracts/blob/master/contracts/FlowIDTableStaking.cdc#L1406)
 
 The service account committee runs a transaction, 
 [`set_minimums.cdc`](https://github.com/onflow/flow-core-contracts/blob/master/transactions/idTableStaking/admin/change_minimums.cdc)
