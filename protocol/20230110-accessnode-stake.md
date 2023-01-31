@@ -40,7 +40,7 @@ which refers to nodes who have registered and committed sufficient stake
 to be a node operator for the next epoch,
 but aren't currently in the identity table.
 
-The protocol uses this list to randomly select nodes to participate in the network,
+The protocol uses this list to randomly select nodes from the candidate list to participate in the network,
 and there is a limit to the number of nodes who can be candidate nodes for each role.
 Because access nodes' minimum stake requirement is currently zero,
 an attacker can register any number of nodes until the limit is reached,
