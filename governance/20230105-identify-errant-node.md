@@ -1,6 +1,6 @@
 # Identify Errant Access Nodes
 
-| Status        | WIP                                            |
+| Status        | Drafted                                            |
 :-------------- |:---------------------------------------------------- |
 | **FLIP #**    | [64](https://github.com/onflow/flow/pull/64) (update when you have PR #)|
 | **Author(s)** | James Lofgren (76029851+TheUnseen12@users.noreply.github.com)           | 
