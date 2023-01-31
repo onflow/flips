@@ -34,7 +34,7 @@ The launch of permissionless ANs is an important step in the continued decentral
 
 The node software can be viewed at a very high-level as divided into two parts - the networking layer which handles the peer-to-peer communication and the application layer which handles the node specific business logic. For consensus nodes for instance, the application layer would entail proposing blocks, voting on blocks, sealing blocks etc. Protection already exists at the networking layer to reject traffic from any node that is not on the identity list (non-registered node). Hence, if a sender is not registered in the identity table, all messages from it will be dropped by the other nodes in the network.
 
-![Untitled document.jpg](https://s3-us-west-2.amazonaws.com/secure.notion-static.com/42642094-38ef-42aa-8d33-c5d3ad29f071/Untitled_document.jpg)
+![Errant AN image](Errant AN image.jpg)
 
 However, if a permissionlessly onboarded AN spams other nodes with unnecessary messages, it could waste resources (CPU, network, memory etc.) of other staked nodes in the system. The application layer is robust enough to reject malicious traffic from any node (registered or non-registered) such that the security of the chain is not affected. In such a scenario however, network liveness could be impacted.
 
