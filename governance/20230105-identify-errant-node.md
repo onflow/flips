@@ -1,4 +1,4 @@
-# Identify Errant Access Nodes
+# Identifying and Ejecting Errant Access Nodes
 
 | Status        | Drafted                                            |
 :-------------- |:---------------------------------------------------- |
