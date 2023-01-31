@@ -1,5 +1,5 @@
 ---
-status: Proposed 
+status: Accepted 
 flip: FLIP-57
 authors: Joshua Hannan (joshua.hannan@dapperlabs.com)
 sponsor: Joshua Hannan (joshua.hannan@dapperlabs.com) 
