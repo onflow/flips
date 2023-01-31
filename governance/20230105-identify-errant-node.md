@@ -3,7 +3,7 @@
 | Status        | WIP                                            |
 :-------------- |:---------------------------------------------------- |
 | **FLIP #**    | [NNN](https://github.com/onflow/flow/pull/NNN) (update when you have PR #)|
-| **Author(s)** | James Lofgren (james.lofgren@coinbase.com)           | 
+| **Author(s)** | James Lofgren (76029851+TheUnseen12@users.noreply.github.com)           | 
 | **Sponsor**   | Kshitij Chaudhary (kshitij.chaudhary@dapperlabs.com); Vishal Changrani (vishal.changrani@dapperlabs.com) |
 | **Updated**   | 2023-01-31                                           |
 
