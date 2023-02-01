@@ -23,7 +23,7 @@ The number of nodes selected in each epoch will be in conjunction with the maxim
 
 **Access Node Configurations**
 
-- Minimum stake: 100 Flow
+- Minimum stake: 100 FLOW
 - Maximum permissionless AN slots per epoch: 5 (revisable)
 - Maximum total slots in FlowIDTable: Limited
 - Allow list: Not Applicable
