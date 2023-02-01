@@ -2,7 +2,7 @@
 
 | Status        | Proposed                                            |
 :-------------- |:---------------------------------------------------- |
-| **FLIP #**    | NNNN [TBC]
+| **FLIP #**    | 66
 | **Author(s)** | Kshitij Chaudhary (kshitij.chaudhary@dapperlabs.com) | 
 | **Sponsor**   | Kshitij Chaudhary (kshitij.chaudhary@dapperlabs.com) |
 | **Updated**   | 2023-02-01 
