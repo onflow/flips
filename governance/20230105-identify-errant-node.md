@@ -1,6 +1,6 @@
 # Identifying and Ejecting Errant Access Nodes
 
-| Status        | Drafted                                            |
+| Status        | Proposed                                            |
 :-------------- |:---------------------------------------------------- |
 | **FLIP #**    | [64](https://github.com/onflow/flow/pull/64)
 | **Author(s)** | James Lofgren (76029851+TheUnseen12@users.noreply.github.com)           | 
