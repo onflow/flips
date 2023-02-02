@@ -174,6 +174,73 @@ let ref2 = &r as auth(A, B, C) &R
 `foo` would return `true` when called with `ref2`, because the runtime type of `ref` in the failable cast is a subtype of `auth(A, B) &R`, since
 `{A, B, C}` is a superset of `{A, B}`, but would return `false` when called with `ref1`, since `{A}` is not a superset of `{A, B}`.
 
+#### Attachments and Entitlements
+
+Attachments would interact with entitlements and access-limited members in a nuanced but intuitive manner, where the attachment's entitlements
+are implicitly parameterized over the entitlements of its `base` value. Attachments would remain `pub` accessible, but would permit the declaration of `access`-limited members. 
+The `base` value, which currently is simply a `&R` reference for an attachment `attachment A for R` in any of `A`'s member functions, would now have its entitlements
+depend on the entitlements of the member function in question. In a member declaration `access(X) fun foo()` in `A`, the `base` variable would have
+type `auth(X) &R`, while in a member declaration in `A` `pub fun bar()`, `base` would just be an `&R`. This would effectively mean that the `access(X)`
+members of the `base` would only be available to the attachment author in `auth(X)` members on the attachment. Similarly, in an `access(X)` 
+member, the `self` reference of the attachment `A` would be `auth(X) &A`, while in a `pub`-access member it would just be `&A`.
+
+This would then be combined with a change to the attachment access rules: rather than `v[A]` always returning an `&A?` value, the type of the returned
+attachment reference would depend on the type of `v`. If `v` is not a reference, or a reference with an entitlement to `A`'s `base` type, then `v[A]` would return
+an `(auth(base) &A)?` type, while if the reference did not have access to `A`'s `base`, then the access would be a regular `&A?` type. This would prevent 
+the attachment from accessing `auth` members on its `base` unless the specific instance of that base to which it is attached has the proper entitlement.
+
+So, for example, given the following declaration:
+```cadence
+attachment CurrencyConverter for Provider {
+    pub fun convert(_ amount: UFix64): UFix64 {
+        // ...
+    }
+
+    pub fun convertVault(_ vault: @Vault): @Vault {
+        vault.balance = self.convert(vault.balance)
+        return <-vault
+    }
+
+    access(Provider) fun withdraw(_ amount: UFix64): @Vault {
+        let convertedAmount = self.convert(amount) 
+        // this is permitted because this function has an entitlement to `Provider`
+        // on the attachment, and thus `base` has type `auth(Provider) &{Provider}`
+        return <-base.withdraw(amount: amount) 
+    }
+
+    pub fun deposit (from: @Vault) {
+        // cast is permissable under the new reference casting rules
+        let baseReceiverOptional = base as? &{Receiver}
+        if let baseReceiver = baseReceiverOptional {
+            let convertedVault <- self.convertVault(<-from) 
+            // this is ok because `deposit` has `pub` access
+            baseReceiver.deposit(from: <-convertedVault)
+        }
+    }
+
+    pub fun maliciousStealingFunctionA(_ amount: UFix64): @Vault {
+        // This fails statically, as `self` here is just an `&A` 
+        // because `maliciousStealingFunctionA`'s access is `pub`,
+        // and therefore `self` does not have access to `withdraw`
+        return <-self.withdraw(amount)
+    }
+
+    pub fun maliciousStealingFunctionB(_ amount: UFix64): @Vault {
+        // This fails statically, as `base` here is just an `&{Provider}` 
+        // because `maliciousStealingFunctionB`'s access is `pub`,
+        // and therefore `base` does not have access to `withdraw`
+        return <-base.withdraw(amount: amount) 
+    }
+}
+
+let vault <- attach CurrencyConverter() to <-create Vault(balance: /*...*/)
+let authVaultReference = &vault as auth(Provider) &Vault
+let converterRef = authVaultReference[CurrencyConverter]! // has type auth(Provider) &CurrencyConverter, can call `withdraw`
+
+let otherVaultReference = &vault as auth(Balance) &Vault
+let otheConverterRef = otherVaultReference[CurrencyConverter]! // has type &CurrencyConverter, cannot call `withdraw`
+```
+
 ### Drawbacks
 
 This dramatically increases the complexity of references and capabilities by requiring users to think not only about which types they 
@@ -308,87 +375,6 @@ whenever `∀T ∈ {T1, T2, ... }, ∃U ∈ {U1, U2, ... }, U <: T`.
     It would also be the case that `auth(D, C) &R <: auth(A) &R` as well, because `C <: A`, and that `auth(E) &R <: auth(B, C) &R`, 
     because `E <: B` and `E <: C`. 
 
-* It is unclear how this should interact with the new attachments feature. Prior to this proposal a functional mental model 
-for attachments was to treat them as implicit type-disambiguated `pub` fields on the resource or struct to which they were attached.
-The existing behavior preventing downcasting of non-`auth` references would prevent someone from accessing a `Vault`-attachment (which 
-would have access to functions like `withdraw` via the `base` reference) if they only possessed a `&{Balance}`, since only `Balance`-attachments
-would be visible with such a reference. 
-
-    One simple approach would be to allow attachments to be accessed only on values that have an entitlement to the attachment's `base` type. 
-    I.e. given an `attachment A for I`, `v[A]` would be permissible when `v` has type `auth(I) &R` but not when `v` is just a regular `&R`, 
-    or even an `&{I}`. Functionally this would mean that attachments would become `access(<BASE>)` fields in the mental model described above. 
-
-    This approach is simple but very restrictive. In the motivating `KittyHat` use case for example, only users with an `auth`-reference giving them an entitlement 
-    to the `Kitty` resource would be able to use the `Hat`. This would either make the `KittyHat` almost unusable without giving out
-    an unreasonable amount of authority to users, or require the author of the `Kitty` to write a specific interface describing the set of 
-    features they would want an attachment to be able to use. This latter case would completely defeat the point of attachments in the first place,
-    since they are designed to be usable with no prior planning from the base value's author. 
-
-    An alternative would be to implicitly parameterize the attachment's entitlements over the entitlements of its base value. In this model, 
-    attachments would remain `pub` accessible, but would themselves permit the declaration of `access`-limited members. The `base` value, 
-    which currently is simply a `&R` reference for an attachment `attachment A for R` in any of `A`'s member functions, would now have its `auth`-ness
-    depend on the `auth`-ness of the member function in question. In a member declaration `access(X) fun foo()` in `A`, the `base` variable would have
-    type `auth(X) &R`, while in a member declaration in `A` `pub fun bar()`, `base` would just be an `&R`. This would effectively mean that the `access(X)`
-    members of the `base` would only be available to the attachment author in `auth(X)` members on the attachment. Similarly, in an `access(X)` 
-    member, the `self` reference of the attachment `A` would be `auth(X) &A`, while in a `pub`-access member it would just be `&A`.
-
-    This would then be combined with a change to the attachment access rules: rather than `v[A]` always returning an `&A?` value, the type of the returned
-    attachment reference would depend on the type of `v`. If `v` is not a reference, or a reference with an entitlement to `A`'s `base` type, then `v[A]` would return
-    an `(auth(base) &A)?` type, while if the reference did not have access to `A`'s `base`, then the access would be a regular `&A?` type. This would prevent 
-    the attachment from accessing `auth` members on its `base` unless the specific instance of that base to which it is attached has the proper entitlement.
-
-    So, for example, given the following declaration:
-    ```cadence
-    attachment CurrencyConverter for Provider {
-        pub fun convert(_ amount: UFix64): UFix64 {
-            // ...
-        }
-
-        pub fun convertVault(_ vault: @Vault): @Vault {
-            vault.balance = self.convert(vault.balance)
-            return <-vault
-        }
-
-        access(Provider) fun withdraw(_ amount: UFix64): @Vault {
-            let convertedAmount = self.convert(amount) 
-            // this is permitted because this function has an entitlement to `Provider`
-            // on the attachment, and thus `base` has type `auth(Provider) &{Provider}`
-            return <-base.withdraw(amount: amount) 
-        }
-
-        pub fun deposit (from: @Vault) {
-            // cast is permissable under the new reference casting rules
-            let baseReceiverOptional = base as? &{Receiver}
-            if let baseReceiver = baseReceiverOptional {
-                let convertedVault <- self.convertVault(<-from) 
-                // this is ok because `deposit` has `pub` access
-                baseReceiver.deposit(from: <-convertedVault)
-            }
-        }
-
-        pub fun maliciousStealingFunctionA(_ amount: UFix64): @Vault {
-            // This fails statically, as `self` here is just an `&A` 
-            // because `maliciousStealingFunctionA`'s access is `pub`,
-            // and therefore `self` does not have access to `withdraw`
-            return <-self.withdraw(amount)
-        }
-
-        pub fun maliciousStealingFunctionB(_ amount: UFix64): @Vault {
-            // This fails statically, as `base` here is just an `&{Provider}` 
-            // because `maliciousStealingFunctionB`'s access is `pub`,
-            // and therefore `base` does not have access to `withdraw`
-            return <-base.withdraw(amount: amount) 
-        }
-    }
-
-    let vault <- attach CurrencyConverter() to <-create Vault(balance: /*...*/)
-    let authVaultReference = &vault as auth(Provider) &Vault
-    let converterRef = authVaultReference[CurrencyConverter]! // has type auth(Provider) &CurrencyConverter, can call `withdraw`
-
-    let otherVaultReference = &vault as auth(Balance) &Vault
-    let otheConverterRef = otherVaultReference[CurrencyConverter]! // has type &CurrencyConverter, cannot call `withdraw`
-    ```
-
 * One potential change this unlocks would be to restrict the creation of Capabilities based on the entitlements
 they contain. We could restrict the `public` domain to be only for non-entitled Capabilities, while the `private` domain would be only
 for `auth`-references, which would prevent accidentally allowing anybody to get access to your `withdraw` function, for example.
@@ -402,3 +388,37 @@ element of redundancy in a type like `auth(T) &{T}` which is unnecessary. Users 
     of functionality; e.g. writing a function that operates over all `Provider` types, for example. We can support this use case without restricted types,
     however, the outside part `T` of the restricted type `T{Us}` is no longer necessary. One improvement we could make as part of this change would be to
     remove "restricted types" and replace them with a "interface set" or "intersection" type that only contains the `{Us}`.
+
+* One large open question about this is whether entitlements should be a separate language object from interfaces. The current proposal allows users to use
+interfaces as entitlements, since currently in Cadence one of the functions of interfaces is to limit access the way that entitlements will do. However, 
+there isn't any strong theoretical link between the polymorphism behavior of interfaces and this access control functionality, so it might be possible to 
+separate these concepts and allow declaring entitlements separately. An example of such functionality might look like this:
+
+    ```cadence
+    contract FungibleToken {
+        resource interface Provider {
+            entitlement withdraw
+
+            access(withdraw) fun withdraw(amount: UFix64): @Vault {}
+        }
+
+        resource interface Receiver {
+            access(all) fun deposit(from: @Vault) {}
+        }
+
+        resource interface Balance {
+            access(all) fun balance(): UFix64 {}
+        }
+
+        resource interface Vault: Provider, Receiver, Balance {}
+    }
+
+    resource FlowVault: FungibleToken.Vault {
+        access(FungibleToken.Provider.withdraw) fun withdraw(amount: UFix64): @Vault {}
+        access(all) fun deposit(from: @Vault) {}
+        access(all) fun balance(): UFix64 {}
+
+    access(class) fun internalUtilityFunction(otherVault: auth(FungibleToken.Provider.withdraw)& FlowVault) {}
+    access(FungibleToken.Provider.withdraw) fun withdrawAll(): @Vault {}
+    }
+    ```
