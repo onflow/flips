@@ -11,7 +11,7 @@ updated: 2022-12-16
 ## Objective
 
 This FLIP proposes two major changes to the language:
-1) The addition of a new access modifier on contracts, structs and resources: `auth`
+1) The addition of new, bespoke access modifiers on fields and functions in composites and interfaces
 2) A change to the behavior of reference types to add granular authority restrictions to specific interfaces, and allow safe downcasting
 
 ## Motivation
@@ -28,7 +28,7 @@ that there would be no safety concerns in doing so; it should be possible to cal
 reference a user possesses. 
 
 The proposed change is designed to overcome this limitation by allowing developers to directly mark which fields and functions
-should be access-limited (using the new `auth` keyword), and which should be generally available to anyone. 
+should be access-limited using these new bespoke modifiers, and which should be generally available to anyone. 
  
 ## User Benefit
 
@@ -39,28 +39,31 @@ or because they are trying to write a generic method that works, say, on any `NF
 It would also increase safety, as we would be able to do additional checking on the values and types to which users create capabilities. 
 For example, it is currently possible for a user to (presumably accidentally) create a public Capability directly to a `Vault` object, 
 rather than a Capability to a `&{Balance, Receiver}` restricted type as is intended. With these changes, such a Capability still would 
-not be subject to having its funds `withdraw`n, as this `Vault` Capability would not be `auth`. In order to have access to an `auth`
-method like `withdraw`, the user would need to explicitly create the Capability with an `auth` reference, and we could enforce statically
+not be subject to having its funds `withdraw`n, as this `Vault` Capability would not be `auth(Provider)`. In order to have access to an `auth`
+method like `withdraw`, the user would need to explicitly create the Capability with an `auth(Provider)` reference, and we could enforce statically
 (or warn) that `auth` reference capabilies should not be stored publicly. 
 
 ## Design Proposal
 
-### `auth` fields
+### entitlement-access fields
 
 The first portion of this FLIP proposes to add a new access control modifier to field and function declarations in composite types:
-`access(auth)`, which allows access to either the immediate owner of the resource (i.e. anybody who has the actual resource value),
-or someone with an `auth` reference to the type on which the member is defined. 
+`access(X)`, which allows access to either the immediate owner of the resource (i.e. anybody who has the actual resource value),
+or someone with an `auth(X)` reference to the type on which the member is defined. The `X` here can be the name of any interface (including 
+the interface currently being defined), in the inheritance chain of the composite or interface being defined. We call this `X` the "entitlement"
+associated with the field or function, and a reference of `auth(X)` type is considered to possess an `X` entitlement. 
 
 Like `access(contract)` and `access(account)`, this new modifier sits exactly between `pub` and `priv` (or equivalently `access(self)`) 
-in permissiveness; it allows less access than `pub`, but strictly more than `priv`, as an `auth` field or function can be used anywhere 
+in permissiveness; it allows less access than `pub`, but strictly more than `priv`, as an `access(X)` field or function can be used anywhere 
 in the implementation of the composite. To see why, consider that `self` is necessarily of the same type as the composite, meaning 
-that the access rules defined above allow any `auth` members to be accessed on it. 
+that the access rules defined above allow any `access(I)` members to be accessed on it. 
 
 As such, the following would be prohibited statically:
 
 ```cadence
-pub resource R {
-    access(auth) fun foo() { ... }
+pub resource interface I {} 
+pub resource R: I {
+    access(I) fun foo() { ... }
 }
 let r: &R = // ...
 r.foo()
@@ -69,37 +72,36 @@ r.foo()
 while all of these would be permitted:
 
 ```cadence
-pub resource R {
-    access(auth) fun foo() { ... }
+pub resource interface I {} 
+pub resource R: I {
+    access(I) fun foo() { ... }
     pub fun bar() {
         self.foo()
     }
 }
 let r: @R = // ...
 r.foo()
-let ref: auth &R = &r
+let ref: auth(I) &R = &r
 ref.foo()
 ```
 
-Note also that the interface implementation rules allow a composite to implement an `access(auth)` interface member with a `pub` 
-composite member, as this is less restrictive, but not the other way around, as this would allow the interface type to gain more access 
-to the composite than should be possible. So this would be acceptable:
+Note also that while the normal interface implementation subtyping rules would allow a composite to implement an `access(X)` interface member with a `pub` 
+composite member, as this is less restrictive, in order to prevent users from accidentally surrendering authority and security this way, we prevent this statically. 
+As such, the below code would not typecheck.
 
 ```cadence
 pub resource interface I {
-  access(auth) fun foo() 
+  access(I) fun foo() 
 }
 
 pub resource R: I {
-  pub fun foo() {}
+  pub fun foo() {} // must also be access(I)
 }
 ```
 
-since upcasting a value of type `&R` to type `&{I}` would not allow the reference to call any more functions. There is no similar concern 
-with downcasting a `&{I}` to a `&R` and gaining the ability to call `foo`, because `foo` is declared as `pub` on `R`, and we treat the
-access control declarations on the concrete composite as the "source of truth" for the value's access control at runtime. 
+If users would like to expose an access-limited function to `pub` users, they can do so by wrapping the `access(X)` function in a `pub` function. 
 
-while this is not:
+As with normal subtyping, this would also be statically rejected:
 
 ```cadence
 pub resource interface I {
@@ -107,7 +109,7 @@ pub resource interface I {
 }
 
 pub resource R: I {
-  access(auth) fun foo() {}
+  access(I) fun foo() {}
 }
 ```
 
@@ -116,18 +118,17 @@ since if this were to typecheck, anybody with a `&R` reference could upcast it t
 ### Safely Downcastable References
 
 The second, more complex part of this proposal, is a change to the behavior of references to allow the `auth` modifier not to 
-refer to the entire referenced value, but to the specific set of interfaces to which the referenced value has `auth` permissions. 
-To express this, the `auth` keyword can now be used with similar syntax to that of restricted types: `auth{T1, T2, ...}`, where the `T`s
-in the curly braces denote the interface types to which that reference has `auth` access. This permits these references
-to access `auth` members on the interfaces to which they have `auth` access. So, for example, given three interface definitions and 
-a composite definition:
+refer to the entire referenced value, but to the specific set of interfaces to which the referenced value has `auth` permissions (the reference's entitlements). 
+To express this, the `auth` keyword can now be used with similar syntax to that of restricted types: `auth(T1, T2, ...)`, where the `T`s
+in the parentheses denote the entitlements. This permits these references to access `access(T)` members for any `T` entitlement they possess. 
+So, for example, given three interface definitions and a composite definition:
 
 ```cadence
 pub resource interface A { 
-    access(auth) fun foo()
+    access(A) fun foo()
 }
 pub resource interface B { 
-    access(auth) fun bar()
+    access(B) fun bar()
 }
 pub resource interface C { 
     pub fun baz()
@@ -137,12 +138,12 @@ pub resource R: A, B, C {
 }
 ```
 
-a value of type `auth{A} &R` would be able to access `foo`, because the reference has `auth` access to `A`, but not `bar`, because
-it does not have `auth` access to `B`. However, `baz` would be accessible on this reference, since it has `pub` access. 
+a value of type `auth(A) &R` would be able to access `foo`, because the reference has the `A` entitlement, but not `bar`, because
+it does not have an entitlement for `B`. However, `baz` would be accessible on this reference, since it has `pub` access. 
 
-The interfaces over which a reference can be authorized must be a supertypes of the underlying referenced type: it is nonsensical,
-for example, to express a type like `auth{A} &{B}`, since `A` and `B` are disjoint interfaces that do not share a heirarchy, and thus
-the `auth` access to `A` granted by this reference would have no effect. As such, given a list of `I`s in a reference `auth{I1, I2} &T`, 
+A reference's entitlements must be a supertypes of the underlying referenced type: it is nonsensical,
+for example, to express a type like `auth(A) &{B}`, since `A` and `B` are disjoint interfaces that do not share a heirarchy, and thus
+the entitlement to `A` granted by this reference would have no effect. As such, given a list of `I`s in a reference `auth(I1, I2) &T`, 
 we require that `I` appear in the conformance heirarchy of `T` if it is a composite type, or that `I` exists in the restriction set of `T` 
 if it is a restricted type. 
 
@@ -151,41 +152,38 @@ non-`auth` references could not be downcast at all, since the sole purpose of th
 downcast. With the proposed change, all reference types can be downcast or upcast the same way any other type would be. So, for example
 `&{A} as! &R` would be valid, as would `&AnyResource as? &{B, C}` or `&{A} as? &{B}`, using the hierarchy defined above. 
 
-However, the `auth`-ness (and the set of interfaces for which the reference is `auth`) would not change on downcasting, nor would that set
-be expandable via casting. The subtyping rules for `auth` references is that `auth {U1, U2, ... } &X <: auth {T1, T2, ... } &X` whenever `{U1, U2, ... }`
-is a superset of `{T1, T2, ... }`, or equivalently `∀T ∈ {T1, T2, ... }, ∃U ∈ {U1, U2, ... }, T = U`. Of course, all `auth` reference types
+However, the `auth`-ness (and the reference's set of entitlements) would not change on downcasting, nor would that set
+be expandable via casting. The subtyping rules for `auth` references is that `auth (U1, U2, ... ) &X <: auth (T1, T2, ... ) &X` whenever `{U1, U2, ...}`
+is a superset of `{T1, T2, ...}`, or equivalently `∀T ∈ {T1, T2, ...}, ∃U ∈ {U1, U2, ...}, T = U`. Of course, all `auth` reference types
 would remain subtypes of all non-`auth` reference types as before. 
 
-As such, `auth{A, B} &R` would be statically upcastable to `auth{A} &R`, since this decreases the permissions on the 
+As such, `auth(A, B) &R` would be statically upcastable to `auth{A} &R`, since this decreases the permissions on the 
 reference, it would require a runtime cast to go from `auth{A} &R` to `auth{A, B} &R`, as this cast would only succeed if the 
-runtime type of the reference was `auth` for both `A` and `B`. So in the code below:
+runtime type of the reference was entitled to both `A` and `B`. So in the code below:
 
 ```cadence
 fun foo(ref: &R): Bool {
-    let authRef = ref as? auth{A, B} &R
+    let authRef = ref as? auth(A, B) &R
     return authRef != nil 
 }
 let r <- create R()
-let ref1 = &r as auth{A} &R
-let ref2 = &r as auth{A, B, C} &R
+let ref1 = &r as auth(A) &R
+let ref2 = &r as auth(A, B, C) &R
 ```
 
-`foo` would return `true` when called with `ref2`, because the runtime type of `ref` in the failable cast is a subtype of `auth{A, B} &R`, since
+`foo` would return `true` when called with `ref2`, because the runtime type of `ref` in the failable cast is a subtype of `auth(A, B) &R`, since
 `{A, B, C}` is a superset of `{A, B}`, but would return `false` when called with `ref1`, since `{A}` is not a superset of `{A, B}`.
-
-Because only interface types can appear in the curly braces after the `auth` keyword, the `auth` keyword without a restriction set will denote
-full (unrestricted) `auth` access to the reference type. E.g. `auth &R` would be a reference with full `auth` access to `R`. 
 
 ### Drawbacks
 
 This dramatically increases the complexity of references and capabilities by requiring users to think not only about which types they 
-are creating the references with, but also which `auth` accesses they are providing on each reference they create. It also increases 
+are creating the references with, but also which entitlements they are providing on each reference they create. It also increases 
 the implementation complexity of the type system significantly by adding an additional dimension to the reference type's subtype heirarchy. 
 
 ### Best Practices
 
 This would encourage users to use the new `auth` access modifier to restrict access on their contracts and resources; and use different
-`auth` restriction sets to control access. 
+entitlement sets to control access. 
 
 ### Tutorials and Examples
 
@@ -193,7 +191,7 @@ With this new design, the `Vault` heirarchy might be written like so:
 
 ```cadence
 pub resource interface Provider {
-    access(auth) fun withdraw(amount: UFix64): @Vault {
+    access(Provider) fun withdraw(amount: UFix64): @Vault {
         // ...
     }
 }
@@ -209,7 +207,7 @@ pub resource interface Balance {
 }
 
 pub resource Vault: Provider, Receiver, Balance {
-    access(auth) fun withdraw(amount: UFix64): @Vault {
+    access(Provider) fun withdraw(amount: UFix64): @Vault {
         // ...
     }
     pub fun deposit(from: @Vault) {
@@ -220,14 +218,14 @@ pub resource Vault: Provider, Receiver, Balance {
 ```
 
 Then, someone with a `&{Balance}` reference would be able to cast this to a `&{Receiver}` and call `deposit` on it. 
-They would also be able to cast this to a `&Vault` reference, but because this reference is non-`auth` for `Provider`,
-they would be unable to call the `withdraw` function. However, if a user possessed a `auth{Provider} &{Balance}` reference, 
-they would be able to cast this to `auth{Provider} &{Provider}` and call `withdraw`.
+They would also be able to cast this to a `&Vault` reference, but because this reference is not entitled to `Provider`,
+they would be unable to call the `withdraw` function. However, if a user possessed a `auth(Provider) &{Balance}` reference, 
+they would be able to cast this to `auth(Provider) &Vault` and call `withdraw`.
 
 ### Compatibility
 
 This would not be backwards compatible with existing code, and thus would need to be part of the Stable Cadence release. 
-Most contracts would need to be audited and rewritten to use the new `auth` access modifier, as they would immediately become
+Most contracts would need to be audited and rewritten to use the new access modifiers, as they would immediately become
 vulnerable to having `pub` fields accessed from now-downcastable references. 
 
 ### User Impact
@@ -235,17 +233,17 @@ vulnerable to having `pub` fields accessed from now-downcastable references.
 There is a huge user impact to rolling out this change; every single contract would become invalid, and would need to be manually audited
 by the authors in order to be used. This is because all code previously written using the old model of access control (wherein giving someone
 a `&{Balance}` would prevent them from calling `pub` functions on `Provider` like `withdraw`), would become invalidated, allowing everyone 
-to call `pub` members like `withdraw` unless those methods were updated to be `auth`.  
+to call `pub` members like `withdraw` unless those methods were updated to be `access(Provider)`.  
 
 ### Rollout
 
 There are two cases that need handling to migrate to this new paradigm: contracts and data. 
 
 Existing references in storage (i.e. `Capability` values) would need to be migrated, as they would no longer be semantically valid under the new system. 
-The simplest way to do this would be to ensure existing capabilities stay usable by converting existing capabilities and links' reference types to auth references, 
-e.g. `Capability<&Vault{Provider}>` -> `Capability<auth{Provider} &Vault>`. Specifically, all existing references would become `auth` with regard to their entire borrow type,
+The simplest way to do this would be to ensure existing capabilities stay usable by converting existing capabilities and links' reference types to `auth` references, 
+e.g. `Capability<&Vault{Provider}>` -> `Capability<auth(Provider) &Vault>`. Specifically, all existing references would become `auth` with regard to their entire borrow type,
 as this does not add any additional power to these `Capability` values that did not previously exist. For example, `&Vault{Provider}` previously had the ability to call `withdraw`,
-which was `pub` on `Provider`. After this change, it will still have the ability to call `withdraw`, as it is now `access(auth)` on `Provider`, but the reference now has `auth`
+which was `pub` on `Provider`. After this change, it will still have the ability to call `withdraw`, as it is now `access(Provider)` on `Provider`, but the reference now has `auth(Provider)`
 access to that type.
 
 However, this does not handle the previously mentioned problem wherein existing contracts become vulnerable to exploitation, as all their `pub` functions would become
@@ -253,16 +251,7 @@ accessible to anybody with any kind of reference to a contract or resource.
 
 To handle this case we woukld "freeze" all existing contracts, preventing calling any code defined in them or interacting with their data until they are updated
 at least once after the release of this feature (it's also possible that given the large number of breaking changes being released with Cadence 1.0, this restriction would happen
-automatically and would not need special handling). Developers would be encouraged to give their contracts and resource the proper `auth` access modifiers. 
-
-There are a few ways we could encourage developers to update their code and prevent security issues in the mean time. One would be to change subtyping such that `auth` methods 
-cannot subtype `pub` methods, so that when the NFT standards are updated to use `auth`, any concrete NFTs implementing them will need to change their implementations to use `auth` 
-in order to type check. An even more extreme option would be to remove support for the `pub` alias for `access(all)`, essentially breaking every single existing contract in 
-order to guarantee nothing is implicitly broken.
-
-## Prior Art
-
-* This section needs filling out; would love to know if there are any languages out there doing something similar to this. 
+automatically and would not need special handling). Developers would be encouraged to give their contracts and resources the proper access modifiers. 
 
 ## Alternatives Considered
 
@@ -299,7 +288,7 @@ to no say in the access-control on their value beyond selecting which interfaces
 * The upcoming proposed changes to permit interfaces to conform to other interfaces will necessarily change the subtyping rules
 for `auth` references, as it would no longer be sufficient to compare the sets for the two `auth` references just based on membership. 
 The membership check would still exist, but it would function as a width subtyping rule, in addition to a depth rule based on
-interface chains. I.e. it would be the case that for two auth references, `auth{U} &X <: auth{T1} &X`, if `U <: T`. 
+interface chains. I.e. it would be the case that for two auth references, `auth(U) &X <: auth(T1) &X`, if `U <: T`. 
 
     We can combine this depth rule with the already existing width rule to yield a combined subtyping rule: `auth{U1, U2, ... } &X <: auth{T1, T2, ... } &X`, 
 whenever `∀T ∈ {T1, T2, ... }, ∃U ∈ {U1, U2, ... }, U <: T`. 
@@ -315,8 +304,8 @@ whenever `∀T ∈ {T1, T2, ... }, ∃U ∈ {U1, U2, ... }, U <: T`.
     pub resource R: E {}
     ```
 
-    we would have `auth{E} &R <: auth{C} &R <: auth{A} &R <: &R` and `auth{E} &R <: auth{D} &R <: auth{B} &R <: &R`.
-    It would also be the case that `auth{D, C} &R <: auth{A} &R` as well, because `C <: A`, and that `auth{E} &R <: auth{B, C} &R`, 
+    we would have `auth(E) &R <: auth(C) &R <: auth(A) &R <: &R` and `auth(E) &R <: auth(D) &R <: auth(B) &R <: &R`.
+    It would also be the case that `auth(D, C) &R <: auth(A) &R` as well, because `C <: A`, and that `auth(E) &R <: auth(B, C) &R`, 
     because `E <: B` and `E <: C`. 
 
 * It is unclear how this should interact with the new attachments feature. Prior to this proposal a functional mental model 
@@ -325,28 +314,28 @@ The existing behavior preventing downcasting of non-`auth` references would prev
 would have access to functions like `withdraw` via the `base` reference) if they only possessed a `&{Balance}`, since only `Balance`-attachments
 would be visible with such a reference. 
 
-    One simple approach would be to allow attachments to be accessed only on values that have `auth` access to the attachment's `base` type. 
-    I.e. given an `attachment A for I`, `v[A]` would be permissible when `v` has type `auth{I} &R` but not when `v` is just a regular `&R`, 
-    or even an `&{I}`. Functionally this would mean that attachments would become `auth` fields in the mental model described above. 
+    One simple approach would be to allow attachments to be accessed only on values that have an entitlement to the attachment's `base` type. 
+    I.e. given an `attachment A for I`, `v[A]` would be permissible when `v` has type `auth(I) &R` but not when `v` is just a regular `&R`, 
+    or even an `&{I}`. Functionally this would mean that attachments would become `access(<BASE>)` fields in the mental model described above. 
 
-    This approach is simple but very restrictive. In the motivating `KittyHat` use case for example, only users with an `auth`-reference 
+    This approach is simple but very restrictive. In the motivating `KittyHat` use case for example, only users with an `auth`-reference giving them an entitlement 
     to the `Kitty` resource would be able to use the `Hat`. This would either make the `KittyHat` almost unusable without giving out
     an unreasonable amount of authority to users, or require the author of the `Kitty` to write a specific interface describing the set of 
     features they would want an attachment to be able to use. This latter case would completely defeat the point of attachments in the first place,
     since they are designed to be usable with no prior planning from the base value's author. 
 
-    An alternative would be to implicitly parameterize the attachment's `auth` access over the `auth` access of its base value. In this model, 
-    attachments would remain `pub` accessible, but would themselves permit the declaration of `auth` members. The `base` value, 
+    An alternative would be to implicitly parameterize the attachment's entitlements over the entitlements of its base value. In this model, 
+    attachments would remain `pub` accessible, but would themselves permit the declaration of `access`-limited members. The `base` value, 
     which currently is simply a `&R` reference for an attachment `attachment A for R` in any of `A`'s member functions, would now have its `auth`-ness
-    depend on the `auth`-ness of the member function in question. In a member declaration `access(auth) fun foo()` in `A`, the `base` variable would have
-    type `auth &R`, while in a member declaration in `A` `pub fun bar()`, `base` would just be an `&R`. This would effectively mean that the `auth`-access
-    members of the `base` would only be available to the attachment author in `auth`-access members on the attachment. Similarly, in an `auth`-access 
-    member, the `self` reference of the attachment `A` would be `auth &A`, while in a `pub`-access member it would just be `&A`.
+    depend on the `auth`-ness of the member function in question. In a member declaration `access(X) fun foo()` in `A`, the `base` variable would have
+    type `auth(X) &R`, while in a member declaration in `A` `pub fun bar()`, `base` would just be an `&R`. This would effectively mean that the `access(X)`
+    members of the `base` would only be available to the attachment author in `auth(X)` members on the attachment. Similarly, in an `access(X)` 
+    member, the `self` reference of the attachment `A` would be `auth(X) &A`, while in a `pub`-access member it would just be `&A`.
 
     This would then be combined with a change to the attachment access rules: rather than `v[A]` always returning an `&A?` value, the type of the returned
-    attachment reference would depend on the type of `v`. If `v` is not a reference, or a reference with `auth` access to `A`'s `base` type, then `v[A]` would return
-    an `(auth &A)?` type, while if the reference did not have access to `A`'s `base`, then the access would be a regular `&A?` type. This would prevent 
-    the attachment from accessing `auth` members on its `base` unless the specific instance of that base to which it is attached has the proper `auth` access.
+    attachment reference would depend on the type of `v`. If `v` is not a reference, or a reference with an entitlement to `A`'s `base` type, then `v[A]` would return
+    an `(auth(base) &A)?` type, while if the reference did not have access to `A`'s `base`, then the access would be a regular `&A?` type. This would prevent 
+    the attachment from accessing `auth` members on its `base` unless the specific instance of that base to which it is attached has the proper entitlement.
 
     So, for example, given the following declaration:
     ```cadence
@@ -360,10 +349,10 @@ would be visible with such a reference.
             return <-vault
         }
 
-        access(auth) fun withdraw(_ amount: UFix64): @Vault {
+        access(Provider) fun withdraw(_ amount: UFix64): @Vault {
             let convertedAmount = self.convert(amount) 
-            // this is permitted because this function has `auth` access
-            // on the attachment, and thus `base` has type `auth{Provider} &{Provider}`
+            // this is permitted because this function has an entitlement to `Provider`
+            // on the attachment, and thus `base` has type `auth(Provider) &{Provider}`
             return <-base.withdraw(amount: amount) 
         }
 
@@ -393,21 +382,21 @@ would be visible with such a reference.
     }
 
     let vault <- attach CurrencyConverter() to <-create Vault(balance: /*...*/)
-    let authVaultReference = &vault as auth{Provider} &Vault
-    let converterRef = authVaultReference[CurrencyConverter]! // has type auth &CurrencyConverter, can call `withdraw`
+    let authVaultReference = &vault as auth(Provider) &Vault
+    let converterRef = authVaultReference[CurrencyConverter]! // has type auth(Provider) &CurrencyConverter, can call `withdraw`
 
-    let otherVaultReference = &vault as auth{Balance} &Vault
+    let otherVaultReference = &vault as auth(Balance) &Vault
     let otheConverterRef = otherVaultReference[CurrencyConverter]! // has type &CurrencyConverter, cannot call `withdraw`
     ```
 
-* One potential change this unlocks would be to restrict the creation of Capabilities based on the `auth`-ness of the reference
-they contain. We could restrict the `public` domain to be only for non-`auth` Capabilities, while the `private` domain would be only
+* One potential change this unlocks would be to restrict the creation of Capabilities based on the entitlements
+they contain. We could restrict the `public` domain to be only for non-entitled Capabilities, while the `private` domain would be only
 for `auth`-references, which would prevent accidentally allowing anybody to get access to your `withdraw` function, for example.
 
 * After this change, it is unclear whether restricted type would still have a place in the type system of Cadence. Consider that
 now, with interface types specified both in the `auth` portion of the reference as well in the actual referenced type, there is an
-element of redundancy in a type like `auth{T} &{T}` which is unnecessary. Users will be likely to instead specify reference with something like
-`let ref = &r as auth{Provider} &Vault` instead of `let ref = &r as auth{Provider} &{Provider, Receiver}` given that downcasting is now possible.
+element of redundancy in a type like `auth(T) &{T}` which is unnecessary. Users will be likely to instead specify reference with something like
+`let ref = &r as auth(Provider) &Vault` instead of `let ref = &r as auth(Provider) &{Provider, Receiver}` given that downcasting is now possible.
 
     Restricted types would now only really be used as "interface sets", rather than restrictions, to specify that that a type should have a certain set
     of functionality; e.g. writing a function that operates over all `Provider` types, for example. We can support this use case without restricted types,
