@@ -1,6 +1,6 @@
 ---
 status: Draft
-flip: <TBD>
+flip: #69
 author: Satyam Agrawal (satyam.agrawal@dapperlabs.com)
 updated: 2023-02-06
 --- 
@@ -8,21 +8,34 @@ updated: 2023-02-06
 
 ## Objective
 
-The purpose of this proposal is to enable Fungible Tokens (FTs) to be returned as vault types using the `FungibleToken.Receiver` interface. This would enhance the discoverability of FT vault types and reduce the likelihood of deposit vault failures. This is because the smart contract would now have prior knowledge of the acceptable vault types for deposits.
+The purpose of this proposal is to enable the Fungible Token (FT) `Receiver`s to return a list of vault types that they can accept.
+This would enhance the discoverability of FT vault types and reduce the likelihood of unintended failures in the deposit method because the deposited vault is not supported.
+This is because Cadence code trying to perform a deposit would now be able to query the acceptable vault types before making a deposit.
 
 ## Motivation
 
-The [Fungible Token Standard](https://github.com/onflow/flow-ft) mandates that a single Vault can only receive one type of token, meaning that a Flow Vault can only receive Flow tokens and a FUSD Vault can only receive FUSD tokens. Previously, there was no programmatic way to determine the type of token a `Vault` would receive, leading to the possibility of a failed deposit due to an incorrect assumption about the Vault's capabilities. To address this issue, a new proxy receiver, the [`FungibleTokenSwitchboard`](https://github.com/onflow/flow-ft/blob/master/contracts/FungibleTokenSwitchboard.cdc), was created to allow for the receipt of multiple Vault types through a single capability, the `Capability<&{FungibleToken.Receiver}>`. The [`SwitchboardPublic`](https://github.com/onflow/flow-ft/blob/4416bbe585629671d00d3acfa6fd8052104dd861/contracts/FungibleTokenSwitchboard.cdc#L37) interface also includes the `getVaultTypes` function, which partially solves the problem of `Vault` discoverability. However, this solution is not complete as the provided capability, `Capability<&{FungibleToken.Receiver}>`, can represent any type of receiver, including the `FungibleTokenSwitchboard`, a standard receiver, or another proxy receiver. As the Flow ecosystem expands, the number of proxy receivers developed to solve various problems is likely to increase.
+The [Fungible Token Standard](https://github.com/onflow/flow-ft) mandates that a single Vault can only receive one type of token, 
+meaning that a Flow Vault can only receive Flow tokens and a FUSD Vault can only receive FUSD tokens.
+The `FungibleToken.Receiver` interface, on the other hand, is designed to be able to accept any Vault type in its `deposit` method.
+Currently, there is no programmatic way to determine the type of token that a `Receiver` is able receive, leading to the possibility of a failed deposit due to an incorrect assumption about the Vault that the `Receiver` is linked to.
+To address this issue, a new proxy receiver, the [`FungibleTokenSwitchboard`](https://github.com/onflow/flow-ft/blob/master/contracts/FungibleTokenSwitchboard.cdc), was created to allow for the receipt of multiple Vault types through a single `FungibleToken.Receiver` capability.
+The [`SwitchboardPublic`](https://github.com/onflow/flow-ft/blob/4416bbe585629671d00d3acfa6fd8052104dd861/contracts/FungibleTokenSwitchboard.cdc#L37) interface also includes the `getVaultTypes` function, which solves the problem of knowing what vaults the receiver accepts, but only for the switchboard and only for code that is aware of the switchboard.
+This solution is not complete. A `{FungibleToken.Receiver}` capability can represent any type of receiver such the `FungibleTokenSwitchboard`, a standard receiver, or any other custom `Receiver`.
+As the Flow ecosystem expands, the number and complexity of proxy receivers developed to solve various problems is likely to increase.
 
-The current state of the `FungibleToken.Receiver` interface presents a challenge, as it does not offer a clear-cut method for determining the expected type of Vault that a particular receiver is able to receive. This issue is compounded by the fact that proxy receivers, which implement the `FungibleToken.Receiver` interface, can also return `Capability<&{FungibleToken.Receiver}>`. As a result, the true nature of the receiving Vault, whether it be derived from the standard Vault or a proxy receiver, remains ambiguous.
+The current `FungibleToken.Receiver` interface only contains the `deposit` method. It does not offer a clear-cut method for knowing the `Vault` types that a particular receiver is able to receive.
+This issue is compounded by the fact that proxy receivers, which implement the `FungibleToken.Receiver` interface, can also return `Capability<&{FungibleToken.Receiver}>`.
+As a result, the true nature of the receiver, whether it be derived from the standard Vault or a proxy receiver, remains ambiguous.
 
 ## User Benefit
 
-The revelation of the Vault type from the receiver capability has the potential to streamline the FT receiving process and minimize transaction failures. This is because developers now have the ability to programmatically verify the compatibility between the given receiver capability and the intended Vault type, allowing them to take proactive measures accordingly.
+Adding type information to `Receiver` capabilities has the potential to streamline the FT receiving process and minimize transaction failures.
+This is because developers now have the ability to programmatically verify the compatibility between the given receiver capability and the intended Vault type,
+allowing them to take proactive measures accordingly such as depositing the tokens elsewhere instead of the transaction just failing.
 
 ## Design Proposal
 
-The essence of this proposal lies in modifying the `FungibleToken.Receiver` interface to furnish the expected type of receiving `Vault` and necessitate that all `FungibleToken.Vault` and custom receivers abide by this implementation. 
+The essence of this proposal lies in modifying the `FungibleToken.Receiver` interface to include a method to return the expected `Vault` types that it can receive and include a default implementation so that the upgrade will not be breaking for existing fungible tokens.
 
 So new `Receiver` interface would look like this -  
 ```cadence
@@ -47,7 +60,7 @@ So new `Receiver` interface would look like this -
         ///
         /// @return Optional list of vault types.
         /// 
-        pub fun getExpectedVaultTypes() :[Type] {
+        pub fun getSupportedVaultTypes() :[Type] {
             return [self.getType()]
         }
     }
@@ -55,7 +68,7 @@ So new `Receiver` interface would look like this -
 
 while the existing interface can be accessed [here](https://github.com/onflow/flow-ft/blob/4416bbe585629671d00d3acfa6fd8052104dd861/contracts/FungibleToken.cdc#L105).
 
-The proposed interface features a default implementation of the `getExpectedVaultTypes` function, ensuring that existing FTs will not encounter any breakage and will have a ready-made implementation available. This default implementation also eliminates the need for upgrading existing FTs.
+The proposed interface features a default implementation of the `getSupportedVaultTypes` function, ensuring that existing FTs will not encounter any breakage and will have a ready-made implementation available. This default implementation also eliminates the need for upgrading existing FTs.
 
 ### Examples
 Implementation of proposed `Receiver` type for `FungibleTokenSwitchboard` contract.
@@ -83,7 +96,7 @@ Implementation of proposed `Receiver` type for `FungibleTokenSwitchboard` contra
         /// `{FungibleToken.Receiver}` capabilities that can be effectively 
         /// borrowed.
         ///
-        pub fun getExpectedVaultTypes(): [Type] {
+        pub fun getSupportedVaultTypes(): [Type] {
             let effectiveTypes: [Type] = []
             for vaultType in self.receiverCapabilities.keys {
                 if self.receiverCapabilities[vaultType]!.check() {
