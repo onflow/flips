@@ -56,12 +56,22 @@ So new `Receiver` interface would look like this -
         pub fun deposit(from: @Vault)
 
         /// Returns the type of implementing resource i.e If `FlowToken.Vault` implements
-        /// this then it would return `[Type<@FlowToken.Vault>()]`
+        /// this then it would return `[Type<@FlowToken.Vault>()]` and if any custom receiver
+        /// uses the default implementation then it would return empty array as its parent
+        /// resource doesn't conform with the `FungibleToken.Vault` resource.
         ///
-        /// @return Optional list of vault types.
+        /// @return list of supported vault types by the implemented resource.
         /// 
         pub fun getSupportedVaultTypes() :[Type] {
-            return [self.getType()]
+            // Below check is implemented to make sure that run-time type would
+            // only get returned when the parent resource conforms with `FungibleToken.Vault`. 
+            if self.getType().isSubtype(of: Type<@FungibleToken.Vault>()) {
+                return [self.getType()]
+            } else {
+                // Return empty array as the default value for the resource who don't
+                // implements `FungibleToken.Vault`, such as `FungibleTokenSwitchboard`, `TokenForwarder` etc.
+                return []
+            }
         }
     }
 ```
