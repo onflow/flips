@@ -6,6 +6,7 @@
 | **Author(s)** | James Lofgren (76029851+TheUnseen12@users.noreply.github.com)           | 
 | **Sponsor**   | Kshitij Chaudhary (kshitij.chaudhary@dapperlabs.com); Vishal Changrani (vishal.changrani@dapperlabs.com) |
 | **Updated**   | 2023-01-31                                           |
+| **Forum**     | https://forum.onflow.org/t/flip-64-identifying-and-ejecting-errant-access-nodes/4238 |
 
 # **Objective**
 
