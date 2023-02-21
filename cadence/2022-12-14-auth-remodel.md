@@ -52,7 +52,7 @@ with a few key differences. They use the following syntax: `pub? entitlement <Id
 functions or fields like in an interfaces. However, it is important to note three key distinctions: 
 
 1) `entitlement`s are not kinded the way that interfaces are; they are neither resources nor structs, and as such cannot appear in any type position where a
-kinded type is expected. 
+kinded type is expected. In practice, this means entitlement annotations can only be used inside of the `auth` portion of references (described below).
 
 2) `entitlement` functions cannot contain default implementations, pre-conditions, or post-conditions. `entitlement`s are used purely for access control, and
 contain no polymorphism functionality like interfaces do. 
@@ -200,6 +200,35 @@ pub resource R: I {
 
 since if this were to typecheck, anybody with a `&R` reference could upcast it to `&{I}` and thus gain the ability to call `foo`. 
 
+When multiple interfaces declare the same function with different entitlements, a composite implementing both interfaces must use the union of the function's entitlement 
+sets as the access modifier for that function. E.g.
+
+```cadence
+pub entitlement E {
+    fun foo()
+}
+pub resource interface I {
+    access(E) fun foo() 
+}
+
+pub entitlement F {
+    fun foo()
+}
+pub resource interface G {
+    access(F) fun foo() 
+}
+
+pub resource R: I, G {
+  access(E, F) fun foo() {} // valid, access(E, F) permits both access(E) and access(F)
+}
+pub resource S: I, G {
+  access(E) fun foo() {} // invalid, does not match definition in G
+}
+pub resource T: I, G {
+  access(F) fun foo() {} // invalid, does not match definition in I
+}
+```
+
 ### Safely Downcastable References
 
 The second, more complex part of this proposal, is a change to the behavior of references to allow the `auth` modifier not to 
@@ -225,7 +254,7 @@ pub resource R {
 a value of type `auth(A) &R` would be able to access `foo`, because the reference has the `A` entitlement, but not `bar`, because
 it does not have an entitlement for `B`. However, `baz` would be accessible on this reference, since it has `pub` access. 
 
-A reference's entitlements on creation must be valid entitlements of the underlying referenced type: it is nonsensical, given a set of definitions like: 
+A reference type's entitlements must be valid entitlements of the referenced type: it is nonsensical, given a set of definitions like: 
 
 ```cadence
 pub entitlement A { 
@@ -246,9 +275,32 @@ let r <- create R()
 let ref = &r as auth(B) &R // cannot take a reference to `r` with a `B` entitlement
 ```
 
-would fail statically. However, because the type on the right-hand side of the `&` may be an interface, just given an arbitrary static
-reference type like `auth(B) &{I}`, we cannot know statically that some `R` does not exist such that `R <: I` and `R` has a function 
-with a `B` entitlement. As such we only enforce that the entitlements are valid when references are created, not when reference types are expressed. 
+would fail statically. It is important to note, however, that because the type on the right-hand side of the `&` may be an interface, the dynamic type of a reference may
+permit more entitlements than the static type. Consider the following code:
+
+```cadence
+pub entitlement A { 
+    fun foo()
+}
+pub entitlement B { 
+    fun bar()
+}
+pub resource interface I {
+    access(A) fun foo()
+}
+pub resource R: I {
+    access(A) fun foo() { ... }
+    access(B) fun bar() { ... }
+}
+let r <- create R()
+let ref1 = &r as auth(A, B) &R // valid
+let ref2 = ref as auth(A, B) &{I} // invalid cast
+let ref3 = ref as auth(A) &{I} // valid cast
+```
+
+Here, `auth(A, B) &R` is a valid type because both `A` and `B` are valid entitlements for `R`. However, if we wished to upcast this to a reference of 
+type `&{I}`, this would not permit a `B` entitlement, so in order to upcast this we would need to drop the `B` entitlement to get `auth(A) &{I}`. The `B`
+entitlement would remain present on the dynamic (run-time) type of this reference, however, and could be recovered with a runtime downcasting operation (described below).
 
 The other part of this change is to remove the limitations on resource downcasting that used to exist. Prior to this change, 
 non-`auth` references could not be downcast at all, since the sole purpose of the `auth` keyword was to indicate that references could be
@@ -260,8 +312,8 @@ be expandable via casting. The subtyping rules for `auth` references is that `au
 is a superset of `{T1, T2, ...}`, or equivalently `∀T ∈ {T1, T2, ...}, ∃U ∈ {U1, U2, ...}, T = U`. Of course, all `auth` reference types
 would remain subtypes of all non-`auth` reference types as before. 
 
-As such, `auth(A, B) &R` would be statically upcastable to `auth{A} &R`, since this decreases the permissions on the 
-reference, it would require a runtime cast to go from `auth{A} &R` to `auth{A, B} &R`, as this cast would only succeed if the 
+As such, while `auth(A, B) &R` would be statically upcastable to `auth(A) &R`, since this decreases the permissions on the 
+reference, it would require a runtime cast to go from `auth(A) &R` to `auth(A, B) &R`, as this cast would only succeed if the 
 runtime type of the reference was entitled to both `A` and `B`. So in the code below:
 
 ```cadence
