@@ -5,7 +5,8 @@
 | **FLIP #**    | 66
 | **Author(s)** | Kshitij Chaudhary (kshitij.chaudhary@dapperlabs.com) | 
 | **Sponsor**   | Kshitij Chaudhary (kshitij.chaudhary@dapperlabs.com) |
-| **Updated**   | 2023-02-01 
+| **Created**   | 2023-02-01 |
+| **Updated**   | 2023-22-01 
 
 # Introduction
 
@@ -43,16 +44,16 @@ Given that the state of Flow needs to be stored only across a handful of executi
 **Thus, it is proposed that** 
 
 1. storage pricing function would remain a constant multiple of the byte-size of the data to be stored on-chain
-2. pricing (storage capacity per reserved Flow) would increase 1000 times, as tabulated below.
-3. minimum account balance however would increase 100 times such that minimum storage capacity reduces from 100kB to 10kB and the minimum balance required changes from 0.001 FLOW providing 100kB storage capacity, to 0.1 FLOW providing 10kB capacity (at a 1000x multiple of the current pricing).
+2. pricing (storage capacity per reserved Flow) would increase 100 times, as tabulated below.
+3. minimum account balance however would increase 10 times such that minimum storage capacity reduces from 100kB to 10kB and the minimum balance required changes from 0.001 FLOW providing 100kB storage capacity, to 0.01 FLOW providing 10kB capacity (at a 100x multiple of the current pricing).
 
 |                                                      **Current Prices**                                                     |                                                    **Proposed Prices**                                                   |
 |:---------------------------------------------------------------------------------------------------------------------------:|:------------------------------------------------------------------------------------------------------------------------:|
-| 100 MB per 1 reserved FLOW <br>10 MB per 0.1 reserved FLOW<br>1 MB per 0.01 reserved FLOW<br>100 kB per 0.001 reserved FLOW | 100 MB per 1000 reserved FLOW<br>10 MB per 100 reserved FLOW<br>1 MB per 10 reserved FLOW<br>10 kB per 0.1 reserved FLOW |
+| 100 MB per 1 reserved FLOW <br>10 MB per 0.1 reserved FLOW<br>1 MB per 0.01 reserved FLOW<br>100 kB per 0.001 reserved FLOW | 100 MB per 100 reserved FLOW<br>10 MB per 10 reserved FLOW<br>1 MB per 1 reserved FLOW<br>10 kB per 0.01 reserved FLOW |
 
-If the proposal is accepted and implemented, users would require a minimum account balance of 0.1 FLOW as part of the account-creation transaction, providing them with up to 10kB of storage capacity, which is what >95% of all accounts use today. As the minimum account balance corresponds to account-creation transactions, this change makes the network more robust to sybil attacks. If the storage used by an account exceeds 10kB, account balance requirements will be calculated based on the prices recommended above and the byte-size of data stored by the account.
+If the proposal is accepted and implemented, users would require a minimum account balance of 0.01 FLOW as part of the account-creation transaction, providing them with up to 10kB of storage capacity, which is what >95% of all accounts use today. As the minimum account balance corresponds to account-creation transactions, this change makes the network more robust to sybil attacks. If the storage used by an account exceeds 10kB, account balance requirements will be calculated based on the prices recommended above and the byte-size of data stored by the account.
 
-With the proposed change in the pricing, Flow would continue to remain ~2x and 14x cheaper than NEAR protocol’s and Solana’s storage prices. Nevertheless, with this increase, Flow would **make deliberate storage-exhaustion attacks dramatically more costly, reduce token liquidity to drive broader network benefits, and allow for a sustainable and regulated growth of state.**
+With the proposed change in the pricing, Flow would continue to remain ~20x and 140x cheaper than NEAR protocol’s and Solana’s storage prices. Nevertheless, with this increase, Flow would **make deliberate storage-exhaustion attacks more costly, reduce token liquidity to drive broader network benefits, and allow for a sustainable and regulated growth of state.**
 
 Transitioning to the new storage pricing structure would be a multi-phase process requiring a change-management approach that minimizes user-impact, supports developer experience, and promotes network scalability. With community consultations prior to any protocol changes, the Flow core R&D team would implement the changes only after deliberate consideration, communication, testing, and impact-analysis.
 
