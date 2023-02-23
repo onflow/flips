@@ -59,7 +59,7 @@ updated: 2023-02-23
 
 # Context
 
-One of Flow’s biggest advantages is its ease of user onboarding; however, as discussed earlier, the current state does not [go far enough](https://flow.com/post/flow-blockchain-mainstream-adoption-easy-onboarding-wallets). With the focus on [hybrid and progressive onboarding flows](https://forum.onflow.org/t/hybrid-custody/4016) and the recent work on [AuthAccount capabilities](https://github.com/onflow/flips/pull/53), there is a need for a mechanism to both maintain these capabilities as well as enable dApps to facilitate user interactions that deal with those sub-accounts and the assets within them.
+One of Flow’s biggest advantages is its ease of user onboarding; however, as discussed recently, the current state does not [go far enough](https://flow.com/post/flow-blockchain-mainstream-adoption-easy-onboarding-wallets). With the focus on [hybrid and progressive onboarding flows](https://forum.onflow.org/t/hybrid-custody/4016) and the recent work on [AuthAccount capabilities](https://github.com/onflow/flips/pull/53), there is a need for a mechanism to both maintain these capabilities as well as enable dApps to facilitate user interactions that deal with those sub-accounts and the assets within them.
 
 # Objective
 
@@ -391,9 +391,9 @@ pub resource ChildAccountCreator : ChildAccountCreatorPublic {
 
 ## Considered For Inclusion
 
-### Standardizing child accounts’ resources access
+### Storage Iteration Convenience Methods
 
-The most simple use case for this is when dealing with a FT that multiple child accounts hold, or NFTs from the same collection spread among different child. Right now in RPS / Flow Arcade we solve this in scripts, e.g.: `get_all_account_balances_from_storage.cdc`
+The most simple use case for this is when dealing with a FT that multiple child accounts hold, or NFTs from the same collection spread among different child accounts. Currently, a dApp would solve this by iterating over each child account's storage either in separate or one large script (the former being more scalable over large number of stored items):
 
 <details>
 <summary>Example Account + Storage Iteration Script to get child account balances</summary>
@@ -536,12 +536,7 @@ pub fun getChildNFTIDs(tokenPath: PublicPath): {Address: [UInt64]}
 pub fun withdrawChildNFT(tokenPath: PublicPath, tokenID: UInt64, child: Address): @NonFungibleToken.NFT
 ```
 
-TODO: Resolve this phrasing
-
-Those method will allow vaults or collections to be interoperable with all the child accounts from one parent at the same time.
-
-Keeping in mind points like “Sources of truth” and “Limiting Delayed Attack Vectors” restricting how `ChildAccountManager` can access child auth accounts, via methods only exposing certain parts instead of borrowing a reference to the whole auth account or capability, could be interesting. For instance managing revocation of keys from the creating dApp on the child account, forcing to update the ledger that the `ChildAccountCreator` has. I have a crazy idea about attachments for the `ChildAccountManager` to take care of each specific resource, with the goal of easing the process of detecting malicious transactions for wallets / FLIX (e.g.: “The site
-definetlynotmcdonalds.com wants to interact with your attachment McMonopoly for `ChildAccountManager`”)
+Those convenience methods would allow vaults or collections to easily accessible across all child accounts from one parent at the same time. However, iteration over a large number of accounts and/or unexpected path naming conventions within those accounts might lead to unexpected behavior and encourage reliance on iteration at the script layer anyway.
 
 # Drawbacks
 
@@ -571,7 +566,7 @@ As such, it’s recommended that users forego revocation in favor of abandoning 
 
 When it comes to accessing a user’s saved AuthAccount Capabilities, it is possible to restrict Capabilities to retrieval by reference - `&AuthAccount` instead of `Capability<&AuthAccount>`. However, in capability-based access, such restrictions on an issued Capability might be considered an anti-pattern.
 
-With that said, signing a malicious transaction today means you are at risk within the scope of that transaction. Signing a malicious transaction in a world of AuthAccount Capabilities means a bad actor could issue themselves a Capability on your account or one of the signer’s child accounts to perform their attack at a later time.
+With that said, signing a malicious transaction today means you are at risk within the scope of that transaction. Signing a malicious transaction in a world of AuthAccount Capabilities means a bad actor could issue themselves a Capability on your account or one of your child accounts to perform their attack at a later time.
 
 One way to prevent this is to make accessing issued AuthAccount Capabilities ephemeral, limiting the scope of the attack to the time scope of the transaction. Another is to rely on events emitted whenever an AuthAccount Capability is retrieved from the `ChildAccountManager`. Yet another measure would include emitting an event any time an AuthAccount Capability is linked.
 
@@ -601,7 +596,7 @@ let childAccountCap: Capability<&AuthAccount> = managerRef.getChildAccountCap(
 	)
 ```
 
-Taken together, these measures enable wallet providers to at least notify relevant user’s when any of their accounts triggers an AuthAccount Capability-related event. Such a flow would be similar to the notification you receive from a Web2 identity provider whenever you authorize a new app (e.g. sign in with Google to DapperLabs and Google will let you know you linked your accounts).
+Taken together, these measures enable wallet providers to at least notify relevant user’s when any of their accounts trigger an AuthAccount Capability-related event. Such a flow would be similar to the notification you receive from a Web2 identity provider whenever you authorize a new app (e.g. sign in with Google to DapperLabs and Google will let you know you linked your accounts).
 
 ### Lack of Ultimate Control
 
