@@ -59,7 +59,7 @@ updated: 2023-02-23
 
 # Context
 
-One of Flow’s biggest advantages is its ease of user onboarding; however, as discussed recently, the current state does not [go far enough](https://flow.com/post/flow-blockchain-mainstream-adoption-easy-onboarding-wallets). With the focus on [hybrid and progressive onboarding flows](https://forum.onflow.org/t/hybrid-custody/4016) and the recent work on [AuthAccount capabilities](https://github.com/onflow/flips/pull/53), there is a need for a mechanism to both maintain these capabilities as well as enable dApps to facilitate user interactions that deal with those sub-accounts and the assets within them.
+One of Flow’s biggest advantages is its ease of user onboarding; however, as discussed recently, the current state does not [go far enough](https://flow.com/post/flow-blockchain-mainstream-adoption-easy-onboarding-wallets). With the focus on [hybrid custody](https://forum.onflow.org/t/hybrid-custody/4016) and [progressive onboarding flows](https://youtu.be/0eYX_S4jUYM) and the recent work on [AuthAccount capabilities](https://github.com/onflow/flips/pull/53), there is a need for a mechanism to both maintain these capabilities as well as enable dApps to facilitate user interactions that deal with those sub-accounts and the assets within them.
 
 # Objective
 
@@ -98,7 +98,7 @@ Guidance on implementation of this standard for wallets & marketplaces can be se
 - [Walletless onboarding dApp example](https://github.com/onflow/walletless-arcade-example)
 - [Testnet contract deployment](https://f.dnz.dev/0x1b655847a90e644a/ChildAccount)
 
-The work thus far is a product of lots of iteration. Much thought has been put into alternative approaches ([more details below](https://www.notion.so/AuthAccount-Management-Flip-ba9e340fe6904c47958a0441e714c2a3)) including key-based and language API approaches. However, due to a combination of consequential technical issues, prioritization of iteration speed, and avoiding dependency on external actors, the Capability-based contract & resource design outlined in this FLIP is the one proposed. Of course, this FLIP is just that - a proposal - and alternative approaches and challenges to this design are welcome for discussion.
+The work thus far is a product of lots of iteration. Much thought has been put into alternative approaches ([more details below](#alternatives-considered)) including key-based and language API approaches. However, due to a combination of consequential technical issues, prioritization of iteration speed, and avoiding dependency on external actors, the Capability-based contract & resource design outlined in this FLIP is the one proposed. Of course, this FLIP is just that - a proposal - and alternative approaches and challenges to this design are welcome for discussion.
 
 # Motivation
 
@@ -113,7 +113,7 @@ Accomplishing this vision successfully - success here meaning building a secure 
 # FAQ
 
 - I’m concerned my main account can get adopted by another Flow account, how is that prevented?
-    - Issuing Capabilities on an AuthAccount pose the same sort of vulnerability vector as adding keys onto an account. Since these features are in a similar class - that of delegated authority - the community has worked to introduce a new [“Super User Account” feature](https://forum.onflow.org/t/super-user-account/4088), similar to `sudo` in Linux systems. This means a issuing a Capability on your AuthAccount, as well as adding keys, deploying/deleting contracts, and other potentially dangerous operations, can only occur in transactions for which you have given explicit sudo-like permission for. Note that the concept is not the focus of this Flip, and is still in discussion meaning the exact construct will likely evolve.
+    - Issuing Capabilities on an AuthAccount pose the same sort of vulnerability vector as adding keys onto an account. Since these features are in a similar class - that of delegated authority - the community has worked to introduce a new [“Super User Account” feature](https://forum.onflow.org/t/super-user-account/4088), similar to `sudo` in Linux systems. This means issuing a Capability on your AuthAccount, as well as adding keys, deploying/deleting contracts, and other potentially dangerous operations, can only occur in transactions for which you have given explicit sudo-like permission for. Note that the concept is not the focus of this Flip, and is still in discussion meaning the exact construct will likely evolve.
 - Why would I want someone else to have access to my account?
     - To clarify, the design isn’t for you to give a dApp access to your main account. The dApp creates an account it maintains access to that it uses to interact with Flow. Then, when you’re ready to control the dApp’s account more directly, the dApp issues a Capability on its AuthAccount to you, thereby linking its account as a child of your main account. This lets the dApp act on your behalf for only the assets in the child account. Everything in your main account remains only in your control, while allowing you to act on the assets in the child account without the need for the dApp to mediate.
 - Why would I want a separate account I share access with? Doesn’t that put all of my assets at custodial risk?
@@ -685,7 +685,7 @@ Given the idea of progressive onboarding, we’ll need to add existing accounts 
 
 The parent can the take the child account’s AuthAccount Capability & call `ChildAccountManager.addAsChildAccount()` to create the on-chain link between accounts & preserve the child account’s `ChildAccountTag` & `AuthAccount` Capabilities.
 
-For more on this process, see [this example](https://www.notion.so/AuthAccount-Management-Flip-ba9e340fe6904c47958a0441e714c2a3).
+For more on this process, see [this example](#adding-an-account-as-a-child-account-aka-account-linking).
 
 ## Revoking a child account
 
@@ -800,6 +800,7 @@ While the “parent-child” name implies an account hierarchy, it doesn’t nec
 
 - [Preceding Forum Post](https://forum.onflow.org/t/account-linking-authaccount-capabilities-management/4314)
 - [Walletless Onboarding Blog Post](https://flow.com/post/flow-blockchain-mainstream-adoption-easy-onboarding-wallets)
+- [Walletless Onboarding Presentation](https://youtu.be/0eYX_S4jUYM)
 - [AuthAccount Capability Cadence implementation](https://github.com/onflow/cadence/issues/2151)
 - [AuthAccount Capability Flip](https://github.com/onflow/flips/pull/53)
 - [Hybrid Custody forum post](https://forum.onflow.org/t/hybrid-custody/4016/8)
