@@ -140,19 +140,19 @@ And for builders:
 
 > ℹ️ Note that AuthAccount Capabilities are not currently enabled on mainnet, only testnet. You may also use a [preview version of flow-cli](https://github.com/onflow/flow-cli/releases/tag/v0.45.1-cadence-attachments-dev-wallet) to utilize the feature in your local emulator environment
 
-Taking a look at our [current prototype implementation](https://github.com/onflow/linked-accounts/blob/main/contracts/ChildAccount.cdc), this will look as a contract deployed that anyone could use to create at least two core resources:
+Taking a look at our [current prototype implementation](https://github.com/onflow/linked-accounts/blob/main/contracts/ChildAccount.cdc), you'll find the following constructs:
 
 - `ChildAccountManager` - a resource associated with a parent account that will allow its owner to store and access (currently via reference) AuthAccount Capabilities to which it has been delegated access. Enables creation of child accounts, linking existing accounts as child accounts and issuing/revoking Capabilities directly to/from child accounts that are accessed via reference. Note that any accounts created by this resource are, at least via single signed transactions, funded via the parent account (AKA user-funded) as far as the contracts are concerned.
 - `ChildAccountTag` - a resource that is held by any account and identifies it as a child / secondary account. This will store its parent / main account address along with some metadata info that will identify the secondary account (e.g. what dApp created it) and methods related to managing the child account.
-- `ChildAccountInfo` - a metadata struct containing information about the intended purpose of a given child account. In a world where dApps create these use-case specific accounts for users, it would be helpful to know at a glance the context of a given child account..
+- `ChildAccountInfo` - a metadata struct containing information about the intended purpose of a given child account. In a world where dApps create these use-case specific accounts for users, it would be helpful to know at a glance the context of a given child account.
 - `ChildAccountController` - a resource containing a Capability to the child’s AuthAccount and its `ChildAccountTag`, created to be stored as a nested resource in `ChildAccountManager`. This construct is a resource for two reasons
-    1. We want to leverage the safeguards around deletion inherent to resources
+    1. We want to leverage the existence safeguards inherent to resources.
     2. The uniqueness guarantees of resources prevent copying which would be very difficult to detect and prevent with structs.
-- `ChildAccountCreator` - a resource designed to create child accounts from provided public keys without assigned parents. This can be a helpful resource to keep in a backend account which creates and funds new accounts for local dApp clients which maintain keys in a self-custodial manner on the user’s device. Note that any accounts created via this resource are funded by the signing account.
+- `ChildAccountCreator` - a resource designed to create child accounts from provided public keys without assigned parents. This can be a helpful resource to keep in a backend account which creates and funds new accounts for local dApp clients which maintain keys in a self-custodial manner on the user’s device. While not critical to the linked account paradigm, it was useful for prototyping and remained in the contract for reference.
 
 ## Example Implementation
 
-The constructs listed above have been prototyped and are available for reference below. For more context on how these might function together, the [demo dApp Cadence repo](https://github.com/onflow/sc-eng-gaming/tree/sisyphusSmiling/child-account-auth-acct-cap) and simplified [linked accounts](https://github.com/onflow/linked-accounts) repos will be helpful.
+The constructs listed above have been prototyped and are available for reference below. For more context on how these function together, the [demo dApp Cadence repo](https://github.com/onflow/sc-eng-gaming/tree/sisyphusSmiling/child-account-auth-acct-cap) and simplified [linked accounts](https://github.com/onflow/linked-accounts) repos will be helpful.
 
 <details>
 <summary>ChildAccountManager</summary>
@@ -329,30 +329,46 @@ pub struct ChildAccountInfo {
 <summary>ChildAccountController</summary>
 
 ```js
-pub resource interface ChildAccountCreatorPublic {
-    pub fun getAddressFromPublicKey (publicKey: String): Address?
-}
+/// Wrapper for the child's info and authacct and tag capabilities
+///
+pub resource ChildAccountController: MetadataViews.Resolver {
+    
+    access(self) let authAccountCapability: Capability<&AuthAccount>
+    access(self) var childAccountTagCapability: Capability<&ChildAccountTag>
 
-/// Anyone holding this resource can create accounts, keeping a mapping of their
-/// originating public keys to their addresses. These accounts can then later
-/// be associated with a parent account by wrapping the ChildAccountTag and AuthAccount
-/// Capabilities in a ChildAccountController & saving in the parent account's
-/// ChildAccountManager
-/// 
-pub resource ChildAccountCreator : ChildAccountCreatorPublic {
-    /// mapping of public_key: address
-    access(self) let createdChildren: {String: Address}
 
-    /// Returns the address of the account created by this resource if it exists
-    pub fun getAddressFromPublicKey (publicKey: String): Address?
-    /// Creates a new account, funding with the signer account, adding the public key
-    /// contained in the ChildAccountInfo, and saving a ChildAccountTag with unassigned
-    /// parent account containing the provided ChildAccountInfo metadata
-    pub fun createChildAccount(
-        signer: AuthAccount,
-        initialFundingAmount: UFix64,
-        childAccountInfo: ChildAccountInfo
-    ): AuthAccount
+    /// Store the child account tag capability
+    ///
+    pub fun setTagCapability (tagCapability: Capability<&ChildAccountTag>)
+
+    /// Function that returns all the Metadata Views implemented by a Child Account controller
+    ///
+    /// @return An array of Types defining the implemented views. This value will be used by
+    ///         developers to know which parameter to pass to the resolveView() method.
+    ///
+    pub fun getViews(): [Type]
+
+    /// Function that resolves a metadata view for this ChildAccount.
+    ///
+    /// @param view: The Type of the desired view.
+    /// @return A structure representing the requested view.
+    ///
+    pub fun resolveView(_ view: Type): AnyStruct?
+
+    /// Get a reference to the child AuthAccount object.
+    /// What is better to do if the capability can not be borrowed? return an optional or just panic?
+    ///
+    /// We could explore making the account controller a more generic solution (resource interface)
+    /// and allow developers to create their own application specific more restricted getters that only expose
+    /// specific parts of the account (e.g.: a certain NFT collection). This could not be very useful for the child 
+    /// accounts since you will be restricting the highest permission level account access to something it owns, but
+    /// could be useful for other forms of delegated access
+    ///
+    pub fun getAuthAcctRef(): &AuthAccount
+
+    pub fun getChildTagRef(): &ChildAccountTag
+
+    pub fun getTagPublicRef(): &{ChildAccountTagPublic}
 }
 ```
 </details>
