@@ -662,7 +662,7 @@ In summary, on the one hand, this feels more secure. On the other hand, if we st
 
 ![cadence_api_child_accounts](./20230223-auth-account-capability-management-standard-resources/cadence_api_child_accounts.png)
 
-# Best Practices*
+# Best Practices
 
 As this Flip introduces a standard contract and set of resources, best practices around using them are centered around:
 
