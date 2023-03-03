@@ -36,6 +36,11 @@ This new function behaves like the existing function `link`, but
 
 - It creates a link to the account, instead of creating a link to a value in account storage.
 - It only supports private paths (`/private`).
+- It emits an event:
+
+  ```cadence
+  event flow.AccountLinked(address: Address, path: PrivatePath)
+  ```
 
 Existing functions that work with links/capabilities, like `getCapability`, `borrow`, `unlink`, etc., can be used with account capabilities,
 just like they currently can be used for storage path links.
