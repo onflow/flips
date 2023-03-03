@@ -45,6 +45,11 @@ This new function behaves like the existing function `link`, but
 Existing functions that work with links/capabilities, like `getCapability`, `borrow`, `unlink`, etc., can be used with account capabilities,
 just like they currently can be used for storage path links.
 
+The function is only allowed to be used when the program contains the pragma `#allowAccountLinking`.
+The pragma must occur at the top-level, i.e. it may not be nested, and it must occur before all other non-pragma declarations.
+
+The pragma only affects the availability of the `linkAccount` function – it does not have any influence on the usage of account links.
+
 ### Drawbacks
 
 This proposal suggests adding a very powerful feature: An account capability allows full access to the account,
