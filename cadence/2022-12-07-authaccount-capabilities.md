@@ -5,7 +5,7 @@
 | **FLIP #**    | [53](https://github.com/onflow/flips/pull/53)        |
 | **Author(s)** | Bastian Müller (bastian@dapperlabs.com)              |
 | **Sponsor**   | Bastian Müller (bastian@dapperlabs.com)              |
-| **Updated**   | 2022-12-07                                           |
+| **Updated**   | 2022-03-02                                           |
 
 ## Objective
 
@@ -29,10 +29,13 @@ in their smart contracts, dapps, user agents, etc.
 This proposal suggest adding a new function to the type `AuthAccount`:
 
 ```cadence
-fun linkAccount(_ newCapabilityPath: CapabilityPath): Capability<&AuthAccount>?
+fun linkAccount(_ newCapabilityPath: PrivatePath): Capability<&AuthAccount>?
 ```
 
-This new function behaves like the existing function `link`, but instead of creating a link to a value in storage, it creates links to the account.
+This new function behaves like the existing function `link`, but
+
+- It creates a link to the account, instead of creating a link to a value in account storage.
+- It only supports private paths (`/private`).
 
 Existing functions that work with links/capabilities, like `getCapability`, `borrow`, `unlink`, etc., can be used with account capabilities,
 just like they currently can be used for storage path links.
