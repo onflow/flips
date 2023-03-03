@@ -50,6 +50,33 @@ The pragma must occur at the top-level, i.e. it may not be nested, and it must o
 
 The pragma only affects the availability of the `linkAccount` function – it does not have any influence on the usage of account links.
 
+#### Example
+
+Signer 0x1 creates an account link and publishes the resulting capability for 0x2:
+
+```cadence
+#allowAccountLinking
+
+transaction {
+    prepare(signer: AuthAccount) {
+        let capability = signer.linkAccount(/private/accountCapForSomeone)!
+        signer.inbox.publish(capability, name: "accountCap", recipient: 0x2)
+    }
+}
+```
+
+Signer 0x2 claims the account capability from 0x1:
+
+```cadence
+transaction {
+    prepare(signer: AuthAccount) {
+        let capability = signer.inbox.claim<&AuthAccount>("accountCap", provider: 0x1)!
+        let accountRef = capability.borrow()!
+        log(accountRef.address)
+    }
+}
+```
+
 ### Drawbacks
 
 This proposal suggests adding a very powerful feature: An account capability allows full access to the account,
