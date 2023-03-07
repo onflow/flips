@@ -23,7 +23,8 @@ updated: 2023-02-23
 - [Design Proposal](#design-proposal)
 - [Example Implementation](#example-implementation)
 - [Considered For Inclusion](#considered-for-inclusion)
-    - [Standardizing child accounts’ resources access](#standardizing-child-accounts-resources-access)
+    - [Events](#events)
+    - [Storage Iteration Convenience Methods](#storage-iteration-convenience-methods)
 - [Drawbacks](#drawbacks)
     - [Considerations](#considerations)
         - [Visibility into All Sub-Account Storage](#visibility-into-all-sub-account-storage)
@@ -53,8 +54,6 @@ updated: 2023-02-23
     - [Open Questions](#open-questions)
 - [References](#references)
 
-
-
 </details>
 
 # Context
@@ -81,6 +80,7 @@ This FLIP proposes a standard for the creation and management of child accounts 
 - Revoking hybrid custody approval/access granted to a child account
 - Identifying an account’s child accounts
 - Identifying an account’s parent account(s)
+- Implement useful events builders can rely on
 
 ## For Consideration
 
@@ -406,6 +406,38 @@ pub resource ChildAccountCreator : ChildAccountCreatorPublic {
 </details>
 
 ## Considered For Inclusion
+
+### Events
+
+> The following proposed events are in addition to the AuthAccount Capability linking event `flow.AccountLinked(address: Address, path: PrivatePath)` implemented in the Cadence [AuthAccount Capability linking API](https://github.com/onflow/flips/pull/53#issuecomment-1452777257) whenever an account is linked via `AuthAccount.linkAccount(PrivatePath)`.
+
+As some members of the community have voiced, using a shared standard contract can present challenges to dApps subscibing to events on the contract. Ultimately, how do they know which events are relevant to their users' accounts?
+
+With this in mind, the following events and values have been proposed, though additional feedback is requested as the hope is these events can be as helpful as possible to dApps relying on this shared standard.
+
+- **Linking Accounts & Removing Linked Accounts** - Whenever an account is added as a child of a parent account, an event is emitted denoting both sides of the link. It may be helpful to include values from the child account's `ChildAccountTag.info` metadata struct to better identify the linked account.
+    ```js
+    pub event AccountAddedAsChild(parent: Address, child: Address)
+    pub event ChildAccountRemoved(parent: Address, child: Address)
+    ```
+
+- **Account Creation** - Emitted when an account is created from either the `ChildAccountManager` or `ChildAccountCreator` `createChildAccount()` methods. Since this method takes the arguments `signer: AuthAccount`, `initialFundingAmount: UFix64`, and `childAccountInfo: ChildAccountInfo`, there is room to include more information that may be relevant to callers, namely values from the `childAccountInfo` metadata struct.
+    ```js
+    pub event ChildAccountCreatedFromManager(parent: Address, child: Address)
+    pub event AccountCreatedFromCreator(creator: Address?, newAccount: Address)
+    ```
+
+- **Grant/Revoke Capabilities to/from Child Accounts** - Emitted when a parent account grants/revokes a Capability to/from a linked child account.
+    ```js
+    pub event ChildAccountGrantedCapability(parent: Address, child: Address, capabilityType: Type)
+    pub event ParentAccountRevokedCapability(parent: Address, child: Address, capabilityType: Type)
+    ```
+
+- **Creation of Standard Resources** - Emitted when a `ChildAccountManager` and `ChildAccountCreator` are created. Since the creation methods are public contract methods, there isn't any data we can include related to the caller. These events likely won't be very useful for dApps or wallet providers, but could be helpful from a data analysis & user behavior perspective to gain insight into the adoption of this standard.
+    ```js
+    pub event ChildAccountManagerCreated()
+    pub event ChildAccountCreatorCreated()
+    ```
 
 ### Storage Iteration Convenience Methods
 
@@ -798,7 +830,7 @@ While the “parent-child” name implies an account hierarchy, it doesn’t nec
 
 ## Open Questions
 
-- Should the Cadence implementation of AuthAccount Capabilities prevent linking AuthAccounts to public paths?
+- What additional events and event data should be included in this standard?
 - How will the newly introduced [SuperAuthAccount](https://forum.onflow.org/t/super-user-account/4088/2) feature fit in? Will we want to delegate and store `SuperAuthAccount` in the parent’s managing resource or should parent accounts only preserve AuthAccount? My vote is to give parent accounts the fullest permissions on child accounts so they can add/revoke keys, etc.
 - Where do Capability Controllers fit in and can they reduce some of the concerns around auditing and revocation of AuthAccount Capabilities?
 - Should ChildAccountTags be allowed to have multiple parent accounts. I believe they should. One use case I can imagine is gaming - I might want all of my game client accounts to have access to each other so I can easily transfer between them and for full interoperability between platforms.
