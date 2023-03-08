@@ -1,6 +1,6 @@
 ---
 status: Proposed 
-flip: NNN (do not set)
+flip: #72
 title: AuthAccount Capability Management
 forum: https://forum.onflow.org/t/account-linking-authaccount-capabilities-management/4314
 authors: Giovanni Sanchez (giovanni.sanchez@dapperlabs.com)
@@ -423,8 +423,8 @@ With this in mind, the following events and values have been proposed, though ad
 
 - **Account Creation** - Emitted when an account is created from either the `ChildAccountManager` or `ChildAccountCreator` `createChildAccount()` methods. Since this method takes the arguments `signer: AuthAccount`, `initialFundingAmount: UFix64`, and `childAccountInfo: ChildAccountInfo`, there is room to include more information that may be relevant to callers, namely values from the `childAccountInfo` metadata struct.
     ```js
-    pub event ChildAccountCreatedFromManager(parent: Address, child: Address)
-    pub event AccountCreatedFromCreator(creator: Address?, newAccount: Address)
+    pub event ChildAccountCreatedFromManager(parent: Address, child: Address, originatingPublicKey: String)
+    pub event AccountCreatedFromCreator(creator: Address?, newAccount: Address, originatingPublicKey: String)
     ```
 
 - **Grant/Revoke Capabilities to/from Child Accounts** - Emitted when a parent account grants/revokes a Capability to/from a linked child account.
