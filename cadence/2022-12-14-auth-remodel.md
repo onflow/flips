@@ -3,7 +3,7 @@ status: draft
 flip: NNN (do not set)
 authors: Daniel Sainati (daniel.sainati@dapperlabs.com)
 sponsor: Daniel Sainati (daniel.sainati@dapperlabs.com)
-updated: 2023-02-17
+updated: 2023-03-09
 ---
 
 # Entitlements
@@ -110,9 +110,45 @@ resource R {
 }
 ```
 
-A single member definition can include multiple entitlements; in which case the member is accessible to any `auth` reference with any 
-of those entitlements. As such, that member's definition must match all of its definitions in each of the `entitlement` declarations being 
-used. 
+A single member definition can include multiple entitlements, using either a `|` or a `,` separator when defining the list.
+
+An entitlement list defined using a `|` functions like a disjunction (or an "or"); it is accessible to any `auth` reference with any of those entitlements. 
+An entitlement list defined using a `,` functions like a conjection set (or an "and"); it is accessible only to an `auth` reference with all of those entitlements. 
+
+So, for example, in 
+
+```cadence
+entitlement E {
+   fun foo() {}
+   fun bar() {}
+}
+entitlement F {
+   fun foo() {}
+   fun bar() {}
+}
+resource R {
+   access(E, F) foo() {}
+   access(E | F) bar() {}
+}
+```
+
+`foo` is only calleable on a reference to `R` that is `auth` for both `E` and `F`, while `bar` is calleable on any `auth` reference that is `auth` for either `E` or `F` (or both).
+
+In either case, a member's definition must match all of its definitions in each of the `entitlement` declarations being used in the access modifier for that member, so in the below case:
+
+```cadence
+entitlement E {
+   fun bar(a: A) {}
+}
+entitlement F {
+   fun bar() {}
+}
+resource R {
+   access(E | F) bar(a : A) {}
+}
+```
+
+This would fail to type check because `bar`'s type does not match its definition in `F`. 
 
 Additionally, because we only check that each member using an `entitlement` matches that entitlement's declaration of the member, it is not
 necessary for a composite or interface to use every single member on an `entitlement` if they do not want or need to. So, for example, this code is valid:
@@ -200,7 +236,7 @@ pub resource R: I {
 
 since if this were to typecheck, anybody with a `&R` reference could upcast it to `&{I}` and thus gain the ability to call `foo`. 
 
-When multiple interfaces declare the same function with different entitlements, a composite implementing both interfaces must use the union of the function's entitlement 
+When multiple interfaces declare the same function with different entitlements, a composite implementing both interfaces must use the `|` union of the function's entitlement 
 sets as the access modifier for that function. E.g.
 
 ```cadence
@@ -219,7 +255,7 @@ pub resource interface G {
 }
 
 pub resource R: I, G {
-  access(E, F) fun foo() {} // valid, access(E, F) permits both access(E) and access(F)
+  access(E | F) fun foo() {} // valid, access(E | F) permits both access(E) and access(F)
 }
 pub resource S: I, G {
   access(E) fun foo() {} // invalid, does not match definition in G
@@ -305,7 +341,7 @@ entitlement would remain present on the dynamic (run-time) type of this referenc
 The other part of this change is to remove the limitations on resource downcasting that used to exist. Prior to this change, 
 non-`auth` references could not be downcast at all, since the sole purpose of the `auth` keyword was to indicate that references could be
 downcast. With the proposed change, all reference types can be downcast or upcast the same way any other type would be. So, for example
-`&{A} as! &R` would be valid, as would `&AnyResource as? &{B, C}` or `&{A} as? &{B}`, using the hierarchy defined above. 
+`&{I} as! &R` would be valid, as would `&AnyResource as? &{I}` or `&{I} as? &{J}`, using the hierarchy defined above (for any `J`).
 
 However, the `auth`-ness (and the reference's set of entitlements) would not change on downcasting, nor would that set
 be expandable via casting. The subtyping rules for `auth` references is that `auth (U1, U2, ... ) &X <: auth (T1, T2, ... ) &X` whenever `{U1, U2, ...}`
@@ -329,15 +365,67 @@ let ref2 = &r as auth(A, B, C) &R
 `foo` would return `true` when called with `ref2`, because the runtime type of `ref` in the failable cast is a subtype of `auth(A, B) &R`, since
 `{A, B, C}` is a superset of `{A, B}`, but would return `false` when called with `ref1`, since `{A}` is not a superset of `{A, B}`.
 
+In addition to the `,`-separated list of entitlements (which defines a conjunction/"and" set for `auth` modifiers similarly to its behavior for `access` modifiers), it is also possible, 
+although very rarely necessary, to define `|`-separated entitlement lists in `auth` modifers for references, like so: `auth(E1 | E2 | ...) &T`. In this case, the type denotes that the
+reference to `T` is authorized for **at least one** of the entitled specified, not that it is `auth` for all of them. This means, for example, that an `auth(A | B) &R` reference
+would not be permitted to call an `access(A)` function on `R`, because we only know that the reference is authorized for one of `A` **or** `B`, and cannot guarantee that it is permitted to 
+call an `A`-entitled function. However, an `auth(A | B) &R` reference could call an `access(A | B)` function on `R`, because the function requires one of `A` or `B`, and we know 
+that our reference has at least one of these entitlements. 
+
+```cadence
+entitlement E {
+    fun foo()
+    fun bar()
+    fun baz()
+}
+entitlement F {
+    fun foo()
+    fun bar()
+    fun qux()
+}
+resource R {
+    access(E | F) fun foo() { ... }
+    access(E,  F) fun bar() { ... }
+    access(E) fun baz() { ... }
+    access(F) fun qux() { ... }
+}
+fun test(ref: auth(E | F) &R) {
+    ref.foo() // allowed because `foo` requires either `E` or `F`
+    ref.bar() // not allowed because the reference may not have `E` and `F`
+    ref.baz() // not allowed because the reference may not have `E`
+    ref.qux() // not allowed because the reference may not have `F`
+    (ref as? auth(E) &R)?.baz() // allowed statically, will succeed at runtime if `ref` has an `E` entitlement
+    (ref as? auth(F) &R)?.baz() // allowed statically, will succeed at runtime if `ref` has an `F` entitlement
+    (ref as? auth(E, F) &R)?.qux() // allowed statically, will succeed at runtime if `ref` has both an `E` and an `F` entitlement
+}
+```
+
+The subtyping rules for `|`-separated entitlement lists allow lists to expand on supertyping. I.e., `auth(A | B) &R <: auth(A | B | C) &R`, as this decreases the information we have about
+the reference's entitlements and thus permits fewer operations. In general, `auth (U1 | U2 | ... ) &X <: auth (T1 | T2 | ... ) &X` whenever `{U1, U2, ...}`
+is a subset of `{T1, T2, ...}`, or equivalently `∀U ∈ {U1, U2, ...}, ∃T ∈ {T1, T2, ...}, T = U`. To shrink the `|`-separated entitlement list, downcasting is required (as shown in the example above). 
+
+`,`-separated entitlement lists subtype `|`-separated ones as long as the two sets are not disjoint; that is, as long as there is an entitlement in the subtype set that is also in the supertype set. 
+This is because we are casting from a type that is known to possess all of the listed entitlements to a type that is only guaranted to possess one. More specifically, 
+`auth (U1, U2, ... ) &X <: auth (T1 | T2 | ... ) &X` whenever `{U1, U2, ...}` is not disjoint from `{T1, T2, ...}`, or equivalently `∃U ∈ {U1, U2, ...}, ∃T ∈ {T1, T2, ...}, T = U`.
+
+In practice `|`-separated entitlement lists never subtype `,`-separated ones except in the trivial case. This is because we are attempting to upcast (change the type without gaining any new
+specificity) from a reference where we only know we possess at least one of the listed entitlement to one where we know we possess all of them. This is only possible when all of the references
+in both lists are equal. More specifically, `auth (U1, U2, ... ) &X <: auth (T1 | T2 | ... ) &X` whenever `∀U ∈ {U1, U2, ...}, ∀T ∈ {T1, T2, ...}, T = U`. 
+As one can see, this is only possible when every `U` and `T` are the same entitlement, or when the two entitlement lists each only have a single equivalent element. 
+
 #### Attachments and Entitlements
 
 Attachments would interact with entitlements and access-limited members in a nuanced but intuitive manner, where the attachment's entitlements
 are implicitly parameterized over the entitlements of its `base` value. Attachments would remain `pub` accessible, but would permit the declaration of `access`-limited members. 
 The `base` value, which currently is simply a `&R` reference for an attachment `attachment A for R` in any of `A`'s member functions, would now have its entitlements
-depend on the entitlements of the member function in question. In a member declaration `access(X) fun foo()` in `A`, the `base` variable would have
-type `auth(X) &R`, while in a member declaration in `A` `pub fun bar()`, `base` would just be an `&R`. This would effectively mean that the `access(X)`
-members of the `base` would only be available to the attachment author in `auth(X)` members on the attachment. Similarly, in an `access(X)` 
-member, the `self` reference of the attachment `A` would be `auth(X) &A`, while in a `pub`-access member it would just be `&A`.
+depend on the entitlements of the member function in question. In a member declaration `access(X | Y) fun foo()` in `A`, the `base` variable would have
+type `auth(X | Y) &R`, while in a member declaration in `A` `pub fun bar()`, `base` would just be an `&R`. This would effectively mean that the `access(X)`
+members of the `base` would only be available to the attachment author in `access(X)` members on the attachment. Similarly, in an `access(X, Y)` 
+member, the `self` reference of the attachment `A` would be `auth(X, Y) &A`, while in a `pub`-access member it would just be `&A`.
+
+One important point to note here is that the previously mentioned rules about `auth(...) &T` reference types (namely that the set of entitlements on the `auth` modifier must all be valid for the referenced type `T`) require that attachments for any `base` type only use entitlements that are already present on that `base`. 
+To see why, consider an attachment `A` declared `attachment A for R` with a member `access(X) fun foo()`. Within the body of `foo`, using the rules described above, the 
+`base` reference would have type `auth(X) &R`. This type is only reasonable if `X` is a valid entitlement for `R`. 
 
 This would then be combined with a change to the attachment access rules: rather than `v[A]` always returning an `&A?` value, the type of the returned
 attachment reference would depend on the type of `v`. If `v` is not a reference, then any access `v[A]` would be fully authorized with type `(auth(owner) &A)?` (or similar
