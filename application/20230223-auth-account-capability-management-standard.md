@@ -1,6 +1,6 @@
 ---
 status: Proposed 
-flip: #72
+flip: 72
 title: AuthAccount Capability Management
 forum: https://forum.onflow.org/t/account-linking-authaccount-capabilities-management/4314
 authors: Giovanni Sanchez (giovanni.sanchez@dapperlabs.com)
@@ -24,6 +24,7 @@ updated: 2023-02-23
 - [Example Implementation](#example-implementation)
 - [Considered For Inclusion](#considered-for-inclusion)
     - [Events](#events)
+    - [NonFungibleToken & MetadataViews Standards Implementation](#nonfungibletoken--metadataviews-standards-implementation)
     - [Storage Iteration Convenience Methods](#storage-iteration-convenience-methods)
 - [Drawbacks](#drawbacks)
     - [Considerations](#considerations)
@@ -439,6 +440,15 @@ With this in mind, the following events and values have been proposed, though ad
     pub event ChildAccountCreatorCreated()
     ```
 
+### NonFungibleToken & MetadataViews Standards Implementation
+
+The current proposal already wraps delegated AuthAccount Capabilities in a resource (`ChildAccountController`) and linked accounts are expected to maintain some metadata (`ChildAccountTag.info: ChildAccountInfo`) - a pattern consistent with the existing `NonFungibleToken` & `MetadataViews` standards. As such, it's been suggested that we further implement the standards in this contract, making the wrapping resources `ChildAccountController: NonFungibleToken.INFT, MetadataViews.Resolver`, and the collection-like `ChildAccountManager: NonFungibleToken.Collection, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection`. This accomplishes two things:
+
+1. Makes it easy for builders to resolve metadata about a user's linked accounts, at least in regards to the account's association/purpose. We'll want to consider the types of metadata supported by `ChildAccountTag.info` and perhaps generalize the implementation of `ChildAccountInfo` to enable use case specific metadata to emerge.
+2. Leverages standard `withdraw()` & `deposit()` to make delegation transfers easy. This would have implications for a `ChildAccountTag`'s `parent` attribute, and we'd want to consider the conditions for updating this value (e.g. should `parent` be updated on `deposit()` to a new `ChildAccountManager`, etc.)
+
+Whether we proceed with implementation of one or both of these standards is worth discussion as ease of transer may be a pro or con depending on perspective. Regardless of where discussion falls on the issue of easy transfer, ease of metadata resolution would likely be a big plus for both dApps and wallet providers.
+
 ### Storage Iteration Convenience Methods
 
 The most simple use case for this is when dealing with a FT that multiple child accounts hold, or NFTs from the same collection spread among different child accounts. Currently, a dApp would solve this by iterating over each child account's storage either in separate or one large script (the former being more scalable over large number of stored items):
@@ -830,7 +840,8 @@ While the “parent-child” name implies an account hierarchy, it doesn’t nec
 
 ## Open Questions
 
-- What additional events and event data should be included in this standard?
+- Are there any additional events and/or event data that should be included in this standard?
+- Given the expectation that delegated AuthAccount Capabilities are wrapped in a resource (`ChildAccountController`) also containing account metadata, would further implementing the `MetadataViews` & `NonFungibleToken` in that resource assist dApp & wallet implementations of this new standard collection of resources? 
 - How will the newly introduced [SuperAuthAccount](https://forum.onflow.org/t/super-user-account/4088/2) feature fit in? Will we want to delegate and store `SuperAuthAccount` in the parent’s managing resource or should parent accounts only preserve AuthAccount? My vote is to give parent accounts the fullest permissions on child accounts so they can add/revoke keys, etc.
 - Where do Capability Controllers fit in and can they reduce some of the concerns around auditing and revocation of AuthAccount Capabilities?
 - Should ChildAccountTags be allowed to have multiple parent accounts. I believe they should. One use case I can imagine is gaming - I might want all of my game client accounts to have access to each other so I can easily transfer between them and for full interoperability between platforms.
