@@ -505,16 +505,16 @@ entitlement X
 entitlement Y
 entitlement Z
 entitlement mapping M {
-    E -> X
-    E -> Y
-    F -> Z
+    X -> E
+    Y -> E
+    Z -> F
 }
 access(M) attachment A for R {
-    access(F | Y) fun foo() { ... }
+    access(E, F) fun foo() { ... }
 }
 ```
 
-The preimage of `F | Y` under `M` would be `(X, Y) | Z`. It is impossible to create an `auth` reference with this entitlement set, so the `base` reference
+The preimage of `E, F` under `M` would be `(X | Y), Z`. It is impossible to create an `auth` reference with this entitlement set, so the `base` reference
 would not be typable within the body of `foo`. To avoid this problem, we will simply prevent defining functions with impossible preimages, so non-one-to-one entitlement
 mappings will require careful use for attachments. 
 
