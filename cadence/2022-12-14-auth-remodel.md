@@ -3,7 +3,7 @@ status: draft
 flip: NNN (do not set)
 authors: Daniel Sainati (daniel.sainati@dapperlabs.com)
 sponsor: Daniel Sainati (daniel.sainati@dapperlabs.com)
-updated: 2023-03-09
+updated: 2023-03-14
 ---
 
 # Entitlements
@@ -47,69 +47,28 @@ method like `withdraw`, the user would need to explicitly create the Capability 
 
 ### Entitlements
 
-The first part of this FLIP proposes to add a new declaration type to Cadence: `entitlement`s. `entitlement`s are declared similarly to interfaces, but
-with a few key differences. They use the following syntax: `pub? entitlement <Identifier> { ... }`, where the body of the `entitlement` contains a list of 
-functions or fields like in an interfaces. However, it is important to note three key distinctions: 
-
-1) `entitlement`s are not kinded the way that interfaces are; they are neither resources nor structs, and as such cannot appear in any type position where a
-kinded type is expected. In practice, this means entitlement annotations can only be used inside of the `auth` portion of references (described below).
-
-2) `entitlement` functions cannot contain default implementations, pre-conditions, or post-conditions. `entitlement`s are used purely for access control, and
-contain no polymorphism functionality like interfaces do. 
-
-3) `entitlement` members are not declared with an access modifier the way that interface members are; this is because the `entitlement` is used to define
-the access of these members on composites and interfaces, and thus it would be nonsensical for the entitlement definition itself to contain an access modifier. 
-
-As such, the following is a valid entitlement definition:
+The first part of this FLIP proposes to add a new declaration type to Cadence: `entitlement`s. `entitlement` declarations are simple, 
+just the keyword `entitlement` and the name; we only require that they be pre-declared to guard against typos and other minor errors.
+A sample `entitlement` may look like this:
 
 ```cadence
-pub entitlement E {
-    fun foo(a: Int)
-    let x: String
-}
+entitlement E
 ```
 
-while the following are not:
-
-```cadence
-pub entitlement A {
-    pub fun foo(a: Int) // cannot have an access modifier
-}
-pub resource entitlement A { // entitlement is not kinded
-    fun foo(a: Int) 
-}
-pub entitlement A {
-    fun foo(a: Int) {} // cannot have a body
-}
-```
+In the future, this is easily extensible to allow creating entitlements that are constructed from others via operators like `&` or `|`.
 
 ### Entitlement-access fields
 
 To go with these `entitlement` declarations, this FLIP proposes to add a new access control modifier to field and function declarations in composite types:
 `access(X)`, which allows access to either the immediate owner of the resource (i.e. anybody who has the actual resource value),
-or someone with an `auth(X)` reference to the type on which the member is defined. The `X` here can be the qualified name of any entitlement, but
-the function or field definition that uses that access modifier must match its definition in the `X` entitlement. So, this would be allowed:
+or someone with an `auth(X)` reference to the type on which the member is defined. The `X` here can be the qualified name of any entitlement, e.g.:
 
 ```cadence
-entitlement E {
-    fun foo(a: Int)
-}
+entitlement E
 resource R {
     access(E) fun foo(a: Int) { }
 }
 ```
-
-while this would not:
-
-```cadence
-entitlement E {
-    fun foo(a: Int)
-}
-resource R {
-    access(E) fun foo(a: String) { } // definition does not match `foo`'s definition in `E`. 
-}
-```
-
 A single member definition can include multiple entitlements, using either a `|` or a `,` separator when defining the list.
 
 An entitlement list defined using a `|` functions like a disjunction (or an "or"); it is accessible to any `auth` reference with any of those entitlements. 
@@ -118,14 +77,8 @@ An entitlement list defined using a `,` functions like a conjection set (or an "
 So, for example, in 
 
 ```cadence
-entitlement E {
-   fun foo() {}
-   fun bar() {}
-}
-entitlement F {
-   fun foo() {}
-   fun bar() {}
-}
+entitlement E
+entitlement F
 resource R {
    access(E, F) foo() {}
    access(E | F) bar() {}
@@ -133,38 +86,6 @@ resource R {
 ```
 
 `foo` is only calleable on a reference to `R` that is `auth` for both `E` and `F`, while `bar` is calleable on any `auth` reference that is `auth` for either `E` or `F` (or both).
-
-In either case, a member's definition must match all of its definitions in each of the `entitlement` declarations being used in the access modifier for that member, so in the below case:
-
-```cadence
-entitlement E {
-   fun bar(a: A) {}
-}
-entitlement F {
-   fun bar() {}
-}
-resource R {
-   access(E | F) bar(a : A) {}
-}
-```
-
-This would fail to type check because `bar`'s type does not match its definition in `F`. 
-
-Additionally, because we only check that each member using an `entitlement` matches that entitlement's declaration of the member, it is not
-necessary for a composite or interface to use every single member on an `entitlement` if they do not want or need to. So, for example, this code is valid:
-
-```cadence
-entitlement E {
-   fun foo(a: A) {}
-   fun bar(b: B) {}
-}
-resource R {
-   access(E) foo(a: A) {}
-}
-```
-
-because `foo`'s definition matches its definition in `E`. There is no check that `R` implmements all the members in `E`, however. This does not
-pose an issue for type safety because `entitlement`s are never used for polymorphism, only access control. 
 
 Like `access(contract)` and `access(account)`, this new modifier sits exactly between `pub` and `priv` (or equivalently `access(self)`) 
 in permissiveness; it allows less access than `pub`, but strictly more than `priv`, as an `access(X)` field or function can be used anywhere 
@@ -174,7 +95,7 @@ that the access rules defined above allow any `access(I)` members to be accessed
 As such, the following would be prohibited statically:
 
 ```cadence
-pub entitlement E {} 
+pub entitlement E
 pub resource R {
     access(E) fun foo() { ... }
 }
@@ -185,7 +106,7 @@ r.foo()
 while all of these would be permitted:
 
 ```cadence
-pub entitlement E {} 
+pub entitlement E
 pub resource R {
     access(E) fun foo() { ... }
     pub fun bar() {
@@ -203,9 +124,7 @@ composite member, as this is less restrictive, in order to prevent users from ac
 As such, the below code would not typecheck.
 
 ```cadence
-pub entitlement E {
-    fun foo()
-}
+pub entitlement E
 
 pub resource interface I {
   access(E) fun foo() 
@@ -221,9 +140,7 @@ If users would like to expose an access-limited function to `pub` users, they ca
 As with normal subtyping, this would also be statically rejected:
 
 ```cadence
-pub entitlement E {
-    fun foo()
-}
+pub entitlement E
 
 pub resource interface I {
   pub fun foo() 
@@ -240,16 +157,12 @@ When multiple interfaces declare the same function with different entitlements, 
 sets as the access modifier for that function. E.g.
 
 ```cadence
-pub entitlement E {
-    fun foo()
-}
+pub entitlement E
 pub resource interface I {
     access(E) fun foo() 
 }
 
-pub entitlement F {
-    fun foo()
-}
+pub entitlement F
 pub resource interface G {
     access(F) fun foo() 
 }
@@ -274,12 +187,8 @@ in the parentheses denote the entitlements. This permits these references to acc
 So, for example, given two entitlement definitions and a composite definition:
 
 ```cadence
-pub entitlement A { 
-    fun foo()
-}
-pub entitlement B { 
-    fun bar()
-}
+pub entitlement A
+pub entitlement B
 pub resource R {
     access(A) fun foo() { ... }
     access(B) fun bar() { ... }
@@ -293,12 +202,8 @@ it does not have an entitlement for `B`. However, `baz` would be accessible on t
 A reference type's entitlements must be valid entitlements of the referenced type: it is nonsensical, given a set of definitions like: 
 
 ```cadence
-pub entitlement A { 
-    fun foo()
-}
-pub entitlement B { 
-    fun bar()
-}
+pub entitlement A
+pub entitlement B
 pub resource R {
     access(A) fun foo() { ... }
 }
@@ -315,12 +220,8 @@ would fail statically. It is important to note, however, that because the type o
 permit more entitlements than the static type. Consider the following code:
 
 ```cadence
-pub entitlement A { 
-    fun foo()
-}
-pub entitlement B { 
-    fun bar()
-}
+pub entitlement A
+pub entitlement B
 pub resource interface I {
     access(A) fun foo()
 }
@@ -373,16 +274,8 @@ call an `A`-entitled function. However, an `auth(A | B) &R` reference could call
 that our reference has at least one of these entitlements. 
 
 ```cadence
-entitlement E {
-    fun foo()
-    fun bar()
-    fun baz()
-}
-entitlement F {
-    fun foo()
-    fun bar()
-    fun qux()
-}
+entitlement E
+entitlement F
 resource R {
     access(E | F) fun foo() { ... }
     access(E,  F) fun bar() { ... }
@@ -413,35 +306,232 @@ specificity) from a reference where we only know we possess at least one of the 
 in both lists are equal. More specifically, `auth (U1, U2, ... ) &X <: auth (T1 | T2 | ... ) &X` whenever `∀U ∈ {U1, U2, ...}, ∀T ∈ {T1, T2, ...}, T = U`. 
 As one can see, this is only possible when every `U` and `T` are the same entitlement, or when the two entitlement lists each only have a single equivalent element. 
 
+### Entitlement Mapping and Nested Values
+
+When objects have reference fields to child objects, it can often be valuable to have different views of that reference depending on the entitlements one has on the reference to the parent object.
+Consider the following example:
+
+```cadence
+entitlement OuterEntitlement
+entitlement SubEntitlement
+
+resource SubResource {
+    pub fun foo() { ... }
+    access(SubEntitlement) fun bar() { ... }
+}
+
+resource OuterResource {
+    pub let pubRef: &SubResource
+    access(OuterEntitlement) let entitledRef: auth(SubEntitlement) &SubResource
+
+    init(ref: auth(SubEntitlement) &SubResource) {
+        self.pubRef = ref // `ref` is implicitly upcast here to `&SubResource`
+        self.entitledRef = ref
+    }
+}
+```
+
+With this pattern, we can store a reference to a `SubResource` on an `OuterResource` value, and create different ways to access that nested resource depending on the entitlement one
+posseses. Somoneone with only an unauthorized reference to `OuterResource` can only access the `pubRef` field, and thus can only get an unauthorized reference to `SubResource` that lets them call `foo`. 
+However, someone with a `OuterEntitlement`-authorized refererence to the `OuterResource` can access the `entitledRef` field, giving them a `SubEntitlement`-authorized reference to `SubResource` that
+allows them to call `bar`. 
+
+This pattern is functional, but it is unfortunate that we are forced to "duplicate" the reference to `SubResource`, storing it twice on the object in differently named fields, essentially creating
+two different views to the same object that are stored as different fields. To avoid necessitating this duplication, we add support to the language for "entitlement mappings", a way to declare 
+statically how entitlements are propagated from parents to child objects in a nesting hierarchy. So, the above example could be equivalently written as:
+
+```cadence
+entitlement OuterEntitlement
+entitlement SubEntitlement
+
+// specify a mapping for entitlements called `Map`, which defines a function
+// from an input set of entitlements (called the domain) to an output set (called the image)
+entitlement mapping Map {
+    OuterEntitlement -> SubEntitlement
+}
+
+resource SubResource {
+    pub fun foo() { ... }
+    access(SubEntitlement) fun bar() { ... }
+}
+
+resource OuterResource {
+    // by referering to `Map` here, we declare that the entitlements we receive when accessing the `ref` field on this resource
+    // will depend on the entitlements we possess to the resource during the access. 
+    access(Map) let ref: auth(Map) &SubResource
+
+    init(ref: auth(SubEntitlement) &SubResource) {
+        // because the `self.ref` field here is typed with a mapping, in order to assign to it the rhs of the assignment must be fully-entitled 
+        // for the range of this mapping, that is, it must possess all of the entitlements in the image of `Map`
+        self.ref = ref
+    }
+}
+
+// given some value `r` of type `@OuterResource`
+let pubRef = &r as &OuterResource
+let pubSubRef = r.ref // has type `&SubResource`
+
+let entitledRef = &r as auth(OuterEntitlement) &OuterResource
+let entiteldSubRef = r.ref // `OuterEntitlement` is defined to map to `SubEntitlement`, so this access yields a value of type `auth(SubEntitlement) &SubResource`
+```
+
+Entitlement mappings do not need to be 1:1; it is perfectly valid to define a mapping like so:
+
+```cadence
+entitlement mapping M {
+    A -> C
+    B -> C
+    A -> D
+}
+```
+
+If this mapping were used to define the `auth` access of a nested resource reference, one could obtain a `C`-entitled reference to that nested resource with either an 
+`A` or a `B` entitled outer reference. Conversely, an `A`-entitled outer reference would yield a nested reference entitled for both `C` and `D`. Specifically, if the 
+field with the nested reference were called `foo`, then we'd get these different outputs for differently typed `ref` inputs:
+* if `ref` was typed as `&Outer`, then `ref.foo` would just be an `&Inner`
+* if `ref` was typed as `auth(A) Outer`, then `ref.foo` would be `auth(C, D) &Inner`, since `A` maps to both of these outputs
+* if `ref` was typed as `auth(B) Outer`, then `ref.foo` would be `auth(C) &Inner`, since `B` maps only to `C`
+* if `ref` was typed as `auth(A | B) Outer`, then `ref.foo` would be `auth(C) &Inner`, since `C` is mapped to by both of these inputs
+
+Note, however, that because the `|` and `,` typed entitlement sets cannot be mixed (this is a restriction for simplicity more than anything else), it is not possible to use non 1:1 
+mappings in situations where their output would be an unrepresentable entitlement set. So with this mapping: 
+
+```cadence
+entitlement mapping M {
+    E -> A
+    E -> B
+    F -> C
+    F -> D
+}
+```
+We would have the following access relationship: 
+
+* if `ref` was typed as `&auth(E) Outer`, then `ref.foo` would be `auth(A, B) &Inner`
+* if `ref` was typed as `&auth(F) Outer`, then `ref.foo` would be `auth(C, D) &Inner`
+* if `ref` was typed as `&auth(E, F) Outer`, then `ref.foo` would be `auth(A, B, C, D) &Inner`
+* However, if `ref` was typed as `&auth(E | F) Outer`, then `ref.foo` would result in a static error, as this would be `auth((A, B) | (C, D)) &Inner`, which is not representable in Cadence
+
+It is also important to note that when using a mapping, when the mapped field is initialized, it must be initialized with a concrete reference value that is fully-entitled
+to the output of the mapping. So, given the following mapping:
+
+```
+entitlement mapping Map {
+    A -> B
+    C -> D
+    C -> E
+}
+
+resource SubResource { ... }
+
+resource OuterResource {
+    access(Map) let ref: auth(Map) &SubResource
+    init(ref: auth(B) &SubResource) {
+        self.ref = ref // this would fail, as `ref` is only entitled to `B`
+    }
+}
+```
+
+If this were to succeed, then a user could create an `OuterResource` with only a `B`-entitled reference to `SubResource`, and use the mapping on it to get a `D`-entitled
+reference to the `SubResource`, since the owner of the `OuterResource` can get any entitled reference to it. In order to be a valid initial value for the `self.ref` field here,
+the `ref` argument to the constructor would need to have type `auth(B, D, E) &SubResource`. This is most easily achievable if the creator of the `OuterResource` is also
+the owner of the inner resource. 
+
 #### Attachments and Entitlements
 
-Attachments would interact with entitlements and access-limited members in a nuanced but intuitive manner, where the attachment's entitlements
-are implicitly parameterized over the entitlements of its `base` value. Attachments would remain `pub` accessible, but would permit the declaration of `access`-limited members. 
-The `base` value, which currently is simply a `&R` reference for an attachment `attachment A for R` in any of `A`'s member functions, would now have its entitlements
-depend on the entitlements of the member function in question. In a member declaration `access(X | Y) fun foo()` in `A`, the `base` variable would have
-type `auth(X | Y) &R`, while in a member declaration in `A` `pub fun bar()`, `base` would just be an `&R`. This would effectively mean that the `access(X)`
-members of the `base` would only be available to the attachment author in `access(X)` members on the attachment. Similarly, in an `access(X, Y)` 
-member, the `self` reference of the attachment `A` would be `auth(X, Y) &A`, while in a `pub`-access member it would just be `&A`.
+Attachments would interact with entitlements and access-limited members in a nuanced but intuitive manner, using the entitlement mapping feature described above. Instead 
+of requiring that all attachment declarations are `pub`, they can additionally be declared with an `access(X)` modifier, where `X` is the name of an entitlement mapping. 
+When declared with an entitlement mapping access, the attachment's entitlements are propagated from the entitlements of its `base` value according to the mapping. Attachments would remain `pub` accessible, but would permit the declaration of `access`-limited members. So, for example, given some declarations like:
 
-One important point to note here is that the previously mentioned rules about `auth(...) &T` reference types (namely that the set of entitlements on the `auth` modifier must all be valid for the referenced type `T`) require that attachments for any `base` type only use entitlements that are already present on that `base`. 
-To see why, consider an attachment `A` declared `attachment A for R` with a member `access(X) fun foo()`. Within the body of `foo`, using the rules described above, the 
-`base` reference would have type `auth(X) &R`. This type is only reasonable if `X` is a valid entitlement for `R`. 
-
-This would then be combined with a change to the attachment access rules: rather than `v[A]` always returning an `&A?` value, the type of the returned
-attachment reference would depend on the type of `v`. If `v` is not a reference, then any access `v[A]` would be fully authorized with type `(auth(owner) &A)?` (or similar
-super-entitlement keyword). If `v` is a reference, then the access `v[A]` would return a reference to `A` with the same set of entitlements as `v`. This would prevent 
-the attachment from accessing `auth` members on its `base` unless the specific instance of that base to which it is attached has the proper entitlement.
-
-So, for example, given the following declaration:
 ```cadence
-entitlement Withdraw {
-    fun withdraw(_ amount: UFix64): @Vault 
+entitlement E
+entitlement F
+entitlement mapping M {
+    E -> F 
 }
+access(M) attachment A for R {}
+```
+
+given a reference to `r` called `ref`, when `ref` has type `&R` then `ref[A]` has type `&A?`, while when `ref` has type `auth(E) &R` then `ref[A]` has type `auth(F) &A?`. Additionally, as
+owned values are considered fully entitled, accessing `A` directly off of an `@R`-typed value `r` will yield a reference to `A` that is fully entitled, that is, an `A` reference that
+is authorized for the entire image of `M`.
+
+Within the declaration of the attachment itself, the members of the attachments can use any entitlements that exist in the image of `M`, but cannot use other entitlements as the 
+attachment access semantics would make it impossible to obtain a reference to the attachment with entitlements not in the image of `M`. Additionally, there are new semantics for inferring
+the type of `self` and `base` in the bodies of attachment member functions. 
+
+The `self` value, which currently is simply a `&A` reference for an attachment `attachment A for R` in any of `A`'s member functions, would now have its entitlements
+depend on the entitlements of the member function in question. In a member declaration `access(X | Y) fun foo()` in `A`, the `self` variable would have
+type `auth(X | Y) &R`, while in a member declaration in `A` `pub fun bar()`, `self` would just be an `&R`. 
+
+Meanwhile, the `base` value would have slightly more complex semantics - specifically, on an attachment `access(M) attachment A for R`, 
+within a member function declared with some entitlement set `S`, within that 
+member function the `base` reference would be typed with `auth(P) &R`, where `P` is the preimage of `S` under the mapping `M`. 
+This can be understood more easily when we take a concrete example; given the following declarations:
+
+```cadence
+entitlement E
+entitlement F
+entitlement X
+entitlement Y
+entitlement mapping M {
+    E -> F 
+    X -> Y
+}
+access(M) attachment A for R {
+    access(F) fun foo() { ... }
+    access(Y) fun bar() { ... }
+    access(F, Y) fun baz() { ... }
+    access(F | Y) fun qux() { ... }
+}
+```
+
+As explained previously, within `foo` the `self` reference has type `auth(F) &A`, since `foo` is only callable when one possesses at least an `F`-entitled
+reference to `A`. However, when considered carefully it also becomes apparent that the given the specified mapping in `M`, the only way to obtain such a reference
+is via access on an `E`-entitled reference to `R`. Specifically, an `F`-entitled reference to `A` can only be accessed on a `base` that possesses an entitlement for `E`. 
+As such, we can thus infer that within `foo` the `base` reference has an `auth(E) &R` type. The same logic can be used to infer that within `bar`, `base` must have an
+`auth(X) &R` type. Just as we called the output of `M` its "image", the output of the "inverted" version of `M` is called its "preimage".
+
+For more complex access modifiers, instead of computing `M`'s preimage for a single element, we compute the preimage for the entire set. I.e., within `baz` 
+the `base` reference would need to have type `auth(E, X) &R` in order to make `baz` callable on an `A` reference, and within `qux` it would need a 
+`auth(E | X) &R` type in order to make its usage safe. Specifically in the second case, because `qux` is callable with either an `F` or a `Y`-entitled reference to `A`, 
+we can only deduce that `base` had either an `E` or an `X` entitled reference to `R`. 
+
+As before with regular nested objects, certain non-one-to-one mappings make inferring the `base` type impossible. In the following example:
+
+```cadence
+entitlement E
+entitlement F
+entitlement X
+entitlement Y
+entitlement Z
+entitlement mapping M {
+    E -> X
+    E -> Y
+    F -> Z
+}
+access(M) attachment A for R {
+    access(F | Y) fun foo() { ... }
+}
+```
+
+The preimage of `F | Y` under `M` would be `(X, Y) | Z`. It is impossible to create an `auth` reference with this entitlement set, so the `base` reference
+would not be typable within the body of `foo`. To avoid this problem, we will simply prevent defining functions with impossible preimages, so non-one-to-one entitlement
+mappings will require careful use for attachments. 
+
+Putting all of these rules together, we can see that given the following declaration:
+```cadence
+entitlement Withdraw
+entitlement ConvertAndWithdraw
+
+entitlement mapping ConverterMap {
+    Withdraw -> ConvertAndWithdraw
+}
+
 interface Provider {
     access(Withdraw) fun withdraw(_ amount: UFix64): @Vault
 }
 
-attachment CurrencyConverter for Provider {
+access(ConverterMap) attachment CurrencyConverter for Provider {
     pub fun convert(_ amount: UFix64): UFix64 {
         // ...
     }
@@ -451,9 +541,9 @@ attachment CurrencyConverter for Provider {
         return <-vault
     }
 
-    access(Withdraw) fun withdraw(_ amount: UFix64): @Vault {
+    access(ConvertAndWithdraw) fun withdraw(_ amount: UFix64): @Vault {
         let convertedAmount = self.convert(amount) 
-        // this is permitted because this function has an entitlement to `Withdraw`
+        // this is permitted because this function has an entitlement to `ConvertAndWithdraw`
         // on the attachment, and thus `base` has type `auth(Withdraw) &{Provider}`
         return <-base.withdraw(amount: amount) 
     }
@@ -485,7 +575,7 @@ attachment CurrencyConverter for Provider {
 
 let vault <- attach CurrencyConverter() to <-create Vault(balance: /*...*/)
 let authVaultReference = &vault as auth(Withdraw) &Vault
-let converterRef = authVaultReference[CurrencyConverter]! // has type auth(Withdraw) &CurrencyConverter, can call `withdraw`
+let converterRef = authVaultReference[CurrencyConverter]! // has type auth(ConvertAndWithdraw) &CurrencyConverter, can call `withdraw`
 
 let otherVaultReference = &vault as &Vault
 let otheConverterRef = otherVaultReference[CurrencyConverter]! // has type &CurrencyConverter, cannot call `withdraw`
@@ -507,9 +597,7 @@ entitlement sets to control access.
 With this new design, the `Vault` heirarchy might be written like so:
 
 ```cadence
-pub entitlement Withdraw {
-    fun withdraw(amount: UFix64): @Vault
-}
+pub entitlement Withdraw
 
 pub resource interface Provider {
     access(Withdraw) fun withdraw(amount: UFix64): @Vault {
@@ -561,11 +649,11 @@ to call `pub` members like `withdraw` unless those methods were updated to be `a
 There are two cases that need handling to migrate to this new paradigm: contracts and data. 
 
 Existing references in storage (i.e. `Capability` values) would need to be migrated, as they would no longer be semantically valid under the new system. 
-The simplest way to do this would be to ensure existing capabilities stay usable by converting existing capabilities and links' reference types to `auth` references, 
-e.g. `Capability<&Vault{Withdraw}>` -> `Capability<auth(Withdraw) &Vault>`. Specifically, all existing references would become `auth` with regard to their entire borrow type,
-as this does not add any additional power to these `Capability` values that did not previously exist. For example, `&Vault{Provider}` previously had the ability to call `withdraw`,
-which was `pub` on `Provider`. After this change, it will still have the ability to call `withdraw`, as it is now `access(Withdraw)` on `Provider`, but the reference now has `auth(Withdraw)`
-access to that type.
+The simplest way to do this would be to ensure existing capabilities stay usable by converting existing capabilities and links' reference types to `auth` references, along with creating
+entitlements that map 1:1 with existing interfaces, e.g. `Capability<&Vault{Withdraw}>` -> `Capability<auth(Withdraw) &Vault>`. Specifically, all existing 
+references would become `auth` with regard to their entire borrow type, as this does not add any additional power to these `Capability` values that did not previously exist. 
+For example, `&Vault{Provider}` previously had the ability to call `withdraw`, which was `pub` on `Provider`. After this change, it will still have the ability to call `withdraw`, 
+as it is now `access(Withdraw)` on `Provider`, but the reference now has `auth(Withdraw)`access to that type.
 
 However, this does not handle the previously mentioned problem wherein existing contracts become vulnerable to exploitation, as all their `pub` functions would become
 accessible to anybody with any kind of reference to a contract or resource. 
