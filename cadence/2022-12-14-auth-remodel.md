@@ -72,7 +72,7 @@ resource R {
 A single member definition can include multiple entitlements, using either a `|` or a `,` separator when defining the list.
 
 An entitlement list defined using a `|` functions like a disjunction (or an "or"); it is accessible to any `auth` reference with any of those entitlements. 
-An entitlement list defined using a `,` functions like a conjection set (or an "and"); it is accessible only to an `auth` reference with all of those entitlements. 
+An entitlement list defined using a `,` functions like a conjunction set (or an "and"); it is accessible only to an `auth` reference with all of those entitlements. 
 
 So, for example, in 
 
