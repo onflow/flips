@@ -56,21 +56,21 @@ So new `Receiver` interface would look like this -
         pub fun deposit(from: @Vault)
 
         /// Returns the type of implementing resource i.e If `FlowToken.Vault` implements
-        /// this then it would return `[Type<@FlowToken.Vault>()]` and if any custom receiver
-        /// uses the default implementation then it would return empty array as its parent
+        /// this then it would return `{Type<@FlowToken.Vault>(): true}` and if any custom receiver
+        /// uses the default implementation then it would return empty dictionary as its parent
         /// resource doesn't conform with the `FungibleToken.Vault` resource.
         ///
-        /// @return list of supported vault types by the implemented resource.
+        /// @return Dictionary of supported vault types by the implemented resource.
         /// 
-        pub fun getSupportedVaultTypes() :[Type] {
+        pub fun getSupportedVaultTypes() :{Type: Bool} {
             // Below check is implemented to make sure that run-time type would
             // only get returned when the parent resource conforms with `FungibleToken.Vault`. 
             if self.getType().isSubtype(of: Type<@FungibleToken.Vault>()) {
-                return [self.getType()]
+                return {self.getType(): true}
             } else {
-                // Return empty array as the default value for the resource who don't
+                // Return empty dictionary as the default value for the resource who don't
                 // implements `FungibleToken.Vault`, such as `FungibleTokenSwitchboard`, `TokenForwarder` etc.
-                return []
+                return {}
             }
         }
     }
@@ -106,14 +106,14 @@ Implementation of proposed `Receiver` type for `FungibleTokenSwitchboard` contra
         /// `{FungibleToken.Receiver}` capabilities that can be effectively 
         /// borrowed.
         ///
-        pub fun getSupportedVaultTypes(): [Type] {
-            let effectiveTypes: [Type] = []
+        pub fun getSupportedVaultTypes(): {Type: Bool} {
+            let supportedTypes: {Type: Bool} = []
             for vaultType in self.receiverCapabilities.keys {
                 if self.receiverCapabilities[vaultType]!.check() {
-                    effectiveTypes.append(vaultType)
+                    supportedTypes.insert(key: vaultType, true)
                 }
             }
-            return effectiveTypes
+            return supportedTypes
         }
     }
 ```
