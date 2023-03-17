@@ -303,7 +303,7 @@ This is because we are casting from a type that is known to possess all of the l
 
 In practice `|`-separated entitlement lists never subtype `,`-separated ones except in the trivial case. This is because we are attempting to upcast (change the type without gaining any new
 specificity) from a reference where we only know we possess at least one of the listed entitlement to one where we know we possess all of them. This is only possible when all of the references
-in both lists are equal. More specifically, `auth (U1, U2, ... ) &X <: auth (T1 | T2 | ... ) &X` whenever `∀U ∈ {U1, U2, ...}, ∀T ∈ {T1, T2, ...}, T = U`. 
+in both lists are equal. More specifically, `auth (U1 | U2 | ... ) &X <: auth (T1, T2,  ... ) &X` whenever `∀U ∈ {U1, U2, ...}, ∀T ∈ {T1, T2, ...}, T = U`. 
 As one can see, this is only possible when every `U` and `T` are the same entitlement, or when the two entitlement lists each only have a single equivalent element. 
 
 ### Entitlement Mapping and Nested Values
