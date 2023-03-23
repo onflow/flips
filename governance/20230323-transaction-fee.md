@@ -1,5 +1,12 @@
 # FLIP: Revisiting Flow Transaction fee
 
+| Status        | Proposed                                            |
+:-------------- |:---------------------------------------------------- |
+| **FLIP #**    | [74](https://github.com/onflow/flow/pull/74)
+| **Author(s)** | Kshitij Chaudhary (kshitij.chaudhary@dapperlabs.com)           | 
+| **Sponsor**   | Kshitij Chaudhary (kshitij.chaudhary@dapperlabs.com) |
+| **Updated**   | 2023-03-23                                           |
+
 ## **Introduction**
 
 In October 2021, with [FLIP-660](https://github.com/onflow/flow/blob/c05d847adf2f6fb509e42c17020484d7dd3e89bd/flips/20211007-transaction-fees.md) it was determined that the transaction fees on Flow should be proportional to the cost of effort to the network imposed by deployment of resources such as CPU and bandwidth. Fees were broken down into [three components](https://developers.flow.com/learn/concepts/variable-transaction-fees) - ‘*Inclusion Fee*’ that accounts for the resources required to process a transaction due to the transaction’s core properties (byte size, number of signatures); ‘Execution Fee’ that accounts for the operational cost of running the transaction script, processing the results, sending results for verification, generating verification receipt, etc; and a *Surge* factor as a multiplicative factor to dynamically account for network pressure and market conditions.
