@@ -138,9 +138,7 @@ And for builders:
 
 # Design Proposal
 
-> :warning: The diagram below will be updated shortly to be in sync with the recently updated implementation
-
-![child_account_resources_overview](./20230223-auth-account-capability-management-standard-resources/child_account_resources_overview.jpg)
+![linkeds_account_resources_overview](./20230223-auth-account-capability-management-standard-resources/linked_accounts_resources_overview.png)
 *The hierarchical model between accounts is reflected by the `Collection` in the parent account & `Handler` in the child account. A `Collection` identifies a parent account, map its child accounts to `NFT`, and enables a user to create & manage multiple child accounts. `Handler`s identify a child account, its parent, & enables its creating Manager to grant the child account Capabilities.*
 
 > ℹ️ Note that AuthAccount Capabilities are not currently enabled on mainnet, only testnet. You may also use a [preview version of flow-cli](https://github.com/onflow/flow-cli/releases/tag/v0.45.1-cadence-attachments-dev-wallet) to utilize the feature in your local emulator environment
@@ -1056,24 +1054,22 @@ Assuming this FLIP is approved/implemented formal tutorials and examples will be
 ## Adding an Account as a Child Account (AKA “Account Linking”)
 > ℹ️ Can be multisigned transaction by both parties or AuthAccount capability can be linked & published by child account then claimed and linked in the parent accounts Collection
 
-![child_account_add_as_child](./20230223-auth-account-capability-management-standard-resources/child_account_add_as_child.jpg)
-
-> :warning: Note, this diagram and steps below will be updated shortly to reflect the latest iteration of this proposed standard.
+![add_as_child_account](./20230223-auth-account-capability-management-standard-resources/add_as_child_account.png)
 
 In this diagram, the parent account signs a transaction doing the following:
 
 1. Claim the AuthAccount Capability published for them by the child account
-2. Gets a reference to their ChildAccountManager and passes the claimed Capability along with child account metadata, `ChildAccountInfo`
-3. Creates a ChildAccountTag in the child account if one doesn’t already exist, providing the given `ChildAccountInfo` on creation. Again, this is possible because the parent now has an AuthAccount Capability for the child account.
-4. Links the `ChildAccountTag` in as a private Capability in the child account
-5. Retrieves the linked `ChildAccountTag` Capability from the child account
-6. Creates a `ChildAccountController`, providing the claimed AuthAccount Capability as well as the `ChildAccountTag` Capability
+2. Gets a reference to their `Collection` and passes the claimed Capability along with linked account metadata, `LinkedAccountMetadataViews.AccountInfo`
+3. Creates a `Handler` in the new child account, providing the given `AccountInfo` on creation. Again, this is possible because the parent now has an AuthAccount Capability for the child account.
+4. Links the `HandlerPublic` unrestricted `Handler` in public and private Capabilities respectively.
+5. Retrieves the linked `Handler` Capability from the child account
+6. Mints an `NFT`, providing the claimed AuthAccount Capability as well as the `Handler` Capability.
+7. Adds the new child account's Address & associated `NFT.id` into the `addressToID` mapping
+8. Inserts the new `NFT` into the `Collection.ownedNFTs` mapping.
 
 ## Using a Child Account’s FlowToken Vault
 
-> :warning: Note, this diagram will be updated shortly to reflect the latest iteration of this proposed standard.
-
-![child_account_use_child_account_vault](./20230223-auth-account-capability-management-standard-resources/child_account_use_child_account_vault.jpg)
+![use_linked_account_funds](./20230223-auth-account-capability-management-standard-resources/use_linked_account_funds.png)
 
 ```js
 import FungibleToken from "../../contracts/utility/FungibleToken.cdc"
@@ -1138,7 +1134,7 @@ While the “parent-child” name implies an account hierarchy, it doesn’t nec
 - Is the limitation of public `deposit()` functionality fly too far away from the NFT standard such that its use is not warranted?
 - How will the newly introduced [SuperAuthAccount](https://forum.onflow.org/t/super-user-account/4088/2) feature fit in? Will we want to delegate and store `SuperAuthAccount` in the parent’s managing resource or should parent accounts only preserve AuthAccount? My vote is to give parent accounts the fullest permissions on child accounts so they can add/revoke keys, etc.
 - Where do Capability Controllers fit in and can they reduce some of the concerns around auditing and revocation of AuthAccount Capabilities?
-- Should ChildAccountTags be allowed to have multiple parent accounts. I believe they should. One use case I can imagine is gaming - I might want all of my game client accounts to have access to each other so I can easily transfer between them and for full interoperability between platforms.
+- Should `Handler` resources be allowed to have multiple parent accounts. I believe they should. One use case I can imagine is gaming - I might want all of my game client accounts to have access to each other so I can easily transfer between them and for full interoperability between platforms.
     - `parentAddresses: [Address]`
 - Do we want `Collection` to be able to revoke other `Collections`s’ access to a child account? For example, let’s say I have access to a set of child accounts and I want to remove anyone else’s access to those accounts. How can we ensure the user has that ability - AuthAccount CapabilityPath naming conventions, CapCons, in-built functions in `Collection`?
     - This can be helpful in the case that a user delegates child account access to another account - a user’s mobile game client account delegated to their web game client account for instance so assets are visible and accessible between the two without friction.
