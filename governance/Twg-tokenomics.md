@@ -2,7 +2,7 @@
 
 **Introduction to TWG**
 
-Flow - the next-generation permissionless platform for decentralized applications and digital assets - is launching a Technical Working Group (TWG) to focus on enhancing FLOW token economics. The working group will be responsible for researching, discussing, and driving improvements to the economic design of Flow's native token, FLOW, and its use-cases, with a focus on driving network security, decentralization and FLOW’s value proposition, ultimately to help expand the Flow ecosystem. The group will comprise experts in blockchain, economics, mathematics, game theory, data science, marketing, and related fields, and will work closely with the community to ensure that decisions are data-driven, technically sound, and aligned with the goals of the Flow community.
+Flow - the next-generation permissionless platform for decentralized applications and digital assets - is launching a Technical Working Group (TWG) to focus on enhancing FLOW token economics. The working group will be responsible for researching, discussing, and driving improvements to the economic design of Flow's native token, FLOW, and its use-cases, with a focus on driving network security, decentralization and FLOW’s value proposition. The group will be open to experts in blockchain, economics, mathematics, game theory, data science, marketing, and related fields, and will work closely with the community to ensure that decisions are data-driven, technically sound, and aligned with the goals of the Flow community.
 
 **Roles & Responsibilities**
 
@@ -17,7 +17,7 @@ Specifically, the group would analyze challenges, design innovative solutions, a
 The constitution and governance of the TWG would be designed to ensure fairness, transparency, and accountability.
 
 - **Tenets**: Overall, the TWG would prioritize inclusivity, transparency, accountability, innovation, and decentralization.
-- **Membership** would be voluntary and open to all anyone with the necessary skills and expertise, including representatives from the Flow Foundation, developers, researchers, community members, and industry experts.
+- **Membership** would be voluntary and open to all; anyone with the necessary skills and expertise, including representatives from the Flow Foundation, developers, researchers, community members, and industry experts, would be able to join the group.
 - **Roles and Responsibilities**: TWG’s responsibilities, key tasks, timelines and deliverables would be clearly defined and communicated to ensure transparency.
 - **Decision-making**: The TWG would use a consensus-based decision-making process, with all members sharing equal voting rights, and decisions made democratically.
 - **Meetings**: Regular meetings would be held to discuss progress, share ideas, and make decisions. These meetings would be open to all members.
