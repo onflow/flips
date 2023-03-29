@@ -344,6 +344,8 @@ interface Identity extends ObjectBase {
 }
 ```
 
+> Note: The 'keyId' is required when returning a proposer identity.
+
 The meaning of the fields is as follows.
 
 - `address`: The flow account address of the user.
