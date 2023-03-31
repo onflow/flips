@@ -1,15 +1,15 @@
-# Interaction Templates (Deprecated)
+# Interaction Templates (Latest)
 
-| Status          | Deprecated                                                     |
-| :-------------- | :------------------------------------------------------------- |
-| **Replaced By** | --                                                             |
-| **FLIP #**      | [934](https://github.com/onflow/flow/pull/934)                 |
-| **Forum**       | https://forum.onflow.org/t/flip-934-interaction-templates/3080 |
-| **Author(s)**   | Jeffrey Doyle (jeffrey.doyle@dapperlabs.com)                   |
-| **Sponsor**     | Jeffrey Doyle (jeffrey.doyle@dapperlabs.com)                   |
-| **Updated**     | 2023-03-31                                                     |
+| Status        | Proposed                                                       |
+| :------------ | :------------------------------------------------------------- |
+| **FLIP #**    | --                                                             |
+| **Forum**     | https://forum.onflow.org/t/flip-934-interaction-templates/3080 |
+| **Author(s)** | Jeffrey Doyle (jeffrey.doyle@dapperlabs.com)                   |
+| **Sponsor**   | Jeffrey Doyle (jeffrey.doyle@dapperlabs.com)                   |
+| **Updated**   | 2023-03-30                                                     |
 
-> ⚠️ This FLIP has been deprecated and replaced by (TODO: include FLIP number and link). Please reference the latest version.
+> This FLIP presents the latest version (v1.1.0) of the InteractionTemplate and InteractionTemplateInterface data structures.
+> To read more on the prior version (v1.0.0) of InteractionTemplate and InteractionTemplateInterface, see: https://github.com/onflow/flips/blob/main/flips/20220503-interaction-templates.md
 
 ## Abstract
 
@@ -74,21 +74,23 @@ Here is an example of an `InteractionTemplateInterface` for "Fungible Token Tran
 ```javascript
 {
     f_type: "InteractionTemplateInterface",
-    f_version: "1.0.0",
+    f_version: "1.1.0",
     id: "asadf23234...fas234234", // Unique ID for the data structure.
     data: {
         flip: "FLIP-XXXX",
         title: "Fungible Token Transfer",
-        arguments: {
-            amount: {
-                index: 0,
-                type: "UFix64"
+        arguments: [
+            {
+              key: "amount",
+              index: 0,
+              type: "UFix64"
             },
-            to: {
-                index: 1,
-                type: "Address"
+            {
+              key: "to",
+              index: 1,
+              type: "Address"
             }
-        }
+        ]
     }
 }
 ```
@@ -135,110 +137,180 @@ Here is an example `InteractionTemplate` for a "Transfer FLOW" transaction:
 
 ```javascript
 {
-    f_type: "InteractionTemplate", // Data Type
-    f_version: "1.0.0", // Data Type Version
-    id: "a2b2d73def...aabc5472d2", // Unique ID for the data structure.
-    data: {
-        type: "transaction", // "transaction" || "script"
-        interface: "asadf23234...fas234234", // ID of InteractionTemplateInterface this conforms to.
-        messages: {
-            title: {
-                i18n: { // Internationalised (BCP-47) set of human readable messages about the interaction
-                    "en-US": "Transfer FLOW",
-                    "fr-FR": "FLOW de transfert",
-                    "zh-CN": "转移流程",
-                }
-            },
-            description: {
-                i18n: { // Internationalised (BCP-47) set of human readable messages about the interaction
-                    "en-US": "Transfer {amount} FLOW to {to}", // Messages might consume arguments.
-                    "fr-FR": "Transférez {amount} FLOW à {to}",
-                    "zh-CN": "将 {amount} FLOW 转移到 {to}"
-                }
-            }
-        },
-        cadence: // Cadence code this interaction executes.
-        `
-        import FungibleToken from 0xFUNGIBLETOKENADDRESS
-        transaction(amount: UFix64, to: Address) {
-            let vault: @FungibleToken.Vault
-            prepare(signer: AuthAccount) {
-                %%self.vault <- signer
-                .borrow<&{FungibleToken.Provider}>(from: /storage/flowTokenVault)!
-                .withdraw(amount: amount)
+  f_type: "InteractionTemplate", // Data Type
+  f_version: "1.1.0", // Data Type Version
+  id: "a2b2d73def...aabc5472d2", // Unique ID for the data structure.
+  data: {
+    type: "transaction", // "transaction" || "script"
+    interface: "asadf23234...fas234234", // ID of InteractionTemplateInterface this conforms to.
+    messages: [
+      {
+        key: "title",
+        i18n: [ // Internationalised (BCP-47) set of human readable messages about the interaction
+          {
+            tag: "en-US",
+            translation: "Transfer FLOW"
+          },
+          {
+            tag: "fr-FR",
+            translation: "FLOW de transfert"
+          },
+          {
+            tag: "zh-CN",
+            translation: "转移流程"
+          }
+        ]
+      },
+      {
+        key: "description",
+        i18n: [ // Internationalised (BCP-47) set of human readable messages about the interaction
+          {
+            tag: "en-US",
+            translation: "Transfer {amount} FLOW to {to}", // Messages might consume arguments.
+          },
+          {
+            tag: "fr-FR",
+            translation:  "Transférez {amount} FLOW à {to}"
+          },
+          {
+            tag: "zh-CN",
+            translation: "将 {amount} FLOW 转移到 {to}"
+          }
+        ]
+      }
+    ],
+    cadence: // Cadence code this interaction executes.
+    `
+    import FungibleToken from 0xFUNGIBLETOKENADDRESS
+    transaction(amount: UFix64, to: Address) {
+        let vault: @FungibleToken.Vault
+        prepare(signer: AuthAccount) {
+            %%self.vault <- signer
+            .borrow<&{FungibleToken.Provider}>(from: /storage/flowTokenVault)!
+            .withdraw(amount: amount)
 
-                self.vault <- FungibleToken.getVault(signer)
-            }
-            execute {
-                getAccount(to)
-                .getCapability(/public/flowTokenReceiver)!
-                .borrow<&{FungibleToken.Receiver}>()!
-                .deposit(from: <-self.vault)
-            }
+            self.vault <- FungibleToken.getVault(signer)
         }
-        `,
-        dependencies: {
-            "0xFUNGIBLETOKENADDRESS": { // Network (mainnet || testnet) dependent locations for 0xFUNGIBLETOKENADDRESS contract.
-                "FungibleToken" : {
-                    mainnet: {
-                        address: "0xf233dcee88fe0abe", // Address of the account the contract is located.
-                        fq_address: "A.0xf233dcee88fe0abe.FungibleToken", // Fully qualified contract identifier.
-                        pin: "asdfasdfasdfasdfasdfasdfsadf123123123123", // Unique identifier of the interactions dependency tree.
-                        pin_block_height: 10123123123 // Block height the pin was generated against.
-                    },
-                    testnet: {
-                        address: "0x9a0766d93b6608b7",
-                        fq_address: "A.0x9a0766d93b6608b7.FungibleToken",
-                        pin: "asdfasdfasdfasdfasdfasdfsadf123123123123",
-                        pin_block_height: 10123123123
-                    }
-                }
-            }
-        },
-        arguments: {
-            amount: {
-                index: 0,
-                type: "UFix64",
-                messages: { // Set of human readable messages about the argument
-                    title: {
-                        i18n: { // Internationalised (BCP-47) set of human readable messages about the argument
-                            "en-US": "Amount",
-                            "fr-FR": "Montant",
-                            "zh-CN": "数量",
-                        }
-                    },
-                    description: {
-                        i18n: { // Internationalised (BCP-47) set of human readable messages about the argument
-                            "en-US": "Amount of FLOW token to transfer",
-                            "fr-FR": "Quantité de token FLOW à transférer",
-                            "zh-CN": "要转移的 FLOW 代币数量"
-                        }
-                    }
-                },
-                balance: "0xFUNGIBLETOKENADDRESS.FungibleToken" // The token this argument acts upon.
-            },
-            to: {
-                index: 1,
-                type: "Address",
-                messages: { // Set of human readable messages about the argument
-                    title: {
-                        i18n: { // Internationalised (BCP-47) set of human readable messages about the argument
-                            "en-US": "To",
-                            "fr-FR": "Pour",
-                            "zh-CN": "到",
-                        }
-                    },
-                    description: {
-                        i18n: { // Internationalised (BCP-47) set of human readable messages about the argument
-                            "en-US": "Amount of FLOW token to transfer",
-                            "fr-FR": "Le compte vers lequel transférer les jetons FLOW",
-                            "zh-CN": "将 FLOW 代币转移到的帐户"
-                        }
-                    }
-                }
-            }
+        execute {
+            getAccount(to)
+            .getCapability(/public/flowTokenReceiver)!
+            .borrow<&{FungibleToken.Receiver}>()!
+            .deposit(from: <-self.vault)
         }
     }
+    `,
+    dependencies: [
+      {
+        address: "0xFUNGIBLETOKENADDRESS", // Network (mainnet || testnet) dependent locations for 0xFUNGIBLETOKENADDRESS contract.
+        contracts: [
+          {
+            contract: "FungibleToken",
+            networks: [
+              {
+                network: "mainnet",
+                address: "0xf233dcee88fe0abe", // Address of the account the contract is located.
+                fq_address: "A.0xf233dcee88fe0abe.FungibleToken", // Fully qualified contract identifier.
+                pin: "asdfasdfasdfasdfasdfasdfsadf123123123123", // Unique identifier of the interactions dependency tree.
+                pin_block_height: 10123123123 // Block height the pin was generated against.
+              },
+              {
+                network: "testnet",
+                address: "0x9a0766d93b6608b7",
+                fq_address: "A.0x9a0766d93b6608b7.FungibleToken",
+                pin: "asdfasdfasdfasdfasdfasdfsadf123123123123",
+                pin_block_height: 10123123123
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    arguments: [
+      {
+        key: "amount",
+        index: 0,
+        type: "UFix64",
+        messages: [ // Set of human readable messages about the argument
+          {
+            key: "title",
+            i18n: [ // Internationalised (BCP-47) set of human readable messages about the argument
+              {
+                tag: "en-US",
+                translation: "Amount", // Messages might consume arguments.
+              },
+              {
+                tag: "fr-FR",
+                translation:  "Montant"
+              },
+              {
+                tag: "zh-CN",
+                translation: "数量"
+              }
+            ]
+          },
+          {
+            key: "description",
+            i18n: [ // Internationalised (BCP-47) set of human readable messages about the argument
+              {
+                tag: "en-US",
+                translation: "Amount of FLOW token to transfer", // Messages might consume arguments.
+              },
+              {
+                tag: "fr-FR",
+                translation:  "Quantité de token FLOW à transférer"
+              },
+              {
+                tag: "zh-CN",
+                translation: "要转移的 FLOW 代币数量"
+              }
+            ]
+          }
+        ],
+        balance: "0xFUNGIBLETOKENADDRESS.FungibleToken" // The token this argument acts upon.
+      },
+      {
+        key: "to",
+        index: 1,
+        type: "Address",
+        messages: [ // Set of human readable messages about the argument
+          {
+            key: "title",
+            i18n: [ // Internationalised (BCP-47) set of human readable messages about the argument
+              {
+                tag: "en-US",
+                translation: "To", // Messages might consume arguments.
+              },
+              {
+                tag: "fr-FR",
+                translation:  "Pour"
+              },
+              {
+                tag: "zh-CN",
+                translation: "到"
+              }
+            ]
+          },
+          {
+            key: "description",
+            i18n: [ // Internationalised (BCP-47) set of human readable messages about the argument
+              {
+                tag: "en-US",
+                translation: "Amount of FLOW token to transfer", // Messages might consume arguments.
+              },
+              {
+                tag: "fr-FR",
+                translation:  "Le compte vers lequel transférer les jetons FLOW"
+              },
+              {
+                tag: "zh-CN",
+                translation: "将 FLOW 代币转移到的帐户"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
 }
 ```
 
@@ -467,7 +539,7 @@ A deterministic serialization algorithm is required to be applied prior to hashi
 
 By serializing each data structure into a specific format, then [RLP encoding](https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp/) that format, then hashing that encoding, we can generate identifiers for each data structure.
 
-### `InteractionTemplate` f_version 1.0.0
+### `InteractionTemplate` f_version 2.0.0
 
 ```text
 template-message-key-content   = UTF-8 string content of the message
@@ -561,10 +633,10 @@ hex(MESSAGE)
 sha3_256(MESSAGE)
     Is the SHA3-256 hash function.
 ...
-    Denotes multiple of a symbol
+    Denotes multiple of a symbol in retained order
 ```
 
-### `InteractionTemplateInterface` f_version 1.0.0
+### `InteractionTemplateInterface` f_version 2.0.0
 
 ```text
 interface-f-version            = Version of the InteractionTemplateInterface data structure being serialized.
@@ -603,7 +675,7 @@ hex(MESSAGE)
 sha3_256(MESSAGE)
     Is the SHA3-256 hash function.
 ...
-    Denotes multiple of a symbol
+    Denotes multiple of a symbol in retained order
 ```
 
 ## Data Structure JSON Schemas
@@ -633,122 +705,271 @@ sha3_256(MESSAGE)
         "interface": {
           "type": "string"
         },
-        "version": {
-          "type": "string"
-        },
         "messages": {
-          "type": "object",
-          "patternProperties": {
-            ".*": {
+          "type": "array",
+          "items": [
+            {
               "type": "object",
               "properties": {
+                "key": {
+                  "type": "string"
+                },
                 "i18n": {
-                  "type": "object",
-                  "patternProperties": {
-                    ".*": {
-                      "type": "string"
+                  "type": "array",
+				          "items": [
+                    {
+                      "type": "object",
+                      "properties": {
+						            "tag": {
+							            "type": "string",
+                        },
+						            "translation": {
+							            "patternProperties": {
+                            ".*": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
                     }
-                  }
+                  ]
                 }
               },
               "required": [
+                "key",
                 "i18n"
-              ],
+              ]
             },
-          },
+            {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "i18n": {
+                  "type": "array",
+				          "items": [
+                    {
+                      "type": "object",
+                      "properties": {
+						            "tag": {
+							            "type": "string",
+                        },
+						            "translation": {
+							            "patternProperties": {
+                            ".*": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "key",
+                "i18n"
+              ]
+            }
+          ]
         },
         "cadence": {
           "type": "string"
         },
         "dependencies": {
-          "type": "object",
-          "description": "Account address placeholder",
-          "patternProperties": {
-            ".*": {
+          "type": "array",
+          "items": [
+            {
               "type": "object",
-              "patternProperties": {
-                ".*": {
-                  "type": "object",
-                  "description": "Contract on account",
-                  "patternProperties": {
-                    ".*": {
+              "properties": {
+                "address": {
+                  "type": "string"
+                },
+                "contracts": {
+                  "type": "array",
+                  "items": [
+                    {
                       "type": "object",
-                      "description": "Network specific dependency (mainnet, testnet, canarynet etc)",
                       "properties": {
-                        "address": {
-                            "type": "string"
+                        "contract": {
+                          "type": "string"
                         },
-                        "fq_address": {
-                            "type": "string"
-                        },
-                        "pin": {
-                            "type": "string"
-                        },
-                        "pin_block_height": {
-                            "type": "integer"
+                        "networks": {
+                          "type": "array",
+                          "items": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "network": {
+                                  "type": "string"
+                                },
+                                "address": {
+                                  "type": "string"
+                                },
+                                "fq_address": {
+                                  "type": "string"
+                                },
+                                "pin": {
+                                  "type": "string"
+                                },
+                                "pin_block_height": {
+                                  "type": "integer"
+                                }
+                              },
+                              "required": [
+                                "network",
+                                "address",
+                                "fq_address",
+                                "pin",
+                                "pin_block_height"
+                              ]
+                            }
+                          ]
                         }
                       },
                       "required": [
-                        "address",
-                        "fq_address",
-                        "pin",
-                        "pin_block_height"
+                        "contract",
+                        "networks"
                       ]
                     }
-                  },
+                  ]
                 }
               },
+              "required": [
+                "address",
+                "contracts"
+              ]
             }
-          },
+          ]
         },
         "arguments": {
-          "type": "object",
-          "patternProperties": {
-            ".*": {
+          "type": "array",
+          "items": [
+            {
               "type": "object",
               "properties": {
+                "key": {
+                  "type": "string"
+                },
                 "index": {
                   "type": "integer"
                 },
                 "type": {
-                  "type": "string",
+                  "type": "string"
                 },
                 "messages": {
-                  "type": "object",
-                  "patternProperties": {
-                    ".*": {
+                  "type": "array",
+                  "items": [
+                    {
                       "type": "object",
                       "properties": {
-                        "i18n": {
-                          "type": "object",
-                          "patternProperties": {
-                            ".*": {
-                              "type": "string"
-                            }
-                          }
-                        },
-                        "balance": {
+                        "key": {
                           "type": "string"
+                        },
+                        "i18n": {
+                          "type": "array",
+                          "items": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "tag": {
+                                  "type": "string",
+                                },
+                                "translation": {
+                                  "patternProperties": {
+                                    ".*": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          ]
                         }
                       },
                       "required": [
+                        "key",
                         "i18n"
                       ]
                     }
-                  }
+                  ]
+                },
+                "balance": {
+                  "type": "string"
                 }
               },
               "required": [
+                "key",
                 "index",
+                "type",
+                "messages",
+                "balance"
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "index": {
+                  "type": "integer"
+                },
+                "type": {
+                  "type": "string"
+                },
+                "messages": {
+                  "type": "array",
+                  "items": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string"
+                        },
+                        "i18n": {
+                          "type": "array",
+                          "items": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "tag": {
+                                  "type": "string",
+                                },
+                                "translation": {
+                                  "patternProperties": {
+                                    ".*": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "key",
+                        "i18n"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "key",
+                "index",
+                "type",
                 "messages"
               ]
             }
-          }
+          ]
         }
       },
       "required": [
         "type",
-        "version",
+        "interface",
         "messages",
         "cadence",
         "dependencies",
@@ -784,9 +1005,6 @@ sha3_256(MESSAGE)
     "data": {
       "type": "object",
       "properties": {
-        "version": {
-          "type": "string"
-        },
         "flip": {
           "type": "string"
         },
@@ -794,11 +1012,14 @@ sha3_256(MESSAGE)
           "type": "string"
         },
         "arguments": {
-          "type": "object",
-          "patternProperties": {
-            ".*": {
+          "type": "array",
+          "items": [
+            {
               "type": "object",
               "properties": {
+                "key": {
+                  "type": "string"
+                },
                 "index": {
                   "type": "integer"
                 },
@@ -807,15 +1028,15 @@ sha3_256(MESSAGE)
                 }
               },
               "required": [
+                "key",
                 "index",
                 "type"
               ]
             }
-          }
+          ]
         }
       },
       "required": [
-        "version",
         "flip",
         "title",
         "arguments"
