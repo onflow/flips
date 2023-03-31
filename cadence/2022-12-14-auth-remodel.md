@@ -3,7 +3,7 @@ status: draft
 flip: NNN (do not set)
 authors: Daniel Sainati (daniel.sainati@dapperlabs.com)
 sponsor: Daniel Sainati (daniel.sainati@dapperlabs.com)
-updated: 2023-03-14
+updated: 2023-03-31
 ---
 
 # Entitlements
@@ -198,46 +198,6 @@ pub resource R {
 
 a value of type `auth(A) &R` would be able to access `foo`, because the reference has the `A` entitlement, but not `bar`, because
 it does not have an entitlement for `B`. However, `baz` would be accessible on this reference, since it has `pub` access. 
-
-A reference type's entitlements must be valid entitlements of the referenced type: it is nonsensical, given a set of definitions like: 
-
-```cadence
-pub entitlement A
-pub entitlement B
-pub resource R {
-    access(A) fun foo() { ... }
-}
-```
-
-to create a reference like like `auth(B) &R`, since `R` has no functions with `B` entitlements. Thus 
-
-```cadence
-let r <- create R()
-let ref = &r as auth(B) &R // cannot take a reference to `r` with a `B` entitlement
-```
-
-would fail statically. It is important to note, however, that because the type on the right-hand side of the `&` may be an interface, the dynamic type of a reference may
-permit more entitlements than the static type. Consider the following code:
-
-```cadence
-pub entitlement A
-pub entitlement B
-pub resource interface I {
-    access(A) fun foo()
-}
-pub resource R: I {
-    access(A) fun foo() { ... }
-    access(B) fun bar() { ... }
-}
-let r <- create R()
-let ref1 = &r as auth(A, B) &R // valid
-let ref2 = ref as auth(A, B) &{I} // invalid cast
-let ref3 = ref as auth(A) &{I} // valid cast
-```
-
-Here, `auth(A, B) &R` is a valid type because both `A` and `B` are valid entitlements for `R`. However, if we wished to upcast this to a reference of 
-type `&{I}`, this would not permit a `B` entitlement, so in order to upcast this we would need to drop the `B` entitlement to get `auth(A) &{I}`. The `B`
-entitlement would remain present on the dynamic (run-time) type of this reference, however, and could be recovered with a runtime downcasting operation (described below).
 
 The other part of this change is to remove the limitations on resource downcasting that used to exist. Prior to this change, 
 non-`auth` references could not be downcast at all, since the sole purpose of the `auth` keyword was to indicate that references could be
