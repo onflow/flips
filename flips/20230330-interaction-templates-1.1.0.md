@@ -201,7 +201,7 @@ Here is an example `InteractionTemplate` for a "Transfer FLOW" transaction:
     `,
     dependencies: [
       {
-        address: "0xFUNGIBLETOKENADDRESS", // Network (mainnet || testnet) dependent locations for 0xFUNGIBLETOKENADDRESS contract.
+        placeholder: "0xFUNGIBLETOKENADDRESS", // Network (mainnet || testnet) dependent locations for 0xFUNGIBLETOKENADDRESS contract.
         contracts: [
           {
             contract: "FungibleToken",
@@ -227,7 +227,7 @@ Here is an example `InteractionTemplate` for a "Transfer FLOW" transaction:
     ],
     arguments: [
       {
-        key: "amount",
+        label: "amount",
         index: 0,
         type: "UFix64",
         messages: [ // Set of human readable messages about the argument
@@ -269,7 +269,7 @@ Here is an example `InteractionTemplate` for a "Transfer FLOW" transaction:
         balance: "0xFUNGIBLETOKENADDRESS.FungibleToken" // The token this argument acts upon.
       },
       {
-        key: "to",
+        label: "to",
         index: 1,
         type: "Address",
         messages: [ // Set of human readable messages about the argument
