@@ -6,7 +6,7 @@ sponsor: Jerome Pimmel (jerome.pimmel@dapperlabs.com)
 updated: 2023-03-09
 ---
 
-# FLIP Draft] Event Streaming API (alpha version)
+# [FLIP Draft] Event Streaming API (alpha version)
 
 ## Objective
 
@@ -20,7 +20,7 @@ This FLIP proposes a new execution and event data streaming API for Access nodes
 which simplifies consumption of on-chain events by providing a simple pub/sub 
 asynchronous event streaming endpoint.
 
-## Motivation
+## Motivation and User Benefit
 
 The Flow Access API presently only offers non-streaming REST/gRPC endpoints. 
 Builders wishing to track events must build clients that poll by ranges of blocks. 
@@ -41,11 +41,6 @@ The most common way to consume events would be:
 While simple request/response APIs like this are straight forward to implement 
 and reason with, they lack the flexibility and scalability needed by builders 
 with more complex workflows.
-
-## User Benefit
-
-How will users (or other contributors) benefit from this work? What would be the
-headline in the release notes or blog post?
 
 ## Design Proposal
 
@@ -160,6 +155,18 @@ for {
 	)
 }
 ```
+
+#### Responses and Heartbeats
+
+All events for a block are aggregated into a single response message, which includes the block's
+ID and height. Depending on the filter, matching responses may be sparse. To cut down on unnecessary
+network traffic, the API will not send a response for a block where no events matched the filter.
+This creates a challenge for clients when they disconnect since they may not know which blocks the
+server has already searched.
+
+To address this, the API will periodically send a heartbeat message. This is a regular response
+message that contains the ID and height of last block searched, but with no events. The interval
+will be configurable by the client.
 
 ### Performance Implications
 
