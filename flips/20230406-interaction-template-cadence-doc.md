@@ -1,4 +1,4 @@
-# Interaction Template CadenceDoc (v1.0.0)
+# Interaction Template Cadence Doc (v1.0.0)
 
 | Status        | Proposed                                                                        |
 | :------------ | :------------------------------------------------------------------------------ |
@@ -10,35 +10,35 @@
 
 ## Objective
 
-This FLIP proposes a new standard for how Cadence transaction and script developers can declare static metadata about their transactions or scripts, in a machine parsable way, with the goal of this metadata to aid in the generation of a corresponding Interaction Template for the transaction or script.
+This FLIP proposes a new standard for how Cadence transaction and script developers can declare static metadata about a transaction or script, in a machine parsable way, with the goal of this metadata to aid in the generation of a corresponding Interaction Template for the transaction or script.
 
-This standard is to be called "CadenceDoc"
+This standard is to be called "Interaction Template Cadence Doc".
 
 ## Motivation
 
-In order to further adoption of Interaction Templates across the Flow ecosystem, the creation of developer friendly tools and processes such as this standard for the generation of Interaction Templates is required.
+In order to increase adoption of Interaction Templates across the Flow ecosystem, the creation of developer friendly tools and processes such as this standard for the generation of Interaction Templates is required.
 
 ## User Benefit
 
-Developers benefit from CadenceDoc by having an easy way to declare static metadata for their transactions and scripts. This allows them to store the metadata alongside the Cadence code for the transaction or script in a CadenceDoc comment. This way, developers can iterate on their transactions and scripts, and only need to declare their metadata once, and change it as required or desired.
+Developers benefit from Interaction Template Cadence Doc by having an easy way to declare static metadata for their transactions and scripts. This allows them to store static metadata alongside the Cadence code for the transaction or script in the Interaction Template Cadence Doc comment. This way, developers can iterate on their transactions and scripts, and only need to declare their metadata once while being able to change it as required or desired.
 
-With the creation of tooling for generating Interaction Templates by parsing CadenceDoc, automated ways for creating Interaction Templates can be created; such as, Flow CLI integration for generating an Interaction Template from a cadence transaction or script file that has CadenceDoc, or a file watcher mechanism which autogenerates a transaction or scripts corresponding Interaction Template every time the transaction or script with CadenceDoc changes.
+With the creation of tooling for generating Interaction Templates through parsing Interaction Template Cadence Doc, automated ways for creating Interaction Templates can be created; such as, Flow CLI integration for generating an Interaction Template from a cadence transaction or script file that has Interaction Template Cadence Doc, or a Flow CLI file watcher mechanism which autogenerates a transaction or scripts corresponding Interaction Template every time the transaction or script with Interaction Template Cadence Doc changes.
 
 ## Design Proposal
 
-CadenceDoc is included in a Cadence transaction or script, below all transaction/script imports and above the `transaction` or `main` function declaration, with no new line in between.
+Interaction Template Cadence Doc is included in a Cadence transaction or script, below all transaction/script imports and above the `transaction` or `main` function declaration, with no new line in between.
 
-All CadenceDoc declarations require one empty new line between.
+All Interaction Template Cadence Doc declarations require one empty new line between.
 
-CadenceDoc supports the following declarations:
+Interaction Template Cadence Doc supports the following declarations:
 
-- The paragraph of CadenceDoc declares the 'title' message. It must be in the language declared by the @lang declaration.
+- The paragraph of Interaction Template Cadence Doc declares the 'title' message. It must be in the language declared by the @lang declaration.
 
-- The second paragraph of CadenceDoc declares the 'description' message. It must be in the language declared by the @lang declaration.
+- The second paragraph of Interaction Template Cadence Doc declares the 'description' message. It must be in the language declared by the @lang declaration.
 
-- `@version` declares the version of CadenceDoc to use. The initial version is `1.0.0`.
+- `@version` declares the version of Interaction Template Cadence Doc to use. The initial version is `1.0.0`.
 
-- `@lang` declares the default BCP-47 language tag for all messages in the CadenceDoc (defaults to 'en-US').
+- `@lang` declares the default BCP-47 language tag for all messages in the Interaction Template Cadence Doc (defaults to 'en-US').
 
 - `@message` declares information about a transaction/script argument
 
@@ -60,7 +60,7 @@ CadenceDoc supports the following declarations:
 
 - `@translate [...translation]` declares a list of BCP-47 language tags to use translate all messages.
 
-This is an example of CadenceDoc for a transaction:
+This is an example of Interaction Template Cadence Doc for a transaction:
 
 ```cadence
 import FungibleToken from 0xFUNGIBLETOKENADDRESS
@@ -104,7 +104,7 @@ transaction(amount: UFix64, to: Address) {
 
 ### Drawbacks
 
-- Since CadenceDoc lives inside the transaction/script, it unnecessarily persists information on the blockchain that is not relevant to the execution of the transaction itself.
+- Since Interaction Template Cadence Doc lives inside the transaction/script, it unnecessarily persists information on the blockchain that is not relevant to the execution of the transaction itself.
 
 ### Alternatives Considered
 
@@ -113,23 +113,23 @@ transaction(amount: UFix64, to: Address) {
 ### Dependencies
 
 - Flow Interaction Templates
-  - Any breaking changes to Interaction Templates must have a corresponding update to CadenceDoc to accommodate them
+  - Any breaking changes to Interaction Templates must have a corresponding update to Interaction Template Cadence Doc to accommodate them
 
 ### Engineering Impact
 
-- CadenceDoc will be maintained by those working on Interaction Templates
+- Interaction Template Cadence Doc will be maintained by those working on Interaction Templates
 
 ### Best Practices
 
-- CadenceDoc will need to be added to tutorials and documentation provided to developers so they can use it when creating transactions and scripts on Flow.
+- Interaction Template Cadence Doc will need to be added to tutorials and documentation provided to developers so they can use it when creating transactions and scripts on Flow.
 
 ### Compatibility
 
-- CadenceDoc will need to maintain compatibility with the latest specification of the Flow Interaction Template data structure.
+- Interaction Template Cadence Doc will need to maintain compatibility with the latest specification of the Flow Interaction Template data structure.
 
 ## Prior Art
 
-- CadenceDoc is built to resemble best practices from Javadoc and JSDoc.
+- Interaction Template Cadence Doc is built to resemble best practices from Javadoc and JSDoc.
 
 ## Questions and Discussion Topics
 
