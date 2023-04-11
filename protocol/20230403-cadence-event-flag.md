@@ -10,7 +10,7 @@ updated: 2023-04-03
 
 ## Objective
 
-Introduce a flag in Cadence that is only allowed to be used by the service account
+Introduce a global function in Cadence that is only allowed to be used by the service account
 that disables event emission while it is enabled.
 
 ## Motivation
@@ -41,7 +41,7 @@ curl -s https://rest-mainnet.onflow.org/v1/transaction_results/84eca4ff612ef7004
 You'll need to multiply the result by two to get the total number of events for each
 delegator above the specified rewards amount.
 
-This FLIP proposes adding a flag to Cadence that is only usable by the service account
+This FLIP proposes adding a function to Cadence that is only usable by the service account
 that turns off event emissions while it is enabled. This would allow the staking
 contract to avoid emitting the meaningless `FlowToken` events.
 
@@ -52,17 +52,36 @@ and the event payload would be much smaller and less cluttered with meaningless 
 
 ## Design Proposal
 
-Propose a pragma for cadence that can be enable by the staking contract every time
+Propose a function for cadence that can be enable by the staking contract every time
 a transfer between vaults happens within the staking contract.
 
 Add code in the staking contract to enable/disable this for transfers between vaults.
+
+Here is a brief example of the proposal:
+
+[This section in the staking contract](https://github.com/onflow/flow-core-contracts/blob/master/contracts/FlowIDTableStaking.cdc#L1217-L1224) that pays rewards to delegators
+would instead look something like this:
+
+```
+    for delegator in rewardBreakdown.delegatorRewards.keys {
+        let delRecord = nodeRecord.borrowDelegatorRecord(delegator)
+        let delegatorReward = rewardBreakdown.delegatorRewards[delegator]!
+            
+        turnOffEvents()
+        delRecord.tokensRewarded.deposit(from: <-rewardsVault.withdraw(amount: delegatorReward))
+        turnOnEvents()
+
+        emit DelegatorRewardsPaid(nodeID: rewardBreakdown.nodeID, delegatorID: delegator, amount: delegatorReward)
+    }
+```
+
 
 ### Drawbacks
 
 - This gives the service account a privilege that regular developers do not have,
 which some believe is unfair.
 
-- This doesn't only slightly changes the time complexity of the rewards operation.
+- This only slightly changes the time complexity of the rewards operation.
 If n is the number of nodes and delegators in the network, this change will reduce
 it from O(3n) to O(n), which is still just O(n) either way,
 but a reduction by a third is still somewhat meaningful, especially in combination
@@ -70,7 +89,7 @@ with the other solutions that are being worked on.
 
 - There may be some apps that still rely on these `FlowToken` events to monitor
 the balance of the staking account. This would break those monitors, but they could
-easily update to just query the balance directly whenever they need to.
+ update to just query the balance directly whenever they need to.
 
 ### Alternatives Considered
 
@@ -80,7 +99,7 @@ is being worked on.
 These include:
 * Reducing the size of events in the protocol (will be live later in 2023)
 * Setting a minimum stake for delegators (https://github.com/onflow/flips/pull/78)
-* Breaking up reward payments into batches to reduce event amount per transaction. (currently being explored)
+* Breaking up reward payments into batches to reduce event amount per transaction.(https://github.com/onflow/flow-core-contracts/issues/360)
 
 ### Performance Implications
 
@@ -107,4 +126,5 @@ https://github.com/onflow/flips/pull/78
 
 What would be required for implementing this in the Cadence language?
 
-Is it reasonable for the service account to be able to do this?
+Is it reasonable for the service account to be able to do this or
+is it better to have the service account follow the same rules as everyone else?
