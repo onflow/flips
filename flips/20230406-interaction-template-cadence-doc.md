@@ -26,7 +26,9 @@ With the creation of tooling for generating Interaction Templates through parsin
 
 ## Design Proposal
 
-Interaction Template Cadence Doc is included in a Cadence transaction or script, below all transaction/script imports and above the `transaction` or `main` function declaration, with no new line in between.
+### Inside a Cadence transaction or script
+
+Interaction Template Cadence Doc can be included in a Cadence transaction or script, below all transaction/script imports and above the `transaction` or `main` function declaration, with no new line in between.
 
 All Interaction Template Cadence Doc declarations require one empty new line between.
 
@@ -75,10 +77,10 @@ Transfer tokens from one account to another
 
 @lang en-US
 
-@param title amount: Amount
-@param title to: To
-@param description amount: The amount of FLOW tokens to send
-@param description to: The Flow account the tokens will go to
+@argument title amount: Amount
+@argument title to: To
+@argument description amount: The amount of FLOW tokens to send
+@argument description to: The Flow account the tokens will go to
 
 @translate fr-FR cn-CN
 
@@ -100,6 +102,79 @@ transaction(amount: UFix64, to: Address) {
       .deposit(from: <-self.vault)
   }
 }
+```
+
+### As a separate JSON file
+
+Instead of including Interaction Template Cadence Doc directly inside a Cadence transaction or script, it could be included as a separate JSON file.
+
+If there is Interaction Template Cadence Doc both within the Cadence transaction or script, and in a corresponding JSON file as well, the content of the Interaction Template Cadence Doc in the Cadence transaction or script takes precedent.
+
+The Interaction Template Cadence Doc JSON file must be in following format:
+
+- An array of InteractionTemplateCadenceDoc objects
+  - Each InteractionTemplateCadenceDoc must include:
+    - A `version` field, denoting the version of the InteractionTemplateCadenceDoc object (The initial version is `1.0.0`).
+    - A `lang` field, denoting the BCP-47 language tag representing the language of the InteractionTemplateCadenceDoc object
+    - A `messages` field, which is an object with:
+      - `[key]` key subfields, where `key` is the key of each message, with value being the translation of that message for `lang`
+    - A `arguments` field, which is an object with:
+      - `[label]` key subfields, where `label` is the label of an argument of the Cadence transaction or script, with value being an object with:
+        - `[key]` key subfields, where `key` is the key of each message, with value being the translation of that message for `lang`
+
+This is an example of Interaction Template Cadence Doc for a transaction (as a JSON file):
+
+```json
+[
+  {
+    "version": "1.0.0",
+    "lang": "en-US",
+    "messages": {
+      "title": "Transfer Tokens",
+      "description": "Transfer tokens from one account to another"
+    },
+    "arguments": {
+      "to": {
+        "title": "The Flow account the tokens will go to"
+      },
+      "amount": {
+        "title": "The amount of FLOW tokens to send"
+      }
+    }
+  },
+  {
+    "version": "1.0.0",
+    "lang": "fr-FR",
+    "messages": {
+      "title": "Jetons de transfert",
+      "description": "Transférer des jetons d'un compte à un autre"
+    },
+    "arguments": {
+      "to": {
+        "title": "Le compte Flow auquel les jetons iront"
+      },
+      "amount": {
+        "title": "Le nombre de jetons FLOW à envoyer"
+      }
+    }
+  },
+  {
+    "version": "1.0.0",
+    "lang": "zh-CN",
+    "messages": {
+      "title": "转移代币",
+      "description": "将代币从一个账户转移到另一个账户"
+    },
+    "arguments": {
+      "recipient": {
+        "to": "令牌将转到的 Flow 帐户"
+      },
+      "amount": {
+        "title": "要发送的 FLOW 代币数量"
+      }
+    }
+  }
+]
 ```
 
 ### Drawbacks
