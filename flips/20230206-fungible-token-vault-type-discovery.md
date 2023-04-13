@@ -1,6 +1,6 @@
 ---
-status: Draft
-flip: #69
+status: Accepted
+flip: [69](https://github.com/onflow/flow-ft/pull/127)
 author: Satyam Agrawal (satyam.agrawal@dapperlabs.com)
 updated: 2023-02-06
 --- 
