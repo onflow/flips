@@ -1,11 +1,11 @@
 # Events emitted from interfaces
 
 | Status        | (Proposed / Rejected / Accepted / Implemented)       |
-:-------------- |:---------------------------------------------------- | |
-**FLIP #**    | [NNN](https://github.com/onflow/flow/pull/NNN) (update when you
-have PR #)| | **Author(s)** | Deniz Mert Edincik (deniz@edincik.com)
-| | **Sponsor**   |                                                      | |
-**Updated**   | 2023-04-17                                           | |
+:-------------- |:---------------------------------------------------- | 
+| **FLIP #**    | [82](https://github.com/onflow/flips/pull/82/)       | 
+| **Author(s)** | Deniz Mert Edincik (deniz@edincik.com)               | 
+| **Sponsor**   |                                                      | 
+| **Updated**   | 2023-04-17                                           | 
 
 ## Objective
 
