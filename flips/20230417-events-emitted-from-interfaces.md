@@ -1,6 +1,6 @@
 # Events emitted from interfaces
 
-| Status        | (Proposed / Rejected / Accepted / Implemented)       |
+| Status        | Proposed                                             |
 :-------------- |:---------------------------------------------------- | 
 | **FLIP #**    | [82](https://github.com/onflow/flips/pull/82/)       | 
 | **Author(s)** | Deniz Mert Edincik (deniz@edincik.com)               | 
