@@ -181,18 +181,14 @@ This is an example of Interaction Template Cadence Doc for a transaction (as a J
 
 - Since Interaction Template Cadence Doc lives inside the transaction/script, it unnecessarily persists information on the blockchain that is not relevant to the execution of the transaction itself.
 
-### Alternatives Considered
-
-- Alternatively, there could exist a separate file which such interaction metadata could be included that sits outside the
-
 ### Dependencies
 
 - Flow Interaction Templates
-  - Any breaking changes to Interaction Templates must have a corresponding update to Interaction Template Cadence Doc to accommodate them
+  - Any breaking changes to Interaction Templates must have a corresponding update to Interaction Template Cadence Doc to accommodate them.
 
 ### Engineering Impact
 
-- Interaction Template Cadence Doc will be maintained by those working on Interaction Templates
+- Interaction Template Cadence Doc will be maintained by those working on Interaction Templates.
 
 ### Best Practices
 
