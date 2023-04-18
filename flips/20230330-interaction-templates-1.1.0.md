@@ -181,7 +181,7 @@ Here is an example `InteractionTemplate` for a "Transfer FLOW" transaction:
     ],
     cadence: // Cadence code this interaction executes.
     `
-    import FungibleToken from 0xFUNGIBLETOKENADDRESS
+    import FlowToken from 0xFLOWTOKENADDRESS
     transaction(amount: UFix64, to: Address) {
         let vault: @FungibleToken.Vault
         prepare(signer: AuthAccount) {
@@ -201,25 +201,47 @@ Here is an example `InteractionTemplate` for a "Transfer FLOW" transaction:
     `,
     dependencies: [
       {
-        placeholder: "0xFUNGIBLETOKENADDRESS", // Network (mainnet || testnet) dependent locations for 0xFUNGIBLETOKENADDRESS contract.
+        placeholder: "0xFLOWTOKENADDRESS", // Network (mainnet || testnet) dependent locations for 0xFUNGIBLETOKENADDRESS contract.
         contracts: [
           {
-            contract: "FungibleToken",
+            contract: "FlowToken",
             networks: [
               {
                 network: "mainnet",
-                address: "0xf233dcee88fe0abe", // Address of the account the contract is located.
-                fq_address: "A.0xf233dcee88fe0abe.FungibleToken", // Fully qualified contract identifier.
-                pin: "asdfasdfasdfasdfasdfasdfsadf123123123123", // Unique identifier of the interactions dependency tree.
-                pin_block_height: 10123123123 // Block height the pin was generated against.
+                address: "0x1654653399040a61", // Address of the account the contract is located.
+                dependency_pin_block_height: 10123123123 // Block height the pin was generated against.
+                dependency_pin: {
+                  pin: "c8cb7cc7a1c2a329de65d83455016bc3a9b53f9668c74ef555032804bac0b25b" // Unique identifier of this contract dependency and it's dependency tree.
+                  pin_contract_name: "FlowToken",
+                  pin_contract_address: "0x1654653399040a61",
+                  imports: [
+                    {
+                      pin: "b8a3ed26c222ed67016a28021d8fee5603b948533cbc992b3c90f71a61b2b312" // Unique identifier of this contract dependency and it's dependency tree.
+                      pin_contract_name: "FungibleToken",
+                      pin_contract_address: "0xf233dcee88fe0abe",
+                      imports: []
+                    }
+                  ]
+                },
               },
               {
                 network: "testnet",
-                address: "0x9a0766d93b6608b7",
-                fq_address: "A.0x9a0766d93b6608b7.FungibleToken",
-                pin: "asdfasdfasdfasdfasdfasdfsadf123123123123",
-                pin_block_height: 10123123123
-              }
+                address: "0x7e60df042a9c0868",
+                dependency_pin_block_height: 10123123123, // Block height the pin was generated against.
+                dependency_pin: {
+                  pin: "c8cb7cc7a1c2a329de65d83455016bc3a9b53f9668c74ef555032804bac0b25b", // Unique identifier of this contract dependency and it's dependency tree tree.
+                  pin_contract_name: "FlowToken",
+                  pin_contract_address: "0x7e60df042a9c0868",
+                  imports: [
+                    {
+                      pin: "b8a3ed26c222ed67016a28021d8fee5603b948533cbc992b3c90f71a61b2b312", // Unique identifier of this contract dependency and it's dependency tree.
+                      pin_contract_name: "FungibleToken",
+                      pin_contract_address: "0x9a0766d93b6608b7",
+                      imports: []
+                    }
+                  ]
+                },
+              },
             ]
           }
         ]
@@ -686,6 +708,35 @@ sha3_256(MESSAGE)
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "type": "object",
+  "definitions": {
+    "dependency_pin": {
+      "type": "object",
+      "properties": {
+        "pin": {
+          "type": "string"
+        },
+        "pin_contract_name": {
+          "type": "string"
+        },
+        "pin_contract_address": {
+          "type": "string"
+        },
+        "imports": {
+          "type": "array",
+          "items": [
+            { "$ref": "#/definitions/dependency_pin" }
+          ],
+          "default": []
+        }
+      },
+      "required": [
+        "pin",
+        "pin_contract_name",
+        "pin_contract_address",
+        "imports"
+      ]
+    }
+  },
   "properties": {
     "f_type": {
       "type": "string"
@@ -807,22 +858,18 @@ sha3_256(MESSAGE)
                                 "address": {
                                   "type": "string"
                                 },
-                                "fq_address": {
-                                  "type": "string"
-                                },
-                                "pin": {
-                                  "type": "string"
-                                },
-                                "pin_block_height": {
+                                "dependency_pin_block_height": {
                                   "type": "integer"
+                                },
+                                "dependency_pin": {
+                                  "$ref": "#/definitions/dependency_pin"
                                 }
                               },
                               "required": [
                                 "network",
                                 "address",
-                                "fq_address",
-                                "pin",
-                                "pin_block_height"
+                                "dependency_pin_block_height",
+                                "dependency_pin"
                               ]
                             }
                           ]
