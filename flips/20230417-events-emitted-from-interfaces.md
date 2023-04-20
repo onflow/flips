@@ -132,6 +132,7 @@ I have attempted to present a solution that is as compatible with existing
 systems as possible. Naturally, this would necessitate updates to documentation
 and tutorials.
 
+Existing contracts would still emit their old events in addition to these new events, so any event listeners would not be affected by these changes except for if they wanted to listen to new contracts that did not emit their own events.
 ### Engineering Impact
 
 The Flow team should be responsible for maintaining this feature and
