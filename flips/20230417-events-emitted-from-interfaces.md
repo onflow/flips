@@ -31,7 +31,7 @@ emitted event is a direct outcome of an action specified within the interface.
 
 ## Design Proposal
 
-For instance, a sample extract from the FungibleToken contract can be currently
+For instance, a sample extract from the `FungibleToken` contract can be currently
 represented as:
 
 
