@@ -138,6 +138,7 @@ Existing contracts would still emit their old events in addition to these new ev
 The Flow team should be responsible for maintaining this feature and
 incorporating it into standard contracts.
 
+This change will be included in the [FT/NFT v2 standards](https://github.com/onflow/flips/pull/56) along with all the other updates and breaking changes that are part of the proposals.
 ### Best Practices
 
 This introduces a new best practice, allowing interface owners the option to
