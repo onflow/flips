@@ -211,12 +211,14 @@ Here is an example `InteractionTemplate` for a "Transfer FLOW" transaction:
                 address: "0x1654653399040a61", // Address of the account the contract is located.
                 dependency_pin_block_height: 10123123123 // Block height the pin was generated against.
                 dependency_pin: {
-                  pin: "c8cb7cc7a1c2a329de65d83455016bc3a9b53f9668c74ef555032804bac0b25b" // Unique identifier of this contract dependency and it's dependency tree.
+                  pin: "c8cb7cc7a1c2a329de65d83455016bc3a9b53f9668c74ef555032804bac0b25b", // Unique identifier of this contract dependency and it's dependency tree.
+                  pin_self: "38d0cca4b74c4e88213df636b4cfc2eb6e86fd8b2b84579d3b9bffab3e0b1fcb", // Unique identifier of this dependency
                   pin_contract_name: "FlowToken",
                   pin_contract_address: "0x1654653399040a61",
                   imports: [
                     {
-                      pin: "b8a3ed26c222ed67016a28021d8fee5603b948533cbc992b3c90f71a61b2b312" // Unique identifier of this contract dependency and it's dependency tree.
+                      pin: "b8a3ed26c222ed67016a28021d8fee5603b948533cbc992b3c90f71a61b2b312", // Unique identifier of this contract dependency and it's dependency tree.
+                      pin_self: "7bc3056ba5d39d130f45411c2c05bb549db8ce727c11a1cb821136a621be27fb",  // Unique identifier of this dependency
                       pin_contract_name: "FungibleToken",
                       pin_contract_address: "0xf233dcee88fe0abe",
                       imports: []
@@ -230,11 +232,13 @@ Here is an example `InteractionTemplate` for a "Transfer FLOW" transaction:
                 dependency_pin_block_height: 10123123123, // Block height the pin was generated against.
                 dependency_pin: {
                   pin: "c8cb7cc7a1c2a329de65d83455016bc3a9b53f9668c74ef555032804bac0b25b", // Unique identifier of this contract dependency and it's dependency tree tree.
+                  pin_self: "38d0cca4b74c4e88213df636b4cfc2eb6e86fd8b2b84579d3b9bffab3e0b1fcb", // Unique identifier of this dependency
                   pin_contract_name: "FlowToken",
                   pin_contract_address: "0x7e60df042a9c0868",
                   imports: [
                     {
                       pin: "b8a3ed26c222ed67016a28021d8fee5603b948533cbc992b3c90f71a61b2b312", // Unique identifier of this contract dependency and it's dependency tree.
+                      pin_self: "7bc3056ba5d39d130f45411c2c05bb549db8ce727c11a1cb821136a621be27fb", // Unique identifier of this dependency
                       pin_contract_name: "FungibleToken",
                       pin_contract_address: "0x9a0766d93b6608b7",
                       imports: []
@@ -715,6 +719,9 @@ sha3_256(MESSAGE)
         "pin": {
           "type": "string"
         },
+        "pin_self": {
+          "type": "string"
+        },
         "pin_contract_name": {
           "type": "string"
         },
@@ -731,6 +738,7 @@ sha3_256(MESSAGE)
       },
       "required": [
         "pin",
+        "pin_self",
         "pin_contract_name",
         "pin_contract_address",
         "imports"
