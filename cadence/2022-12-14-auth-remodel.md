@@ -204,27 +204,16 @@ non-`auth` references could not be downcast at all, since the sole purpose of th
 downcast. With the proposed change, all reference types can be downcast or upcast the same way any other type would be. So, for example
 `&{I} as! &R` would be valid, as would `&AnyResource as? &{I}` or `&{I} as? &{J}`, using the hierarchy defined above (for any `J`).
 
-However, the `auth`-ness (and the reference's set of entitlements) would not change on downcasting, nor would that set
-be expandable via casting. The subtyping rules for `auth` references is that `auth (U1, U2, ... ) &X <: auth (T1, T2, ... ) &X` whenever `{U1, U2, ...}`
-is a superset of `{T1, T2, ...}`, or equivalently `∀T ∈ {T1, T2, ...}, ∃U ∈ {U1, U2, ...}, T = U`. Of course, all `auth` reference types
-would remain subtypes of all non-`auth` reference types as before. 
+However, the `auth`-ness (and the reference's set of entitlements) would not change on downcasting, nor would that set be expandable via casting. 
+In fact, the set of entitlements to which a reference is authorized is purely a static construct, and entitlements do not exist as a concept at runtime. 
+In particular, what this means that it is not ever possible to downcast a reference to a type with a more restrictive set of entitlements. 
 
 As such, while `auth(A, B) &R` would be statically upcastable to `auth(A) &R`, since this decreases the permissions on the 
-reference, it would require a runtime cast to go from `auth(A) &R` to `auth(A, B) &R`, as this cast would only succeed if the 
-runtime type of the reference was entitled to both `A` and `B`. So in the code below:
+reference, it would not be possible to go from `auth(A) &R` to `auth(A, B) &R`.
 
-```cadence
-fun foo(ref: &R): Bool {
-    let authRef = ref as? auth(A, B) &R
-    return authRef != nil 
-}
-let r <- create R()
-let ref1 = &r as auth(A) &R
-let ref2 = &r as auth(A, B, C) &R
-```
-
-`foo` would return `true` when called with `ref2`, because the runtime type of `ref` in the failable cast is a subtype of `auth(A, B) &R`, since
-`{A, B, C}` is a superset of `{A, B}`, but would return `false` when called with `ref1`, since `{A}` is not a superset of `{A, B}`.
+The subtyping rules for `auth` references is that `auth (U1, U2, ... ) &X <: auth (T1, T2, ... ) &X` whenever `{U1, U2, ...}`
+is a superset of `{T1, T2, ...}`, or equivalently `∀T ∈ {T1, T2, ...}, ∃U ∈ {U1, U2, ...}, T = U`. Of course, all `auth` reference types
+would remain subtypes of all non-`auth` reference types as before. 
 
 In addition to the `,`-separated list of entitlements (which defines a conjunction/"and" set for `auth` modifiers similarly to its behavior for `access` modifiers), it is also possible, 
 although very rarely necessary, to define `|`-separated entitlement lists in `auth` modifers for references, like so: `auth(E1 | E2 | ...) &T`. In this case, the type denotes that the
@@ -247,15 +236,12 @@ fun test(ref: auth(E | F) &R) {
     ref.bar() // not allowed because the reference may not have `E` and `F`
     ref.baz() // not allowed because the reference may not have `E`
     ref.qux() // not allowed because the reference may not have `F`
-    (ref as? auth(E) &R)?.baz() // allowed statically, will succeed at runtime if `ref` has an `E` entitlement
-    (ref as? auth(F) &R)?.baz() // allowed statically, will succeed at runtime if `ref` has an `F` entitlement
-    (ref as? auth(E, F) &R)?.qux() // allowed statically, will succeed at runtime if `ref` has both an `E` and an `F` entitlement
 }
 ```
 
 The subtyping rules for `|`-separated entitlement lists allow lists to expand on supertyping. I.e., `auth(A | B) &R <: auth(A | B | C) &R`, as this decreases the information we have about
 the reference's entitlements and thus permits fewer operations. In general, `auth (U1 | U2 | ... ) &X <: auth (T1 | T2 | ... ) &X` whenever `{U1, U2, ...}`
-is a subset of `{T1, T2, ...}`, or equivalently `∀U ∈ {U1, U2, ...}, ∃T ∈ {T1, T2, ...}, T = U`. To shrink the `|`-separated entitlement list, downcasting is required (as shown in the example above). 
+is a subset of `{T1, T2, ...}`, or equivalently `∀U ∈ {U1, U2, ...}, ∃T ∈ {T1, T2, ...}, T = U`.
 
 `,`-separated entitlement lists subtype `|`-separated ones as long as the two sets are not disjoint; that is, as long as there is an entitlement in the subtype set that is also in the supertype set. 
 This is because we are casting from a type that is known to possess all of the listed entitlements to a type that is only guaranted to possess one. More specifically, 
