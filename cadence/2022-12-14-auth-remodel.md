@@ -416,17 +416,15 @@ owned values are considered fully entitled, accessing `A` directly off of an `@R
 is authorized for the entire image of `M`.
 
 Within the declaration of the attachment itself, the members of the attachments can use any entitlements that exist in the image of `M`, but cannot use other entitlements as the 
-attachment access semantics would make it impossible to obtain a reference to the attachment with entitlements not in the image of `M`. Additionally, there are new semantics for inferring
-the type of `self` and `base` in the bodies of attachment member functions. 
+attachment access semantics would make it impossible to obtain a reference to the attachment with entitlements not in the image of `M`. 
 
-The `self` value, which currently is simply a `&A` reference for an attachment `attachment A for R` in any of `A`'s member functions, would now have its entitlements
-depend on the entitlements of the member function in question. In a member declaration `access(X | Y) fun foo()` in `A`, the `self` variable would have
-type `auth(X | Y) &R`, while in a member declaration in `A` `pub fun bar()`, `self` would just be an `&R`. 
+Within `A`'s member functions, the `self` value is an `&A` reference that is fully entitled to the image of `M`. This results in similar behavior to regular composite declarations,
+where `self` is fully entitled because it is an owned value. 
 
-Meanwhile, the `base` value would have slightly more complex semantics - specifically, on an attachment `access(M) attachment A for R`, 
-within a member function declared with some entitlement set `S`, within that 
-member function the `base` reference would be typed with `auth(P) &R`, where `P` is the preimage of `S` under the mapping `M`. 
-This can be understood more easily when we take a concrete example; given the following declarations:
+Meanwhile, the `base` value would have slightly more complex semantics. In the default case, the `base` value is an unentitled reference, which will prevent
+attachment authors from using the `base` to access restricted functionality on the base resource. However, if the author of an attachment needs a specific entitlement on the `base`
+in order to implement their functionality, they can explicitly require it in the declaration of the attachment using a new `require entitlement X` syntax. This will require that
+the attachment explicitly be given an entitlement to `X` on creation, and thus makes `X` an available entitlement on the `base` in the declaration. So in the following example:
 
 ```cadence
 entitlement E
@@ -438,45 +436,17 @@ entitlement mapping M {
     X -> Y
 }
 access(M) attachment A for R {
-    access(F) fun foo() { ... }
-    access(Y) fun bar() { ... }
-    access(F, Y) fun baz() { ... }
-    access(F | Y) fun qux() { ... }
+    require entitlement X
+    // ...
 }
 ```
 
-As explained previously, within `foo` the `self` reference has type `auth(F) &A`, since `foo` is only callable when one possesses at least an `F`-entitled
-reference to `A`. However, when considered carefully it also becomes apparent that the given the specified mapping in `M`, the only way to obtain such a reference
-is via access on an `E`-entitled reference to `R`. Specifically, an `F`-entitled reference to `A` can only be accessed on a `base` that possesses an entitlement for `E`. 
-As such, we can thus infer that within `foo` the `base` reference has an `auth(E) &R` type. The same logic can be used to infer that within `bar`, `base` must have an
-`auth(X) &R` type. Just as we called the output of `M` its "image", the output of the "inverted" version of `M` is called its "preimage".
+`base` will be considered to possess an `X` entitlement within all the members of `A`. 
 
-For more complex access modifiers, instead of computing `M`'s preimage for a single element, we compute the preimage for the entire set. I.e., within `baz` 
-the `base` reference would need to have type `auth(E, X) &R` in order to make `baz` callable on an `A` reference, and within `qux` it would need a 
-`auth(E | X) &R` type in order to make its usage safe. Specifically in the second case, because `qux` is callable with either an `F` or a `Y`-entitled reference to `A`, 
-we can only deduce that `base` had either an `E` or an `X` entitled reference to `R`. 
-
-As before with regular nested objects, certain non-one-to-one mappings make inferring the `base` type impossible. In the following example:
-
-```cadence
-entitlement E
-entitlement F
-entitlement X
-entitlement Y
-entitlement Z
-entitlement mapping M {
-    X -> E
-    Y -> E
-    Z -> F
-}
-access(M) attachment A for R {
-    access(E, F) fun foo() { ... }
-}
-```
-
-The preimage of `E, F` under `M` would be `(X | Y), Z`. It is impossible to create an `auth` reference with this entitlement set, so the `base` reference
-would not be typable within the body of `foo`. To avoid this problem, we will simply prevent defining functions with impossible preimages, so non-one-to-one entitlement
-mappings will require careful use for attachments. 
+Creating attachments that require certain entitlements can be done with an extension to the original `attach` expression: `attach A() to v with X, Y, ...`. Here the
+`A()` is an attachment constructor call as before, while `v` is the value to which the attachment is to be attached. However, after this the user may optionally
+provide a `with` followed by a list of entitlements which they wish to give to `A`. This list must superset the list of entitlements required by `A`'s declaration, 
+or the attach expression will fail to typecheck. This way the user must be explicit about what permissions they are giving to each attachment they create. 
 
 Putting all of these rules together, we can see that given the following declaration:
 ```cadence
@@ -492,6 +462,8 @@ interface Provider {
 }
 
 access(ConverterMap) attachment CurrencyConverter for Provider {
+    require entitlement Withdraw
+
     pub fun convert(_ amount: UFix64): UFix64 {
         // ...
     }
@@ -503,8 +475,7 @@ access(ConverterMap) attachment CurrencyConverter for Provider {
 
     access(ConvertAndWithdraw) fun withdraw(_ amount: UFix64): @Vault {
         let convertedAmount = self.convert(amount) 
-        // this is permitted because this function has an entitlement to `ConvertAndWithdraw`
-        // on the attachment, and thus `base` has type `auth(Withdraw) &{Provider}`
+        // this is permitted because the attachment declaration explicitly requires an entitlement to `Withdraw`
         return <-base.withdraw(amount: amount) 
     }
 
@@ -517,28 +488,11 @@ access(ConverterMap) attachment CurrencyConverter for Provider {
             baseReceiver.deposit(from: <-convertedVault)
         }
     }
-
-    pub fun maliciousStealingFunctionA(_ amount: UFix64): @Vault {
-        // This fails statically, as `self` here is just an `&A` 
-        // because `maliciousStealingFunctionA`'s access is `pub`,
-        // and therefore `self` does not have access to `withdraw`
-        return <-self.withdraw(amount)
-    }
-
-    pub fun maliciousStealingFunctionB(_ amount: UFix64): @Vault {
-        // This fails statically, as `base` here is just an `&{Provider}` 
-        // because `maliciousStealingFunctionB`'s access is `pub`,
-        // and therefore `base` does not have access to `withdraw`
-        return <-base.withdraw(amount: amount) 
-    }
 }
 
-let vault <- attach CurrencyConverter() to <-create Vault(balance: /*...*/)
+let vault <- attach CurrencyConverter() to <-create Vault(balance: /*...*/) with Withdraw
 let authVaultReference = &vault as auth(Withdraw) &Vault
 let converterRef = authVaultReference[CurrencyConverter]! // has type auth(ConvertAndWithdraw) &CurrencyConverter, can call `withdraw`
-
-let otherVaultReference = &vault as &Vault
-let otheConverterRef = otherVaultReference[CurrencyConverter]! // has type &CurrencyConverter, cannot call `withdraw`
 ```
 
 ### Drawbacks
