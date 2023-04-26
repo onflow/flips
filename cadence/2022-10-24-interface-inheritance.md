@@ -189,9 +189,26 @@ pub resource interface Vault: Receiver {
 
 #### Default functions
 
-It is also possible for two functions with identical signatures to have default implementations.
-The priority will be given to the default implementation at the bottom of the inheritance chain.
-i.e: Inherited default methods will be shadowed.
+An interface can provide a default implementation to an inherited function.
+
+<div style="text-align: left;">
+<img height="300" src="2022-11-16-interface-inheritance/default-implementation.jpg"/>
+</div>
+
+```cadence
+pub resource interface Receiver {
+    pub fun log(_ message: String)
+}
+
+pub resource interface Vault: Receiver {
+    // Valid: Provides the implementation for `Receiver.log` method.
+    pub fun log(_ message: String) {
+        log(message.append("from Vault"))
+    }
+}
+```
+
+However, an interface cannot override an inherited default implementation of a function.
 
 <div style="text-align: left;">
 <img height="300" src="2022-11-16-interface-inheritance/simple-override.jpg"/>
@@ -205,27 +222,14 @@ pub resource interface Receiver {
 }
 
 pub resource interface Vault: Receiver {
-
-    // This will shadow the implementation coming from the `Receiver` interface.
+    // Invalid: Cannot override the `Receiver.log` method.
     pub fun log(_ message: String) {
         log(message.append("from Vault"))
     }
 }
-
-pub resource MyVault: Vault {}
-
-pub fun test() {
-    let myVault = MyVault()
-    
-    // Below will print "Hello from Vault"
-    myVault.log("Hello")
-}
 ```
 
-In the above example, invoking the `log` method of `MyVault` will call the default implementation provided by
-`Vault`, and the implementation provided by `Receiver` will be shadowed.
-
-However, it is not allowed to have two or more inherited default implementations for an interface.
+It is also invalid to have two or more inherited default implementations for an interface.
 
 <div style="text-align: left;">
 <img height="200" src="2022-11-16-interface-inheritance/two-default-implelentations-direct.jpg"/>
@@ -247,8 +251,6 @@ pub resource interface Provider {
 // Invalid: Two default functions from two interfaces.
 pub resource interface Vault: Receiver, Provider {}
 ```
-
-To resolve this ambiguity, the `Vault` interface would need to add a default implementation for the `log` function.
 
 Having said that, there can be situations where the same default function can be available via different
 inheritance paths.
@@ -276,38 +278,6 @@ pub resource interface Vault: Receiver, Provider {}
 In the above example, `Logger.log()` default function is visible to the `Vault` interface via both `Receiver`
 and `Provider`. Even though it is available from two different interfaces, they are both referring to the same
 default implementation. Therefore, the above code is valid.
-
-However, if at least one of the interfaces in the middle of the chain also adds a default implementation to the `log`
-function, then the code becomes invalid, as there are multiple implementations present now, which leads to ambiguity.
-
-<div style="text-align: left;">
-<img height="300" src="2022-11-16-interface-inheritance/two-default-implementations-indirect.jpg"/>
-</div>
-
-```cadence
-pub resource interface Logger {
-    pub fun log(_ message: String) {
-        log(message.append("from Logger"))
-    }
-}
-
-pub resource interface Receiver: Logger {
-    pub fun log(_ message: String) {
-        log(message.append("from Receiver"))
-    }
-}
-
-pub resource interface Provider: Logger {}
-
-// Invalid: The default implementation of the `log` function provided by the `Logger`
-// interface is visible to the `Vault` via the `Provider` interface.
-// Another default implementation of `log` function is visible to the `Vault` via the `Receiver` interface.
-// This creates ambiguity.
-pub resource interface Vault: Receiver, Provider {}
-```
-
-Like in the previous scenario, to resolve this ambiguity, the `Vault` interface would need to add a default
-implementation for the `log` function.
 
 #### Conditions with Default functions
 
