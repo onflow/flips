@@ -2,10 +2,10 @@
 
 | Status         | Proposed                                     |
 |:---------------|:---------------------------------------------|
-| **FLIP #**     |                                              |
+| **FLIP #**     | https://github.com/onflow/cadence/pull/2112  |
 | **Author(s)**  | Supun Setunga (supun.setunga@dapperlabs.com) |
 | **Sponsor**    | Supun Setunga (supun.setunga@dapperlabs.com) |
-| **Updated**    | 2022-11-17                                   |
+| **Updated**    | 2023-04-26                                   |
 
 ## Objective
 
@@ -165,7 +165,7 @@ pub resource interface Vault: Receiver {
 #### Functions with conditions
 
 If the two functions with identical names and signatures have pre/post conditions, then it will still be valid.
-However, the pre/post conditions would be linearized (TBD - refer [questions and discussion topics section](#questions-and-discussion-topics)) 
+However, the pre/post conditions would be linearized (refer [linearizing conditions section](#linearizing-conditions))
 to determine the order of the execution of the conditions.
 Given the pre/post conditions are `view` only, the order of execution would not have an impact on the conditions.
 
@@ -389,6 +389,107 @@ pub resource interface NonFungibleToken: Token, Provider {}
 Many other languages that support multiple-inheritance also follow similar approaches, where inheritances that
 cause ambiguities are rejected by the compiler (see: https://en.wikipedia.org/wiki/Multiple_inheritance).
 
+### Linearizing Conditions
+
+As mentioned in the [functions with conditions](#functions-with-conditions) section, it would be required to linearize
+the function conditions, to determine the order in which pre- and post-conditions are executed.
+This is done by linearizing the interfaces, and hence conditions, in a **depth-first pre-ordered manner, without duplicates**.
+
+For example, consider an interface inheritance hierarchy as below:
+```
+       A
+      / \
+     B   C
+    / \ /
+   D   E
+
+where an edge from X (top) to Y (bottom) means X inherits from Y.
+```
+
+This would convert to a cadence implementation as:
+
+```cadence
+struct interface A: B, C {
+    pub fun test() {
+        pre { print("A") }
+    }
+}
+struct interface B: D, E {
+    pub fun test() {
+        pre { print("B") }
+    }
+}
+struct interface C: E {
+    pub fun test() {
+        pre { print("C") }
+    }
+}
+struct interface D {
+    pub fun test() {
+        pre { print("D") }
+    }
+}
+struct interface E {
+    pub fun test() {
+        pre { print("E") }
+    }
+}
+```
+
+Any concrete type implementing interface `A` would be equivalent to implementing all interfaces from `A` to `E`, linearized.
+
+```cadence
+struct Foo: A {
+    pub fun test() {
+        pre { print("Foo") }
+    }
+}
+```
+
+The linearized interface order would be: [A, B, D, E, C].
+
+i.e: same as having:
+```cadence
+struct Foo: A, B, D, C, E {
+    pub fun test() {
+        pre { print("Foo") }
+    }
+}
+```
+
+Thus, invoking `test` method of `Foo` would first invoke the pre-conditions of [A, B, D, E, C], in that particular order,
+and eventually runs the pre-condition of the concrete implementations.
+
+```cadence
+let foo = Foo()
+foo.test()
+```
+
+Above will print:
+
+```
+A
+B
+D
+E
+C
+Foo
+```
+
+Similarly, for post-conditions, same linearization of interfaces would be used, and the post-conditions are executed
+on the reverse order.
+i.e: Replacing the `pre` conditions in above example with `post` conditions with exact same content, would result in an
+output similar to:
+
+```
+Foo
+C
+E
+D
+B
+A
+```
+
 ### Drawbacks
 
 One drawback is, as mentioned in the above section, when there are complex inheritance chains with default functions
@@ -450,9 +551,3 @@ None
 - Many of the existing object-oriented languages such as C++, Go, Java, Kotlin, etc. supports interface inheritance.
 - These languages also already deal with the complexities that come with multiple inheritance:
 https://en.wikipedia.org/wiki/Multiple_inheritance 
-
-## Questions and Discussion Topics
-
-As mentioned in the [functions with conditions](#functions-with-conditions) section, it would be required to linearize
-the function conditions, to determine the order of execution of pre- and post-conditions.
-A possible option is to use the [C3 linearization](https://en.wikipedia.org/wiki/C3_linearization) algorithm.
