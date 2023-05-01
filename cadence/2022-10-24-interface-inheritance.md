@@ -104,16 +104,18 @@ The following sections explain how to resolve these ambiguities for different sc
 
 #### Fields
 
-If two fields with identical-names have identical types, then it will be valid.
+If two fields of same kind (both are `let`, or both are `var`) have identical names, types and access modifiers,
+then it will be valid to coexist, and will be treated as one field.
 
 ```cadence
 pub resource interface Receiver {
-    pub var id: UInt64
+    pub(set) var id: UInt64
 }
 
 pub resource interface Vault: Receiver {
-    // `id` field has same type as the `Receiver.id`. Hence this is valid.
-    pub var id: UInt64
+    // `id` is a var-field that has the same type and access modifier as the `Receiver.id`.
+    // Hence this is valid.
+    pub(set) var id: UInt64
 }
 ```
 
@@ -121,12 +123,24 @@ Otherwise, interface conformance is not valid.
 
 ```cadence
 pub resource interface Receiver {
-    pub var id: Int
+    pub(set) var id: Int
 }
 
-pub resource interface Vault: Receiver {
+pub resource interface Vault1: Receiver {
+    // `id` field is defined with `let` where as `Receiver.id` is defined with `var`.
+    // Hence this is invalid.
+    pub(set) let id: Int
+}
+
+pub resource interface Vault2: Receiver {
     // `id` field has a different type than the `Receiver.id`. Hence this is invalid.
-    pub var id: UInt64
+    pub(set) var id: UInt64
+}
+
+pub resource interface Vault3: Receiver {
+    // `id` field has `pub access modifer, where as `Receiver.id` as `pub(set)` access modifier.
+    // Hence this is invalid.
+    pub var id: Int
 }
 ```
 
