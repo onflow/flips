@@ -172,7 +172,7 @@ Given the pre/post conditions are `view` only, the order of execution would not 
 ```cadence
 pub resource interface Receiver {
     pub fun deposit(_ something: @AnyResource) {
-        pre{ self.balance > 100 }
+        pre { self.balance > 100 }
     }
 }
 
@@ -182,7 +182,7 @@ pub resource interface Vault: Receiver {
     // Having pre/post condition is valid.
     // Both conditions would be executed, in a pre-determined order.
     pub fun deposit(_ something: @AnyResource) {
-        pre{ self.balance > 50 }
+        pre { self.balance > 50 }
     }
 }
 ```
@@ -293,7 +293,7 @@ pub resource interface Receiver {
 
 pub resource interface Provider {
     pub fun log(_ message: String) {
-        pre{ message != "" }
+        pre { message != "" }
     }
 }
 
