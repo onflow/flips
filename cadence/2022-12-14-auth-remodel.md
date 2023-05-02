@@ -3,7 +3,7 @@ status: draft
 flip: NNN (do not set)
 authors: Daniel Sainati (daniel.sainati@dapperlabs.com)
 sponsor: Daniel Sainati (daniel.sainati@dapperlabs.com)
-updated: 2023-03-31
+updated: 2023-05-02
 ---
 
 # Entitlements
@@ -74,6 +74,8 @@ A single member definition can include multiple entitlements, using either a `|`
 An entitlement list defined using a `|` functions like a disjunction (or an "or"); it is accessible to any `auth` reference with any of those entitlements. 
 An entitlement list defined using a `,` functions like a conjunction set (or an "and"); it is accessible only to an `auth` reference with all of those entitlements. 
 
+Note that these operators cannot be mixed within a single list; any entitlement access modifier may use either `|` or `,`, but not both. 
+
 So, for example, in 
 
 ```cadence
@@ -90,7 +92,18 @@ resource R {
 Like `access(contract)` and `access(account)`, this new modifier sits exactly between `pub` and `priv` (or equivalently `access(self)`) 
 in permissiveness; it allows less access than `pub`, but strictly more than `priv`, as an `access(X)` field or function can be used anywhere 
 in the implementation of the composite. To see why, consider that `self` is necessarily of the same type as the composite, meaning 
-that the access rules defined above allow any `access(I)` members to be accessed on it. 
+that the access rules defined above allow any `access(I)` members to be accessed on it. A table summarizing the new access modifiers is included here:
+
+
+| Modifier(s)             | Visibility                                                            |
+|-------------------------|-----------------------------------------------------------------------|
+| `access(self)` (`priv`) | Methods defined within the same type object.                          |
+| `access(contract)`      | Methods defined within the same smart contract object.                |
+| `access(account)`       | Methods defined in a contract deployed to the same account.           |
+| `access(X)`             | Code holding an `auth(X)` reference for some defined entitlement `X`. | 
+| `access(all)` (`pub`)   | Any code with any reference to the object.                            |
+
+As specified above, note that actual ownership of an object grants access to any `access(X)` member for any `X`.
 
 As such, the following would be prohibited statically:
 
@@ -254,7 +267,7 @@ As one can see, this is only possible when every `U` and `T` are the same entitl
 
 ### Entitlement Mapping and Nested Values
 
-When objects have reference fields to child objects, it can often be valuable to have different views of that reference depending on the entitlements one has on the reference to the parent object.
+When objects have fields that are child objects, it can often be valuable to have different views of that reference depending on the entitlements one has on the reference to the parent object.
 Consider the following example:
 
 ```cadence
@@ -262,28 +275,32 @@ entitlement OuterEntitlement
 entitlement SubEntitlement
 
 resource SubResource {
-    pub fun foo() { ... }
+    access(all) fun foo() { ... }
     access(SubEntitlement) fun bar() { ... }
 }
 
 resource OuterResource {
-    pub let pubRef: &SubResource
-    access(OuterEntitlement) let entitledRef: auth(SubEntitlement) &SubResource
+    access(self) let childResource: @SubResource
+    access(all) fun getPubRef(): &SubResource {
+        return &self.childResource as &SubResource
+    }
+    access(OuterEntitlement) fun getEntitledRef(): auth(SubEntitlement) &SubResource {
+        return &self.childResource as auth(SubEntitlement) &SubResource
+    }
 
-    init(ref: auth(SubEntitlement) &SubResource) {
-        self.pubRef = ref // `ref` is implicitly upcast here to `&SubResource`
-        self.entitledRef = ref
+    init(r: @SubResource) {
+        self.childResource <- r 
     }
 }
 ```
 
-With this pattern, we can store a reference to a `SubResource` on an `OuterResource` value, and create different ways to access that nested resource depending on the entitlement one
-posseses. Somoneone with only an unauthorized reference to `OuterResource` can only access the `pubRef` field, and thus can only get an unauthorized reference to `SubResource` that lets them call `foo`. 
-However, someone with a `OuterEntitlement`-authorized refererence to the `OuterResource` can access the `entitledRef` field, giving them a `SubEntitlement`-authorized reference to `SubResource` that
+With this pattern, we can store to a `SubResource` on an `OuterResource` value, and create different ways to access that nested resource depending on the entitlement oneposseses.
+Somoneone with only an unauthorized reference to `OuterResource` can only call the `getPubRef` function, and thus can only get an unauthorized reference to `SubResource` that lets them call `foo`. 
+However, someone with a `OuterEntitlement`-authorized refererence to the `OuterResource` can call the `getEntitledRef` function, giving them a `SubEntitlement`-authorized reference to `SubResource` that
 allows them to call `bar`. 
 
-This pattern is functional, but it is unfortunate that we are forced to "duplicate" the reference to `SubResource`, storing it twice on the object in differently named fields, essentially creating
-two different views to the same object that are stored as different fields. To avoid necessitating this duplication, we add support to the language for "entitlement mappings", a way to declare 
+This pattern is functional, but it is unfortunate that we are forced to "duplicate" the accessors to `SubResource`, duplicating the code and storing two functions on the object, essentially creating
+two different views to the same object that are stored as different functions. To avoid necessitating this duplication, we add support to the language for "entitlement mappings", a way to declare 
 statically how entitlements are propagated from parents to child objects in a nesting hierarchy. So, the above example could be equivalently written as:
 
 ```cadence
@@ -297,28 +314,29 @@ entitlement mapping Map {
 }
 
 resource SubResource {
-    pub fun foo() { ... }
+    access(all) fun foo() { ... }
     access(SubEntitlement) fun bar() { ... }
 }
 
 resource OuterResource {
-    // by referering to `Map` here, we declare that the entitlements we receive when accessing the `ref` field on this resource
+    access(self) let childResource: @SubResource
+    // by referering to `Map` here, we declare that the entitlements we receive when accessing the `getRef` function on this resource
     // will depend on the entitlements we possess to the resource during the access. 
-    access(Map) let ref: auth(Map) &SubResource
+    access(Map) fun getRef(): auth(Map) &SubResource {
+        return &self.childResource as auth(Map) &SubResource
+    }
 
-    init(ref: auth(SubEntitlement) &SubResource) {
-        // because the `self.ref` field here is typed with a mapping, in order to assign to it the rhs of the assignment must be fully-entitled 
-        // for the range of this mapping, that is, it must possess all of the entitlements in the image of `Map`
-        self.ref = ref
+    init(r: @SubResource) {
+        self.childResource = r
     }
 }
 
 // given some value `r` of type `@OuterResource`
 let pubRef = &r as &OuterResource
-let pubSubRef = r.ref // has type `&SubResource`
+let pubSubRef = r.getRef() // has type `&SubResource`
 
 let entitledRef = &r as auth(OuterEntitlement) &OuterResource
-let entiteldSubRef = r.ref // `OuterEntitlement` is defined to map to `SubEntitlement`, so this access yields a value of type `auth(SubEntitlement) &SubResource`
+let entiteldSubRef = r.getRef() // `OuterEntitlement` is defined to map to `SubEntitlement`, so this access yields a value of type `auth(SubEntitlement) &SubResource`
 ```
 
 Entitlement mappings do not need to be 1:1; it is perfectly valid to define a mapping like so:
@@ -450,11 +468,11 @@ interface Provider {
 access(ConverterMap) attachment CurrencyConverter for Provider {
     require entitlement Withdraw
 
-    pub fun convert(_ amount: UFix64): UFix64 {
+    access(all) fun convert(_ amount: UFix64): UFix64 {
         // ...
     }
 
-    pub fun convertVault(_ vault: @Vault): @Vault {
+    access(all) fun convertVault(_ vault: @Vault): @Vault {
         vault.balance = self.convert(vault.balance)
         return <-vault
     }
@@ -465,12 +483,12 @@ access(ConverterMap) attachment CurrencyConverter for Provider {
         return <-base.withdraw(amount: amount) 
     }
 
-    pub fun deposit (from: @Vault) {
+    access(all) fun deposit (from: @Vault) {
         // cast is permissable under the new reference casting rules
         let baseReceiverOptional = base as? &{Receiver}
         if let baseReceiver = baseReceiverOptional {
             let convertedVault <- self.convertVault(<-from) 
-            // this is ok because `deposit` has `pub` access
+            // this is ok because `deposit` has `all` access
             baseReceiver.deposit(from: <-convertedVault)
         }
     }
@@ -497,32 +515,32 @@ entitlement sets to control access.
 With this new design, the `Vault` heirarchy might be written like so:
 
 ```cadence
-pub entitlement Withdraw
+access(all) entitlement Withdraw
 
-pub resource interface Provider {
+access(all) resource interface Provider {
     access(Withdraw) fun withdraw(amount: UFix64): @Vault {
         // ...
     }
 }
 
-pub resource interface Receiver {
-    pub fun deposit(from: @Vault) {
+access(all) resource interface Receiver {
+    access(all) fun deposit(from: @Vault) {
        // ...
     }
 }
 
-pub resource interface Balance {
-    pub var balance: UFix64
+access(all) resource interface Balance {
+    access(all) var balance: UFix64
 }
 
-pub resource Vault: Provider, Receiver, Balance {
+access(all) resource Vault: Provider, Receiver, Balance {
     access(Withdraw) fun withdraw(amount: UFix64): @Vault {
         // ...
     }
-    pub fun deposit(from: @Vault) {
+    access(all) fun deposit(from: @Vault) {
        // ...
     }
-    pub var balance: UFix64
+    access(all) var balance: UFix64
 }
 ```
 
