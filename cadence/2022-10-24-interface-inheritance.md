@@ -504,6 +504,77 @@ B
 A
 ```
 
+### Interface Subtyping
+
+When an interface `B` inherits from another interface `A`, `B` becomes a subtype of `A`.
+This has the following implications on subtyping of restricted types and reference types.
+
+#### Composite types
+
+A composite type `S` which conforms to `B` is a subtype of restricted type `{A}`.
+
+```cadence
+struct interface A {}
+
+struct interface B: A {}
+
+struct S: B {}
+
+var s1: S = S()
+
+var s2: {A} = s1    // `S` conforming to `B`, is a subtype of `{A}`
+```
+
+#### Restricted types
+
+A restricted type `{B}` is a subtype of restricted type `{A}`.
+
+```cadence
+struct interface A {}
+
+struct interface B: A {}
+
+struct S: B {}
+
+var s1: {B} = S()
+
+var s2: {A} = s1    // `{B}` is a subtype of `{A}`
+```
+
+A restricted type `{B, C, D}` where atleast one of `B`, `C` and `D` inherits from `A`, is a subtype of restricted type `{A}`.
+
+```cadence
+struct interface A {}
+
+struct interface B: A {}
+
+struct interface C {}
+
+struct interface D {}
+
+struct S: B, C, D {}
+
+var s1: {B, C, D} = S()
+
+var s2: {A} = s1    // `{B, C, D}` is a subtype of `{A}`
+```
+
+#### Reference types
+
+A restricted reference type `&{B}` is a subtype of restricted reference type `&{A}`.
+
+```cadence
+struct interface A {}
+
+struct interface B: A {}
+
+struct S: B {}
+
+var s1: &{B} = S() as &{B}
+
+var s2: &{A} = s1    // `&{B}` is a subtype of `&{A}`
+```
+
 ### Drawbacks
 
 One drawback is, as mentioned in the above section, when there are complex inheritance chains with default functions
