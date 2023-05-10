@@ -3,7 +3,7 @@ status: draft
 flip: NNN (do not set)
 authors: Daniel Sainati (daniel.sainati@dapperlabs.com)
 sponsor: Daniel Sainati (daniel.sainati@dapperlabs.com)
-updated: 2023-05-02
+updated: 2023-05-10
 ---
 
 # Entitlements
@@ -57,16 +57,17 @@ entitlement E
 
 In the future, this is easily extensible to allow creating entitlements that are constructed from others via operators like `&` or `|`.
 
-### Entitlement-access fields
+### Entitlement-access members
 
 To go with these `entitlement` declarations, this FLIP proposes to add a new access control modifier to field and function declarations in composite types:
-`access(X)`, which allows access to either the immediate owner of the resource (i.e. anybody who has the actual resource value),
-or someone with an `auth(X)` reference to the type on which the member is defined. The `X` here can be the qualified name of any entitlement, e.g.:
+`access(E)`, which allows access to either the immediate owner of the resource (i.e. anybody who has the actual resource value),
+or someone with an `auth(E)` reference to the type on which the member is defined. The `X` here can be the qualified name of any entitlement, e.g.:
 
 ```cadence
-entitlement E
+entitlement X
 resource R {
     access(E) fun foo(a: Int) { }
+    access(E) let bar: String
 }
 ```
 A single member definition can include multiple entitlements, using either a `|` or a `,` separator when defining the list.
@@ -90,7 +91,7 @@ resource R {
 `foo` is only calleable on a reference to `R` that is `auth` for both `E` and `F`, while `bar` is calleable on any `auth` reference that is `auth` for either `E` or `F` (or both).
 
 Like `access(contract)` and `access(account)`, this new modifier sits exactly between `pub` and `priv` (or equivalently `access(self)`) 
-in permissiveness; it allows less access than `pub`, but strictly more than `priv`, as an `access(X)` field or function can be used anywhere 
+in permissiveness; it allows less access than `pub`, but strictly more than `priv`, as an `access(E)` field or function can be used anywhere 
 in the implementation of the composite. To see why, consider that `self` is necessarily of the same type as the composite, meaning 
 that the access rules defined above allow any `access(I)` members to be accessed on it. A table summarizing the new access modifiers is included here:
 
@@ -100,10 +101,10 @@ that the access rules defined above allow any `access(I)` members to be accessed
 | `access(self)` (`priv`) | Methods defined within the same type object.                          |
 | `access(contract)`      | Methods defined within the same smart contract object.                |
 | `access(account)`       | Methods defined in a contract deployed to the same account.           |
-| `access(X)`             | Code holding an `auth(X)` reference for some defined entitlement `X`. | 
+| `access(E)`             | Code holding an `auth(E)` reference for some defined entitlement `E`. | 
 | `access(all)` (`pub`)   | Any code with any reference to the object.                            |
 
-As specified above, note that actual ownership of an object grants access to any `access(X)` member for any `X`.
+As specified above, note that actual ownership of an object grants access to any `access(E)` member for any `E`.
 
 As such, the following would be prohibited statically:
 
@@ -132,7 +133,7 @@ let ref: auth(E) &R = &r
 ref.foo()
 ```
 
-Note also that while the normal interface implementation subtyping rules would allow a composite to implement an `access(X)` interface member with a `pub` 
+Note also that while the normal interface implementation subtyping rules would allow a composite to implement an `access(E)` interface member with a `pub` 
 composite member, as this is less restrictive, in order to prevent users from accidentally surrendering authority and security this way, we prevent this statically. 
 As such, the below code would not typecheck.
 
@@ -148,7 +149,7 @@ pub resource R: I {
 }
 ```
 
-If users would like to expose an access-limited function to `pub` users, they can do so by wrapping the `access(X)` function in a `pub` function. 
+If users would like to expose an access-limited function to `pub` users, they can do so by wrapping the `access(E)` function in a `pub` function. 
 
 As with normal subtyping, this would also be statically rejected:
 
@@ -403,7 +404,7 @@ the owner of the inner resource.
 #### Attachments and Entitlements
 
 Attachments would interact with entitlements and access-limited members in a nuanced but intuitive manner, using the entitlement mapping feature described above. Instead 
-of requiring that all attachment declarations are `pub`, they can additionally be declared with an `access(X)` modifier, where `X` is the name of an entitlement mapping. 
+of requiring that all attachment declarations are `pub`, they can additionally be declared with an `access(E)` modifier, where `E` is the name of an entitlement mapping. 
 When declared with an entitlement mapping access, the attachment's entitlements are propagated from the entitlements of its `base` value according to the mapping. Attachments would remain `pub` accessible, but would permit the declaration of `access`-limited members. So, for example, given some declarations like:
 
 ```cadence
