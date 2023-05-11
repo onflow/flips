@@ -1,11 +1,11 @@
 # Interface inheritance in Cadence
 
-| Status         | Proposed                                     |
+| Status         | Accepted                                     |
 |:---------------|:---------------------------------------------|
 | **FLIP #**     | https://github.com/onflow/cadence/pull/2112  |
 | **Author(s)**  | Supun Setunga (supun.setunga@dapperlabs.com) |
 | **Sponsor**    | Supun Setunga (supun.setunga@dapperlabs.com) |
-| **Updated**    | 2023-04-26                                   |
+| **Updated**    | 2023-05-11                                   |
 
 ## Objective
 
