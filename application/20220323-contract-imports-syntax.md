@@ -1,20 +1,21 @@
-# Contracts Import Syntax
+---
+status: accepted
+flip: 892
+authors: Gregor Gololicic @sideninja gregor.gololicic@dapperlabs.com
+sponsor: Gregor Gololicic @sideninja gregor.gololicic@dapperlabs.com
+updated: 2022-03-23
+---
 
-| Status        | Proposed       |
-:-------------- |:---------------------------------------------------- |
-| **FLIP #**    | 892 |
-| **Author(s)** | Gregor Gololicic @sideninja gregor.gololicic@dapperlabs.com |
-| **Sponsor**   | Gregor Gololicic @sideninja gregor.gololicic@dapperlabs.com |
-| **Updated**   | 2022-03-23                                           |
+# FLIP 892: Contracts Import Syntax
 
 ## Objective
-Uniforming the import syntaxes that are used in Cadence contracts. Currently there are few established patterns in the community for how to 
-write imports that would then be replaced before deploying the code to the network. The replacement mechanism is needed because depending 
+Uniforming the import syntaxes that are used in Cadence contracts. Currently there are few established patterns in the community for how to
+write imports that would then be replaced before deploying the code to the network. The replacement mechanism is needed because depending
 on the network you develop on, the addresses will change, and in some cases it might even reference a local file.
 
 ## Motivation
-Currently there is no single standard for how to solve this problem and hence few have been established which makes it super hard 
-when switching between environments. Example one format is used locally when developing using the CLI and another with FCL which makes 
+Currently there is no single standard for how to solve this problem and hence few have been established which makes it super hard
+when switching between environments. Example one format is used locally when developing using the CLI and another with FCL which makes
 switching betwen those environments hard.
 
 ## Design Proposal
@@ -46,14 +47,14 @@ Source code is loaded and searched for `0x<placeholder>` string and then replace
 
 **Import syntax**
 
-`import <declarations to import> from <relative path>` 
+`import <declarations to import> from <relative path>`
 
 Example:
 `import Foo from ./Foo.cdc`
 
 **Mechanics**
 
-Source code is loaded and parsed with the Cadence library, the import statements are iterated over and replaced with the values set in `flow.json` configuration. 
+Source code is loaded and parsed with the Cadence library, the import statements are iterated over and replaced with the values set in `flow.json` configuration.
 
 **Used by**
 
@@ -101,7 +102,7 @@ Example flow.json for the above syntax:
 	"onflow/FungibleToken": {
 		"testnet": "github.com/flow/FungibleToken/Fungible.cdc",
 		"mainnet": "0x2",
-		"emulator": "./FungibleToken.cdc", 
+		"emulator": "./FungibleToken.cdc",
 		"e2e-testnet": "0x3"
 	}
 }

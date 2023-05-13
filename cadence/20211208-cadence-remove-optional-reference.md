@@ -1,37 +1,37 @@
---
-status: Finalized
+---
+status: accepted
 flip: 722
-author: Daniel Sainati (daniel.sainati@dapperlabs.com)
+authors: Daniel Sainati (daniel.sainati@dapperlabs.com)
 sponsor: Daniel Sainati (daniel.sainati@dapperlabs.com)
 updated: 2021-12-09
 ---
 
-# Optional References to Indexed Accesses
+# FLIP 722: Optional References to Indexed Accesses
 
 ## Objective
 
-This removes the ability to create a reference to an optional value in Cadence by 
-creating a reference to the result of an indexed access. This was previously the 
-only way to obtain a reference to an optional, and as such this change effectively 
-removes these references from the language entirely. Instead, it allows users to 
-make the type on the right-hand side of an `as` expression an optional, and 
+This removes the ability to create a reference to an optional value in Cadence by
+creating a reference to the result of an indexed access. This was previously the
+only way to obtain a reference to an optional, and as such this change effectively
+removes these references from the language entirely. Instead, it allows users to
+make the type on the right-hand side of an `as` expression an optional, and
 allows users to create optionally-typed references in place of references
-to optional values. 
+to optional values.
 
 ## Motivation
 
-As detailed in https://github.com/onflow/cadence/issues/747, it is possible to 
+As detailed in https://github.com/onflow/cadence/issues/747, it is possible to
 abort execution with a failed dereference that is not caught by the type checker
 by creating a reference to the result of an indexed access, and then accessing
-a field on that reference. This occurs because while references to optional 
+a field on that reference. This occurs because while references to optional
 values are normally disallowed, references to indexed accesses are special cased
 in the checker. In order to proceed with a stable release of Cadence, this feature
-needs to be removed. 
+needs to be removed.
 
 ## User Benefit
 
 This removes an unsound behavior from the type checker, preventing an error
-from occurring at runtime. 
+from occurring at runtime.
 
 ## Design Proposal
 
@@ -39,16 +39,16 @@ When creating a reference value, the Cadence type checker includes a
 check to ensure that the type of the referenced value is not optional.
 However, prior to this change, there was a special case included that would
 "unwrap" one layer of an optional obtained from an indexed access, effectively
-allowing people to create optional references when the optional was the 
-result of an indexed access. 
+allowing people to create optional references when the optional was the
+result of an indexed access.
 
 This worked without issue when the indexed access succeeded, but if the
 access would have returned `nil`, users were able to access the fields of the
 non-`nil` case of the optional value, which was unsafe and caused a crash at
 runtime.
 
-This FLIP proposes that instead of creating a reference to the result of the 
-access and assuming that the access succeeded, instead the reference itself 
+This FLIP proposes that instead of creating a reference to the result of the
+access and assuming that the access succeeded, instead the reference itself
 will be optional. In the case where the access succeeded, the reference will
 point to the value that was returned, and when it failed, the reference itself
 will be `nil` (as opposed to a reference to `nil`). This will be denoted in the
@@ -78,14 +78,14 @@ let ref = &i as &Int? // ref has type &Int?
 
 ### Drawbacks
 
-This is a breaking change, and will require existing contracts to be updated to 
-account for this change. 
+This is a breaking change, and will require existing contracts to be updated to
+account for this change.
 
 ### Best Practices
 
 Users will now need to handle the case where the result of a dictionary
-access is `nil`, by checking the optional reference for `nil`. To obtain the 
-same behavior as before, users can force the reference they create this way, 
+access is `nil`, by checking the optional reference for `nil`. To obtain the
+same behavior as before, users can force the reference they create this way,
 and execution will abort if the access was `nil` (previously execution would
 have aborted on a `nil` access when the reference was used).
 
@@ -105,7 +105,7 @@ code of the following form:
 let x = &dict[key] as T
 ```
 
-can be rewritten as 
+can be rewritten as
 
 ```cadence
 let x = (&dict[key] as &T?)!
@@ -114,4 +114,4 @@ let x = (&dict[key] as &T?)!
 This will cause a runtime panic if `key` was not present in `dict`, but cases
 where this panic would occur would already have resulted in panics when the value of `x`
 was used as a `&T` even though it was `nil`. As such, it is likely that this replacement
-will work in most cases. 
+will work in most cases.

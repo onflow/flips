@@ -1,11 +1,12 @@
-# Application of BIP 44 in Flow Wallets
+---
+status: accepted
+flip: 200
+authors: Peter Siemens (peter@dapperlabs.com), Jeffery Doyle (jeffrey.doyle@dapperlabs.com)
+sponsor: Peter Siemens (peter@dapperlabs.com)
+updated: 2022-03-03
+---
 
-| Status        | Accepted |
-:-------------- |:---------|
-| **FLIP #**    | [200](https://github.com/onflow/flow/pull/200) |
-| **Author(s)** | Peter Siemens (peter@dapperlabs.com), Jeffery Doyle (jeffrey.doyle@dapperlabs.com) |
-| **Sponsor**   | Peter Siemens (peter@dapperlabs.com) |
-| **Updated**   | 2022-03-03 |
+# FLIP 200: Application of BIP 44 in Flow Wallets
 
 ## Objective
 
@@ -42,9 +43,9 @@ paths that support multiple coins and multiple accounts per coin.
 
 Flow accounts support keys on two different elliptic curves (secp256k1 and NIST P-256).
 While BIP 32 describes the key derivation process for the secp256k1 curve, [SLIP-0010]
-(https://github.com/satoshilabs/slips/blob/master/slip-0010.md) generalizes the derivation 
-process to the NIST P-256 curve. In the rest of this document, BIP 44 is applicable for 
-both elliptic curves. 
+(https://github.com/satoshilabs/slips/blob/master/slip-0010.md) generalizes the derivation
+process to the NIST P-256 curve. In the rest of this document, BIP 44 is applicable for
+both elliptic curves.
 
 The BIP 44 path format is as follows:
 
@@ -79,7 +80,7 @@ The motivation for these accounts is the same set forth in BIP 44:
 > accounts; for donation purposes (where all addresses are considered public),
 > for saving purposes, for common expenses etc.
 
-When generating a key pair to be added on a new account, use the smallest 
+When generating a key pair to be added on a new account, use the smallest
 account index that has not already been used to generate keys for an existing account.
 
 Unlike [BIP 44](https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki#account),
@@ -106,8 +107,8 @@ This index should not be confused with the on-chain account key index. It must
 not be assumed that this index will reflect the on-chain account key index for
 any key.
 
-When generating a new key pair for an account, the key index to use in the path to 
-generate the new key should be the smallest unused key index available which 
+When generating a new key pair for an account, the key index to use in the path to
+generate the new key should be the smallest unused key index available which
 has not yet been used to generate a key on the account.
 
 ### Legacy Path
@@ -147,17 +148,17 @@ or account index gap limit.)
 
 The prescribed account discovery procedure is as follows:
 
-1. Derive the key pair using the legacy path and P-256 curve, 
-   checking its use with the public key registry. If an address is found, 
-   query the Flow network to fetch the account's details. If an account 
-   is found, remember the relationship between the path used to generate 
+1. Derive the key pair using the legacy path and P-256 curve,
+   checking its use with the public key registry. If an address is found,
+   query the Flow network to fetch the account's details. If an account
+   is found, remember the relationship between the path used to generate
    this key and the account's details.
-2. Derive the key pair(s) (starting with account index = 0 and key index = 0) 
+2. Derive the key pair(s) (starting with account index = 0 and key index = 0)
    using the path specified in this FLIP and each elliptic curve that
    both you and Flow support (Flow currently supports keys generated on the
    P-256 and secp256k1 curves).
-   Note: If you are unable to derive keys for a certain elliptic curve, 
-   you may fail to discover an account / key that the user has generated 
+   Note: If you are unable to derive keys for a certain elliptic curve,
+   you may fail to discover an account / key that the user has generated
    previously.
 3. Scan for each keys usage by querying the public key registry with the key and
    elliptic curve used to generate it.
@@ -236,7 +237,7 @@ should be used.
 A Flow account address is not derived from a public key and is instead assigned
 during an on-chain transaction. Flow supports a many-to-many relationship
 between accounts and public keys; multiple public keys can be added to a single
-account, and a single public key can be added to multiple accounts. 
+account, and a single public key can be added to multiple accounts.
 
 The Flow protocol maintains an index from `address => [publicKey]`, but there is
 currently no on-chain reverse mapping from `publicKey => [address]`.
@@ -286,7 +287,7 @@ to the Flow account model.
 
 ### Tutorials and Examples
 
-TODO: add examples 
+TODO: add examples
 
 ### Compatibility
 
@@ -313,7 +314,7 @@ This document outlines a specific application of the standard described by [BIP
 standard has been widely adopted by Bitcoin, Ethereum and many other
 cryptocurrency projects and communities.
 
-[SLIP-0010](https://github.com/satoshilabs/slips/blob/master/slip-0010.md) 
+[SLIP-0010](https://github.com/satoshilabs/slips/blob/master/slip-0010.md)
 is a document that generalizes the BIP 32 key derivation process
 to other curves, in particular the NIST P-256 curve supported by Flow accounts.
 

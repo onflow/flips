@@ -1,39 +1,41 @@
-# Self-Ejection (feature for the core protocol)
+---
+status: proposed
+flip: 324
+authors: Alex Hentschel (alex.hentschel@dapperlabs.com), Jordan Schalm (jordan@dapperlabs.com)
+sponsor: Alex Hentschel (alex.hentschel@dapperlabs.com)
+updated: 2021-02-02
+---
 
-| Status        | Proposed       |
-:-------------- |:---------------------------------------------------- |
-| **FLIP #**    | [324](https://github.com/onflow/flow/pull/324) |
-| **Author(s)** | Alex Hentschel (alex.hentschel@dapperlabs.com) <br /> Jordan Schalm (jordan@dapperlabs.com)|
-| **Sponsor**   | Alex Hentschel (alex.hentschel@dapperlabs.com)             |
-| **Updated**   | 2021-02-02                                           |
+# FLIP 324: Self-Ejection (feature for the core protocol)
 
 ## Objective
-Staked nodes running the core protocol are expected to participate for the duration of 
-(at least) one Epoch and are subject to slashing challenges. An authorized Flow node is 
-primarily authenticated via its `staking key`. 
 
-This FLIP addresses the question of what a node operator can do in case she believes her 
+Staked nodes running the core protocol are expected to participate for the duration of
+(at least) one Epoch and are subject to slashing challenges. An authorized Flow node is
+primarily authenticated via its `staking key`.
+
+This FLIP addresses the question of what a node operator can do in case she believes her
 node's operational keys (i.e. staking or networking key) has been compromised.
-The established process for handling this case is (1) to revoke the compromised key and 
+The established process for handling this case is (1) to revoke the compromised key and
 (2) issue new key(s). Changing a node's keys mid-epoch will _not_ be supported for the foreseeable future.
-Therefore, the only available mitigation strategy is to remove the node as an authorized protocol participant 
-(this is essentially just 1). 
+Therefore, the only available mitigation strategy is to remove the node as an authorized protocol participant
+(this is essentially just 1).
 
 Flow's technical term for revoking a node's participation privileges is `ejection` (from the protocol).
 This FLIP proposes `self-ejection` as a measure a node operator can take in case
-they believe their node's staking key has been compromised. Conceptually, self-ejection is very similar 
+they believe their node's staking key has been compromised. Conceptually, self-ejection is very similar
 to ejecting a node as punishment for protocol violations (usually accompanied by slashing the node's stake).
 
 
 ## Motivation
 
 In case a node's staking key has been compromised, the attacker might be able to spoof node messages.
-For example, an attacker gaining knowledge of a consensus node's private staking and networking key 
+For example, an attacker gaining knowledge of a consensus node's private staking and networking key
 could impersonate the node and equivocate (double-vote or propose conflicting blocks). As a consequence,
-the node's stake will be slashed, and the node ejected. 
+the node's stake will be slashed, and the node ejected.
 
 For safety of the network, the operational rewards for a node are generally significantly smaller compared to
-a node's stake. Therefore, for an honest node operator, it is economically rational to forgo the 
+a node's stake. Therefore, for an honest node operator, it is economically rational to forgo the
 operational rewards to protect the stake from being slashed.
 
 
@@ -41,7 +43,7 @@ operational rewards to protect the stake from being slashed.
 
 Supporting `self-ejection` benefits the node operators as well as the safety of the core protocol:
 * `self-ejection` allows the node operator to prevent significant economic losses through slashing
-* `self-ejection` increases protocol safety as this might prevent a malicious party from entering the network 
+* `self-ejection` increases protocol safety as this might prevent a malicious party from entering the network
 
 
 ## Design Proposal
@@ -55,46 +57,46 @@ then the identity table change is propagated to the consensus committee (and ult
 
 ![Illustration of the self-ejection process. For simplicity, we denote denote the node as well as the node operator requesting self-ejection as _Alice_ ](20210118-self-ejection/Self-Ejection.png)
 
-1. To request self-ejection, the operator (denoted as _Alice_) submits the respective transaction 
+1. To request self-ejection, the operator (denoted as _Alice_) submits the respective transaction
    (denoted as _T_) to the network (same process as any other conventional transaction).
-   - This transaction will require access to the resource obtained by the operator during staking registration. 
+   - This transaction will require access to the resource obtained by the operator during staking registration.
      For additional security we may want to require that the request is signed by the staking key of the node requesting self-ejection.
 2. The transaction will eventually be included in a block (denoted as _A_ in the illustration above).
 
-   1. When the Execution Nodes process transaction _T_, a `Service Event` is emitted. 
+   1. When the Execution Nodes process transaction _T_, a `Service Event` is emitted.
        * Service events are special messages that are generated by smart contracts and included in execution results.
-         They enable communication between system smart contracts and the Flow protocol. 
+         They enable communication between system smart contracts and the Flow protocol.
          In other words, they serve as a communication mechanism between the execution state and the protocol state.
-         Concretely, service events are defined and emitted as events like any other in Cadence. 
+         Concretely, service events are defined and emitted as events like any other in Cadence.
          An event is considered a service event if and only if:
          - emitted within the service chunk, and
          - emitted from a smart contract deployed to the service account, and
          - its type is in the list of Service Events (defined by the protocol layer)
    2. Correctness of the service event is checked by Flow's Verification Process (like the output of any other transaction).
-3. When consensus nodes include a seal for an Execution Result in a fork (block _b_ in illustration), the 
+3. When consensus nodes include a seal for an Execution Result in a fork (block _b_ in illustration), the
    Service Events that are listed as part of the Result take effect in the child block.
-   - Note that Service Events only affect the fork in which they are included. 
-   - When a fork contains a seal for a self-ejection event, the respective node's participation privileges are revoked 
-     for this particular fork. 
-   - Only when the seal for a self-ejection event is finalized (i.e. the block containing the seal is finalized), 
+   - Note that Service Events only affect the fork in which they are included.
+   - When a fork contains a seal for a self-ejection event, the respective node's participation privileges are revoked
+     for this particular fork.
+   - Only when the seal for a self-ejection event is finalized (i.e. the block containing the seal is finalized),
      the node's participation privileges can be revoked entirely.
 
 #### Sanity checks:
 Context:
 * While Execution Results can contain self-ejection service events, consensus nodes cannot verify their validity.
-  Checking correctness of Execution Results is the job of the verification nodes.   
-* Only after an Execution Result passes verification, consensus nodes can be sure that the result was derived by honest execution. 
-  However, note that honest execution does not necessarily imply that the service event is correct. 
-  We could still have a bug in the smart contract. 
+  Checking correctness of Execution Results is the job of the verification nodes.
+* Only after an Execution Result passes verification, consensus nodes can be sure that the result was derived by honest execution.
+  However, note that honest execution does not necessarily imply that the service event is correct.
+  We could still have a bug in the smart contract.
 * If the service account smart contract has a bug that causes it to emit service events that violate protocol specifications,
-  the only option is to halt the chain and wait for human intervention.   
+  the only option is to halt the chain and wait for human intervention.
 
-While Flow cannot automatically recover from bugs in the service account smart contract, it is still important to  
-sanity-check the contract's service event. In this particular case, Consensus Nodes should apply the following checks 
+While Flow cannot automatically recover from bugs in the service account smart contract, it is still important to
+sanity-check the contract's service event. In this particular case, Consensus Nodes should apply the following checks
 when processing a seal for a self-ejection service event:
-   - is the node requesting self-ejection must be a valid network participant as of the parent block's protocol state and 
+   - is the node requesting self-ejection must be a valid network participant as of the parent block's protocol state and
    - the parent block must *not* contain an ejection request for this node
-If either condition is violated, the consensus node can crash (which will halt the chain). 
+If either condition is violated, the consensus node can crash (which will halt the chain).
 
 ### Implementation steps:
 
@@ -123,45 +125,45 @@ If either condition is violated, the consensus node can crash (which will halt t
 
 #### Side considerations: When precisely take changes to the identity table effect?
 
-As we now get to the point, where the Identity table can dynamically change from block to block, 
+As we now get to the point, where the Identity table can dynamically change from block to block,
 it is probably a good time to think about when precisely changes to the protocol state take effect.
-Consider a block `B`, whose payload contains some components that change the identity of node `Alice` 
+Consider a block `B`, whose payload contains some components that change the identity of node `Alice`
 (for example, a slashing challenge whose adjudication results in Alice's ejection).
 
 Generally, nodes check block correctness to different degrees:
 * Consensus nodes are obliged to check the block in its entirety including the payload.
-* All other nodes roles can rely on consensus nodes to check payload validity. 
+* All other nodes roles can rely on consensus nodes to check payload validity.
   They only check block headers for validity (specifically the QC). Once the block has been
-  voted for by a supermajority of consensus nodes, other nodes can be certain that the payload 
-  is protocol compliant. This means, as soon as a block `B` has a child with a valid header 
+  voted for by a supermajority of consensus nodes, other nodes can be certain that the payload
+  is protocol compliant. This means, as soon as a block `B` has a child with a valid header
   (ignoring the validity of the child's payload), a non-consensus node can take the `B`'s
   payload as valid.
-  - On the one hand, this means that non-consensus nodes don't have to validate slashing 
+  - On the one hand, this means that non-consensus nodes don't have to validate slashing
     challenges, which removes a huge amount of complexity.
-  - On the other hand, this implies that an adjudication result in `B`'s payload cannot 
-    take effect immediately, because non-consensus nodes can't verify its correctness. 
-    Instead, non-consensus require a full round of votes (i.e. the existence of a child block 
+  - On the other hand, this implies that an adjudication result in `B`'s payload cannot
+    take effect immediately, because non-consensus nodes can't verify its correctness.
+    Instead, non-consensus require a full round of votes (i.e. the existence of a child block
     with valid header), to accept the identity table update.
 
 **In summary, this implies the following two-step approach for slashing adjudications to take effect:**
-1. **Identity table update is proposed in block `B`.** 
+1. **Identity table update is proposed in block `B`.**
    (E.g. Alice's ejection, referencing a slashing adjudication published also in block `B`)
 2. **The identity table update only takes effect in the fork, _after_ its validity is affirmed through a QC**.
 
 I think it would be most consistent to apply this pattern to _all_ identity table changes..
 ![two-step approach for IOdentity-table updates](20210118-self-ejection/two-step_identity-table_update.png)
 
-  
+
 
 ### Drawbacks
 
-Ideally, it would be nicer to exchange the node's key (out of scope as 
-too many open questions are unsolved). 
+Ideally, it would be nicer to exchange the node's key (out of scope as
+too many open questions are unsolved).
 
 ### Alternatives Considered
 
-Support for node to change its key. 
-Nevertheless, we need ability to eject a slashed node for protocol violations. 
+Support for node to change its key.
+Nevertheless, we need ability to eject a slashed node for protocol violations.
 
 ### Performance Implications
 .
@@ -169,9 +171,9 @@ Nevertheless, we need ability to eject a slashed node for protocol violations.
 ### Dependencies
 
 * Dependencies: does this proposal add any new dependencies to Flow?
-* Dependent projects: are there other areas of Flow or things that use Flow 
-(Access API, Wallets, SDKs, etc.) that this affects? 
-How have you identified these dependencies and are you sure they are complete? 
+* Dependent projects: are there other areas of Flow or things that use Flow
+(Access API, Wallets, SDKs, etc.) that this affects?
+How have you identified these dependencies and are you sure they are complete?
 If there are dependencies, how are you managing those changes?
 
 ### Engineering Impact
@@ -183,21 +185,21 @@ If there are dependencies, how are you managing those changes?
 .
 ### Tutorials and Examples
 
-A short how-to for node operators would be great.  
+A short how-to for node operators would be great.
 
 ### Compatibility
 
-This change affects the Flow core protocol only. Higher-level components are agnostic to this change.    
+This change affects the Flow core protocol only. Higher-level components are agnostic to this change.
 
 
 ### User Impact
 
-Extra feature for node operators. No user impact.  
+Extra feature for node operators. No user impact.
 
 ## Related Issues
 
-Would be great if we already considered the possibility for extending the implementation 
-to ejections as a result of slashing. 
+Would be great if we already considered the possibility for extending the implementation
+to ejections as a result of slashing.
 
 
 ## Prior Art

@@ -1,11 +1,12 @@
-# Interface inheritance in Cadence
+---
+status: accepted
+flip: 40
+authors: Supun Setunga (supun.setunga@dapperlabs.com)
+sponsor: Supun Setunga (supun.setunga@dapperlabs.com)
+updated: 2023-05-11
+---
 
-| Status         | Accepted                                     |
-|:---------------|:---------------------------------------------|
-| **FLIP #**     | https://github.com/onflow/cadence/pull/2112  |
-| **Author(s)**  | Supun Setunga (supun.setunga@dapperlabs.com) |
-| **Sponsor**    | Supun Setunga (supun.setunga@dapperlabs.com) |
-| **Updated**    | 2023-05-11                                   |
+# FLIP 40: Interface inheritance in Cadence
 
 ## Objective
 
@@ -31,17 +32,17 @@ pub resource interface Vault {
 }
 ```
 
-Suppose all implementations of the `Valut` would also need to conform to the interface `Receiver`.
+Suppose all implementations of the `Vault` would also need to conform to the interface `Receiver`.
 Currently, there is no way to enforce this.
 
 Anyone who implements the `Vault` would have to explicitly specify that their concrete type also implements the `Receiver`.
 But it's not always guaranteed that all implementations would follow this informal agreement.
 
 ```cadence
-pub resource MyVault: Vault, Reciever {
+pub resource MyVault: Vault, Receiver {
 
     pub fun deposit(_ something: @AnyResource) {}
-    
+
     pub fun withdraw(_ amount: Int): @Vault {}
 }
 ```
@@ -155,8 +156,8 @@ pub resource interface Receiver {
 
 pub resource interface Vault: Receiver {
 
-    // `deposit` function has the same signature as the `Receiver.deposit`. 
-    // Also none of them have any default implementations. 
+    // `deposit` function has the same signature as the `Receiver.deposit`.
+    // Also none of them have any default implementations.
     // Hence this is valid.
     pub fun deposit(_ something: @AnyResource)
 }
@@ -192,7 +193,7 @@ pub resource interface Receiver {
 
 pub resource interface Vault: Receiver {
 
-    // `deposit` function has the same signature as the `Receiver.deposit`. 
+    // `deposit` function has the same signature as the `Receiver.deposit`.
     // Having pre/post condition is valid.
     // Both conditions would be executed, in a pre-determined order.
     pub fun deposit(_ something: @AnyResource) {
@@ -206,7 +207,7 @@ pub resource interface Vault: Receiver {
 An interface can provide a default implementation to an inherited function.
 
 <div style="text-align: left;">
-<img height="300" src="2022-11-16-interface-inheritance/default-implementation.jpg"/>
+<img height="300" src="20221024-interface-inheritance/default-implementation.jpg"/>
 </div>
 
 ```cadence
@@ -225,7 +226,7 @@ pub resource interface Vault: Receiver {
 However, an interface cannot override an inherited default implementation of a function.
 
 <div style="text-align: left;">
-<img height="300" src="2022-11-16-interface-inheritance/simple-override.jpg"/>
+<img height="300" src="20221024-interface-inheritance/simple-override.jpg"/>
 </div>
 
 ```cadence
@@ -246,7 +247,7 @@ pub resource interface Vault: Receiver {
 It is also invalid to have two or more inherited default implementations for an interface.
 
 <div style="text-align: left;">
-<img height="200" src="2022-11-16-interface-inheritance/two-default-implelentations-direct.jpg"/>
+<img height="200" src="20221024-interface-inheritance/two-default-implelentations-direct.jpg"/>
 </div>
 
 ```cadence
@@ -270,7 +271,7 @@ Having said that, there can be situations where the same default function can be
 inheritance paths.
 
 <div style="text-align: left;">
-<img height="300" src="2022-11-16-interface-inheritance/same-default-implementation-two-paths.jpg"/>
+<img height="300" src="20221024-interface-inheritance/same-default-implementation-two-paths.jpg"/>
 </div>
 
 ```cadence
@@ -635,4 +636,4 @@ None
 
 - Many of the existing object-oriented languages such as C++, Go, Java, Kotlin, etc. supports interface inheritance.
 - These languages also already deal with the complexities that come with multiple inheritance:
-https://en.wikipedia.org/wiki/Multiple_inheritance 
+https://en.wikipedia.org/wiki/Multiple_inheritance
