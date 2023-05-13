@@ -1,11 +1,12 @@
-# Flow Client Library (FCL) Specification
+---
+status: accepted
+flip: 45
+authors: Greg Santos (greg.santos@dapperlabs.com)
+sponsor: Justin Barry (justin.barry@dapperlabs.com)
+updated: 2022-11-08
+---
 
-| Status        | Proposed                                    |
-| :------------ | :------------------------------------------ |
-| **FLIP #**    | [NNN](Link to FLIP)                         |
-| **Author(s)** | Greg Santos (greg.santos@dapperlabs.com)    |
-| **Sponsor**   | Justin Barry (justin.barry@dapperlabs.com ) |
-| **Updated**   | 2022-11-08                                  |
+# FLIP 45: Flow Client Library (FCL) Specification
 
 ## Objective
 

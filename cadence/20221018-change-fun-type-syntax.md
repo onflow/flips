@@ -1,10 +1,12 @@
-# Change the syntax for function types.
+---
+status: accepted
+flip: 43
+authors: Naomi Liu (naomi.liu@dapperlabs.com)
+sponsor: Naomi Liu (naomi.liu@dapperlabs.com)
+updated: 2022-10-27
+---
 
-| Status        | Accepted                                             |
-:-------------- |:---------------------------------------------------- |
-| **FLIP #**    | [43](https://github.com/onflow/flips/pull/43)        |
-| **Author(s)** | Naomi Liu (naomi.liu@dapperlabs.com)                 |
-| **Updated**   | 2022-10-27                                           |
+# FLIP 43: Change the syntax for function types
 
 ## Objective
 
@@ -55,7 +57,7 @@ The existing syntax is inconsistent and unfamiliar, ultimately harming readabili
 
 Rename function types to require the `fun` keyword.
 
-Given that `fun` is already a reserved keyword for declaring functions, requiring the keyword in the type signature of a function is more consistent with the existing syntax. For instance, 
+Given that `fun` is already a reserved keyword for declaring functions, requiring the keyword in the type signature of a function is more consistent with the existing syntax. For instance,
 
     ```cadence
     // (AnyStruct -> Void) -> AnyStruct -> Void
@@ -76,13 +78,13 @@ let bar = fun (x: Int): String {...}
 let baz: ((Int): String) = foo
 ```
 
-If we continued to elide the `fun` keyword in function types, parentheses could still be eliminated by making `:` a right-associative operator with a higher precedence than `=`. 
+If we continued to elide the `fun` keyword in function types, parentheses could still be eliminated by making `:` a right-associative operator with a higher precedence than `=`.
 
 Currently, a function type signature is defined by the following grammar:
 
 ```ebnf
 functionType
-    : '(' 
+    : '('
          '(' ( typeAnnotation ( ',' typeAnnotation )* )? ')'
          ':' typeAnnotation
       ')'
@@ -120,7 +122,7 @@ The adjusted grammar would only affect `functionType`:
 
 ```ebnf
 functionType:
-    'fun' '(' ( typeAnnotation ( ',' typeAnnotation )* )? ')' 
+    'fun' '(' ( typeAnnotation ( ',' typeAnnotation )* )? ')'
          ( ':' typeAnnotation )?
 ```
 
@@ -143,13 +145,13 @@ fun (): AnyStruct {Foo} // return type is AnyStruct, body is Foo
 
 This ambiguity does not extend to types however, and is outside the scope of this FLIP. Using the proposed syntax, we could still write
 
-```cadence 
+```cadence
 let f: fun (): AnyStruct{Foo} = fun (): AnyStruct{Foo} {...}
 ```
 
 ### Alternatives Considered
 
-An alternative to using `fun` to denote function types is to introduce another keyword, such as `=>` or `->`. This would be more familiar to users coming from languages such as JavaScript, Swift, and Kotlin, while remaining as a non-breaking change due to these operators being unreserved currently. For example, 
+An alternative to using `fun` to denote function types is to introduce another keyword, such as `=>` or `->`. This would be more familiar to users coming from languages such as JavaScript, Swift, and Kotlin, while remaining as a non-breaking change due to these operators being unreserved currently. For example,
 
 ```cadence
 // before
@@ -170,9 +172,9 @@ The main benefit of this alternative syntax would be the unambiguous parsing and
 Introducing a separate operator for return types still does not eliminate the previously-mentioned ambiguity in parsing function expressions, however:
 
 ```cadence
-// still ambiguous, but looks cleaner because ':' in declarations 
+// still ambiguous, but looks cleaner because ':' in declarations
 // now only indicates a type assignment to a variable
-let f: fun () -> AnyStruct{Foo} = fun () -> AnyStruct{Foo} 
+let f: fun () -> AnyStruct{Foo} = fun () -> AnyStruct{Foo}
 ```
 
 ### Performance Implications
@@ -181,7 +183,7 @@ Function types written with either syntax will create identical parse trees, so 
 
 ### Engineering Impact
 
-Given that first-class functions are a very small part of onchain contracts and the standard library in its current form, no significant impacts should occur. Any required changes are expected to be unit-testable and relatively encapsulated. 
+Given that first-class functions are a very small part of onchain contracts and the standard library in its current form, no significant impacts should occur. Any required changes are expected to be unit-testable and relatively encapsulated.
 
 ### Best Practices
 
@@ -213,13 +215,13 @@ val f: Int => Int = {n => n * 2}
 
 ```haskell
 -- haskell
-let f :: Int -> Int 
+let f :: Int -> Int
     f = \n -> n * 2
 ```
 
 ```swift
 // swift
-// note that using the arrow allows for the `func` keyword 
+// note that using the arrow allows for the `func` keyword
 // to be omitted from function types
 let f: (Int) -> Int = func(_ n: Int) -> Int {
     return n * 2
