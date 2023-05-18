@@ -1,3 +1,4 @@
 # Cadence FLIPs
 
-This directory will specify a list of improvement proposals to Cadence. proposals in this category are managed by the flow team including the process whereby the proposal is implemented and included in the language. 
+This directory contains the improvement proposals for Cadence.
+Proposals in this category are managed by the Flow team including the process whereby the proposal is implemented and included in the language.
