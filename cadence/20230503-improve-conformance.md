@@ -1,11 +1,12 @@
-# Improve interface conformance
+---
+status: proposed
+flip: 83
+authors: Supun Setunga (supun.setunga@dapperlabs.com)
+sponsor: Supun Setunga (supun.setunga@dapperlabs.com)
+updated: 2023-05-03
+---
 
-| Status        | Proposed                                     |
-:-------------- |:---------------------------------------------|
-| **FLIP #**    |                                              |
-| **Author(s)** | Supun Setunga (supun.setunga@dapperlabs.com) |
-| **Sponsor**   | Supun Setunga (supun.setunga@dapperlabs.com) |
-| **Updated**   | 2023-05-03                                   |
+# FLIP 83: Improve interface conformance
 
 ## Objective
 
