@@ -1,12 +1,12 @@
 ---
 status: draft 
-flip: NNN (do not set)
+flip: 54
 authors: Daniel Sainati (daniel.sainati@dapperlabs.com)
 sponsor: Daniel Sainati (daniel.sainati@dapperlabs.com)
 updated: 2023-05-10
 ---
 
-# Entitlements
+# FLIP 54: Entitlements
 
 ## Objective
 
