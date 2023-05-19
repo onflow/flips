@@ -202,7 +202,7 @@ The constructs listed above have been prototyped and interface references are av
 /// Entry point for a parent to borrow its child account and obtain capabilities or
 /// perform other actions on the child account
 pub resource interface ManagerPrivate {
-    pub fun borrowAccount(addr: Address): &{AccountPrivate, AccountPublic}?
+    pub fun borrowAccount(addr: Address): &{AccountPrivate, AccountPublic, MetadataViews.Resolver}?
     pub fun removeChild(addr: Address)
     pub fun removeOwned(addr: Address)
     pub fun borrowOwnedAccount(addr: Address): &{Account, ChildAccountPublic, ChildAccountPrivate}?
@@ -212,7 +212,7 @@ pub resource interface ManagerPrivate {
 /// Functions anyone can call on a manager to get information about an account such as
 /// What child accounts it has
 pub resource interface ManagerPublic {
-    pub fun borrowAccountPublic(addr: Address): &{AccountPublic}?
+    pub fun borrowAccountPublic(addr: Address): &{AccountPublic, MetadataViews.Resolver}?
     pub fun getChildAddresses(): [Address]
     pub fun getOwnedAddresses(): [Address]
 }
@@ -221,22 +221,25 @@ pub resource interface ManagerPublic {
 /// A resource for an account which fills the Parent role of the Child-Parent account
 /// management Model. A Manager can redeem or remove child accounts, and obtain any capabilities
 /// exposed by the child account to them.
-/// TODO: Implement MetadataViews.Resolver and MetadataViews.ResolverCollection
-pub resource Manager: ManagerPrivate, ManagerPublic {
-    pub let accounts: {Address: Capability<&{AccountPrivate, AccountPublic}>}
-    pub let ownedAccounts: {Address: Capability<&{Account, ChildAccountPublic, ChildAccountPrivate}>}
+pub resource Manager: ManagerPrivate, ManagerPublic, MetadataResolver.ResolverCollection {
+    pub let accounts: {{Address: Capability<&{AccountPrivate, AccountPublic, MetadataViews.Resolver}>}
+    pub let ownedAccounts: {Address: Capability<&{Account, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver}>}
+    // A bucket of structs so that the Manager resource can be easily extended with new functionality.
+    pub let data: {String: AnyStruct}
+    // A bucket of resources so that the Manager resource can be easily extended with new functionality.
+    pub let resources: @{String: AnyResource}
     /// An optional filter to gate what capabilities are permitted to be returned from a proxy account
     /// For example, Dapper Wallet parent account's should not be able to retrieve any FungibleToken Provider capabilities.
     pub let filter: Capability<&{CapabilityFilter.Filter}>?
 
-    pub fun addAccount(_ cap: Capability<&{AccountPrivate, AccountPublic}>) {
+    pub fun addAccount(_ cap: Capability<&{AccountPrivate, AccountPublic, MetadataViews.Resolver}>) {
         pre {
             self.accounts[cap.address] == nil: "There is already a child account with this address"
         }
     }
     pub fun setManagerCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>?, childAddress: Address)
     pub fun removeChild(addr: Address)
-    pub fun addOwnedAccount(_ cap: Capability<&{Account, ChildAccountPublic, ChildAccountPrivate}>) {
+    pub fun addOwnedAccount(_ cap: Capability<&{Account, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver}>) {
         pre {
             self.ownedAccounts[cap.address] == nil: "There is already a child account with this address"
         }
@@ -249,6 +252,8 @@ pub resource Manager: ManagerPrivate, ManagerPublic {
     pub fun giveOwnerShip(addr: Address, to: Address)
     pub fun getChildAddresses(): [Address]
     pub fun getOwnedAddresses(): [Address]
+    pub fun getViews(): [Type]
+    pub fun resolveView(_ view: Type): AnyStruct?
 }
 ```
 </details>
@@ -283,6 +288,8 @@ pub resource interface AccountPrivate {
     pub fun getPublicCapFromProxy(type: Type): Capability?
     access(contract) fun redeemedCallback(_ addr: Address)
     access(contract) fun setManagerCapabilityFilter(_ managerCapabilityFilter: Capability<&{CapabilityFilter.Filter}>?)
+    access(contract) fun setDisplay(_ d: MetadataViews.Display)
+    access(contract) fun parentRemoveChildCallback(parent: Address)
 }
 
 /// The ProxyAccount resource sits between a child account and a parent and is stored on the same account as the child account.
@@ -290,7 +297,7 @@ pub resource interface AccountPrivate {
 /// will accept this proxy capability into its own manager resource and use it to interact with the child account.
 /// Because the ProxyAccount resource exists on the child account itself, whoever owns the child account will be able to manage all
 /// ProxyAccount resources it shares, without worrying about whether the upstream parent can do anything to prevent it.
-pub resource ProxyAccount: AccountPrivate, AccountPublic {
+pub resource ProxyAccount: AccountPrivate, AccountPublic, MetadataResolver.Resolver {
     access(self) let childCap: Capability<&{BorrowableAccount, ChildAccountPublic}>
 
     // The CapabilityFactory Manager is a ProxyAccount's way of limiting what types can be asked for
@@ -322,6 +329,7 @@ pub resource ProxyAccount: AccountPrivate, AccountPublic {
     access(contract) fun setManagerCapabilityFilter(_ managerCapabilityFilter: Capability<&{CapabilityFilter.Filter}>?)
     pub fun setCapabilityFactory(_ cap: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>)
     pub fun setCapabilityFilter(_ cap: Capability<&{CapabilityFilter.Filter}>)
+    access(contract) fun setDisplay(_ d: MetadataViews.Display)
     // The main function to a child account's capabilities from a parent account. When a PrivatePath type is used, 
     // the CapabilityFilter will be borrowed and the Capability being returned will be checked against it to 
     // ensure that borrowing is permitted
@@ -332,6 +340,9 @@ pub resource ProxyAccount: AccountPrivate, AccountPublic {
     pub fun getManagerCapabilityFilter():  &{CapabilityFilter.Filter}?
     access(contract) fun setRedeemed(_ addr: Address)
     pub fun borrowCapabilityProxy(): &CapabilityProxy.Proxy?
+    pub fun getViews(): [Type]
+    pub fun resolveView(_ view: Type): AnyStruct?
+    access(contract) fun parentRemoveChildCallback(parent: Address)
 }
 ```
 </code>
@@ -341,6 +352,70 @@ pub resource ProxyAccount: AccountPrivate, AccountPublic {
 <summary>ChildAccount</summary>
 
 ```cadence
+// Public methods anyone can call on a child account
+pub resource interface ChildAccountPublic {
+    pub fun getParentsAddresses(): [Address]
+    // Returns all parent addresses of this child account, and whether they have already
+    // redeemed the parent has redeemed the account (true) or has not (false)
+    pub fun getParentStatuses(): {Address: Bool}
+    // Returns true if the given address is a parent of this child and has redeemed it.
+    // Returns false if the given address is a parent of this child and has NOT redeemed it.
+    // returns nil if the given address it not a parent of this child account.
+    pub fun getRedeemedStatus(addr: Address): Bool?
+    // A callback function to mark a parent as redeemed on the child account.
+    access(contract) fun setRedeemed(_ addr: Address)
+}
+
+// Accessible to the owner of the ChildAccount.
+pub resource interface ChildAccountPrivate {
+    // Deletes the proxy account resource being used to share access to this child account with the
+    // supplied parent address, and unlinks the paths it was using to reach the proxy account
+    pub fun removeParent(parent: Address): Bool
+    // Sets up a new ProxyAccount resource for the given parentAddress to redeem.
+    // This proxy account uses the supplied factory and filter to manage what can be obtained
+    // from the child account, and a new CapabilityProxy resource is created for the sharing of one-off
+    // capabilities. Each of these pieces of access control are managed through the child account.
+    pub fun publishToParent(
+        parentAddress: Address,
+        factory: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>,
+        filter: Capability<&{CapabilityFilter.Filter}>
+    ) {
+        pre {
+            factory.check(): "Invalid CapabilityFactory.Getter Capability provided"
+            filter.check(): "Invalid CapabilityFilter Capability provided"
+        }
+    }
+    // Passes ownership of this child account to the given address. Once executed, all active keys on 
+    // the child account will be revoked, and the active AuthAccount Capability being used by to obtain capabilities
+    // will be rotated, preventing anyone without the newly generated capability from gaining access to the account.
+    pub fun giveOwnership(to: Address)
+    // Revokes all keys on an account, unlinks all currently active AuthAccount capabilities, then makes a new one and replaces the
+    // @ChildAccount's underlying AuthAccount Capability with the new one to ensure that all parent accounts can still operate normally.
+    // Unless this method is executed via the giveOwnership function, this will leave an account **without** an owner.
+    // USE WITH EXTREME CAUTION.
+    pub fun seal()
+    // Override the existing CapabilityFactory Capability for a given parent. This will allow the owner of the account
+    // to start managing their own factory of capabilities to be able to retrieve
+    pub fun setCapabilityFactoryForParent(parent: Address, cap: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>) {
+        pre {
+            cap.check(): "Invalid CapabilityFactory.Getter Capability provided"
+        }
+    }
+    // Override the existing CapabilityFilter Capability for a given parent. This will allow the owner of the account
+    // to start managing their own filter for retrieving Capabilities on Private Paths
+    pub fun setCapabilityFilterForParent(parent: Address, cap: Capability<&{CapabilityFilter.Filter}>) {
+        pre {
+            cap.check(): "Invalid CapabilityFilter Capability provided"
+        }
+    }
+    // Adds a capability to a parent's managed @ProxyAccount resource. The Capability can be made public,
+    // permitting anyone to borrow it.
+    pub fun addCapabilityToProxy(parent: Address, _ cap: Capability, isPublic: Bool)
+
+    pub fun removeCapabilityFromProxy(parent: Address, _ cap: Capability)
+}
+
+
 /*
 ChildAccount
 A resource which sits on the account it manages to make it easier for apps to configure the behavior they want to permit.
@@ -350,7 +425,7 @@ The ChildAccount can also be used to pass ownership of an account off to another
 marking the account as owned by no one. Note that even if there isn't an owner, the parent accounts would still exist, allowing
 a form of Hybrid Custody which has no true owner over an account, but shared partial ownership.
 */
-pub resource ChildAccount: Account, BorrowableAccount, ChildAccountPublic, ChildAccountPrivate {
+pub resource ChildAccount: Account, BorrowableAccount, ChildAccountPublic, ChildAccountPrivate, MetadataResolver.Resolver {
     priv var acct: Capability<&AuthAccount>
 
     pub let parents: {Address: Bool}
@@ -409,9 +484,13 @@ pub resource ChildAccount: Account, BorrowableAccount, ChildAccountPublic, Child
     pub fun seal()
     pub fun borrowProxyAccount(parent: Address): &ProxyAccount?
     pub fun setCapabilityFactoryForParent(parent: Address, cap: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>)
+    pub fun setCapabilityFilterForParent(parent: Address, cap: Capability<&{CapabilityFilter.Filter}>)
     pub fun borrowCapabilityProxyForParent(parent: Address): &CapabilityProxy.Proxy?
     pub fun addCapabilityToProxy(parent: Address, _ cap: Capability, isPublic: Bool)
     pub fun removeCapabilityFromProxy(parent: Address, _ cap: Capability)
+    pub fun getViews(): [Type]
+    pub fun resolveView(_ view: Type): AnyStruct?
+    pub fun setDisplay(_ d: MetadataViews.Display)
 }
 ```
 </details>
@@ -977,9 +1056,9 @@ While the “parent-child” name implies an account hierarchy, it doesn’t nec
     - A: Any Capability Controller access is done in function scope and would be an upgradable change. If anything, the feature should enhance security guarantees without much refactor needed.
 - [ ] ~~Should child accounts be allowed to have multiple parent accounts?~~
     - A: Yes and they will be mediated by a single owning `ChildAccount` managing `ProxyAccount` access for each parent
-- [X] ~~~Linking AuthAccounts is possible outside of the mechanisms defined in this standard. How does a user know who else has secondary access to their child accounts.~~
+- [X] ~~Linking AuthAccounts is possible outside of the mechanisms defined in this standard. How does a user know who else has secondary access to their child accounts.~~
     - A: Until CapCons, this is not technically possible and will need to be addressed via communication and education
-- [X] ~~~Do we want `Manager` to be able to revoke other `Manager`s’ access to a child account? For example, let’s say I have access to a set of child accounts and I want to remove anyone else’s access to those accounts - should I be able to and how would I do that if so?~~
+- [X] ~~Do we want `Manager` to be able to revoke other `Manager`s’ access to a child account? For example, let’s say I have access to a set of child accounts and I want to remove anyone else’s access to those accounts - should I be able to and how would I do that if so?~~
     - A: In the current implementation, only the custodian and the parent "owner" of a `ChildAccount` can remove other parents' access
 
 # References
