@@ -513,6 +513,41 @@ entitlement sets to control access.
 
 ### Tutorials and Examples
 
+In prior versions of Cadence, the `Vault` heirarchy might be written like so:
+
+```cadence
+access(all) entitlement Withdraw
+
+access(all) resource interface Provider {
+    access(all) fun withdraw(amount: UFix64): @Vault {
+        // ...
+    }
+}
+
+access(all) resource interface Receiver {
+    access(all) fun deposit(from: @Vault) {
+       // ...
+    }
+}
+
+access(all) resource interface Balance {
+    access(all) var balance: UFix64
+}
+
+access(all) resource Vault: Provider, Receiver, Balance {
+    access(all) fun withdraw(amount: UFix64): @Vault {
+        // ...
+    }
+    access(all) fun deposit(from: @Vault) {
+       // ...
+    }
+    access(all) var balance: UFix64
+}
+```
+
+Here, the access control to the `Vault` is determined by the type of reference issued to it:
+someone with a `&{Provider}` reference can call `withdraw`, but someone with a `&{Receiver}` cannot.
+
 With this new design, the `Vault` heirarchy might be written like so:
 
 ```cadence
@@ -544,6 +579,8 @@ access(all) resource Vault: Provider, Receiver, Balance {
     access(all) var balance: UFix64
 }
 ```
+
+Note how the primary difference here is that `withdraw` now requires a `Withdraw` entitlement.
 
 Then, someone with a `&{Balance}` reference would be able to cast this to a `&{Receiver}` and call `deposit` on it. 
 They would also be able to cast this to a `&Vault` reference, but because this reference is not entitled to `Withdraw`,
