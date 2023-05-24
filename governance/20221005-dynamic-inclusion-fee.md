@@ -1,27 +1,26 @@
 ---
-status: Proposed
+status: proposed
 flip: GOV-3
-author: Tony Zhang (tony.zhang@dapperlabs.com)
-title: Dynamic Inclusion Fees
-editor: Janez Podhostnik (janez.podhostnik@dapperlabs.com), Jan Bernatik (jan.bernatik@dapperlabs.com)
-updated: 2022-10-06
 forum: https://forum.onflow.org/t/flip-dynamic-inclusion-fees/3700
+authors: Tony Zhang (tony.zhang@dapperlabs.com)
+editors: Janez Podhostnik (janez.podhostnik@dapperlabs.com), Jan Bernatik (jan.bernatik@dapperlabs.com)
+updated: 2022-10-06
 ---
 
-## Dynamic Inclusion Fees
+# FLIP GOV-3: Dynamic Inclusion Fees
 
-#### Motivation
+## Motivation
 
-As mentioned in the FLIP of [Variable Transaction Fees](https://github.com/onflow/flow/blob/master/flips/20211007-transaction-fees.md): 
-> Transaction fees should allow the Flow blockchain to self-regulate transaction throughput in a way where it would always tend to the optimum throughput. Fees should also discourage malicious actors from trying to destabilize the network by sending computationally or network heavy transactions, as the transaction fees on such transactions would be appropriately higher. 
+As mentioned in the FLIP of [Variable Transaction Fees](https://github.com/onflow/flow/blob/master/flips/20211007-transaction-fees.md):
+> Transaction fees should allow the Flow blockchain to self-regulate transaction throughput in a way where it would always tend to the optimum throughput. Fees should also discourage malicious actors from trying to destabilize the network by sending computationally or network heavy transactions, as the transaction fees on such transactions would be appropriately higher.
 
 Inclusion fee is part of the total fee of one transaction. It is meant to cover all costs of one transaction’s handling except for the execution part, which will be charged as the execution fee. Inclusion fee is supposed to cover resource utilization (network transmission, memory usage etc.) overhead after one transaction is submitted. Inclusion fee must be calculated without one transaction being executed.
 
 The goal of this proposal is to come up with a formula incentivizing developers to create simpler transactions which will cost less, compared with more complex ones.
 
-> 💬 We are not looking for perfectly precise math models this time, instead we are looking for a simple equation to calculate inclusion fees to reflect relative potential inclusion effort of a given transaction, including network transmission, memory usage etc. 
+> 💬 We are not looking for perfectly precise math models this time, instead we are looking for a simple equation to calculate inclusion fees to reflect relative potential inclusion effort of a given transaction, including network transmission, memory usage etc.
 
-#### How Transactions are Created in Load Test
+### How Transactions are Created in Load Test
 
 To get performance metrics with a batch of fixed-sized transactions, we need to compose such transactions that we can control each of their:
 
@@ -29,7 +28,7 @@ To get performance metrics with a batch of fixed-sized transactions, we need to 
 
 
 * Total transaction size
-* Number of authorizers 
+* Number of authorizers
 * Number of keys of payer
 * Argument size
 * Comment size
@@ -37,7 +36,7 @@ To get performance metrics with a batch of fixed-sized transactions, we need to 
 
 In [PR 2816](https://github.com/onflow/flow-go/pull/2816), we added this feature in the loader app. We first add all indicated number of authorizers and keys of payer, compose transaction argument string, and at last leave all remaining bytes as comments. When these transactions are ready, the loader app will submit them to a given access cluster with give TPS.
 
-#### How Transaction Size is Calculated
+### How Transaction Size is Calculated
 
 According to our [code](https://github.com/onflow/flow-go/blob/master/engine/access/rest/models/model_transaction.go#L11), we should consider these variant fields when calculating the total size of a given transaction:
 
@@ -52,7 +51,7 @@ The above fields are the only available information of one transaction which we 
 
 However in the BigTable storing mainnet transactions dapperlabs-data.production_ddp_flow_on_chain_data_v2.transactions, there’s no information about number of keys per authorizer\payer, we will have to exclude that field from our mathematical modeling. And since we are only looking for estimated calculation instead of a precise modeling, plus that number of keys per authorizer\payer is not a major part of one given transaction, we don’t treat it as a blocking issue for our metrics collection.
 
-#### Metrics Collection
+### Metrics Collection
 
 We created a new loader type ([PR 2816](https://github.com/onflow/flow-go/pull/2816)) to generate fixed-sized (configurable) empty transactions to localnet and canary to check the stable peak TPS, as the max number of transactions that targeted network is able to handle (a.k.a the network saturation point).
 
@@ -65,7 +64,7 @@ We checked localnet, benchnet and canary to collect metrics. Except that benchne
 <i>chart for metrics from canary</i>
 </p>
 
-#### Data Modeling
+### Data Modeling
 
 Assuming that with given configuration, relative inclusion fee is simply the inverse of stable peak TPS, now we have below linear equation with transaction size as X and the resulting Inclusion Fee as Y:
 
@@ -80,7 +79,7 @@ We’d like to charge average sized transactions by 1e-6 FLOW, and according to 
 
         Inclusion Fee Factor = 267.956977406 * (6.370641e-7 * TxByteSize + 2.585227e-3)
 
-#### Model Validation
+### Model Validation
 
 To make sure our mathematical model above works as expected with real mainnet transactions, we ran the equation against sampled transactions in BigQuery where our recent production transactions are stored.
 
@@ -136,7 +135,7 @@ After applying this new inclusion fee factor onto the existing inclusion effort 
 
 According to the [code](https://github.com/onflow/flow-go/blob/master/model/flow/constants.go#L32), the max possible byte size of one transaction is 1500000B, now we have:
 
-        Inclusion Fee Factor(largest tx possible) 
+        Inclusion Fee Factor(largest tx possible)
             = 267.956977406 * (6.370641e-7*1500000 + 2.585227e-3)
             = 256.751385588
 
@@ -152,11 +151,11 @@ After applying this new inclusion fee factor onto the existing inclusion effort 
 
 Cadence script we use for the calculation: [link](https://github.com/onflow/flow-go/blob/master/integration/benchmark/scripts/createAccountsTransaction.cdc) - size: 984B
 
-        New inclusion fee factor 
+        New inclusion fee factor
         = 267.956977406 * (6.370641e-7*984 + 2.585227e-3)
         = 0.86070409114
 
-The new fee is roughly **14% less** than the existing inclusion charge (1e-6 FLOW) 	
+The new fee is roughly **14% less** than the existing inclusion charge (1e-6 FLOW)
 
 
 <li>Token transfer transaction</li>
@@ -164,7 +163,7 @@ The new fee is roughly **14% less** than the existing inclusion charge (1e-6 FLO
 Cadence script we use for the calculation: [link](https://github.com/onflow/flow-go/blob/master/integration/benchmark/scripts/tokenTransferTransaction.cdc) - size: 718B
 
 
-        New inclusion fee factor 
+        New inclusion fee factor
         = 267.956977406 * (6.370641e-7*718 + 2.585227e-3)
         = 0.81529635615
 
@@ -175,7 +174,7 @@ The new fee is roughly **18% less** than the existing inclusion charge (1e-6 FLO
 Cadence script we use for the calculation: [link](https://github.com/onflow/flow-go/blob/master/fvm/fvm_bench_test.go) - size 818B
 
 
-        New inclusion fee factor 
+        New inclusion fee factor
         = 267.956977406 * (6.370641e-7*818 + 2.585227e-3)
 	    = 0.83236693322
 
@@ -193,7 +192,7 @@ The new fee is roughly **16% less** than the existing inclusion charge (1e-6 FLO
 
     So most transactions are with sizes between 500 - 2000 bytes, and there are much fewer number of transactions with sizes above 4000B. The average transaction size from our mainnet is 1800B, which is marked on the diagram too. We used this value to calibrate our inclusion fees as mentioned above.
 
-#### Limitations
+## Limitations
 
 * <span style="color: #000099;">Using metrics from canary to estimate mainnet fees</span>
 Since we were using the loader app to stress test certain environments (localnet, canary), it is impractical to run a similar stress test to mainnet which will impact production traffic. Thus, we are only able to apply the mathematical equation derived from those environments to mainnet directly. It is fine in our use cases because we are not looking for precise mathematical calculation to new inclusion fees, and we are looking for a better calculation than the current constant inclusion charge: we should charge less for smaller transactions and more for bigger transactions. So as long as the new equation demonstrates this characteristic on production transactions, we will treat it as a working math model.
@@ -204,7 +203,7 @@ We also tried the loader app on benchnet configurations. However the existing be
 * <span style="color: #000099;">Other factors impacting stable peak TPS</span>
 In our benchmark testing on both localnet and canary environments, we actually also found that another two factors can also impact the stable peak TPS: number of authorizers and number of keys per payer. However we didn’t include these two factors into our final equation, because they don’t seem to be major factors impacting performance, thus including them will make our equation unnecessarily complex.
 
-**Future Work**
+## Future Work
 
 * <span style="color: #000099;">Collecting more data points for a more accurate model</span>
 Due to the limitation mentioned, it was quite a cumbersome process to collect even one single performance metrics data point, so we were only able to collect a limited amount of data for modeling purposes. We don’t need a super precise model for now, but if in the future when higher precision is required, we will need to collect more data to support the precision we want from a model.
@@ -218,9 +217,9 @@ When we have a dynamic inclusion fee, we will have to check if a certain payer�
 * <span style="color: #000099;">More infrastructure setup is nice-to-have for easier metrics collection in future</span>
 As previously mentioned, for almost all existing testing environments(localnet, benchnet, canary), we had to do a trial-and-error method to collect one stable peak TPS with a given configuration. This process is a very cumbersome manual process and it does not scale with the number of metrics to collect. So in future when we need to collect similar metrics, we may want to have an easier or even automated process. It will enable us to collect relatively comprehensive metrics data for our future data related work. At the time of writing, the automation team has been actively working on this already.
 
-#### References
+## References
 * Parent FLIPs
-[https://github.com/onflow/flow/blob/master/flips/20211007-transaction-fees.md](https://github.com/onflow/flow/blob/master/flips/20211007-transaction-fees.md) 
+[https://github.com/onflow/flow/blob/master/flips/20211007-transaction-fees.md](https://github.com/onflow/flow/blob/master/flips/20211007-transaction-fees.md)
 [https://github.com/onflow/flow/blob/master/flips/20220111-execution-effort.md](https://github.com/onflow/flow/blob/master/flips/20220111-execution-effort.md)
 
 * Github Issue

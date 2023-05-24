@@ -1,12 +1,12 @@
-# Interaction Template Interface | Fungible Token Transfer Transaction [DRAFT]
+---
+status: draft
+flip: TBD
+authors: Jeffrey Doyle (jeffrey.doyle@dapperlabs.com)
+sponsor: Jeffrey Doyle (jeffrey.doyle@dapperlabs.com)
+updated: 2022-09-13
+---
 
-| Status        | Draft                                                          |
-| :------------ | :------------------------------------------------------------- |
-| **FLIP #**    | TBD                                                            |
-| **Forum**     |                                                                |
-| **Author(s)** | Jeffrey Doyle (jeffrey.doyle@dapperlabs.com)                   |
-| **Sponsor**   | Jeffrey Doyle (jeffrey.doyle@dapperlabs.com)                   |
-| **Updated**   | 2022-09-13                                                     |
+# Interaction Template Interface | Fungible Token Transfer Transaction (DRAFT)
 
 ## Abstract
 
@@ -39,4 +39,3 @@ Interaction Template Interface is a data structure established in [FLIP-934](htt
     }
 }
 ```
-
