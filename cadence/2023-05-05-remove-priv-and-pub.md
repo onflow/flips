@@ -14,6 +14,11 @@ This FLIP proposes to remove the `pub` alias for `access(all)` and the `priv`
 modifier for `access(self)`, requiring all code to use these longer forms instead
 of the shortened ones. 
 
+This also proposes to remove the `pub(set)` access keyword, which was previously used to make
+variables publicly settable. This is not a common case, and in order to simplify the language, 
+we also propose to remove it. If users wish to have a field be publicly settable, they should write
+a public mutator function for that field. 
+
 ## Motivation
 
 The proposed entitlements changes in [the entitlements FLIP](https://github.com/onflow/flips/pull/54) 
