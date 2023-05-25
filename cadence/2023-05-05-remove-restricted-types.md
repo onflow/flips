@@ -6,7 +6,7 @@ sponsor: Daniel Sainati (daniel.sainati@dapperlabs.com)
 updated: 2023-05-05
 ---
 
-# Remove Restricted Types
+# Replace Restricted Types with Interface Set Types
 
 ## Objective
 
