@@ -32,8 +32,8 @@ This will increase the readability and consistency of user code.
 
 ## Design Proposal
 
-The proposal is simple: just remove the `pub` and `priv` aliases. No other
-changes will be necessary. 
+The proposal is simple: just remove the `pub` and `priv` aliases. `pub(set)` will 
+also be removed. 
 
 ### Drawbacks
 
