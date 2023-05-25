@@ -1,12 +1,12 @@
 ---
 status: proposed 
-flip: NNN (do not set)
+flip: 85
 authors: Daniel Sainati (daniel.sainati@dapperlabs.com)
 sponsor: Daniel Sainati (daniel.sainati@dapperlabs.com)
 updated: 2023-05-05
 ---
 
-# Replace Restricted Types with Interface Set Types
+# FLIP 85: Replace Restricted Types with Interface Set Types
 
 ## Objective
 
