@@ -1,12 +1,12 @@
 ---
 status: proposed 
-flip: NNN (do not set)
+flip: 84
 authors: Daniel Sainati (daniel.sainati@dapperlabs.com)
 sponsor: Daniel Sainati (daniel.sainati@dapperlabs.com)
 updated: 2023-05-05 
 ---
 
-# Remove `pub` and `priv` aliases for access modifiers
+# FLIP 84: Remove `pub` and `priv` aliases for access modifiers
 
 ## Objective
 
