@@ -1,24 +1,24 @@
-# FLIP: Revisiting Flow storage minimum account balance
+---
+status: proposed
+flip: GOV-5
+authors: Kshitij Chaudhary (kshitij.chaudhary@dapperlabs.com)
+sponsors: Kshitij Chaudhary (kshitij.chaudhary@dapperlabs.com)
+updated: 2023-01-22
+---
 
-| Status        | Proposed                                            |
-:-------------- |:---------------------------------------------------- |
-| **FLIP #**    | 66
-| **Author(s)** | Kshitij Chaudhary (kshitij.chaudhary@dapperlabs.com) | 
-| **Sponsor**   | Kshitij Chaudhary (kshitij.chaudhary@dapperlabs.com) |
-| **Created**   | 2023-02-01 |
-| **Updated**   | 2023-22-01 
+# FLIP GOV-5: Revisiting Flow storage minimum account balance
 
-# Introduction
+## Introduction
 
-Flow incentivizes mindful use of on-chain storage through economic means. 
-Depending on the amount of data that an account holds, there is a minimum FLOW token balance that the account must maintain. 
-[To bootstrap an account](https://developers.flow.com/learn/concepts/storage#storage-parameters) today for instance, users are required to have a minimum deposit of 0.001 FLOW as part of the account-creation transaction, which corresponds to an initial storage capacity of 100kB. 
-While Flow storage pricing was kept low in its early days to promote network trial-ability without financial concerns, as the chain matures and usage-patterns evolve, it is important to revisit the pricing from time to time. 
-If storing data is priced too low, the platform could potentially become vulnerable to storage exhaustion attacks or make rapid state growth unsustainable. 
+Flow incentivizes mindful use of on-chain storage through economic means.
+Depending on the amount of data that an account holds, there is a minimum FLOW token balance that the account must maintain.
+[To bootstrap an account](https://developers.flow.com/learn/concepts/storage#storage-parameters) today for instance, users are required to have a minimum deposit of 0.001 FLOW as part of the account-creation transaction, which corresponds to an initial storage capacity of 100kB.
+While Flow storage pricing was kept low in its early days to promote network trial-ability without financial concerns, as the chain matures and usage-patterns evolve, it is important to revisit the pricing from time to time.
+If storing data is priced too low, the platform could potentially become vulnerable to storage exhaustion attacks or make rapid state growth unsustainable.
 This FLIP aims at gathering community feedback on revisiting storage pricing such that it reduces attack surfaces and promotes sustainable state growth.
 
-Importantly, storage pricing on Flow is not intended in any way to limit state growth that emanates from massive network growth, higher resource utilization and rising developer and user activity. 
-It is only aimed at avoiding “state bloating” - a wasteful uncontrolled capture of storage capacity, and to prevent storage exhaustion attacks. 
+Importantly, storage pricing on Flow is not intended in any way to limit state growth that emanates from massive network growth, higher resource utilization and rising developer and user activity.
+It is only aimed at avoiding “state bloating” - a wasteful uncontrolled capture of storage capacity, and to prevent storage exhaustion attacks.
 Additionally, as storage fees are established not as “fees” but rather a minimum balance check, to avoid confusion, we use the term “storage pricing” to allude to the minimum balance requirement.
 
 ## Problem Statement
@@ -29,19 +29,19 @@ While storage price introduced some form of payment structure to modify behavior
 
 With over 5 billion internet users today and Flow’s focus on mainstream adoption, storage on Flow must also be prepared for significant scale. A billion accounts on Flow storing an average of at least 1 MB of data each would require 1 Petabyte of storage in the future. While it is imperative to eventually move current state from memory to disc to allow for such large state future, it is also crucial to incentivize users to economize on storage space and make conscientious decisions about occupying the available storage capacity.
 
-# Proposed Solution
+## Proposed Solution
 
-## *Objective*
+### Objective
 
 **This FLIP primarily focuses on economic solutions, i.e. storage price alterations** **to incentivize users to thoughtfully make data-storage decisions** **and disincentivize any storage-exhaustion attacks.** Effectively, storage pricing must prevent ‘*tragedy of the commons’* i.e. over-utilization of finite network resources to the extent of exploitation, and allow for a sustainable and regulated state growth.
 
-## *Proposal*
+### Proposal
 
 Different L1 blockchains have implemented varying structures to deal with potential state bloating issues, but generally have priced storage much higher than Flow. Solana’s [rent model](https://docs.solana.com/storage_rent_economics) requires a minimum balance at the rate of ~7 SOL per MB of data (US$168 for 1MB storage, at US$24/SOL exchange rate), else users are required to pay rent for storing data on-chain at the end of every epoch. At the prescribed rate, **Solana’s storage price is about 14,000x more expensive than Flow** (US$0.012 for 1MB storage at US$1.2/FLOW exchange rate). NEAR protocol employs a [storage-staking mechanism](https://docs.near.org/concepts/storage/storage-staking#the-million-cheap-data-additions-attack) that requires accounts owning smart contracts to stake (lock) tokens according to the amount of data stored in that smart contract. For 100KB of storage occupied, the protocol requires 1 NEAR token to be staked, or ~$2.6 for 100KB storage at $2.6/NEAR exchange rate, making **NEAR ~2,100x more expensive than Flow** (0.001 FLOW per 100KB requirement).
 
 Given that the state of Flow needs to be stored only across a handful of execution nodes (7 currently), Flow is less challenged by potential state growth challenges and could arguably choose a lower storage price compared to competitors like Solana (3400+ validators) and NEAR (100 validators).
 
-**Thus, it is proposed that** 
+**Thus, it is proposed that**
 
 1. storage pricing function would remain a constant multiple of the byte-size of the data to be stored on-chain
 2. pricing (storage capacity per reserved Flow) would increase 100 times, as tabulated below.
@@ -57,11 +57,11 @@ With the proposed change in the pricing, Flow would continue to remain ~20x and 
 
 Transitioning to the new storage pricing structure would be a multi-phase process requiring a change-management approach that minimizes user-impact, supports developer experience, and promotes network scalability. With community consultations prior to any protocol changes, the Flow core R&D team would implement the changes only after deliberate consideration, communication, testing, and impact-analysis.
 
-# **Final Word**
+## Final Word
 
 Flow's core team is working towards **strengthening FLOW token economics**, and one of the ways to achieve this would be to **price FLOW’s use-cases for the value it generates** for the community vis-a-vis other networks. This proposal is meant to serve as a starting point for community discussions on how potential state scaling problem and storage-exhaustion attacks can be addressed economically with a revised storage pricing structure in the short-term. **The community is invited to share feedback on this post and participate in defining storage price changes** to help elevate Flow’s value capture and ultimately generate improved experience for developers and users on the platform.
 
-# Resources
+## Resources
 
 [Flow Storage Parameters](https://developers.flow.com/learn/concepts/storage#storage-parameters)
 

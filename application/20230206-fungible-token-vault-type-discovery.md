@@ -1,10 +1,11 @@
 ---
-status: Accepted
-flip: [69](https://github.com/onflow/flow-ft/pull/127)
-author: Satyam Agrawal (satyam.agrawal@dapperlabs.com)
+status: accepted
+flip: 69
+authors: Satyam Agrawal (satyam.agrawal@dapperlabs.com)
 updated: 2023-02-06
---- 
-# Fungible Tokens Vault Type Discovery
+---
+
+# FLIP 69: Fungible Tokens Vault Type Discovery
 
 ## Objective
 
@@ -14,7 +15,7 @@ This is because Cadence code trying to perform a deposit would now be able to qu
 
 ## Motivation
 
-The [Fungible Token Standard](https://github.com/onflow/flow-ft) mandates that a single Vault can only receive one type of token, 
+The [Fungible Token Standard](https://github.com/onflow/flow-ft) mandates that a single Vault can only receive one type of token,
 meaning that a Flow Vault can only receive Flow tokens and a FUSD Vault can only receive FUSD tokens.
 The `FungibleToken.Receiver` interface, on the other hand, is designed to be able to accept any Vault type in its `deposit` method.
 Currently, there is no programmatic way to determine the type of token that a `Receiver` is able receive, leading to the possibility of a failed deposit due to an incorrect assumption about the Vault that the `Receiver` is linked to.
@@ -37,7 +38,7 @@ allowing them to take proactive measures accordingly such as depositing the toke
 
 The essence of this proposal lies in modifying the `FungibleToken.Receiver` interface to include a method to return the expected `Vault` types that it can receive and include a default implementation so that the upgrade will not be breaking for existing fungible tokens.
 
-So new `Receiver` interface would look like this -  
+So new `Receiver` interface would look like this -
 ```cadence
     /// The interface that enforces the requirements for depositing
     /// tokens into the implementing type.
@@ -61,10 +62,10 @@ So new `Receiver` interface would look like this -
         /// resource doesn't conform with the `FungibleToken.Vault` resource.
         ///
         /// @return Dictionary of supported vault types by the implemented resource.
-        /// 
+        ///
         pub fun getSupportedVaultTypes() :{Type: Bool} {
             // Below check is implemented to make sure that run-time type would
-            // only get returned when the parent resource conforms with `FungibleToken.Vault`. 
+            // only get returned when the parent resource conforms with `FungibleToken.Vault`.
             if self.getType().isSubtype(of: Type<@FungibleToken.Vault>()) {
                 return {self.getType(): true}
             } else {
@@ -84,26 +85,26 @@ The proposed interface features a default implementation of the `getSupportedVau
 Implementation of proposed `Receiver` type for `FungibleTokenSwitchboard` contract.
 
 ```cadence
-    /// The resource that stores the multiple fungible token receiver 
-    /// capabilities, allowing the owner to add and remove them and anyone to 
+    /// The resource that stores the multiple fungible token receiver
+    /// capabilities, allowing the owner to add and remove them and anyone to
     /// deposit any fungible token among the available types.
-    /// 
+    ///
     pub resource Switchboard: FungibleToken.Receiver, SwitchboardPublic {
 
-        /// Dictionary holding the fungible token receiver capabilities, 
+        /// Dictionary holding the fungible token receiver capabilities,
         /// indexed by the fungible token vault type.
-        /// 
+        ///
         access(contract) var receiverCapabilities: {Type: Capability<&{FungibleToken.Receiver}>}
 
         // ...
         // snip
         // ...
 
-        /// A getter function to know which tokens a certain switchboard 
+        /// A getter function to know which tokens a certain switchboard
         /// resource is prepared to receive.
         ///
-        /// @return The keys from the dictionary of stored 
-        /// `{FungibleToken.Receiver}` capabilities that can be effectively 
+        /// @return The keys from the dictionary of stored
+        /// `{FungibleToken.Receiver}` capabilities that can be effectively
         /// borrowed.
         ///
         pub fun getSupportedVaultTypes(): {Type: Bool} {

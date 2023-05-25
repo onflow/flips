@@ -1,10 +1,12 @@
-# Variable Transaction fees
+---
+status: implemented
+flip: 660
+authors: Janez Podhostnik (janez.podhostnik@dapperlabs.com)
+sponsor: Janez Podhostnik (janez.podhostnik@dapperlabs.com)
+updated: 2022-10-18
+---
 
-| Status        | Implemented (0.25.x)                                 |
-:-------------- |:---------------------------------------------------- |
-| **FLIP 660**  | [660](https://github.com/onflow/flow/pull/660)       |
-| **Author(s)** | Janez Podhostnik (janez.podhostnik@dapperlabs.com)   |
-| **Updated**   | 2022-10-18                                           |
+# FLIP 660: Variable Transaction fees
 
 ## Objective
 

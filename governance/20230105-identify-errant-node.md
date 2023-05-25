@@ -1,34 +1,35 @@
-# Identifying and Ejecting Errant Access Nodes
+---
+status: proposed
+flip: GOV-4
+authors: James Lofgren (76029851+TheUnseen12@users.noreply.github.com)
+sponsors: Kshitij Chaudhary (kshitij.chaudhary@dapperlabs.com), Vishal Changrani (vishal.changrani@dapperlabs.com)
+updated: 2023-01-31
+---
 
-| Status        | Proposed                                            |
-:-------------- |:---------------------------------------------------- |
-| **FLIP #**    | [64](https://github.com/onflow/flow/pull/64)
-| **Author(s)** | James Lofgren (76029851+TheUnseen12@users.noreply.github.com)           | 
-| **Sponsor**   | Kshitij Chaudhary (kshitij.chaudhary@dapperlabs.com); Vishal Changrani (vishal.changrani@dapperlabs.com) |
-| **Updated**   | 2023-01-31                                           |
+# FLIP GOV-4: Identifying and Ejecting Errant Access Nodes
 
-# **Objective**
+## Objective
 
 This FLIP defines an off-chain process for node operators to report on potentially malicious access node behavior at the networking layer and prescribes the process of removal of such errant nodes.
 
-# **Background**
+## Background
 
 Flow is introducing permissionless Access nodes (ANs), allowing anyone to run a stake access node and an API to interact with the chain directly. By running an AN, the operator only needs to trust Execution Nodes (ENs) for the execution state without relying on any other third-party for information, thus getting priority lower-latency access to data.
 
 In the current setup, a separate “allow list” is maintained as a second layer of the onboarding process. Only nodes that are both staked and approved by the service account, i.e. registered on the “allow list”, can operate a node. In a permissionless system, as described in [FLIP 1057](https://github.com/onflow/flips/blob/main/protocol/20220719-automated-slot-assignment.md), Flow would open up AN registration slots, enabling operators to demonstrate their intention to run an AN by simply acquiring a slot. As the number of slots in the registration list is limited, to ensure that attackers don’t acquire all slots and bar others from running a node, a nominal minimum stake (100 Flow) will be required from an interested operator to legitimately acquire a slot.
 
-At the end of the registration cycle, once interested operators have acquired the slots and submitted (*at least*) the minimum required stake, some operators are randomly selected from the list, allowing them to run an AN in the subsequent epoch. This process can be enhanced in the future with an auction process for selecting node operators in a fully permissionless manner. 
+At the end of the registration cycle, once interested operators have acquired the slots and submitted (*at least*) the minimum required stake, some operators are randomly selected from the list, allowing them to run an AN in the subsequent epoch. This process can be enhanced in the future with an auction process for selecting node operators in a fully permissionless manner.
 
 The number of nodes selected in each epoch will be in conjunction with the maximum number of permissionless ANs that are allowed to operate in the network at a time, which is initially fixed at 5. This is in addition to the 122 permissioned access nodes already in the system.
 
-**Access Node Configurations**
+### Access Node Configurations
 
 - Minimum stake: 100 FLOW
 - Maximum permissionless AN slots per epoch: 5 (revisable)
 - Maximum total slots in FlowIDTable: Limited
 - Allow list: Not Applicable
 
-# **Motivation**
+## Motivation
 
 The launch of permissionless ANs is an important step in the continued decentralization of Flow, but also creates an opportunity for byzantine nodes on the [staking identity table](https://github.com/onflow/flow-core-contracts/blob/master/contracts/FlowIDTableStaking.cdc) to send malicious traffic to other staked nodes. Given the Flow nodes are on the public network, they are susceptible to traditional types of attack like denial of service (DDoS) from any IP. This concern is mitigated through best practices based on the infrastructure setup of individual nodes. In a permissionless AN system however, a malicious staked node could impact network performance and stability through seemingly legitimate communication with peers and non-sensical data, circumventing traditional network controls.
 
@@ -43,7 +44,7 @@ However, if a permissionlessly onboarded AN spams other nodes with unnecessary m
 1. At the operator infrastructure level, operators could block the errant AN, and
 2. At the governance level, an operator could flag the errant AN and report it to the community and the service account administrators, leading to the possibility of the errant node’s ejection from the network.
 
-# **Principles**
+## Principles
 
 First, this FLIP focuses on proposing how operators could communicate about errant behavior of ANs. Additionally, it lays a proposal for ejection of errant nodes, contending that nodes will only be removed from the staking list when they are manually slashed by the service account, or when the operator removes its stake. Automated slashing will be explored in the future.
 
@@ -55,7 +56,7 @@ Fourth, depending on the severity and responsiveness of the errant node, separat
 
 Fifth, besides providing clarity on channels of communication, this FLIP ensures that neutrality of node operators is preserved while reporting on an errant node and lays out the expectations of the service account admin resource after the whistle is blown by an operator.
 
-# **Process Proposal**
+## Process Proposal
 
 A mature long-term solution needs to be built in which the protocol itself is able to identify and kick-out errant nodes without off-chain human communication or interaction. In view of the massive engineering effort behind these protocol-level upgrades, in the medium-term, a high level of automation with community operators identifying, reporting and voting on-chain to remove an errant access node should be considered, without any involvement of the service account administrator. This can become a reality once the capability to generate cryptographic evidence of malicious traffic is built, along with a robust on-chain token-weighted voting process for community members to participate in.
 
@@ -68,7 +69,7 @@ In the short-term, a pragmatic, cost-effective, community-observed and community
 
 Note that in the short-term, only the service account has the authority to remove nodes from the identity table. If the service account removes a node from the identity table, it will not take effect until the next epoch. After the removal is complete, other nodes in the network will automatically stop accepting messages or connections from the removed node. The removal also creates space and opportunity for new ANs to join the identity table.
 
-# **Template**
+### Template
 
 A “whistle-blower” must provide the following information when reporting on an errant AN, for community members to conclusively upvote, downvote, and share their feedback.
 
@@ -79,26 +80,26 @@ A “whistle-blower” must provide the following information when reporting on 
 5. Network Identity of any other nodes who have experienced similar behavior from the errant node, and would be ratifying/ co-sponsoring the FLIP-light under consideration
 6. Any other relevant details such as operating experience of the whistleblower on the Flow network, or other observations about the behavior of the errant node
 
-# **User Benefit**
+## User Benefit
 
 By providing this framework, inadvertent issues can be communicated to network participants for resolution, and malicious behavior can be identified then adjudicated through a separate governance process. This allows clear communication between the community to handle potential liveness issues if and when they occur.
 
-# **Drawbacks**
+## Drawbacks
 
 This process does not propose any bonded fee by staked nodes to report on an errant node. This could create an opportunity for the censorship of valid traffic from honest network participants by other nodes without penalty. This is the primary reason this FLIP focuses on informing the network of errant behavior rather than on enforcing behavior directly. When staked nodes become fully permissionless, a minimum bond amount from whistle-blowers may be considered.
 
-# **Performance Implications**
+## Performance Implications
 
 As the proposal is an off-chain process and focuses on improving network performance in the case of errant traffic, the network will be better prepared to address this concern.
 
-# **User Impact**
+## User Impact
 
 Prior to permissionless ANs, the identity of node providers was always known to the Flow team. Having a trusted set of nodes greatly mitigated the concerns of errant nodes, and if there was an issue it could be relayed directly to the Flow team. With the launch of permissionless ANs, the node operators are anonymous, neither known to the Flow team nor to any other node operator. Over time, the expectation of having known node operators will be reduced, and other forms of communication will be required.
 
-# **Related Issues**
+## Related Issues
 
 [FLIP-1057](https://forum.onflow.org/t/flip-1057-automated-slot-assignment/3447/) explains the onboarding process, stating how permissionless ANs join the identity table when the number of intentions has exceeded the number of slots available. Also, [FLIP 57](https://github.com/onflow/flips/blob/main/protocol/20230110-accessnode-stake.md) proposes increasing the minimum stake requirement for permissionless ANs to 100 FLOW to prevent slot-exhaustion attacks from malicious operators.
 
-# **Questions and Discussion Topics**
+## Questions and Discussion Topics
 
 This proposal is meant to serve as a starting point for community discussions on how potential liveness issues can be identified and addressed at the networking layer. We strongly encourage feedback from node operators in the Flow community.
