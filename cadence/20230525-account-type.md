@@ -1,12 +1,12 @@
 ---
 status: proposed
-flip: NNN
+flip: 92
 authors: Bastian Müller (bastian@dapperlabs.com)
 sponsor: Bastian Müller (bastian@dapperlabs.com)
 updated: 2023-05-25
 ---
 
-# FLIP NNN: Account Type
+# FLIP 92: Account Type
 
 ## Objective
 
