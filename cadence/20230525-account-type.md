@@ -45,7 +45,7 @@ For example, if a transaction transfers tokens, it only needs access to the acco
 and does not need, nor should have the possibility, to manage contracts, keys, etc.
 
 Cadence has recently gained a powerful new language feature which allows specifying access control in a declarative manner:
-[entitlements](https://github.com/onflow/flips/blob/main/cadence/2022-12-14-auth-remodel.md),
+[entitlements](https://github.com/onflow/flips/blob/main/cadence/20221214-auth-remodel.md),
 which can be used to improve this situation.
 
 In addition, [FLIP 89 is proposing further improvements to access control](https://github.com/onflow/flips/pull/89).
@@ -76,7 +76,7 @@ whereas the `AuthAccount` type contains/exposes both read and write functionalit
 When the two types were introduced,
 having separate types was the only means to restrict access to a set of functionality.
 
-Today, references and [entitlements](https://github.com/onflow/flips/blob/main/cadence/2022-12-14-auth-remodel.md)
+Today, references and [entitlements](https://github.com/onflow/flips/blob/main/cadence/20221214-auth-remodel.md)
 can be used to implement the access control pattern.
 
 The full type definition of the new `Account` type can be found in the separate subsection below.
