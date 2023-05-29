@@ -148,6 +148,12 @@ For example, given a reference `account: &Account`,
 accessing the field `contracts` results in another reference `&Account.Contracts`
 (instead of the field's type, just `Account.Contracts`).
 
+Account capabilities already leverage account references:
+The type of an account capability is `Capability<&AuthAccount>`.
+Just like for the non-reference type `AuthAccount`,
+the equivalent of the reference type `&AuthAccount`
+will be `auth(Storage, Contracts, Keys, Inbox, Capabilities) &Account`.
+
 ### Refactor Storage-Related Functionality into a Nested Type
 
 Over time, the functionality exposed through the `AuthAccount` type has grown significantly.
