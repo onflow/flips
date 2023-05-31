@@ -21,6 +21,7 @@ In Cadence, access to accounts is provided through the built-in types `AuthAccou
 whereas `PublicAccount` only provides _read_ access.
 
 Any program may request read access to an account using the built-in function `getAccount`.
+Scripts may request write access to an account using the built-in function `getAuthAccount`.
 
 A transaction declaration may request write access to zero or more accounts,
 through the parameter list of a `transaction` declaration's `prepare` block.
