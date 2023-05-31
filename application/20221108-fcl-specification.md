@@ -471,7 +471,7 @@ See also [CompositeSignature](https://github.com/onflow/flow-js-sdk/blob/master/
 ##### <a id="presignable"></a> `PreSignable`
 
 ```typescript
-interface Signable extends ObjectBase<"1.0.1"> {
+interface PreSignable extends ObjectBase<"1.0.1"> {
   f_type: "PreSignable"
   roles: {
     proposer: boolean
