@@ -95,11 +95,25 @@ Similar entitlements are added for other individual management operations and ca
 e.g. the fine-grained `AddKey` entitlement is added for allowing to add a key,
 and the coarse-grained `Keys` entitlement is added to allow any key management operation.
 
-
 Entitlement mappings are introduced to propagate entitlements to the account to nested types.
 
 For example, a reference to an account with the fine-grained `AddContract`
-or coarse-grained `Contracts` entitlement is propagated to the nested `Account.Contracts` type.
+or coarse-grained `Contracts` entitlement is propagated to the nested `Account.Contracts` type:
+
+```cadence
+transaction {
+    prepare(signer: auth(AddContract) &Account) {
+        let contracts: auth(AddContract) &Account = signer.contracts
+        contracts.add(/* ... omitted ... */)
+    }
+}
+```
+
+As the field `Account.Contracts` has the access modifier `access(AccountMapping)`,
+the `AccountMapping` entitlement map is used when accessing the field.
+As `AccountMapping` includes the built-in identity mapping,
+the entitlement of `AddContract` on the `Account` is mapped as-is to `AddContract`,
+and the `add` function, which requires entitlement `AddContract`, can be called.
 
 For a full list of entitlements and entitlement mappings,
 see the full type definition of `Account` below.
