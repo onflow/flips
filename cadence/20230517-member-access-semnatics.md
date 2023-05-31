@@ -17,7 +17,7 @@ key of a map, index of an array), if the parent value is also a reference and th
 
 A previous version of Cadence ("Secure Cadence") restricted the potential foot-gun of mutating container-typed
 `let` fields/variables via the
-[Cadence mutability restrictions FLIP](https://github.com/onflow/flips/blob/main/flips/20211129-cadence-mutability-restrictions.md).
+[Cadence mutability restrictions FLIP](https://github.com/onflow/flips/blob/main/cadence/20211129-cadence-mutability-restrictions.md).
 However, this was a partial solution, and was only applicable for arrays and dictionaries, but did not solve it for
 user-defined types.
 
@@ -69,7 +69,7 @@ Assume `collection` is of type `Collection`. i.e. the code owns the value.
 Then, there is no change to the current behavior.
 
 ```cadence
-var collection: @Collection = ...
+var collection: @Collection <- ...
 
 // `collection.ownedNFTs` would return the concrete value, which is of type `@{UInt64: NFT}`.
 // This is an error because it is not possible to move nested resource.
