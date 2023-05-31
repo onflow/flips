@@ -90,7 +90,11 @@ This allows developers to request access to specific account operations.
 
 For example, the fine-grained entitlement `AddContract` is required to deploy a new contract,
 i.e. to call the `contracts.add` function, and the coarse-grained entitlement `Contracts` grants
-access to
+access to all contract management operations, e.g. to `contracts.update`.
+Similar entitlements are added for other individual management operations and categories of operations,
+e.g. the fine-grained `AddKey` entitlement is added for allowing to add a key,
+and the coarse-grained `Keys` entitlement is added to allow any key management operation.
+
 
 Entitlement mappings are introduced to propagate entitlements to the account to nested types.
 
