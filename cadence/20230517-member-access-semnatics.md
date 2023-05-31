@@ -6,7 +6,7 @@ sponsor: Supun Setunga (supun.setunga@dapperlabs.com)
 updated: 2023-05-17
 ---
 
-# Change Member Access Semantics
+# FLIP 89: Change Member Access Semantics
 
 ## Objective
 
@@ -53,34 +53,35 @@ For example, consider the below `Collection` struct which has two fields: one (`
 and the other (`ownedNFTs`) is dictionary-typed.
 
 ```cadence
-pub struct Collection {
+pub resource Collection {
 
     // Primitive-typed field
     pub var id: String
 
     // Dictionary typed field
-    pub var ownedNFTs: {UInt64: NFT}
+    pub var ownedNFTs: @{UInt64: NFT}
 }
 ```
 
-**Case I: Code owns the container value** 
+#### Case I: Code owns the container value
 
 Assume `collection` is of type `Collection`. i.e. the code owns the value.
 Then, there is no change to the current behavior.
 
 ```cadence
-var collection: Collection = ...
+var collection: @Collection = ...
 
-// `collection.ownedNFTs` would return the concrete value, which is of type `{UInt64: NFT}`.
+// `collection.ownedNFTs` would return the concrete value, which is of type `@{UInt64: NFT}`.
+// This is an error because it is not possible to move nested resource.
 // This is same as existing semantics.
-var ownedNFTs: {UInt64: NFT} = collection.ownedNFTs
+var ownedNFTs: @{UInt64: NFT} <- collection.ownedNFTs
 
 // `collection.id` would return the concrete string value.
 // This is same as existing semantics.
 var id: String = collection.id
 ```
 
-**Case II: Code only has a reference to the container value**
+#### Case II: Code only has a reference to the container value**
 
 Assume a reference to the collection `collectionRef` is available, and is of type `&Collection`. 
 i.e. code doesn't own the value, but has only a reference to the value.
