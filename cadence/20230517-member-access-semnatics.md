@@ -49,7 +49,9 @@ where a "container" is any of:
   - Composite
   - An optional of above
 
-For example, consider the below `Collection` struct which has two fields: one (`id`) is String-typed,
+### Resource Example:
+
+For example, consider the below `Collection` resource which has two fields: one (`id`) is String-typed,
 and the other (`ownedNFTs`) is dictionary-typed.
 
 ```cadence
@@ -81,7 +83,7 @@ var ownedNFTs: @{UInt64: NFT} <- collection.ownedNFTs
 var id: String = collection.id
 ```
 
-#### Case II: Code only has a reference to the container value**
+#### Case II: Code only has a reference to the container value
 
 Assume a reference to the collection `collectionRef` is available, and is of type `&Collection`. 
 i.e. code doesn't own the value, but has only a reference to the value.
@@ -100,7 +102,7 @@ var id: String = collectionRef.id
 It is also important to note that, the returned reference has no entitlements assigned to them.
 i.e: they are **non-**`auth` references.
 
-### Example
+#### Nested resources
 
 Assume a nested resource collection as bellow.
 
@@ -141,6 +143,58 @@ non-auth reference, and calling `withdraw` is prohibited because that reference 
 ```cadence
 masterCollectionRef.kittyCollection.withdraw(24)    // Static Error
 ```
+
+### Struct Example:
+
+Similarly, consider the below `NFTView` struct which has two fields: one (`id`) is UInt64-typed,
+and the other (`royalties`) is array-typed.
+
+```cadence
+pub struct NFTView {
+
+    // Primitive-typed field
+    pub var id: UInt64
+
+    // Array typed field
+    pub var royalties: [Royalty]
+}
+```
+
+#### Case I: Code owns the container value
+
+Assume `nftView` is of type `NFTView`. i.e. the code owns the value.
+Then, there is no change to the current behavior.
+
+```cadence
+var nftView: NFTView = ...
+
+// `nftView.royalties` would return the concrete value, which is of type `[Royalty]`.
+// This is same as existing semantics.
+var royalties: [Royalty] = nftView.royalties
+
+// `nftView.id` would return the concrete `UInt64` value.
+// This is same as existing semantics.
+var id: UInt64 = collection.id
+```
+
+#### Case II: Code only has a reference to the container value
+
+Assume a reference to the nftView `nftViewRef` is available, and is of type `&NFTView`.
+i.e. code doesn't own the value, but has only a reference to the value.
+
+```cadence
+var nftViewRef: &Collection = ...
+
+// `nftViewRef.royalties` would now return a reference of type `&[Royalty]`.
+var royaltiesRef: &[Royalty] = nftViewRef.royalties
+
+// However, `nftViewRef.id` would return the value, since it is a primitive type.
+// This is same as existing semantics.
+var id: String = nftViewRef.id
+```
+
+Similar to resources, the returned reference has no entitlements assigned to them.
+i.e: they are **non-**`auth` references.
 
 ### Drawbacks
 
