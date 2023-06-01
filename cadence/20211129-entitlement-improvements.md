@@ -17,12 +17,21 @@ The main objective of this proposal is to improve entitlement mappings and their
 
 ## Motivation
 
-### Motivation I: Cannot use entitlement mappings for fields
+### Motivation I: Cannot use entitlement mappings for non-reference fields
 
 With the [FLIP for changing member access semantics](https://github.com/onflow/flips/pull/89),
 fields of a composite value would return a non-auth reference when accessed via a reference to the composite value.
-However, currently, entitlement mappings can only be used for functions, but not for fields.
-As such, there's no way to specify to return an auth-reference for fields through member-access syntax.
+However, currently, entitlement mappings can only be used for functions, and reference typed field,
+but not to non-reference typed fields.
+
+```cadence
+access(M) let refField: auth(M) &T   // OK
+
+access(M) let field: T               // Not allowed
+```
+
+As such, there's no way to specify to return an auth-reference for fields through member-access syntax,
+if the field is a non-reference.
 Users would have to write delegator functions to achieve the same, which adds unnecessary boilerplate code.
 
 ### Motivation II: Mapping entitlements to themselves is cumbersome
@@ -64,48 +73,54 @@ pub resource Collection {
 }
 ```
 
+#### Case I: Code only has a reference to the container value
+
 Assume an `auth{Mutable}` reference to the collection `mutableCollectionRef` is available.
-
-```cadence
-var mutableCollectionRef: auth{Mutable} &Collection = ...
-
-```
-
 Because `ownedNFTs` has an entitlement mapping access (i.e. `access(M)`), `mutableCollectionRef.ownedNFTs` would now
 return a reference of type `auth{Insertable} &{UInt64: NFT}`. i.e:
 
 ```cadence
+var mutableCollectionRef: auth{Mutable} &Collection = ...
+
 var ownedNFTsRef: auth{Insertable} &{UInt64: NFT} = mutableCollectionRef.ownedNFTs
 ```
 
 This will allow inserting values to the `ownedNFTs` fields, via `mutableCollectionRef.ownedNFTs`.
 
 ```cadence
-mutableCollectionRef.ownedNFTs[1234] = nft    // OK
+mutableCollectionRef.ownedNFTs.append(<-nft)    // OK
 ```
 
 This massively reduces the boilerplate could a developer would have to if they are to achieve the same by writing
 a function.
 
+#### Case II: Code owns the container value
+
+Assume `collection` is of type `Collection`. i.e. the code owns the value.
+Then, there is no change to the current behavior.
+
+```cadence
+var collection: @Collection <- ...
+
+// `collection.ownedNFTs` would return the concrete value, which is of type `@{UInt64: NFT}`.
+// This is same as existing semantics.
+// Also note that, this is an error because it is not possible to move nested resource.
+var ownedNFTs: @{UInt64: NFT} <- collection.ownedNFTs
+```
+
 ### Syntax for identity mapping
 
 The idea of this change is to introduce a syntax to represent "identity mapping", which denotes mapping of an arbitrary 
 entitlement `E` to the same entitlement `E`, without having to explicitly specify what the source (domain) and the
-target (range) of the mapping are. This saves the trouble of developers having to map each and every such entitlement
-explicitly.
+target (range) of the mapping are.
+This saves the trouble of developers having to map each and every such entitlement explicitly.
 
-The proposed syntax is:
+The proposed solution consist of two parts.
 
-```cadence
-entitlement mapping M {
-    include Identity
-}
-```
+#### Part I: Built-in 'Identity' entitlement mapping
 
-Here, `Identity` is a built-in entitlement mapping which maps any arbitrary entitlement to itself.
-The `include` keyword includes all entries from a given mapping (`Identity` in this case).
-
-Thus, above mapping is equivalent to, but not limited to:
+A built-in entitlement mapping `Identity` is introduced, which maps any arbitrary entitlement to itself.
+For example, inplace of using a custom mapping like below, developers can use the `Identity` entitlement mapping.
 
 ```cadence
 entitlement mapping M {
@@ -114,21 +129,63 @@ entitlement mapping M {
     E1 -> E1
     E2 -> E2
 }
+
+pub resource Foo {
+    access(M) fun someFunction()
+}
 ```
 
-Apart from the syntax being very compact, another advantage of the proposed syntax is, developers wouldn't need to know
-or explicitly specify all the possible entitlements that needs to be included in the mapping, beforehand.
+Can be also written as:
 
-Identity mapping can be combined with other mapping entries. e.g:
+```cadence
+pub resource Foo {
+    access(Identity) fun someFunction()
+}
+```
+
+An added benefit of the proposed syntax is, developers wouldn't need to know or explicitly specify all the possible
+entitlements that needs to be included in the mapping, beforehand.
+
+#### Part II: Entitlement composition
+
+There can be situations where a developer wants to re-use existing entitlement mappings, but also, rather than just
+using them as-is, it might be needed to combine them with some new mapping entries.
+
+The `include` keyword lets developers include all entries from another mapping, to their own mapping.
+
+For an example:
 
 ```cadence
 entitlement mapping M {
     include Identity
 
-    Mutable -> Insertable
-    Mutable -> Removable
+    Insertable -> Mutable
+    Removable -> Mutable
 }
 ```
+
+The above mapping states that, any entitlement will map to itself, but also the two additional mapping entries would
+also be in effect.
+
+Entitlement composition is not limited to the `Identity` entitlement.
+The `include` keyword can be used to combine any arbitrary set of entitlement mappings.
+
+
+```cadence
+entitlement mapping M1 {
+    Removable -> Mutable
+}
+
+entitlement mapping M2 {
+    Insertable -> Mutable
+}
+
+entitlement mapping M3 {
+    include M1
+    include M2
+}
+```
+
 
 ### Drawbacks
 
