@@ -11,7 +11,7 @@ updated: 2023-06-02
 ## Objective
 
 This FLIP proposes adding the `Range` & `Progression` types to Cadence.
-Both of these types can then used inside a `for-in` loop.
+Both of these types can then be used inside a `for-in` loop.
 
 ## Motivation
 
