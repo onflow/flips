@@ -26,7 +26,7 @@ Users will benefit from the concise syntax leading to a cleaner & readable code.
 ## Design Proposal
 
 This proposal suggest adding two new types to Cadence:
-1. `Range<T: Integer`
+1. `Range<T: Integer>`
 2. `Progression<T: Integer>`
 
 ### Range
