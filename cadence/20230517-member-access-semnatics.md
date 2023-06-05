@@ -32,6 +32,9 @@ This proposal is aimed at moving one step closer to solving this problem by retu
 so that [Entitlements](https://github.com/onflow/flips/pull/54) can be used to control who can perform mutating
 operations via references.
 
+The [Mutability Restrictions Vision](https://github.com/onflow/flips/pull/97) explains how this proposed change
+contributes to solving the aforementioned problems, and how the final solution looks like, with examples.
+
 ## User Benefit
 
 As mentioned in the previous section, this change enables using Entitlements to prevent accidental mutations via references.
