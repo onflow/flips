@@ -51,6 +51,13 @@ entitlement mapping M {
 However, currently it is a bit cumbersome to write such a mapping, and also, it would require knowing all possible
 entitlements beforehand.
 
+### Bigger Picture
+
+These two changes are also intended on improving the user experience of existing mutability restrictions.
+The [Mutability Restrictions Vision](https://github.com/onflow/flips/pull/97) explains how this proposed change
+contributes to improving the solution to the existing issue with mutability restrictions,
+and how the final solution looks like, with examples.
+
 ## User Benefit
 
 Provides a simple and shorthand syntax to achieve above-mentioned use-cases and thus, prevents developers from writing
