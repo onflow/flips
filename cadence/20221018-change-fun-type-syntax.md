@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: implemented
 flip: 43
 authors: Naomi Liu (naomi.liu@dapperlabs.com)
 sponsor: Naomi Liu (naomi.liu@dapperlabs.com)
