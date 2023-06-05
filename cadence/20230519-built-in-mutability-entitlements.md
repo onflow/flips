@@ -17,7 +17,7 @@ dictionaries and composite types.
 
 A previous version of Cadence ("Secure Cadence") restricted the potential foot-gun of mutating container-typed
 `let` fields/variables via the
-[Cadence mutability restrictions FLIP](https://github.com/onflow/flips/blob/main/cadence/20211129-cadence-mutability-restrictions.md).
+[Cadence mutability restrictions FLIP (#703)](https://github.com/onflow/flips/blob/main/cadence/20211129-cadence-mutability-restrictions.md).
 
 However, there are still ways to mutate such fields by:
 - Directly mutating a nested composite typed field.
@@ -31,6 +31,11 @@ With an aim of moving one step closer to solving these existing problems, anothe
 
 Going another step further, this FLIP proposes introducing a set of built-in entitlements, that can be used along with
 the change of member-access semantics, to better control who can perform mutating operations through the references.
+With that, it is also proposed to remove the restrictions introduced in the previous
+[Cadence mutability restrictions FLIP (#703)](https://github.com/onflow/flips/blob/main/cadence/20211129-cadence-mutability-restrictions.md).
+
+The [Mutability Restrictions Vision](https://github.com/onflow/flips/pull/97) explains how this proposed changes
+contribute to solving the aforementioned problems, and how the final solution looks like, with examples.
 
 ## User Benefit
 
@@ -173,6 +178,39 @@ removableArrayRef[2] = "John"     // Static Error: doesn't have the required ent
 ```
 
 This would behave the same way for dictionaries as well.
+
+### Removing existing restrictions
+
+The changes (mutable annotation in particular) introduced in [FLIP #703](https://github.com/onflow/flips/blob/main/cadence/20211129-cadence-mutability-restrictions.md)
+are very similar to the ones that are suggested in this FLIP.
+The `mutable` annotation introduced there for built-in functions, can be replaced with the proposed entitlements.
+
+The major difference in the two approaches is that, changes in FLIP#703 also apply to 'owned' values,
+whereas the entitlement-based solution (this proposal) only applicable for references.
+
+However, for an owned value, since it is possible to take a reference to members with any desired entitlement,
+having those restrictions as in FLIP#703 doesn't make much sense.
+
+For an example:
+
+```cadence
+pub resource Collection {
+    pub var ownedNFTs: @{UInt64: NonFungibleToken.NFT}
+}
+
+// Consider an 'owned' value.
+var collection: @Collection <- ...
+
+// Mutating from outside of the resource is prohibitted as per existing type-checking rules.
+collection.ownedNFTRef[1234] <- nft
+
+// However, can take a mutable reference and mutate the field via the reference
+var mutableOwnedNFTRef = &collection as auth(Mutable) @{UInt64: NonFungibleToken.NFT}
+mutableOwnedNFTRef[1234] <- nft
+```
+
+Thus, the existing restrictions can be confusing, and would rather be better to keep a consistent behavior by undoing
+those changes, and leaning towards an entitlement-based solution.
 
 ### Putting It All Together
 
