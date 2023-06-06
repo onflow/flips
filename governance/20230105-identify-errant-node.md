@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: Accepted
 flip: GOV-4
 authors: James Lofgren (76029851+TheUnseen12@users.noreply.github.com)
 sponsors: Kshitij Chaudhary (kshitij.chaudhary@dapperlabs.com), Vishal Changrani (vishal.changrani@dapperlabs.com)
