@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: implemented
 flip: 753
 authors: Janez Podhostnik (janez.podhostnik@dapperlabs.com)
 sponsor: Janez Podhostnik (janez.podhostnik@dapperlabs.com)
