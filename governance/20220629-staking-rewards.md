@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: Implemented
 flip: GOV-1
 forum: https://forum.onflow.org/t/flip-gov-1-maintain-staking-rewards/3340
 authors: Kristin Smith (kristin@flowfoundation.com)
