@@ -149,7 +149,6 @@ let exclusiveRangeValueEmpty = ExclusiveRangeWithStep(10, 10, 2) // Empty since 
 
 let invalidStep = ExclusiveRangeWithStep(10, 32, 0) // Runtime Error
 let invalidDirection = ExclusiveRangeWithStep(132, 33, 3) // Runtime Error
-
 ```
 
 ### Drawbacks
