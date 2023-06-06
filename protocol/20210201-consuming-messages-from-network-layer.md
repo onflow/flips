@@ -1,9 +1,9 @@
 ---
-status: accepted
+status: Implemented
 flip: 343
 authors: Alex Hentschel (alex.hentschel@dapperlabs.com)
 sponsor: Alex Hentschel (alex.hentschel@dapperlabs.com)
-updated: 2021-09-20
+updated: 2023-06-06
 ---
 
 # FLIP 343: Handing Messages from Networking Layer to Engines (Core Protocol)
