@@ -1,9 +1,9 @@
 ---
-status: proposed
+status: accepted
 flip: 73
 authors: Peter Argue (peter.argue@dapperlabs.com)
 sponsor: Jerome Pimmel (jerome.pimmel@dapperlabs.com)
-updated: 2023-03-09
+updated: 2023-06-06
 ---
 
 # FLIP 73: Event Streaming API (alpha version)
