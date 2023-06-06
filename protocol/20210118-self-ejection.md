@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: Accepted
 flip: 324
 authors: Alex Hentschel (alex.hentschel@dapperlabs.com), Jordan Schalm (jordan@dapperlabs.com)
 sponsor: Alex Hentschel (alex.hentschel@dapperlabs.com)
