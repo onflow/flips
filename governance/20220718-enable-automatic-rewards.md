@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: Implemented
 flip: GOV-2
 forum: https://forum.onflow.org/t/flip-gov-2-enable-automatic-staking-rewards/3438
 authors: Paul Gebheim (paul.gebheim@dapperlabs.com)
