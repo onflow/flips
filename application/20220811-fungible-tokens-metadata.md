@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: Implemented
 flip: 1087
 authors: Álvaro Lillo Igualada (alvaro.lillo@dapperlabs.com)
 sponsor: Josh Hannan (joshua.hannan@dapperlabs.com)
