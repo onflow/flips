@@ -1,11 +1,12 @@
-# Improve Cadence Numeric Supertypes
+---
+status: implemented
+flip: 729
+authors: Supun Setunga (supun.setunga@dapperlabs.com)
+sponsor: Supun Setunga (supun.setunga@dapperlabs.com)
+updated: 2021-12-13
+---
 
-| Status        | Finalized       |
-:-------------- |:---------------------------------------------------- |
-| **FLIP #**    | https://github.com/onflow/cadence/pull/1360|
-| **Author(s)** | Supun Setunga (supun.setunga@dapperlabs.com)       |
-| **Sponsor**   | Supun Setunga (supun.setunga@dapperlabs.com)       |
-| **Updated**   | 2021-12-13                                           |
+# FLIP 729: Improve Cadence Numeric Supertypes
 
 ## Objective
 
@@ -51,7 +52,7 @@ It is not intuitive enough for developers that their codes may not work for all 
 
 ## User Benefit
 It would be more intuitive and explicit to the developers and to anyone who read the code, about
-what's happening during arithmetic and comparison operations on numeric supertypes. 
+what's happening during arithmetic and comparison operations on numeric supertypes.
 Helps them to avoid any unintentional/unforeseen behaviors.
 
 ## Design Proposal
@@ -75,7 +76,7 @@ let y: Integer = 4 as Int8
 
 let z: Integer = (x as! Int8) + (y as! Int8)
 ```
-This way, it is intuitive for the developers that the code has the potential to fail at run-time. 
+This way, it is intuitive for the developers that the code has the potential to fail at run-time.
 
 
 #### Equality Operations (`==`, `!=`)
@@ -121,7 +122,7 @@ let z = (x as! Int8) < (y as! Int8)
 ### Drawbacks
 - This is a breaking change, and developers will have to update their codes.
 - With this change, developers would now have to write some extra bit of code for the force casts,
-when performing arithmetic and comparison operations on numeric super types. However, it is very 
+when performing arithmetic and comparison operations on numeric super types. However, it is very
 trivial.
 - This reduces the usefulness of numeric supertypes.
 
@@ -156,7 +157,7 @@ combination of operands and operators of different types.
   - In general, the use of supertypes for arithmetic operations can said to be less frequent.
     Along with that, given the complexity of the solution, it may not be worth implementing such a
     complex solution.
-  
+
 
 ### User Impact
 

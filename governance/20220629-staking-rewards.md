@@ -1,11 +1,12 @@
 ---
-status: Finalized
+status: Implemented
 flip: GOV-1
-title: Maintain Staking Rewards
 forum: https://forum.onflow.org/t/flip-gov-1-maintain-staking-rewards/3340
 authors: Kristin Smith (kristin@flowfoundation.com)
-editor: Paul Gebheim (paul.gebheim@dapperlabs.com)
+editors: Paul Gebheim (paul.gebheim@dapperlabs.com)
 ---
+
+# FLIP GOV-1: Maintain Staking Rewards
 
 ## Abstract
 

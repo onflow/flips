@@ -1,12 +1,13 @@
-# Interaction Templates
+---
+status: implemented
+flip: 934
+forum: https://forum.onflow.org/t/flip-934-interaction-templates/3080
+authors: Jeffrey Doyle (jeffrey.doyle@dapperlabs.com)
+sponsor: Jeffrey Doyle (jeffrey.doyle@dapperlabs.com)
+updated: 2022-05-03
+---
 
-| Status        | Accepted                                                       |
-| :------------ | :------------------------------------------------------------- |
-| **FLIP #**    | [934](https://github.com/onflow/flow/pull/934)                 |
-| **Forum**     | https://forum.onflow.org/t/flip-934-interaction-templates/3080 |
-| **Author(s)** | Jeffrey Doyle (jeffrey.doyle@dapperlabs.com)                   |
-| **Sponsor**   | Jeffrey Doyle (jeffrey.doyle@dapperlabs.com)                   |
-| **Updated**   | 2022-05-03                                                     |
+# FLIP 934: Interaction Templates
 
 ## Abstract
 
@@ -402,23 +403,23 @@ FCL `mutate` and `query` could be modified to accept an Interaction Template, an
 EXAMPLE:
 
 ```javascript
-import transferFLOWTemplate from "./transfer-flow-template.json";
+import transferFLOWTemplate from "./transfer-flow-template.json"
 
 await fcl.mutate({
   template: transferFLOWTemplate,
   args: (arg, t) => [arg("1.0", t.UFix64), arg("0xABC123DEF456", t.Address)],
-});
+})
 ```
 
 EXAMPLE:
 
 ```javascript
-import { getFLOWBalanceTemplate } from "@onflow/flow-templates";
+import { getFLOWBalanceTemplate } from "@onflow/flow-templates"
 
 await fcl.query({
   template: getFLOWBalanceTemplate,
   args: (arg, t) => [arg("0xABC123DEF456", t.Address)],
-});
+})
 ```
 
 Instead, if templates are made available at an external location, developers may chose to request them when needed by querying for them from their location:
@@ -429,7 +430,7 @@ EXAMPLE:
 await fcl.mutate({
   template: "https://transfer-flow.interactions.onflow.org",
   args: (arg, t) => [arg("1.0", t.UFix64), arg("0xABC123DEF456", t.Address)],
-});
+})
 ```
 
 EXAMPLE:
@@ -439,7 +440,7 @@ await fcl.query({
   template:
     "ipfs://64EC88CA00B268E5BA1A35678A1B5316D212F4F366B2477232534A8AECA37F3C",
   args: (arg, t) => [arg("0xABC123DEF456", t.Address)],
-});
+})
 ```
 
 Since a URL can remain static, while the Interaction Template it corresponds to dynamic and able to change, this allows developers to always request the most up to date implementation of an interaction - enabling a mechanic for contract developers to modify their contracts and interactions while helping to prevent any downstream breaking changes.

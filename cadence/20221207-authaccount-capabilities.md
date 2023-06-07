@@ -1,11 +1,12 @@
-# AuthAccount Capabilities
+---
+status: implemented
+flip: 53
+authors: Bastian Müller (bastian@dapperlabs.com)
+sponsor: Dieter Shirley (dete@dapperlabs.com)
+updated: 2022-03-21
+---
 
-| Status        | Accepted                                             |
-:-------------- |:---------------------------------------------------- |
-| **FLIP #**    | [53](https://github.com/onflow/flips/pull/53)        |
-| **Author(s)** | Bastian Müller (bastian@dapperlabs.com)              |
-| **Sponsor**   | Dieter Shirley (dete@dapperlabs.com)                 |
-| **Updated**   | 2022-03-21                                           |
+# FLIP 53: AuthAccount Capabilities
 
 ## Objective
 

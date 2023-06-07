@@ -1,10 +1,12 @@
-# Variable Transaction Fees - Execution Effort I.
+---
+status: implemented
+flip: 753
+authors: Janez Podhostnik (janez.podhostnik@dapperlabs.com)
+sponsor: Janez Podhostnik (janez.podhostnik@dapperlabs.com)
+updated: 2022-03-29
+---
 
-| Status        | Proposed                                           |
-| :------------ | :------------------------------------------------- |
-| **FLIP #**    | [753](https://github.com/onflow/flow/pull/753)     |
-| **Author(s)** | Janez Podhostnik (janez.podhostnik@dapperlabs.com) |
-| **Updated**   | 2022-03-29                                         |
+# FLIP 753: Variable Transaction Fees - Execution Effort I.
 
 ## Table of Contents
 
@@ -69,7 +71,7 @@ As a consequence transactions that do little (e.g. transferring a (non)fungible 
 
 ## Current Implementation
 
-As of [v0.23.6 release](https://github.com/onflow/flow-go/tree/v0.23.6), execution effort is coarsely approximated, where every cadence statement, loop iteration or function call represents 1 unit of execution effort, out of a maximum of 9999 *the maximum execution effort limit). 
+As of [v0.23.6 release](https://github.com/onflow/flow-go/tree/v0.23.6), execution effort is coarsely approximated, where every cadence statement, loop iteration or function call represents 1 unit of execution effort, out of a maximum of 9999 *the maximum execution effort limit).
 
 If the execution effort exceeds the execution effort limit (also currently referenced to as gas limit or computation limit) the transaction fails. While the state changes of that transaction are discarded, the fees for that transaction are still deducted.
 
@@ -180,7 +182,7 @@ transaction(){
 }
 ```
 
-The number of iterations (`$ITERATIONS`) is randomly chosen from one to _max loop length_ which is varied during the run so that the transaction does not exceed 500 ms (generally) (See [Appendix 1: varying sample transactions max loop length](#appendix-1-varying-sample-transactions-max-loop-length) for details). This is done so its easier to compare different types of transaction to each other. 
+The number of iterations (`$ITERATIONS`) is randomly chosen from one to _max loop length_ which is varied during the run so that the transaction does not exceed 500 ms (generally) (See [Appendix 1: varying sample transactions max loop length](#appendix-1-varying-sample-transactions-max-loop-length) for details). This is done so its easier to compare different types of transaction to each other.
 
 <details>
 <summary>The names and bodies of the 25 different transaction types is collapsed for better readability.</summary>
@@ -191,59 +193,59 @@ The number of iterations (`$ITERATIONS`) is randomly chosen from one to _max loo
         name:     "reference tx",
     },
     {
-        
+
         body:     "i.toString()",
         name:     "convert int to string",
     },
     {
-        
+
         body:     '"x".concat(i.toString())',
         name:     "convert int to string and concatenate it",
     },
     {
-        
+
         body:     'signer.address',
         name:     "get signer address",
     },
     {
-        
+
         body:     'getAccount(signer.address)',
         name:     "get public account",
     },
     {
-        
+
         body:     'getAccount(signer.address).balance',
         name:     "get account and get balance",
     },
     {
-        
+
         body:     'getAccount(signer.address).availableBalance',
         name:     "get account and get available balance",
     },
     {
-        
+
         body:     'getAccount(signer.address).storageUsed',
         name:     "get account and get storage used",
     },
     {
-        
+
         body:     'getAccount(signer.address).storageCapacity',
         name:     "get account and get storage capacity",
     },
     {
-        
+
         body:     'let vaultRef = signer.borrow<&FlowToken.Vault>(from: /storage/flowTokenVault)!',
         name:     "get signer vault",
     },
     {
-        
+
         body: '''let receiverRef = getAccount(signer.address)
             .getCapability(/public/flowTokenReceiver)
             .borrow<&{FungibleToken.Receiver}>()!''',
         name: "get signer receiver",
     },
     {
-        
+
         body: '''let receiverRef =  getAccount(signer.address)
             .getCapability(/public/flowTokenReceiver)
             .borrow<&{FungibleToken.Receiver}>()!
@@ -252,34 +254,34 @@ The number of iterations (`$ITERATIONS`) is randomly chosen from one to _max loo
         name: "transfer tokens",
     },
     {
-        
+
         body: '''signer.load<String>(from: /storage/testpath)
             signer.save("", to: /storage/testpath)''',
         name: "load and save empty string on signers address",
     },
     {
-        
+
         body: '''signer.load<String>(from: /storage/testpath)
             signer.save("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", to: /storage/testpath)''',
         name: "load and save long string on signers address",
     },
     {
-        
+
         body:     'let acct = AuthAccount(payer: signer)',
         name:     "create new account",
     },
     {
-        
+
         body:     'TestContract.empty()',
         name:     "call empty contract function",
     },
     {
-        
+
         body:     'TestContract.emit()',
         name:     "emit event",
     },
     {
-        
+
         body: '''let strings = signer.borrow<&[String]>(from: /storage/test)!
             var j = 0
             var lenSum = 0
@@ -290,7 +292,7 @@ The number of iterations (`$ITERATIONS`) is randomly chosen from one to _max loo
         name: "borrow array from storage",
     },
     {
-        
+
         body: '''let strings = signer.copy<[String]>(from: /storage/test)!
             var j = 0
             var lenSum = 0
@@ -301,12 +303,12 @@ The number of iterations (`$ITERATIONS`) is randomly chosen from one to _max loo
         name: "copy array from storage",
     },
     {
-        
+
         body:     'signer.addPublicKey("f847b84000fb479cb398ab7e31d6f048c12ec5b5b679052589280cacde421af823f93fe927dfc3d1e371b172f97ceeac1bc235f60654184c83f4ea70dd3b7785ffb3c73802038203e8".decodeHex())',
         name:     "add key to account",
     },
     {
-        
+
         body: '''
             signer.addPublicKey("f847b84000fb479cb398ab7e31d6f048c12ec5b5b679052589280cacde421af823f93fe927dfc3d1e371b172f97ceeac1bc235f60654184c83f4ea70dd3b7785ffb3c73802038203e8".decodeHex())
             signer.removePublicKey(1)
@@ -393,7 +395,7 @@ During data analysis the goals and challenges were:
 
 The full data analysis report can be found in the [flow repository next to this FLIP](./20220111-execution-effort/Flow-execution-effort-prediction-model.docx.pdf). The following are just the results of that data analysis.
 
-Resulting model highlights: 
+Resulting model highlights:
 - The proposed champion model achieve the better performance when compared to the current production benchmark model model in terms of goodness of fit.
 - Only 4 features in the model.
 - All weights are positive.
@@ -427,7 +429,7 @@ On testnet transactions:
 Changing the maximum execution effort limit (a.k.a. gas limit) for end users which is 9999 would cause a lot of braking changes in SDKs and current user code.
 Instead this FLIP proposes to keep the maximum execution effort limit as is, and change the feature weights accordingly, so a desired estimated execution time is reached at 9999 execution effort.
 
-This can be done, since the feature weights from the previous section model the estimated execution time for a transaction, when that transaction is run on a reference execution node. 
+This can be done, since the feature weights from the previous section model the estimated execution time for a transaction, when that transaction is run on a reference execution node.
 
 🚧 The numbers in the following section might change 🚧
 
@@ -536,7 +538,7 @@ This is achieved using the following method. Using the assumption that we are al
 
 <!-- $$
 t \approx kl
-$$ --> 
+$$ -->
 
 <div align="center"><img style="background: white;" src="./20220111-execution-effort/eq/4fBxFBaa1u.svg"></div>
 
@@ -544,7 +546,7 @@ Given the desired maximum time of 500 ms (t_max), the maximum loop length (<!-- 
 
 <!-- $$
 \frac{t_\textbf{max}}{k} = l_\textbf{max}
-$$ --> 
+$$ -->
 
 <div align="center"><img style="background: white;" src="./20220111-execution-effort/eq/81WicaV3gM.svg"></div>
 
@@ -575,7 +577,7 @@ def update_max_loop_length(loop_length, time_taken_to_execute):
 
 ### Appendix 2: Table of changes for common transactions
 
-			
+
 |                                                        | Execution Effort Used Out of<br>  Maximum 9999 Available | Cost [1E-8 FLOW] | Cost compared to before |
 | :----------------------------------------------------- | -------------------------------------------------------: | ---------------: | :---------------------: |
 | Empty Transaction                                      |                                                        0 |              100 |           10%           |

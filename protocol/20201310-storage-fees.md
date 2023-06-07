@@ -1,10 +1,12 @@
-# Storage Fees
+---
+status: implemented
+flip: 99
+authors: Janez Podhostnik (janez.podhostnik@dapperlabs.com)
+sponsor: Janez Podhostnik (janez.podhostnik@dapperlabs.com)
+updated: 2021-01-19
+---
 
-| Status        | Finalized                                            |
-:-------------- |:---------------------------------------------------- |
-| **Author(s)** | Janez Podhostnik (janez.podhostnik@dapperlabs.com)   |
-| **Sponsor**   | Janez Podhostnik (janez.podhostnik@dapperlabs.com)   |
-| **Updated**   | 2021-01-19                                           |
+# FLIP 99: Storage Fees
 
 ## Objective
 
@@ -24,7 +26,7 @@ Limiting the amount of storage that an account can have will prevent the executi
 
 ## User Benefit
 
-Limiting the maximum amount of storage each account has will have the long term benefit of reducing the growth of the execution state size, and thus reducing the growth of the execution node requirements. 
+Limiting the maximum amount of storage each account has will have the long term benefit of reducing the growth of the execution state size, and thus reducing the growth of the execution node requirements.
 
 Prescribing a reasonable minimum amount of storage will allow almost everyone to deploy and use smart contracts normally. The minimum amount of storage must be at least large enough to allow the account to be usable, i.e. it must be large enough to store keys to allow a transaction signed with the key to be successfully executed, and it must be large enough to store the FLOW smart contract objects (vault, receiver capability, etc.) to allow the holding of FLOW tokens.
 
@@ -248,7 +250,7 @@ Memory usage should not significantly change since only one field one resource a
 
 ### Dependencies
 
-* Dependent projects: 
+* Dependent projects:
     * `flow-core-contracts` (adding **FlowStorageFees** contract, changing **ServiceAccount** contract),
     * `cadence` (access to new fields),
     * `flow-go` (execution change),

@@ -1,11 +1,12 @@
-# Change Cadence for-loop semantics
+---
+status: implemented
+flip: 13
+authors: Bastian Müller (bastian@dapperlabs.com)
+sponsor: Bastian Müller (bastian@dapperlabs.com)
+updated: 2022-12-06
+---
 
-| Status        | Implemented                                          |
-:-------------- |:---------------------------------------------------- |
-| **FLIP #**    | [13](https://github.com/onflow/flips/pull/13)        |
-| **Author(s)** | Bastian Müller (bastian@dapperlabs.com)              |
-| **Sponsor**   | Bastian Müller (bastian@dapperlabs.com)              |
-| **Updated**   | 2022-12-06                                           |
+# FLIP 13: Change Cadence for-loop semantics
 
 ## Objective
 

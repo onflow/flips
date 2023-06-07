@@ -1,15 +1,16 @@
 ---
-status: Proposed
+status: Implemented
 flip: 1087
-author: Álvaro Lillo Igualada (alvaro.lillo@dapperlabs.com)
+authors: Álvaro Lillo Igualada (alvaro.lillo@dapperlabs.com)
 sponsor: Josh Hannan (joshua.hannan@dapperlabs.com)
 updated: 2022-08-16
---- 
-# Fungible Tokens Metadata
+---
+
+# FLIP 1087: Fungible Tokens Metadata
 
 ## Objective
 
-The goal of this proposal is to allow Fungible Tokens (FT) to provide metadata, in a similar fashion as the [NFT Metadata Standard, FLIP 636](https://github.com/onflow/flow/blob/master/flips/20210916-nft-metadata.md). This will allow better interoperability between fungible tokens and external applications. 
+The goal of this proposal is to allow Fungible Tokens (FT) to provide metadata, in a similar fashion as the [NFT Metadata Standard, FLIP 636](https://github.com/onflow/flow/blob/master/flips/20210916-nft-metadata.md). This will allow better interoperability between fungible tokens and external applications.
 
 ## Motivation
 
@@ -24,8 +25,8 @@ The creation of a Metadata standard for fungible tokens will bring two major use
 The core of this proposal is to add the following interface and have any `FungibleToken.Vault` implement it. This is the same interface that can be found in the NFT metadata contract.
 
 ```cadence
-    /// Provides access to a set of metadata views. A struct or 
-    /// resource (e.g. a Vault) can implement this interface to provide access to 
+    /// Provides access to a set of metadata views. A struct or
+    /// resource (e.g. a Vault) can implement this interface to provide access to
     /// the views that it supports.
     ///
     pub resource interface Resolver {
@@ -37,8 +38,8 @@ The core of this proposal is to add the following interface and have any `Fungib
 Also, based on the experience gained from the NFT metadata standard, implementations are required to provide an  `FTView` view, which provides a full picture of the FT. It wraps the `FTDisplay` and `FTVaultData` views.
 
 ```cadence
-    /// FTView wraps FTDisplay and FTVaultData, and is used 
-    /// to give a complete picture of a FT. Most FTs should implement this 
+    /// FTView wraps FTDisplay and FTVaultData, and is used
+    /// to give a complete picture of a FT. Most FTs should implement this
     /// view.
     ///
     pub struct FTView {
@@ -54,13 +55,13 @@ Also, based on the experience gained from the NFT metadata standard, implementat
     }
 ```
 
-The `FTView` contains two sub-views: 
+The `FTView` contains two sub-views:
 - `FTDisplay`, which provides the "human readable" information about the fungible token; and
 - `FTVaultData`, which provides the data needed to interact with the fungible token (paths, types linked to those paths, similar to `NFTCollectionData`)
 
 ```cadence
-    /// View to expose the information needed to showcase this FT. 
-    /// This can be used by applications to give an overview and 
+    /// View to expose the information needed to showcase this FT.
+    /// This can be used by applications to give an overview and
     /// graphics of the FT.
     ///
     pub struct FTDisplay {
@@ -101,7 +102,7 @@ The `FTView` contains two sub-views:
 
 ```cadence
     /// View to expose the information needed store and interact with a FT vault.
-    /// This can be used by applications to setup a FT vault with proper 
+    /// This can be used by applications to setup a FT vault with proper
     /// storage and public capabilities.
     ///
     pub struct FTVaultData {
@@ -109,7 +110,7 @@ The `FTView` contains two sub-views:
         pub let storagePath: StoragePath
 
         /// Public path which must be linked to expose public capabilities of
-        /// this FT, including standard FT interfaces and metadataviews 
+        /// this FT, including standard FT interfaces and metadataviews
         /// interfaces
         pub let publicPath: PublicPath
 
@@ -117,14 +118,14 @@ The `FTView` contains two sub-views:
         /// capability to withdraw funds from the vault
         pub let providerPath: PrivatePath
 
-        /// Type that should be linked at the aforementioned public path. This 
-        /// is normally a restricted type with many interfaces. Notably the 
-        /// `FT.Balance`, `FT.Receiver`, and `FungibleMetadataViews.Resolver` 
+        /// Type that should be linked at the aforementioned public path. This
+        /// is normally a restricted type with many interfaces. Notably the
+        /// `FT.Balance`, `FT.Receiver`, and `FungibleMetadataViews.Resolver`
         /// interfaces are required.
         pub let publicLinkedType: Type
 
-        /// Type that should be linked at the aforementioned private path. This 
-        /// is normally a restricted type with at a minimum the `FT.Provider` 
+        /// Type that should be linked at the aforementioned private path. This
+        /// is normally a restricted type with at a minimum the `FT.Provider`
         /// interface
         pub let providerLinkedType: Type
 
@@ -155,7 +156,7 @@ The `FTView` contains two sub-views:
     }
 ```
 
-In order to be able to use the `FTDisplay` we will need to use or import (depending on if this ends up being part of the original `MetadataViews.cdc` contract or having its own contract) the following views: `ExternalURL`, `File`, `HTTPFile`, `IPFSFile`, `Media` and `Medias`. 
+In order to be able to use the `FTDisplay` we will need to use or import (depending on if this ends up being part of the original `MetadataViews.cdc` contract or having its own contract) the following views: `ExternalURL`, `File`, `HTTPFile`, `IPFSFile`, `Media` and `Medias`.
 
 ### Alternatives Considered
 
@@ -197,4 +198,4 @@ The existing [NFT Metadata views standard](https://github.com/onflow/flow/blob/m
 
 ## Questions and Discussion Topics
 
-We should agree on which views, new ones and existing ones, should be needed to implement by any `Fungible Token` adopting the standard. 
+We should agree on which views, new ones and existing ones, should be needed to implement by any `Fungible Token` adopting the standard.
