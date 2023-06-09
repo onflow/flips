@@ -1,108 +1,47 @@
-# Events emitted from interfaces
+---
+status: proposed
+flip: 111
+authors: Deniz Mert Edincik (deniz@edincik.com) / Supun Setunga (supun.setunga@dapperlabs.com)
+sponsor: Deniz Mert Edincik (deniz@edincik.com) / Supun Setunga (supun.setunga@dapperlabs.com)
+updated: 2023-06-09
+---
 
-| Status        | Proposed                                             |
-:-------------- |:---------------------------------------------------- | 
-| **FLIP #**    | [82](https://github.com/onflow/flips/pull/82/)       | 
-| **Author(s)** | Deniz Mert Edincik (deniz@edincik.com)               | 
-| **Sponsor**   |                                                      | 
-| **Updated**   | 2023-04-17                                           | 
+# FLIP 111: Emit events from function conditions
 
 ## Objective
 
-The objective of this proposal is to enable interfaces to emit events.
+The objective of this proposal is to allow emitting events from function pre/post conditions.
 
 ## Motivation
 
-At present, Cadence allows the declaration of events within interfaces, but it
-does not permit the emission of events directly from these interfaces. Instead,
-it relies on the implementation to emit events as needed.  This approach can
-lead to potential issues with contracts, including the emission of incorrect
-events, events with improper parameters, multiple emissions of the same event,
-or the omission of necessary events. 
+Currently, though interfaces can declare events, they act as a type-requirement for the implementations,
+and cannot be used to emit events using `emit` statement.
+Also, there is no way for the interfaces to guarantee the emission of an event.
+Instead, the implementation of the interface needs to re-declare the same event, and then emit events as needed.
 
-By viewing interfaces as a set of governing rules for implementation,
-incorporating event restrictions could serve as an effective solution to these
-challenges.
+The current approach not only put the burden on the implementor to emit the event,
+but also can lead to potential issues with events, such as:
+- Emission of incorrect events
+- Events with improper parameters
+- Multiple emissions of the same event
+- Omission of necessary events
 
 ## User Benefit
 
-This will establish a more secure environment for the user, ensuring that the
-emitted event is a direct outcome of an action specified within the interface.
+Interfaces can ensure the emission of proper events, and can take that burden off the implementation.
 
 ## Design Proposal
 
-For instance, a sample extract from the `FungibleToken` contract can be currently
-represented as:
+As per the objectives, the solution proposed in this FLIP is to allow emitting events inside pre/post conditions.
+This allows interfaces to guarantee the emission of events, when a function (defined in the interface) is called.
 
+### Example:
 
-```cadence 
+Suppose the `FungibleToken` is a contract, and has a `TokenWithdrawal` event declared in it.
 
-pub contract FungibleToken {
-   
-    pub event TokenWithdrawal(type: Type, amount: UFix64, from: Address?)
-   
-    pub resource interface Provider{ 
-        pub fun withdraw(amount: UFix64): @{FungibleToken.Vault} 
-        { 
-            post 
-            { 
-                result.balance == amount: "Withdrawal amount 
-                must be the same as the balance of the withdrawn Vault" 
-            } 
-        } 
-    }
- 
-```
-
-We can enhance our approach by defining a trampoline function, which not only
-eliminates the need for altering the cadence but also offers a more efficient
-method, as this also allows us to emit various events based on specific conditions
-present in the `emitTokenWithdrawal` function.
-
-
+With function pre/post conditions being able to emit events, the `withdraw` function would look like below.
 
 ```cadence 
-
-pub contract FungibleToken {
-   
-    pub event TokenWithdrawal(type: Type, amount: UFix64, from: Address?)
-    
-    //Temporary trampoline to emit event 
-    access(contract) fun emitTokenWithdrawal(type: Type, amount: UFix64, from: Address?): Bool{ 
-         emit TokenWithdrawal(type:type, amount:amount, from:from) 
-         return true 
-    }
-
-     pub resource interface Provider{ 
-         pub fun withdraw(amount: UFix64): @{FungibleToken.Vault} { 
-             post { 
-                 result.balance == amount: "Withdrawal
-                 amount must be the same as the balance of the withdrawn Vault"
-                
-                FungibleToken.emitTokenWithdrawal(
-                    type:result.getType(),
-                    amount: result.balance, 
-                    from: self.owner?.address) 
-                } 
-            } 
-        } 
-    }
-}
-```
-
-
-### Drawbacks
-
-I don't see any drawback currently. 
-
-
-### Alternatives Considered
-
-Alternative solution would be allowing emitting events from post conditions such
-as:
-
-```cadence 
-
 pub contract FungibleToken {
    
     pub event TokenWithdrawal(type: Type, amount: UFix64, from: Address?)
@@ -110,47 +49,52 @@ pub contract FungibleToken {
     pub resource interface Provider{ 
         pub fun withdraw(amount: UFix64): @{FungibleToken.Vault} { 
             post { 
-                result.balance == amount: "Withdrawal amount
-                        must be the same as the balance of the withdrawn Vault" 
+                result.balance == amount: "Withdrawal amount must be the same as the balance of the withdrawn Vault"
                 emit TokenWithdrawal(type:type, amount:amount, from:from) 
             } 
         } 
     }
- 
+}
 ```
 
+Here, everytime the `withdraw` is invoked, an `TokenWithdrawal` event will be emitted.
+Thus, the interface can ensure the proper event is emitted, and can take that burden off the implementation.
+
+### Drawbacks
+
+The proposed solution doesn't possess any known drawbacks. 
+
+### Alternatives Considered
+
+N/A
 
 ### Performance Implications
 
-There will be no impact on performance since we are simply relocating the
-emission of events from one location to another.
-
+There will be no impact on performance since this simply move the emission of events from one location to another.
 
 ### Dependencies
 
-I have attempted to present a solution that is as compatible with existing
-systems as possible. Naturally, this would necessitate updates to documentation
-and tutorials.
+None
 
-Existing contracts would still emit their old events in addition to these new events, so any event listeners would not be affected by these changes except for if they wanted to listen to new contracts that did not emit their own events.
 ### Engineering Impact
 
-The Flow team should be responsible for maintaining this feature and
-incorporating it into standard contracts.
+This feature would be relatively simple to implement.
 
-This change will be included in the [FT/NFT v2 standards](https://github.com/onflow/flips/pull/56) along with all the other updates and breaking changes that are part of the proposals.
 ### Best Practices
 
-This introduces a new best practice, allowing interface owners the option to
-emit their own events. Additionally, contracts can define their own events that
-complement the existing ones.
+This introduces a new best practice, allowing interface owners the option to emit their own events.
+Additionally, contracts can define their own events that complement the existing ones.
 
 ### Compatibility
 
-This solution should be entirely backwards compatible.
+This solution is backwards compatible.
+
+Existing contracts would still emit their old events in addition to these new events, so any event listeners would not
+be affected by these changes except for if they wanted to listen to new contracts that did not emit their own events.
 
 ### User Impact
 
+None
 
 ## Related Issues
 
@@ -158,6 +102,9 @@ https://github.com/onflow/cadence/issues/2069
 
 ## Prior Art
 
+N/A
 
 ## Questions and Discussion Topics
 
+- Is it still a requirement to allow interfaces to declare concrete events (not just type requirements),
+and being able to use those events in `emit` statements?
