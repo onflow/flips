@@ -1,5 +1,5 @@
 ---
-status: draft 
+status: proposed 
 flip: NNN (do not set)
 authors: Satyam Agrawal (satyam.agrawal@dapperlabs.com)
 sponsor: Jonny (Increment.Fi) (hsyjonny@gmail.com) 
