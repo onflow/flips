@@ -1,9 +1,9 @@
 ---
 status: draft 
 flip: NNN (do not set)
-authors: My Name (me@example.org), AN Other (you@example.org) 
-sponsor: Satyam Agrawal (satyam.agrawal@dapperlabs.com) 
-updated: YYYY-MM-DD 
+authors: Satyam Agrawal (satyam.agrawal@dapperlabs.com)
+sponsor: Jonny (Increment.Fi) (hsyjonny@gmail.com) 
+updated: 2023-06-09 
 ---
 
 # Pool-Based DEX Swap Standard
@@ -221,83 +221,51 @@ pub resource interface ImmediateSwapQuotation {
 
 ### Drawbacks
 
-Why should this *not* be done? What negative impact does it have? 
+There is no real drawbacks because of this FLIP.
 
 ### Alternatives Considered
 
-* Make sure to discuss the relative merits of alternatives to your proposal.
+The current FLIP proposes the utilization of optimized routes for token swaps or quotations. Initially, the standard aimed to maintain a lightweight structure by explicitly specifying the source token and target token types instead of an optimized path. This approach assumes that a direct liquidity pool must exist between the provided source and target tokens for a successful swap, and if not, the transaction would fail.
+
+A discussion took place regarding this matter on the forum post, and the community reached a consensus to incorporate support for an optimized path that satisfies the requirement of a direct pool. However, the reverse scenario is not feasible. For further details, please refer to the [forum post](https://forum.onflow.org/t/dex-standard-on-flow/4607/4).
 
 ### Performance Implications
 
-* Do you expect any (speed / memory)? How will you confirm?
-* There should be microbenchmarks. Are there?
-* There should be end-to-end tests and benchmarks. If there are not 
-(since this is still a design), how will you track that these will be created?
+The implementation of the current FLIP would not have any performance implications on the FLOW network or dApps. However, it would decrease the integration time between Automated Market Makers (AMMs) and wallets, thereby facilitating the creation of seamless and composable DeFi dApps.
 
 ### Dependencies
 
-* Dependencies: does this proposal add any new dependencies to Flow?
-* Dependent projects: are there other areas of Flow or things that use Flow 
-(Access API, Wallets, SDKs, etc.) that this affects? 
-How have you identified these dependencies and are you sure they are complete? 
-If there are dependencies, how are you managing those changes?
+There is no external dependencies on this FLIP.
 
 ### Engineering Impact
 
-* Do you expect changes to binary size / build time / test times?
-* Who will maintain this code? Is this code in its own buildable unit? 
-Can this code be tested in its own? 
-Is visibility suitably restricted to only a small API surface for others to use?
+The implementation of the proposed FLIP would have no impact on the FLOW network itself. However, existing AMMs and wallets that have already integrated with AMMs would need to make changes to support the proposed FLIP. Fortunately, since many AMMs are already utilizing a similar interface, it is anticipated that only minimal changes would be required, although these specific modifications fall outside the scope of the current FLIP.
 
 ### Best Practices
 
-* Does this proposal change best practices for some aspect of using/developing Flow? 
-How will these changes be communicated/enforced?
+No changes in the best practices
 
 ### Tutorials and Examples
 
-* If design changes existing API or creates new ones, the design owner should create 
-end-to-end examples (ideally, a tutorial) which reflects how new feature will be used. 
-Some things to consider related to the tutorial:
-    - It should show the usage of the new feature in an end to end example 
-    (i.e. from the browser to the execution node). 
-    Many new features have unexpected effects in parts far away from the place of 
-    change that can be found by running through an end-to-end example.
-    - This should be written as if it is documentation of the new feature, 
-    i.e., consumable by a user, not a Flow contributor. 
-    - The code does not need to work (since the feature is not implemented yet) 
-    but the expectation is that the code does work before the feature can be merged. 
+TODO
 
 ### Compatibility
 
-* Does the design conform to the backwards & forwards compatibility [requirements](../docs/compatibility.md)?
-* How will this proposal interact with other parts of the Flow Ecosystem?
-    - How will it work with FCL?
-    - How will it work with the Emulator?
-    - How will it work with existing Flow SDKs?
+TODO
 
 ### User Impact
 
-* What are the user-facing changes? How will this feature be rolled out?
+AMMs on FLOW are required to conform to the proposed FLIP in order to offer a seamless experience to users. Nevertheless, end-users will not perceive any significant changes in the user interface. However, this implementation will simplify the lives of dApp developers and smart contract developers on the FLOW blockchain.
 
 ## Related Issues
 
-What related issues do you consider out of scope for this proposal, 
-but could be addressed independently in the future?
+- Oder-book based trading interface is out of the scope and it will be addressed in a separate FLIP.
+- Error reporting is also out of the scope of the FLIP. It will be addressed separately.
 
 ## Prior Art
 
-Does the proposed idea/feature exist in other systems and 
-what experience has their community had?
-
-This section is intended to encourage you as an author to think about the 
-lessons learned from other projects and provide readers of the proposal 
-with a fuller picture.
-
-It's fine if there is no prior art; your ideas are interesting regardless of 
-whether or not they are based on existing work.
+Several AMMs already exist within the FLOW ecosystem, including FLIP sponsors such as [Increment.Fi](https://increment.fi/) and other AMMs like [BloctoSwap](https://swap.blocto.app/#/), [Metapier](https://metapier.org/swap). The author of this FLIP collaborated closely with these entities, gaining valuable insights from their experiences, which informed the design of this FLIP. For additional information, please consult the corresponding [forum post](https://forum.onflow.org/t/dex-standard-on-flow/4607/4). 
 
 ## Questions and Discussion Topics
 
-Seed this with open questions you require feedback on from the FLIP process. 
-What parts of the design still need to be defined?
+TODO
