@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: implemented
 flip: 69
 authors: Satyam Agrawal (satyam.agrawal@dapperlabs.com)
 updated: 2023-02-06
