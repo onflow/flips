@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: rejected
 flip: GOV-3
 forum: https://forum.onflow.org/t/flip-dynamic-inclusion-fees/3700
 authors: Tony Zhang (tony.zhang@dapperlabs.com)
