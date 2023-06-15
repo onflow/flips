@@ -40,10 +40,14 @@ the `T{I}` position of an old restricted type.
 For the new semantics of the interface set type, we can use the existing semantics of the `AnyStruct{X}` and `AnyResource{Y}` restricted types, 
 as these contain no information about the type being restricted, and thus function only as restrictions on a generic type. 
 
+The semantics of upcasting and downcasting restricted types will remain the same; they will be covariant in their interface sets. 
+
 Existing references and capabilities could be migrated by replacing the restricted type with the outer type, i.e. converting `T{I}` to `T`. 
 In combination with the incoming entitlement changes, where the old "restricted" behavior would be recaptured with entitlements, this would
 be able to preserve existing behavior. In particular, in the case of references, the entitlements present on the interfaces would be granted to the
 reference type. 
+
+For example, an existing `&Vault{Withdraw}` value would be migrated to a `auth(Withdrawable) &Vault` reference
 
 ### Drawbacks
 
