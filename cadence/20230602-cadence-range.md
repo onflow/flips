@@ -26,7 +26,7 @@ The two `Range` types improves over the usage of arrays. Hence, users will benef
 
 New types `InclusiveRange<T: Integer>` & `ExclusiveRange<T: Integer>` will be added to Cadence and defined as follows:
 
-```go
+```cadence
 struct InclusiveRange<T: Integer> {
    let start: T
    let end: T
