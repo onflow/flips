@@ -60,14 +60,16 @@ pub contract FungibleToken {
 Here, everytime the `withdraw` is invoked, an `TokenWithdrawal` event will be emitted.
 Thus, the interface can ensure the proper event is emitted, and can take that burden off the implementation.
 
+### Caveats
+
+In the [FLIP for 'view' functions](https://github.com/onflow/flips/blob/main/cadence/20220715-cadence-purity-analysis.md),
+function conditions were considered to be `view`, which restricts the modification of the state inside a condition.
+While the emission of events has been categorized as an operation with side effects, it also notes that emitting events
+is permitted in the proposed design, as they are not observable.
+
 ### Drawbacks
 
-In the [FLIP for purity/mutability analysis and restriction in function conditions](https://github.com/onflow/flow/pull/1056),
-function conditions were considered to be `view`, which restricts the modification of the state inside a condition.
-Emitting of events has been categorized as an operation with side effects, and as such, emitting events is restricted
-in function conditions, in Stable Cadence.
-
-This proposal contradicts the previous FLIP, and suggests allowing events to be emitted in a `view` function context.
+The proposed solution doesn't possess any known drawbacks.
 
 ### Alternatives Considered
 
