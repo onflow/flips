@@ -62,7 +62,12 @@ Thus, the interface can ensure the proper event is emitted, and can take that bu
 
 ### Drawbacks
 
-The proposed solution doesn't possess any known drawbacks. 
+In the [FLIP for purity/mutability analysis and restriction in function conditions](https://github.com/onflow/flow/pull/1056),
+function conditions were considered to be `view`, which restricts the modification of the state inside a condition.
+Emitting of events has been categorized as an operation with side effects, and as such, emitting events is restricted
+in function conditions, in Stable Cadence.
+
+This proposal contradicts the previous FLIP, and suggests allowing events to be emitted in a `view` function context.
 
 ### Alternatives Considered
 
