@@ -3,7 +3,7 @@ status: draft
 flip: 96
 authors: darkdrag00n (darkdrag00n@proton.me)
 sponsor: Bastian Müller (bastian@dapperlabs.com)
-updated: 2023-06-02
+updated: 2023-06-19
 ---
 
 # FLIP 96: Range Type
@@ -29,36 +29,32 @@ New types `InclusiveRange<T: Integer>` & `ExclusiveRange<T: Integer>` will be ad
 ```go
 struct InclusiveRange<T: Integer> {
    let start: T
-   let endInclusive: T
+   let end: T
    let step: T
 }
 
 struct ExclusiveRange<T: Integer> {
    let start: T
-   let endExclusive: T
+   let end: T
    let step: T
 }
 ```
 
 Please note the following points:
-1. In `InclusiveRange`, `endInclusive` is an element of the resulting sequence if and only if it can be produced from `start` using steps of size `step`.
+1. In `InclusiveRange`, `end` is an element of the resulting sequence if and only if it can be produced from `start` using steps of size `step`.
 
-2. In `ExclusiveRange`, `endExclusive` is guaranteed to not be part of the generated sequence. As a result, if `start == endExclusive`, the resulting sequence is empty.
+2. In `ExclusiveRange`, `end` is guaranteed to not be part of the generated sequence. As a result, if `start == end`, the resulting sequence is invalid & we disallow creation of such `ExclusiveRange`.
 
 Both the `Range` types will be usable in a `for-in` loop.
 
 ### Constructor Functions
 Constructor functions will be defined to instantiate variables of type `InclusiveRange` & `ExclusiveRange`. They are defined below.
 
-- `InclusiveRange(start: T, endInclusive: T)`: Creates an `InclusiveRange` with the provided start and end with a default value of step as 1 if `start <= endInclusive` or -1 if `start > endInclusive`.
+- `InclusiveRange(start: T, end: T, step: T)`: Creates an `InclusiveRange` with the provided start, end and step. `step` will be an optional argument with a default value of step as 1 if `start <= end` or -1 if `start > end`.
 
-- `InclusiveRangeWithStep(start: T, endInclusive: T, step: T)`: Creates an `InclusiveRange` with the provided start, end and step.
+- `ExclusiveRange(start: T, end: T, step: T)`: Creates an `ExclusiveRange` with the provided start, end and step. `step` will be an optional argument with a default value of step as 1 if `start < end` or -1 if `start > end`.
 
-- `ExclusiveRange(start: T, endExclusive: T)`: Creates an `ExclusiveRange` with the provided start and end with a default value of step as 1 if `start <= endInclusive` or -1 if `start > endInclusive`.
-
-- `ExclusiveRangeWithStep(start: T, endExclusive: T, step: T)`: Creates an `ExclusiveRange` with the provided start, end and step.
-
-The following constraints are applicable in all the four constructor functions:
+The following constraints are applicable in both the constructor functions:
 
 1. `step` must be non-zero i.e. `abs(step) > 0`.
 
@@ -67,10 +63,10 @@ The following constraints are applicable in all the four constructor functions:
 Violation of the above constraints will lead to runtime errors during instantiation.
 
 ### Public Members
-`Range` will also provide the following public member variables and functions:
+Both `InclusiveRange` & `ExclusiveRange` will also provide the following public member variables and functions:
 
-1. `length`: Returns the count of integers included in the `Range`.
-2. `contains<T: Integer>(value: T): Bool`: Returns if the `Range` includes the provided `value`.
+1. `count`: Returns the count of integers included in the Range.
+2. `contains<T: Integer>(value: T): Bool`: Returns if the Range includes the provided `value`.
 
 ### Examples
 
@@ -82,73 +78,72 @@ Example usage of `InclusiveRange` and `ExclusiveRange` types:
 ////////////////////
 
 let inclusiveRangeValue = InclusiveRange(11, 21)
-inclusiveRangeValue.length // 11
+inclusiveRangeValue.count // 11
 inclusiveRangeValue.contains(20) // True
 for i in inclusiveRangeValue {
     // i will be 11, 12, 13, ... 20, 21
 }
 
-let inclusiveRangeValueWithStep = InclusiveRangeWithStep(11, 20, 2)
-inclusiveRangeValueWithStep.length // 5
+let inclusiveRangeValueWithStep = InclusiveRange(11, 20, 2)
+inclusiveRangeValueWithStep.count // 5
 inclusiveRangeValueWithStep.contains(20) // False since 20 cannot be produced from 11 using step of 2.
 for i in inclusiveRangeValueWithStep {
     // i will be 11, 13, 15, 17, 19
 }
 
 let inclusiveRangeValueBackwards = InclusiveRange(132, 33)
-inclusiveRangeValueBackwards.length // 100
+inclusiveRangeValueBackwards.count // 100
 inclusiveRangeValueBackwards.contains(1) // False
 for i in inclusiveRangeValue {
     // i will be 132, 131, 130, ... 34, 33
 }
 
-let inclusiveRangeValueBackwards = InclusiveRangeWithStep(132, 33, -3)
-inclusiveRangeValueBackwards.length // 15
+let inclusiveRangeValueBackwards = InclusiveRange(132, 33, -3)
+inclusiveRangeValueBackwards.count // 15
 inclusiveRangeValueBackwards.contains(34) // True
 for i in inclusiveRangeValue {
     // i will be 132, 125, 118, ... 41, 34
 }
 
-let invalidStep = InclusiveRangeWithStep(10, 32, 0) // Runtime Error
-let invalidDirection = InclusiveRangeWithStep(132, 33, 3) // Runtime Error since the sequence moves in increasing direction.
+let invalidStep = InclusiveRange(10, 32, 0) // Runtime Error
+let invalidDirection = InclusiveRange(132, 33, 3) // Runtime Error since the sequence moves in increasing direction.
 
 ////////////////////
 // ExclusiveRange //
 ////////////////////
 
 let exclusiveRangeValue = ExclusiveRange(11, 21)
-exclusiveRangeValue.length // 10
+exclusiveRangeValue.count // 10
 exclusiveRangeValue.contains(20) // True
 exclusiveRangeValue.contains(21) // False
 for i in exclusiveRangeValue {
     // i will be 11, 12, 13, ... 19, 20
 }
 
-let exclusiveRangeValueWithStep = ExclusiveRangeWithStep(11, 19, 2)
-exclusiveRangeValueWithStep.length // 4
+let exclusiveRangeValueWithStep = ExclusiveRange(11, 19, 2)
+exclusiveRangeValueWithStep.count // 4
 exclusiveRangeValueWithStep.contains(19) // False
 for i in exclusiveRangeValueWithStep {
     // i will be 11, 13, 15, 17
 }
 
 let exclusiveRangeValueBackwards = ExclusiveRange(132, 33)
-exclusiveRangeValueBackwards.length // 99
+exclusiveRangeValueBackwards.count // 99
 exclusiveRangeValueBackwards.contains(1) // False
 for i in exclusiveRangeValue {
     // i will be 132, 131, 130, ... 35, 34
 }
 
-let exclusiveRangeValueBackwards = ExclusiveRangeWithStep(132, 33, -3)
-exclusiveRangeValueBackwards.length // 15
+let exclusiveRangeValueBackwards = ExclusiveRange(132, 33, -3)
+exclusiveRangeValueBackwards.count // 15
 exclusiveRangeValueBackwards.contains(34) // True
 for i in exclusiveRangeValue {
     // i will be 132, 125, 118, ... 41, 34
 }
 
-let exclusiveRangeValueEmpty = ExclusiveRangeWithStep(10, 10, 2) // Empty since start == endExclusive
-
-let invalidStep = ExclusiveRangeWithStep(10, 32, 0) // Runtime Error
-let invalidDirection = ExclusiveRangeWithStep(132, 33, 3) // Runtime Error
+let exclusiveRangeValueEmpty = ExclusiveRange(10, 10, 2) // Runtime Error
+let invalidStep = ExclusiveRange(10, 32, 0) // Runtime Error
+let invalidDirection = ExclusiveRange(132, 33, 3) // Runtime Error
 ```
 
 ### Drawbacks
@@ -172,7 +167,7 @@ None
 
 ### Engineering Impact
 
-No engineering impact is expected.
+It would require 2-3 weeks of engineering effort to implement, review & test the feature.
 
 ### Compatibility
 
