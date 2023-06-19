@@ -1,9 +1,9 @@
 ---
-status: proposed
+status: accepted
 flip: 83
 authors: Supun Setunga (supun.setunga@dapperlabs.com)
 sponsor: Supun Setunga (supun.setunga@dapperlabs.com)
-updated: 2023-05-03
+updated: 2023-06-19
 ---
 
 # FLIP 83: Improve interface conformance
