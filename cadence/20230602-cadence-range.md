@@ -6,11 +6,11 @@ sponsor: Bastian Müller (bastian@dapperlabs.com)
 updated: 2023-06-19
 ---
 
-# FLIP 96: Range Type
+# FLIP 96: Range Types
 
 ## Objective
 
-This FLIP proposes adding the concept of a `Range` to Cadence. It proposes two new types, `InclusiveRange` and `ExclusiveRange` along with constructor functions to create them. It also proposes their usage inside a `for-in` loop.
+This FLIP proposes adding the concept of a range to Cadence. It proposes two new types, `InclusiveRange` and `ExclusiveRange` along with constructor functions to create them. It also proposes their usage inside a `for-in` loop.
 
 ## Motivation
 
