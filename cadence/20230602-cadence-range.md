@@ -63,10 +63,9 @@ The following constraints are applicable in both the constructor functions:
 Violation of the above constraints will lead to runtime errors during instantiation.
 
 ### Public Members
-Both `InclusiveRange` & `ExclusiveRange` will also provide the following public member variables and functions:
+Both `InclusiveRange` & `ExclusiveRange` will also provide the following public members:
 
-1. `count`: Returns the count of integers included in the Range.
-2. `contains<T: Integer>(value: T): Bool`: Returns if the Range includes the provided `value`.
+1. `contains<T: Integer>(value: T): Bool`: Returns if the Range includes the provided `value`.
 
 ### Examples
 
@@ -84,7 +83,7 @@ for i in inclusiveRangeValue {
     // i will be 11, 12, 13, ... 20, 21
 }
 
-let inclusiveRangeValueWithStep = InclusiveRange(11, 20, 2)
+let inclusiveRangeValueWithStep = InclusiveRange(11, 20, step: 2)
 inclusiveRangeValueWithStep.count // 5
 inclusiveRangeValueWithStep.contains(20) // False since 20 cannot be produced from 11 using step of 2.
 for i in inclusiveRangeValueWithStep {
@@ -98,15 +97,15 @@ for i in inclusiveRangeValue {
     // i will be 132, 131, 130, ... 34, 33
 }
 
-let inclusiveRangeValueBackwards = InclusiveRange(132, 33, -3)
+let inclusiveRangeValueBackwards = InclusiveRange(132, 33, step: -3)
 inclusiveRangeValueBackwards.count // 15
 inclusiveRangeValueBackwards.contains(34) // True
 for i in inclusiveRangeValue {
     // i will be 132, 125, 118, ... 41, 34
 }
 
-let invalidStep = InclusiveRange(10, 32, 0) // Runtime Error
-let invalidDirection = InclusiveRange(132, 33, 3) // Runtime Error since the sequence moves in increasing direction.
+let invalidStep = InclusiveRange(10, 32, step: 0) // Runtime Error
+let invalidDirection = InclusiveRange(132, 33, step: 3) // Runtime Error since the sequence moves in increasing direction.
 
 ////////////////////
 // ExclusiveRange //
@@ -120,7 +119,7 @@ for i in exclusiveRangeValue {
     // i will be 11, 12, 13, ... 19, 20
 }
 
-let exclusiveRangeValueWithStep = ExclusiveRange(11, 19, 2)
+let exclusiveRangeValueWithStep = ExclusiveRange(11, 19, step: 2)
 exclusiveRangeValueWithStep.count // 4
 exclusiveRangeValueWithStep.contains(19) // False
 for i in exclusiveRangeValueWithStep {
@@ -134,16 +133,17 @@ for i in exclusiveRangeValue {
     // i will be 132, 131, 130, ... 35, 34
 }
 
-let exclusiveRangeValueBackwards = ExclusiveRange(132, 33, -3)
+let exclusiveRangeValueBackwards = ExclusiveRange(132, 33, step: -3)
 exclusiveRangeValueBackwards.count // 15
+exclusiveRangeValueBackwards.contains(35) // False
 exclusiveRangeValueBackwards.contains(34) // True
 for i in exclusiveRangeValue {
     // i will be 132, 125, 118, ... 41, 34
 }
 
-let exclusiveRangeValueEmpty = ExclusiveRange(10, 10, 2) // Runtime Error
-let invalidStep = ExclusiveRange(10, 32, 0) // Runtime Error
-let invalidDirection = ExclusiveRange(132, 33, 3) // Runtime Error
+let exclusiveRangeValueEmpty = ExclusiveRange(10, 10, step: 2) // Runtime Error
+let invalidStep = ExclusiveRange(10, 32, step: 0) // Runtime Error
+let invalidDirection = ExclusiveRange(132, 33, step: 3) // Runtime Error
 ```
 
 ### Drawbacks
