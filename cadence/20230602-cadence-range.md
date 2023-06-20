@@ -50,9 +50,9 @@ Both the `Range` types will be usable in a `for-in` loop.
 ### Constructor Functions
 Constructor functions will be defined to instantiate variables of type `InclusiveRange` & `ExclusiveRange`. They are defined below.
 
-- `InclusiveRange(start: T, end: T, step: T)`: Creates an `InclusiveRange` with the provided start, end and step. `step` will be an optional argument with a default value of step as 1 if `start <= end` or -1 if `start > end`.
+- `InclusiveRange(_ start: T, _ end: T, step: T)`: Creates an `InclusiveRange` with the provided start, end and step. `step` will be an optional argument with a default value of step as 1 if `start <= end` or -1 if `start > end`.
 
-- `ExclusiveRange(start: T, end: T, step: T)`: Creates an `ExclusiveRange` with the provided start, end and step. `step` will be an optional argument with a default value of step as 1 if `start < end` or -1 if `start > end`.
+- `ExclusiveRange(_ start: T, _ end: T, step: T)`: Creates an `ExclusiveRange` with the provided start, end and step. `step` will be an optional argument with a default value of step as 1 if `start < end` or -1 if `start > end`.
 
 The following constraints are applicable in both the constructor functions:
 
