@@ -1,5 +1,5 @@
 ---
-status: proposed 
+status: accepted 
 flip: 84
 authors: Daniel Sainati (daniel.sainati@dapperlabs.com)
 sponsor: Daniel Sainati (daniel.sainati@dapperlabs.com)
@@ -41,6 +41,9 @@ This will increase the verbosity of all code, as well as break every single cont
 that exists, as it is extremely unlikely that there is any code on Mainnet currently that 
 does not use at least one `pub` modifier. However, as discussed in the next section, this may be
 an benefit rather than a drawback. 
+
+Additionally, any existing `pub(set)` fields will need to be replaced with `access(all)` fields, and be given
+a setter function explicitly in order to regain their previous functionality.
 
 ### Compatibility
 
