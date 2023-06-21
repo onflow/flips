@@ -1,9 +1,9 @@
 ---
-status: proposed
+status: accepted
 flip: 111
 authors: Deniz Mert Edincik (deniz@edincik.com) / Supun Setunga (supun.setunga@dapperlabs.com)
 sponsor: Deniz Mert Edincik (deniz@edincik.com) / Supun Setunga (supun.setunga@dapperlabs.com)
-updated: 2023-06-09
+updated: 2023-06-21
 ---
 
 # FLIP 111: Emit events from function conditions
