@@ -1,5 +1,5 @@
 ---
-status: proposed 
+status: accepted 
 flip: 85
 authors: Daniel Sainati (daniel.sainati@dapperlabs.com)
 sponsor: Daniel Sainati (daniel.sainati@dapperlabs.com)
