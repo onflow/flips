@@ -1,9 +1,9 @@
 ---
 status: Implemented
-flip: FLIP-XX
+flip: FLIP-78
 authors: Joshua Hannan (joshua.hannan@dapperlabs.com)
 sponsor: Joshua Hannan (joshua.hannan@dapperlabs.com) 
-updated: 2023-04-03
+updated: 2023-06-22
 ---
 
 # Delegator Staking Minimum
