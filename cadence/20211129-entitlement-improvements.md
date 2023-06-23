@@ -1,9 +1,9 @@
 ---
-status: proposed
+status: accepted
 flip: 94
 authors: Supun Setunga (supun.setunga@dapperlabs.com)
 sponsor: Supun Setunga (supun.setunga@dapperlabs.com)
-updated: 2023-05-31
+updated: 2023-06-23
 ---
 
 # FLIP 94: Entitlements Improvements
