@@ -1,11 +1,12 @@
-# Invalidate References to Transferred Resources
+---
+status: implemented
+flip: 1043
+authors: Supun Setunga (supun.setunga@dapperlabs.com)
+sponsor: Supun Setunga (supun.setunga@dapperlabs.com)
+updated: 2022-10-03
+---
 
-| Status         | Proposed                                     |
-|:---------------|:---------------------------------------------|
-| **FLIP #**     | https://github.com/onflow/cadence/pull/1999  |
-| **Author(s)**  | Supun Setunga (supun.setunga@dapperlabs.com) |
-| **Sponsor**    | Supun Setunga (supun.setunga@dapperlabs.com) |
-| **Updated**    | 2022-10-03                                   |
+# FLIP 1043: Invalidate References to Transferred Resources
 
 ## Objective
 
