@@ -77,28 +77,24 @@ Example usage of `InclusiveRange` and `ExclusiveRange` types:
 ////////////////////
 
 let inclusiveRangeValue = InclusiveRange(11, 21)
-inclusiveRangeValue.count // 11
 inclusiveRangeValue.contains(20) // True
 for i in inclusiveRangeValue {
     // i will be 11, 12, 13, ... 20, 21
 }
 
 let inclusiveRangeValueWithStep = InclusiveRange(11, 20, step: 2)
-inclusiveRangeValueWithStep.count // 5
 inclusiveRangeValueWithStep.contains(20) // False since 20 cannot be produced from 11 using step of 2.
 for i in inclusiveRangeValueWithStep {
     // i will be 11, 13, 15, 17, 19
 }
 
 let inclusiveRangeValueBackwards = InclusiveRange(132, 33)
-inclusiveRangeValueBackwards.count // 100
 inclusiveRangeValueBackwards.contains(1) // False
 for i in inclusiveRangeValue {
     // i will be 132, 131, 130, ... 34, 33
 }
 
 let inclusiveRangeValueBackwards = InclusiveRange(132, 33, step: -3)
-inclusiveRangeValueBackwards.count // 15
 inclusiveRangeValueBackwards.contains(34) // True
 for i in inclusiveRangeValue {
     // i will be 132, 125, 118, ... 41, 34
@@ -112,7 +108,6 @@ let invalidDirection = InclusiveRange(132, 33, step: 3) // Runtime Error since t
 ////////////////////
 
 let exclusiveRangeValue = ExclusiveRange(11, 21)
-exclusiveRangeValue.count // 10
 exclusiveRangeValue.contains(20) // True
 exclusiveRangeValue.contains(21) // False
 for i in exclusiveRangeValue {
@@ -120,21 +115,18 @@ for i in exclusiveRangeValue {
 }
 
 let exclusiveRangeValueWithStep = ExclusiveRange(11, 19, step: 2)
-exclusiveRangeValueWithStep.count // 4
 exclusiveRangeValueWithStep.contains(19) // False
 for i in exclusiveRangeValueWithStep {
     // i will be 11, 13, 15, 17
 }
 
 let exclusiveRangeValueBackwards = ExclusiveRange(132, 33)
-exclusiveRangeValueBackwards.count // 99
 exclusiveRangeValueBackwards.contains(1) // False
 for i in exclusiveRangeValue {
     // i will be 132, 131, 130, ... 35, 34
 }
 
 let exclusiveRangeValueBackwards = ExclusiveRange(132, 33, step: -3)
-exclusiveRangeValueBackwards.count // 15
 exclusiveRangeValueBackwards.contains(35) // False
 exclusiveRangeValueBackwards.contains(34) // True
 for i in exclusiveRangeValue {
