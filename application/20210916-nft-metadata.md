@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: implemented
 flip: 636
 authors: Bjarte Karslen (bjartek@find.xyz), Deniz Mert Edincik (Deniz@edincik.com), Brian Dilley (briandilley@briandilley.com)
 sponsor: Peter Siemens (peter@dapperlabs.com)

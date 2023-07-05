@@ -1,5 +1,5 @@
 ---
-status: Accepted
+status: implemented
 flip: 798
 authors: Janez Podhostnik (janez.podhostnik@dapperlabs.com), Bastian Müller (bastian@dapperlabs.com)
 updated: 2023-05-12

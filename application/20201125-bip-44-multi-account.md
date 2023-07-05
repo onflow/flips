@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: implemented
 flip: 200
 authors: Peter Siemens (peter@dapperlabs.com), Jeffery Doyle (jeffrey.doyle@dapperlabs.com)
 sponsor: Peter Siemens (peter@dapperlabs.com)
@@ -164,20 +164,20 @@ The prescribed account discovery procedure is as follows:
    elliptic curve used to generate it.
    If the gap limit has been reached for both key index and account index, stop
    discovery.
-    - 3.1. If no addresses are found in the registry
-        - 3.1.1 If the key index gap limit has been reached without finding any
-        addressed in the registry, then go to step 2, incrementing the account index
-        by one and starting with key index = 0 again.
-        - 3.1.2 If the key index gap limit has not been reached, go to step 2 and
-        increment the key index by one.
-    - 3.2. If one or more addresses are found, query the Flow network to fetch each
-      account's details.
-        - 3.2.1. If no accounts are found<sup>1</sup>, go to step 2, incrementing
-        the account index by one.
-        - 3.2.2. For each account found<sup>1</sup>, remember the relationship between the path
-        used to generate this key, the curve used to generate this key,
-        and the hash algorithm corresponding to this key and the account's details.
-        Then go to step 2, incrementing the key index by one.
+   - 3.1. If no addresses are found in the registry
+     - 3.1.1 If the key index gap limit has been reached without finding any
+       addressed in the registry, then go to step 2, incrementing the account index
+       by one and starting with key index = 0 again.
+     - 3.1.2 If the key index gap limit has not been reached, go to step 2 and
+       increment the key index by one.
+   - 3.2. If one or more addresses are found, query the Flow network to fetch each
+     account's details.
+     - 3.2.1. If no accounts are found<sup>1</sup>, go to step 2, incrementing
+       the account index by one.
+     - 3.2.2. For each account found<sup>1</sup>, remember the relationship between the path
+       used to generate this key, the curve used to generate this key,
+       and the hash algorithm corresponding to this key and the account's details.
+       Then go to step 2, incrementing the key index by one.
 
 <sup>1</sup>Flow supports account deletion, meaning that an address found in the
 registry may refer to a nonexistent account. In this case the address should be
@@ -283,7 +283,7 @@ to the Flow account model.
 
 ### Dependencies
 
-* Dependent projects: Flow Ledger application, Flow Port, FCL-Ledger-Web
+- Dependent projects: Flow Ledger application, Flow Port, FCL-Ledger-Web
 
 ### Tutorials and Examples
 

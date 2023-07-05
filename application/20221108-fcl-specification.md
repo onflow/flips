@@ -1,9 +1,9 @@
 ---
-status: accepted
+status: implemented
 flip: 45
 authors: Greg Santos (greg.santos@dapperlabs.com)
 sponsor: Justin Barry (justin.barry@dapperlabs.com)
-updated: 2022-11-08
+updated: 2023-05-31
 ---
 
 # FLIP 45: Flow Client Library (FCL) Specification
@@ -41,35 +41,65 @@ Formalizing a specification for FCL will improve developer and user experience, 
 
 #### Table of Contents
 
-- [Abstract](#abstract)
-- [Background / Overview](#background)
-- [Specification](#specification)
-  - [Definitions](#definitions)
-  - [Data Types](#datatypes)
-  - [Data Structures](#datastructures)
-    - [FCL Objects](#fclobjects)
-      - [Service](#service)
-      - [PollingResponse](#pollingresponse)
-      - [Identity](#identity)
-      - [ServiceProvider](#serviceprovider)
-      - [AuthnResponse](#authnresponse)
-      - [Signable](#signable)
-      - [CompositeSignature](#compositesignature)
-    - [Miscellaneous Objects](#miscellaneousobjects)
-      - [ErrorResponse](#errorresponse)
-  - [Supported Services and Methods](#supportedservices)
-    - [Service Methods](#servicemethods)
-      - [HTTP/POST](#httppost)
-      - [IFRAME/RPC](#iframerpc)
-      - [POP/RPC | TAB/RPC](#poprpc)
-      - [EXT/RPC](#extrpc)
-    - [Service Types](#servicetypes)
-      - [Authn Service](#authnservice)
-      - [Authz Service](#authzservice)
-      - [PreAuthz Service](#preauthzservice)
-      - [AuthnRefresh Service](#authnrefreshservice)
-      - [OpenID Service](#openidservice)
-    - [Service data and params](#dataparams)
+- [FLIP 45: Flow Client Library (FCL) Specification](#flip-45-flow-client-library-fcl-specification)
+  - [Objective](#objective)
+  - [Motivation](#motivation)
+  - [User Benefit](#user-benefit)
+  - [Design Proposal](#design-proposal)
+    - [Flow Client Library (FCL) Specification v1.0](#flow-client-library-fcl-specification-v10)
+      - [Table of Contents](#table-of-contents)
+  - [ Abstract](#-abstract)
+  - [ Background / Overview](#-background--overview)
+  - [ Specification](#-specification)
+    - [ Definitions](#-definitions)
+    - [ Data Types](#-data-types)
+    - [ Data Structures](#-data-structures)
+      - [ FCL Objects](#-fcl-objects)
+        - [ `Service`](#-service)
+      - [Service Object Example](#service-object-example)
+        - [ `PollingResponse`](#-pollingresponse)
+        - [ `Identity`](#-identity)
+        - [ `ServiceProvider`](#-serviceprovider)
+        - [ `AuthnResponse`](#-authnresponse)
+        - [ `Signable`](#-signable)
+        - [ `CompositeSignature`](#-compositesignature)
+        - [ `PreSignable`](#-presignable)
+      - [ Miscellaneous Objects](#-miscellaneous-objects)
+        - [ `ErrorResponse`](#-errorresponse)
+        - [ `Message`](#-message)
+        - [`ExtensionServiceInitiationMessage`](#extensionserviceinitiationmessage)
+        - [`open-id`](#open-id)
+        - [`frame`](#frame)
+        - [`local-view`](#local-view)
+    - [ Supported Services and Methods](#-supported-services-and-methods)
+      - [ Service Methods](#-service-methods)
+        - [ IFRAME/RPC (Front Channel)](#-iframerpc-front-channel)
+        - [ POP/RPC | TAB/RPC (Front Channel)](#-poprpc--tabrpc-front-channel)
+        - [ HTTP/POST (Back Channel)](#-httppost-back-channel)
+        - [ EXT/RPC (Front Channel)](#-extrpc-front-channel)
+      - [ Service Method Plugins](#-service-method-plugins)
+      - [ Service Types](#-service-types)
+        - [ Authentication Service `authn`](#-authentication-service-authn)
+          - [Authenticate your User](#authenticate-your-user)
+          - [Once you know who your User is](#once-you-know-who-your-user-is)
+          - [Stopping an Authentication Process](#stopping-an-authentication-process)
+        - [ Authorization Service `authz`](#-authorization-service-authz)
+        - [ User Signature Service `user-signature`](#-user-signature-service-user-signature)
+        - [ PreAuthz Service `pre-authz`](#-preauthz-service-pre-authz)
+        - [ Authentication Refresh Service `authn-refresh`](#-authentication-refresh-service-authn-refresh)
+        - [ Authentication Proof Service `account-proof`](#-authentication-proof-service-account-proof)
+        - [ OpenIDService](#-openidservice)
+      - [ Service `data` and `params`](#-service-data-and-params)
+      - [Integrating with FCL Discovery](#integrating-with-fcl-discovery)
+      - [Dependencies](#dependencies)
+      - [Engineering Impact](#engineering-impact)
+      - [Best Practices](#best-practices)
+      - [Tutorials and Examples](#tutorials-and-examples)
+      - [Compatibility](#compatibility)
+      - [User Impact](#user-impact)
+      - [Related Issues](#related-issues)
+      - [Prior Art](#prior-art)
+      - [Questions and Discussion Topics](#questions-and-discussion-topics)
 
 ## <a id="abstract"></a> Abstract
 
@@ -171,6 +201,7 @@ type ServiceType =
   | "open-id"
   | "back-channel-rpc"
   | "authn-refresh"
+  | "account-proof"
 
 type ServiceMethod =
   | "HTTP/POST"
@@ -437,6 +468,36 @@ interface CompositeSignature extends ObjectBase {
 
 See also [CompositeSignature](https://github.com/onflow/flow-js-sdk/blob/master/packages/fcl/src/current-user/normalize/composite-signature.js).
 
+##### <a id="presignable"></a> `PreSignable`
+
+```typescript
+interface PreSignable extends ObjectBase<"1.0.1"> {
+  f_type: "PreSignable"
+  roles: {
+    proposer: boolean
+    authorizer: boolean
+    payer: boolean
+    param: boolean
+  }
+  voucher: {
+    cadence: string
+    refBlock: string
+    computeLimit: number
+    arguments: {
+      type: string
+      value: unknown
+    }[]
+    proposalKey: {
+      address: string
+      keyId: number
+      sequenceNum: number
+    }
+    payer: string
+    authorizers: string[]
+  }
+}
+```
+
 #### <a id="miscellaneousobjects"></a> Miscellaneous Objects
 
 ##### <a id="errorresponse"></a> `ErrorResponse`
@@ -651,6 +712,7 @@ The following services will be covered:
 | Authorization Service          | `authz`          |
 | User Signature Service         | `user-signature` |
 | Authentication Refresh Service | `authn-refresh`  |
+| Authentication Proof Service   | `account-proof`  |
 
 ##### <a id="authnservice"></a> Authentication Service `authn`
 
@@ -663,7 +725,7 @@ You will need to make and expose a webpage or API hosted at an authentication en
 ```javascript
 // IN APPLICATION
 // configuring fcl to point at a wallet looks like this
-import {config} from "@onflow/fcl"
+import { config } from "@onflow/fcl"
 
 config({
   "discovery.wallet": "url-or-endpoint-fcl-will-use-for-authentication", // FCL Discovery endpoint, wallet provider's authentication URL or extension endpoint
@@ -852,7 +914,7 @@ WalletUtils.approve({
 From any frame, you can send a `FCL:VIEW:CLOSE` post message to FCL, which will halt FCL's current routine and close the frame.
 
 ```javascript
-import {WalletUtils} from "@onflow/fcl"
+import { WalletUtils } from "@onflow/fcl"
 
 WalletUtils.sendMsgToFCL("FCL:VIEW:CLOSE")
 ```
@@ -954,7 +1016,7 @@ The signatures need to be sent back to FCL as HEX strings in an array of `Compos
 ```javascript
 // Pseudocode:
 // For every required signature
-import {WalletUtils} from "@onflow/fcl"
+import { WalletUtils } from "@onflow/fcl"
 
 const encoded = WalletUtils.encodeMessageFromSignable(signable, signerAddress)
 const taggedMessage = tagMessage(encoded) // Tag the message to sign
@@ -1119,6 +1181,29 @@ The eventual response back from the `authn-refresh` service should resolve to an
       }
       // Additional Services
     ],
+  }
+}
+```
+
+##### <a id="accountproofservice"></a> Authentication Proof Service `account-proof`
+
+An application may wish to prove that their current user controls the account authenticated with. To do so, the application can supply a app identifier (string), and a nonce (hex string), which can be used by the wallet to return an optional `account-proof` service as part of user authentication. The application can use this service to verify that the current user is in control of the account they authenticated with.
+
+```javascript
+{
+  f_type: "Service",                       // Its a service!
+  f_vsn: "1.0.0",                          // Follows the v1.0.0 spec for the service
+  type: "account-proof",                   // the type of service it is
+  method: "DATA",                          // Its data!
+  uid: "awesome-wallet#account-proof",     // A unique identifier for the service
+  data: {
+    f_type: "account-proof",
+    f_vsn: "1.0.0"
+    // The user's address (8 bytes, i.e 16 hex characters)
+    address: "0xf8d6e0586b0a20c7",
+    // Nonce signed by the current account-proof (minimum 32 bytes in total, i.e 64 hex characters)
+    nonce: "75f8587e5bd5f9dcc9909d0dae1f0ac5814458b2ae129620502cb936fde7120a",
+    signatures: [CompositeSignature],
   }
 }
 ```
