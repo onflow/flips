@@ -204,6 +204,9 @@ For example, a transaction can only issue a new account capability controller
 if the transaction requests the fine-grained `IssueAccountCapabilityController`
 or coarse-grained `Capabilities` entitlement.
 
+See the [Examples](#Examples) section to see how a transaction which issues an account capability controller
+would look like.
+
 ### Full `Account` Type Definition
 
 ```cadence
@@ -679,6 +682,8 @@ and unlikely to be necessary for the majority of use-cases.
 
 ### Examples
 
+#### Deploying a Contract
+
 Today, a transaction which deploys a contract is likely written as:
 
 ```cadence
@@ -702,7 +707,63 @@ transaction {
 Note the change in the parameter list of the `prepare` block:
 Instead of requesting access to the whole account, only the `AddContract` entitlement is requested,
 which means that the `contracts.add` function is available,
-while other write operations on the account, like adding a key (`keys.add`), are unavailable.
+while other operations on the account, like adding a key (`keys.add`), are unavailable.
+
+### Linking an Account Capability / Issuing an Account Capability Controller
+
+Today, a transaction which using the linking-based capability API is likely written as:
+
+```cadence
+#allowAccountLinking
+
+transaction {
+    prepare(signer: AuthAccount) {
+        signer.linkAccount(/private/account)
+    }
+}
+```
+
+With the new
+[Capability Controllers API](https://github.com/onflow/flips/blob/main/cadence/20220203-capability-controllers.md)
+it is likely written as:
+
+```cadence
+transaction {
+    prepare(signer: AuthAccount) {
+        signer.capabilities.account.issue<&AuthAccount>()
+    }
+}
+```
+
+With this FLIP implemented, the same transaction can now be written as follows:
+
+```cadence
+transaction {
+    prepare(signer: auth(IssueAccountCapabilityController) &Account) {
+        signer.capabilities.account.issue<&Account>()
+    }
+}
+```
+
+Note the change in the parameter list of the `prepare` block:
+Instead of requesting access to the whole account, and annotating the transaction with a special pragma,
+only the `IssueAccountCapabilityController` entitlement is requested,
+which means that the `capabilities.account.issue` function is available,
+while other operations on the account, like adding a key (`keys.add`), are unavailable.
+
+In addition, note how the `issue` function takes a type parameter.
+Currently, the only possible type is `&AuthAccount`,
+which allows the capability to perform all operations on the account.
+With this FLIP, the type is any subtype of `&Account`.
+That means by "default", the capability is not authorized to perform any operations on the account,
+and the issuer may choose to grant certain coarse or fine-grained entitlements as needed.
+
+For example, it is possible to issue a new account capability which is able to access the account's storage,
+but not perform other operations, like adding keys or contracts:
+
+```cadence
+signer.capabilities.account.issue<auth(Storage) &Account>()
+```
 
 ### Compatibility
 
