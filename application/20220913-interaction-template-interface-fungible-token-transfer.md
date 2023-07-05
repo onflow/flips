@@ -1,12 +1,12 @@
 ---
-status: draft
-flip: TBD
+status: proposed
+flip: 9
 authors: Jeffrey Doyle (jeffrey.doyle@dapperlabs.com)
 sponsor: Jeffrey Doyle (jeffrey.doyle@dapperlabs.com)
 updated: 2022-09-13
 ---
 
-# Interaction Template Interface | Fungible Token Transfer Transaction (DRAFT)
+# Interaction Template Interface | Fungible Token Transfer Transaction
 
 ## Abstract
 
