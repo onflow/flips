@@ -1,9 +1,9 @@
 ---
-status: proposed
+status: accepted
 flip: 89
 authors: Supun Setunga (supun.setunga@dapperlabs.com)
 sponsor: Supun Setunga (supun.setunga@dapperlabs.com)
-updated: 2023-05-17
+updated: 2023-07-05
 ---
 
 # FLIP 89: Change Member Access Semantics
