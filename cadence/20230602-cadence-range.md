@@ -3,7 +3,7 @@ status: accepted
 flip: 96
 authors: darkdrag00n (darkdrag00n@proton.me)
 sponsor: Bastian Müller (bastian@dapperlabs.com)
-updated: 2023-06-19
+updated: 2023-07-05
 ---
 
 # FLIP 96: Range Types
