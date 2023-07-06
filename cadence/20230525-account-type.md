@@ -648,6 +648,49 @@ entitlement mapping CapabilitiesMapping {
 }
 ```
 
+### Adjust `getAccount`
+
+The function `getAccount` allows accessing the public portion of an account
+in any context, in transactions and scripts.
+
+The function currently returns a `PublicAccount` value, and has the signature:
+
+```cadence
+fun getAccount(_ address: Address): PublicAccount
+```
+
+The return type of the function is changed from `PublicAccount`
+to the equivalent `&Account`,
+i.e., the function is changed to have the following signature:
+
+```cadence
+fun getAccount(_ address: Address): &Account
+```
+
+### Adjust `getAuthAccount`
+
+The function `getAuthAccount` allows accessing the authorized portion of an account in a script.
+
+The function currently returns an `AuthAccount` value, and has the signature:
+
+```cadence
+fun getAuthAccount(_ address: Address): AuthAccount
+```
+
+The return type of the function is changed from `AuthAccount` to a type parameter,
+i.e., the function is changed to have the following signature:
+
+```cadence
+fun getAuthAccount<T: &Account>(_ address: Address): T
+```
+
+This allows "summoning" any account type needed.
+For example, to get access to the storage of account at address 0x1:
+
+```cadence
+let ref = getAuthAccount<auth(Storage) &Account>(0x1)
+```
+
 ### Drawbacks
 
 This proposal depends on several language features: references, entitlements, entitlement mappings, field access on references, etc.
