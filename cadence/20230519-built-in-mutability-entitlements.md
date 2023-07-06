@@ -53,28 +53,6 @@ The main change proposed in this FLIP is to introduce a set of built-in entitlem
   - `Removable`
   - `Mutable`
 
-<!--
-Having:
-
-```cadence
-struct Foo {
-    access(Insertable, Removable) fun someFunction()
-}
-
-var fooRef: auth{Insertable, Removable} Foo = ...
-```
-
-is equivalent to:
-
-```cadence
-struct Foo {
-    access(Mutable) fun someFunction()
-}
-
-var fooRef: auth{Insertable, Removable} Foo = ...
-```
--->
-
 Along with that, built-in array/dictionary mutating functions such as `append`, `remove`, etc., would get a
 corresponding entitlement access, instead of the `pub`/`access(all)` access that they currently possess.
 Thus, only a reference (to an array/dictionary) that has the correct entitlement can call such methods.
