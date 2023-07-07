@@ -345,7 +345,7 @@ struct Account {
         /// Otherwise, iteration aborts.
         ///
         access(all)
-        fun forEachPublic(_ function: ((PublicPath, Type): Bool))
+        fun forEachPublic(_ function: fun(PublicPath, Type): Bool)
 
         /// Iterate over all the stored paths of an account,
         /// passing each path and type in turn to the provided callback function.
@@ -361,7 +361,7 @@ struct Account {
         /// then the callback must stop iteration by returning false.
         /// Otherwise, iteration aborts.
         access(all)
-        fun forEachStored(_ function: ((StoragePath, Type): Bool))
+        fun forEachStored(_ function: fun (StoragePath, Type): Bool)
     }
 
     access(all)
@@ -462,7 +462,7 @@ struct Account {
         ///
         /// The order of iteration is undefined.
         access(all)
-        fun forEach(_ function: ((AccountKey): Bool))
+        fun forEach(_ function: fun(AccountKey): Bool)
 
         /// The total number of unrevoked keys in this account.
         access(all)
@@ -500,11 +500,11 @@ struct Account {
 
         /// The storage capabilities of the account.
         access(CapabilitiesMapping)
-        let storage: &Account.StorageCapabilities
+        let storage: Account.StorageCapabilities
 
         /// The account capabilities of the account.
         access(CapabilitiesMapping)
-        let account: &Account.AccountCapabilities
+        let account: Account.AccountCapabilities
 
         /// Returns the capability at the given public path.
         /// Returns nil if the capability does not exist,
@@ -560,7 +560,7 @@ struct Account {
         access(GetStorageCapabilityController)
         fun forEachController(
             forPath: StoragePath,
-            _ function: ((&StorageCapabilityController): Bool)
+            _ function: fun(&StorageCapabilityController): Bool
         )
 
         /// Issue/create a new storage capability.
@@ -590,7 +590,7 @@ struct Account {
         /// then the callback must stop iteration by returning false.
         /// Otherwise, iteration aborts.
         access(GetAccountCapabilityController)
-        fun forEachController(_ function: ((&AccountCapabilityController): Bool))
+        fun forEachController(_ function: fun(&AccountCapabilityController): Bool)
 
         /// Issue/create a new account capability.
         access(IssueAccountCapabilityController)
@@ -625,9 +625,9 @@ entitlement RevokeKey
 
 entitlement Inbox
 
-entitlement PublishInbox
-entitlement UnpublishInbox
-entitlement ClaimInbox
+entitlement PublishInboxCapability
+entitlement UnpublishInboxCapability
+entitlement ClaimInboxCapability
 
 /* Capability entitlements */
 
@@ -635,6 +635,15 @@ entitlement Capabilities
 
 entitlement StorageCapabilities
 entitlement AccountCapabilities
+
+entitlement PublishCapability
+entitlement UnpublishCapability
+
+entitlement GetStorageCapabilityController
+entitlement IssueStorageCapabilityController
+
+entitlement GetAccountCapabilityController
+entitlement IssueAccountCapabilityController
 
 /* Entitlement mappings */
 
@@ -656,9 +665,9 @@ entitlement mapping AccountMapping {
     Keys -> AddKey
     Keys -> RevokeKey
 
-    Inbox -> PublishInbox
-    Inbox -> UnpublishInbox
-    Inbox -> ClaimInbox
+    Inbox -> PublishInboxCapability
+    Inbox -> UnpublishInboxCapability
+    Inbox -> ClaimInboxCapability
 
     Capabilities -> StorageCapabilities
     Capabilities -> AccountCapabilities
