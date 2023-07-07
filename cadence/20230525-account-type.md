@@ -210,16 +210,20 @@ would look like.
 ### Full `Account` Type Definition
 
 ```cadence
-pub struct Account {
+access(all)
+struct Account {
 
     /// The address of the account.
-    pub let address: Address
+    access(all)
+    let address: Address
 
     /// The FLOW balance of the default vault of this account.
-    pub let balance: UFix64
+    access(all)
+    let balance: UFix64
 
     /// The FLOW balance of the default vault of this account that is available to be moved.
-    pub let availableBalance: UFix64
+    access(all)
+    let availableBalance: UFix64
 
     /// The storage of the account.
     access(AccountMapping)
@@ -241,18 +245,23 @@ pub struct Account {
     access(AccountMapping)
     let capabilities: Account.Capabilities
 
-    pub struct Storage {
+    access(all)
+    struct Storage {
         /// The current amount of storage used by the account in bytes.
-        pub let used: UInt64
+        access(all)
+        let used: UInt64
 
         /// The storage capacity of the account in bytes.
-        pub let capacity: UInt64
+        access(all)
+        let capacity: UInt64
 
         /// All public paths of this account.
-        pub let publicPaths: [PublicPath]
+        access(all)
+        let publicPaths: [PublicPath]
 
         /// All storage paths of this account.
-        pub let storagePaths: [StoragePath]
+        access(all)
+        let storagePaths: [StoragePath]
 
         /// Saves the given object into the account's storage at the given path.
         ///
@@ -270,7 +279,8 @@ pub struct Account {
         /// If there is an object stored, the type of the object is returned without modifying the stored object.
         ///
         /// The path must be a storage path, i.e., only the domain `storage` is allowed.
-        pub fun type(at path: StoragePath): Type?
+        access(all)
+        fun type(at path: StoragePath): Type?
 
         /// Loads an object from the account's storage which is stored under the given path,
         /// or nil if no object is stored under the given path.
@@ -302,7 +312,8 @@ pub struct Account {
         /// The given type must not necessarily be exactly the same as the type of the copied structure.
         ///
         /// The path must be a storage path, i.e., only the domain `storage` is allowed.
-        pub fun copy<T: AnyStruct>(from: StoragePath): T?
+        access(all)
+        fun copy<T: AnyStruct>(from: StoragePath): T?
 
         /// Returns a reference to an object in storage without removing it from storage.
         ///
@@ -333,7 +344,8 @@ pub struct Account {
         /// then the callback must stop iteration by returning false.
         /// Otherwise, iteration aborts.
         ///
-        pub fun forEachPublic(_ function: ((PublicPath, Type): Bool))
+        access(all)
+        fun forEachPublic(_ function: ((PublicPath, Type): Bool))
 
         /// Iterate over all the stored paths of an account,
         /// passing each path and type in turn to the provided callback function.
@@ -348,13 +360,16 @@ pub struct Account {
         /// or an existing object is removed from a storage path,
         /// then the callback must stop iteration by returning false.
         /// Otherwise, iteration aborts.
-        pub fun forEachStored(_ function: ((StoragePath, Type): Bool))
+        access(all)
+        fun forEachStored(_ function: ((StoragePath, Type): Bool))
     }
 
-    pub struct Contracts {
+    access(all)
+    struct Contracts {
 
         /// The names of all contracts deployed in the account.
-        pub let names: [String]
+        access(all)
+        let names: [String]
 
         /// Adds the given contract to the account.
         ///
@@ -396,7 +411,8 @@ pub struct Account {
         /// Returns the deployed contract for the contract/contract interface with the given name in the account, if any.
         ///
         /// Returns nil if no contract/contract interface with the given name exists in the account.
-        pub fun get(name: String): DeployedContract?
+        access(all)
+        fun get(name: String): DeployedContract?
 
         /// Removes the contract/contract interface from the account which has the given name, if any.
         ///
@@ -410,10 +426,12 @@ pub struct Account {
         ///
         /// Returns nil if no contract with the given name exists in the account,
         /// or if the contract does not conform to the given type.
-        pub fun borrow<T: &Any>(name: String): T?
+        access(all)
+        fun borrow<T: &Any>(name: String): T?
     }
 
-    pub struct Keys {
+    access(all)
+    struct Keys {
 
         /// Adds a new key with the given hashing algorithm and a weight.
         ///
@@ -428,7 +446,8 @@ pub struct Account {
         /// Returns the key at the given index, if it exists, or nil otherwise.
         ///
         /// Revoked keys are always returned, but they have `isRevoked` field set to true.
-        pub fun get(keyIndex: Int): AccountKey?
+        access(all)
+        fun get(keyIndex: Int): AccountKey?
 
         /// Marks the key at the given index revoked, but does not delete it.
         ///
@@ -442,13 +461,16 @@ pub struct Account {
         /// Iteration is stopped early if the function returns `false`.
         ///
         /// The order of iteration is undefined.
-        pub fun forEach(_ function: ((AccountKey): Bool))
+        access(all)
+        fun forEach(_ function: ((AccountKey): Bool))
 
         /// The total number of unrevoked keys in this account.
-        pub let count: UInt64
+        access(all)
+        let count: UInt64
     }
 
-    pub struct Inbox {
+    access(all)
+    struct Inbox {
 
         /// Publishes a new Capability under the given name,
         /// to be claimed by the specified recipient.
@@ -473,7 +495,8 @@ pub struct Account {
         fun claim<T: &Any>(_ name: String, provider: Address): Capability<T>?
     }
 
-    pub struct Capabilities {
+    access(all)
+    struct Capabilities {
 
         /// The storage capabilities of the account.
         access(CapabilitiesMapping)
@@ -486,12 +509,14 @@ pub struct Account {
         /// Returns the capability at the given public path.
         /// Returns nil if the capability does not exist,
         /// or if the given type is not a supertype of the capability's borrow type.
-        pub fun get<T: &Any>(_ path: PublicPath): Capability<T>?
+        access(all)
+        fun get<T: &Any>(_ path: PublicPath): Capability<T>?
 
         /// Borrows the capability at the given public path.
         /// Returns nil if the capability does not exist, or cannot be borrowed using the given type.
         /// The function is equivalent to `get(path)?.borrow()`.
-        pub fun borrow<T: &Any>(_ path: PublicPath): T?
+        access(all)
+        fun borrow<T: &Any>(_ path: PublicPath): T?
 
         /// Publish the capability at the given public path.
         ///
@@ -509,7 +534,8 @@ pub struct Account {
         fun unpublish(_ path: PublicPath): Capability?
     }
 
-    pub struct StorageCapabilities {
+    access(all)
+    struct StorageCapabilities {
 
         /// Get the storage capability controller for the capability with the specified ID.
         ///
@@ -542,7 +568,8 @@ pub struct Account {
         fun issue<T: &Any>(_ path: StoragePath): Capability<T>
     }
 
-    pub struct AccountCapabilities {
+    access(all)
+    struct AccountCapabilities {
         /// Get capability controller for capability with the specified ID.
         ///
         /// Returns nil if the ID does not reference an existing account capability.
