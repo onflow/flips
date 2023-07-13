@@ -1,16 +1,16 @@
 ---
-status: proposed 
+status: proposed
 flip: 120
-authors: Tarak Ben Youssef (tarak.benyoussef@dapperlabs.com) 
+authors: Tarak Ben Youssef (tarak.benyoussef@dapperlabs.com)
 sponsor: 
-updated: 2023-07-13 
+updated: 2023-07-13
 ---
 
 # FLIP 120: Rename unsafeRandom function to random
 
 ## Objective
 
-The purpose is to rename the current `fun unsafeRandom(): UInt64` function to 
+The purpose is to rename the current `fun unsafeRandom(): UInt64` function to
 `fun random(): UInt64`.
 This can be done by introducing a new `random` function, and eventually
 deprecating `unsafeRandom` (breaking change).
@@ -38,7 +38,7 @@ deterministic sequence of randoms.
 - FVM does not expose the PRG seed or state to the execution environment.
 
 These measures make the `unsafeRandom` unpredictable to the transaction execution environment
-and unbiasable by all transaction code prior to the random function call. 
+and unbiasable by all transaction code prior to the random function call.
 
 ## User Benefit
 
@@ -61,7 +61,7 @@ stable cadence release (Cadence v1.0).
 
 ### Drawbacks
 
-Step (2) in [Design Proposal](##Design-Proposal) introduces a breaking change.
+Step (2) in [Design Proposal](#design-proposal) introduces a breaking change.
 
 ### Alternatives Considered
 
@@ -91,12 +91,12 @@ It is important to note that while the new implementation provides
 safe randomness that cannot be biased or predicted by the network miners
 or by the transaction execution prior to the call (for instance a transaction that calls
 `random()` multiple times in order to predict the future random output), developers
-should still be mindful about using the function very carefully. 
+should still be mindful about using the function very carefully.
 
 In particular, a transaction sender can atomically abort the transaction execution
 and revert all its state changes if they judge the random output is not favorable **after it is
 revealed**. The function is not immune to post-selection manipulation where a random number is
-sampled and then rejected. 
+sampled and then rejected.
 As an example, imagine a transaction
 that calls an on-chain casino contract, that rolls a dice to find out if the
 transaction sender wins. The transaction can be written so that it triggers an
@@ -111,15 +111,15 @@ The `random` function can be used exactly the same way as
 
 ### Compatibility
 
-The step 2 of the [Design Proposal](##Design-Proposal) includes a breaking change. 
+The step 2 of the [Design Proposal](#design-proposal) includes a breaking change.
 
 ### User Impact
 
-Please see [Design Proposal](##Design-Proposal) for details on user impact.
+Please see [Design Proposal](#design-proposal) for details on user impact.
 
 ## Related Issues
 
-As mentioned in [Best Practices](###Best-Practices) section, the current proposal and the new FVM implementation
+As mentioned in [Best Practices](#best-practices) section, the current proposal and the new FVM implementation
 do not propose solutions for the transaction abortion issue. Solutions to abortion
 such as commit-reveal schemes can be proposed in a separate FLIP.
 
