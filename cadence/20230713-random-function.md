@@ -1,5 +1,5 @@
 ---
-status: draft 
+status: proposed 
 flip: 120
 authors: Tarak Ben Youssef (tarak.benyoussef@dapperlabs.com) 
 sponsor: 
@@ -61,7 +61,7 @@ stable cadence release (Cadence v1.0).
 
 ### Drawbacks
 
-Step (2) in ##Design-Proposal introduces a breaking change.
+Step (2) in [Design Proposal](##Design-Proposal) introduces a breaking change.
 
 ### Alternatives Considered
 
@@ -111,15 +111,15 @@ The `random` function can be used exactly the same way as
 
 ### Compatibility
 
-The step 2 of the ##Design-Proposal includes a breaking change. 
+The step 2 of the [Design Proposal](##Design-Proposal) includes a breaking change. 
 
 ### User Impact
 
-Please see ##Design-Proposal for details on user impact.
+Please see [Design Proposal](##Design-Proposal) for details on user impact.
 
 ## Related Issues
 
-As mentioned in ###Best-Practices, the current proposal and the new FVM implementation
+As mentioned in [Best Practices](###Best-Practices) section, the current proposal and the new FVM implementation
 do not propose solutions for the transaction abortion issue. Solutions to abortion
 such as commit-reveal schemes can be proposed in a separate FLIP.
 
