@@ -1,12 +1,12 @@
 ---
 status: draft 
-flip: [PR number]
+flip: 120
 authors: Tarak Ben Youssef (tarak.benyoussef@dapperlabs.com) 
 sponsor: 
 updated: 2023-07-13 
 ---
 
-# FLIP [PR number]: Replace the unsafeRandom function by random
+# FLIP 120: Rename unsafeRandom function to random
 
 ## Objective
 
@@ -36,8 +36,9 @@ randoms in the transaction execution environment:
 - It uses a crypto-secure pseudo-random generator (PRG) to extend the seed entropy into a
 deterministic sequence of randoms.
 - FVM does not expose the PRG seed or state to the execution environment.
+
 These measures make the `unsafeRandom` unpredictable to the transaction execution environment
-and unbiasable by all Cadence code prior to the random function call. 
+and unbiasable by all transaction code prior to the random function call. 
 
 ## User Benefit
 
@@ -48,28 +49,28 @@ clarifies the possible confusion about the function safety.
 
 ## Design Proposal
 
-1. as a first step:
+1. As a first step:
   - rename Cadence's [runtime interface](https://github.com/onflow/cadence/blob/8a128022e0a5171f4c3a173911944a2f43548b98/runtime/interface.go#L107) `UnsafeRandom` to
   `Random`.
   - add a new Cadence function `fun random(): UInt64`, backed
   by a safe implementation in the FVM. `fun unsafeRandom(): UInt64` remains
   available to avoid immediate breaking changes. Note that both functions
   would be backed by the same safe FVM implementation.
-2. as a second step, deprecate `fun unsafeRandom(): UInt64` as part of the
+2. As a second step, deprecate `fun unsafeRandom(): UInt64` as part of the
 stable cadence release (Cadence v1.0).
 
 ### Drawbacks
 
-Step 2. introduces a breaking change.
+Step (2) in ##Design-Proposal introduces a breaking change.
 
 ### Alternatives Considered
 
 - `fun random<T: UnsignedInteger>(): T` can provide more flexibility
-to developers. Any random output of type `T` can be built using `fun random(): UInt64`.
+to developers. However, any random output of type `T` can be built using `fun random(): UInt64`.
 Adding a new built-in function can still be considered.
-- an optional modulus can be added as a input `fun random([modulus; UInt64]): UInt64` to produce
+- An optional modulus can be added as a input `fun random([modulus; UInt64]): UInt64` to produce
 a random number less than `modulus`. In particular, a safe implementation that
-provides a uniformly distributed output, suitable for cryptographic applications
+provides a uniformly distributed output (reducing the modulo bias), suitable for cryptographic applications
 could be added. However, such implementation can be built using `fun random(): UInt64`.
 
 ### Performance Implications
@@ -110,15 +111,15 @@ The `random` function can be used exactly the same way as
 
 ### Compatibility
 
-The step 2 of the #Design-proposal includes a breaking change. 
+The step 2 of the ##Design-Proposal includes a breaking change. 
 
 ### User Impact
 
-Please see #Design-proposal.
+Please see ##Design-Proposal for details on user impact.
 
 ## Related Issues
 
-As mentioned in #Best-Practices, the current proposal and the new FVM implementation
+As mentioned in ###Best-Practices, the current proposal and the new FVM implementation
 do not propose solutions for the transaction abortion issue. Solutions to abortion
 such as commit-reveal schemes can be proposed in a separate FLIP.
 
