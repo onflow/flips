@@ -18,9 +18,10 @@ Application FLIPs are standards for applications built on top of FLOW. This coul
 Governance FLIPs are proposals to take governance actions on the network, for instance changing staking rules, admitting new node operators to the allowlist, adjusting fees, or taking various actions with the the service account.
 
 ## Protocol
-Protocol FLIPs affect the core Flow protocol. This may include items such as: new algorithms which are required for any flow client to work on the network, payload API changes, cryptographic methods, etc.
+Protocol FLIPs affect the core Flow protocol. This may include items such as: new algorithms which are required for any flow client to work on the network, payload API changes, cryptographic primitives, etc.
 
-Cadence changes will currently fall under Protocol FLIPs because they are tightly coupled with the FVM.
+## Cadence
+Cadence FLIPs are proposals that affect the Cadence language. If the changes only affect the FVM, the proposal fall under the protocol FLIPs.
 
 # Current FLIPs
 
