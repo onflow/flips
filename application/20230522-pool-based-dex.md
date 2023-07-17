@@ -45,8 +45,8 @@ Computing such an optimized path on-chain would not be feasible due to the poten
 
 ```cadence
 
-/// Data structure that get returned after the `swapExactSourceToTargetTokenUsingPathAndReturn` function execution.
-pub struct interface ExactSwapAndReturnValue {
+/// Resource that get returned after the `swapExactSourceToTargetTokenUsingPathAndReturn` function execution.
+pub resource interface ExactSwapAndReturnValue {
     /// It represents the Vault that holds target token and would be returned
     /// after a swap. 
     pub let targetTokenVault: @FungibleToken.Vault
