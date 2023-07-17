@@ -10,7 +10,7 @@ updated: 2023-06-09
 
 ## Objective
 
-The Flow ecosystem is experiencing continued growth and with this expansion comes a need to expand the DeFi ecosystem on the Flow blockchain. Expansion of DeFi on Flow requires new liquidity - typically through cross-chain bridges - as well as straightforward integration for wallets and developers to provide a simple and intuitive user experience. While the macro topic of liquidity is beyond the scope of this discussion, the initial focus of the nascent standard aims to enable ease of interoperability with, and composability of, DEXs which are a cornerstone concept serving as gateways to any DeFi ecosystem. This FLIP is focused on the pool based DEXs like Uniswap style AMMs.
+The Flow ecosystem is experiencing continued growth and with this expansion comes a need to expand the DeFi ecosystem on the Flow blockchain. Expansion of DeFi on Flow requires new liquidity - typically through cross-chain bridges - as well as straightforward integration for wallets and developers to provide a simple and intuitive user experience. While the macro topic of liquidity is beyond the scope of this discussion, the initial focus of the nascent standard aims to enable ease of interoperability with, and composability of, DEXs which are a cornerstone concept serving as gateways to any DeFi ecosystem. This FLIP is focused on the pool based DEXs like Uniswap v2 style AMMs.
 
 ## Motivation
 
