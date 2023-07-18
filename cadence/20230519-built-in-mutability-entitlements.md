@@ -49,9 +49,9 @@ Before going into the details of the proposal, it is important to note that thes
 [Entitlements](https://github.com/onflow/flips/pull/54).
 
 The main change proposed in this FLIP is to introduce a set of built-in entitlements:
-  - `Insertable`
-  - `Removable`
-  - `Mutable`
+  - `Insert`
+  - `Remove`
+  - `Mutate`
 
 Along with that, built-in array/dictionary mutating functions such as `append`, `remove`, etc., would get a
 corresponding entitlement access, instead of the `pub`/`access(all)` access that they currently possess.
@@ -65,12 +65,12 @@ Array functions would now have the below entitlements:
 - `access(all) fun firstIndex(of: T): Int?`
 - `access(all) fun slice(from: Int, upTo: Int): [T]`
 - `access(all) fun concat(_ array: T): T`
-- `access(Mutable | Insertable) fun append(_ element: T): Void`
-- `access(Mutable | Insertable) fun appendAll(_ element: T): Void`
-- `access(Mutable | Insertable) fun insert(at: Int, _ element: T): Void`
-- `access(Mutable | Removable) fun remove(at: Int): T`
-- `access(Mutable | Removable) fun removeFirst(at: Int): T`
-- `access(Mutable | Removable) fun removeLast(at: Int): T`
+- `access(Mutate | Insert) fun append(_ element: T): Void`
+- `access(Mutate | Insert) fun appendAll(_ element: T): Void`
+- `access(Mutate | Insert) fun insert(at: Int, _ element: T): Void`
+- `access(Mutate | Remove) fun remove(at: Int): T`
+- `access(Mutate | Remove) fun removeFirst(at: Int): T`
+- `access(Mutate | Remove) fun removeLast(at: Int): T`
 
 Thus, for any arbitrary array:
 
@@ -80,17 +80,17 @@ arrayRef.contains("John")          // OK
 arrayRef.append("John")            // Static Error: doesn't have the required entitlement
 arrayRef.remove(2)                 // Static Error: doesn't have the required entitlement
 
-var insertableArrayRef = &array as auth(Insertable) &[String]
+var insertableArrayRef = &array as auth(Insert) &[String]
 insertableArrayRef.contains("John") // OK
 insertableArrayRef.append("John")   // OK
 insertableArrayRef.remove(2)        // Static Error: doesn't have the required entitlement
 
-var removableArrayRef = &array as auth(Removable) &[String]
+var removableArrayRef = &array as auth(Remove) &[String]
 removableArrayRef.contains("John")  // OK
 removableArrayRef.append("John")    // Static Error: doesn't have the required entitlement
 removableArrayRef.remove(2)         // OK
 
-var mutableArrayRef = &array as auth(Mutable) &[String]
+var mutableArrayRef = &array as auth(Mutate) &[String]
 mutableArrayRef.contains("John")   // OK
 mutableArrayRef.append("John")     // OK
 mutableArrayRef.remove(2)          // OK
@@ -102,8 +102,8 @@ Dictionary functions would now have the below entitlements:
 
 - `access(all) fun containsKey(key: K): Bool`
 - `access(all) fun forEachKey(_ function: ((K): Bool)): Void`
-- `access(Mutable | Insertable) fun insert(key: K, _ value: V): V?`
-- `access(Mutable | Removable) fun remove(key: K): V?`
+- `access(Mutate | Insert) fun insert(key: K, _ value: V): V?`
+- `access(Mutate | Remove) fun remove(key: K): V?`
 
 Thus, for any arbitrary dictionary:
 
@@ -113,17 +113,17 @@ dictionaryRef.containsKey("John")               // OK
 dictionaryRef.insert("John", "Doe")             // Static Error: doesn't have the required entitlement
 dictionaryRef.remove("John")                    // Static Error: doesn't have the required entitlement
 
-var insertableDictionaryRef = &dictionary as auth(Insertable) &{String:AnyStruct}
+var insertableDictionaryRef = &dictionary as auth(Insert) &{String:AnyStruct}
 insertableDictionaryRef.containsKey("John")     // OK
 insertableDictionaryRef.insert("John", "Doe")   // OK
 insertableDictionaryRef.remove("John")          // Static Error: doesn't have the required entitlement
 
-var removableDictionaryRef = &dictionary as auth(Removable) &{String:AnyStruct}
+var removableDictionaryRef = &dictionary as auth(Remove) &{String:AnyStruct}
 removableDictionaryRef.containsKey("John")      // OK
 removableDictionaryRef.insert("John", "Doe")    // Static Error: doesn't have the required entitlement
 removableDictionaryRef.remove("John")           // Ok
 
-var mutableDictionaryRef = &dictionary as auth(Mutable) &{String:AnyStruct}
+var mutableDictionaryRef = &dictionary as auth(Mutate) &{String:AnyStruct}
 mutableDictionaryRef.containsKey("John")        // OK
 mutableDictionaryRef.insert("John", "Doe")      // OK
 mutableDictionaryRef.remove("John")             // OK
@@ -131,12 +131,12 @@ mutableDictionaryRef.remove("John")             // OK
 
 ### Assignment
 
-Similar to functions, the assignment operator for arrays/dictionaries would also have the `Mutable` and `Insertable`
+Similar to functions, the assignment operator for arrays/dictionaries would also have the `Mutate` and `Insert`
 entitlements.
-Think of assignment as a built-in function with `Mutable` and `Insertable` entitlements. 
+Think of assignment as a built-in function with `Mutate` and `Insert` entitlements. 
 e.g:
 ```cadence
-access(Mutable | Insertable) set(keyOrIndex, value) { ... }
+access(Mutate | Insert) set(keyOrIndex, value) { ... }
 ```
 
 Thus, for any arbitrary array:
@@ -145,13 +145,13 @@ Thus, for any arbitrary array:
 var arrayRef = &array as &[String]
 arrayRef[2] = "John"               // Static Error: updating via a read-only reference
 
-var mutableArrayRef = &array as auth(Mutable) &[String]
+var mutableArrayRef = &array as auth(Mutate) &[String]
 mutableArrayRef[2] = "John"        // OK
 
-var insertableArrayRef = &array as auth(Insertable) &[String]
+var insertableArrayRef = &array as auth(Insert) &[String]
 insertableArrayRef[2] = "John"     // OK
 
-var removableArrayRef = &array as auth(Removable) &[String]
+var removableArrayRef = &array as auth(Remove) &[String]
 removableArrayRef[2] = "John"     // Static Error: doesn't have the required entitlement
 ```
 
@@ -183,7 +183,7 @@ var collection: @Collection <- ...
 collection.ownedNFTRef[1234] <- nft
 
 // However, can take a mutable reference and mutate the field via the reference
-var mutableOwnedNFTRef = &collection as auth(Mutable) @{UInt64: NonFungibleToken.NFT}
+var mutableOwnedNFTRef = &collection as auth(Mutate) @{UInt64: NonFungibleToken.NFT}
 mutableOwnedNFTRef[1234] <- nft
 ```
 
@@ -219,10 +219,10 @@ It is not mutable since it has no entitlements.
 ```cadence 
 var len = ownedNFTsRef.length         // OK: read only operation
 
-ownedNFTsRef["someNFT"] <- someNft    // Static Error: `append` needs `Mutable` entitlement
+ownedNFTsRef["someNFT"] <- someNft    // Static Error: `append` needs `Mutate` entitlement
 ```
 
-#### Making the Field Mutable
+#### Making the Field Mutate
 
 Assume the author wanted to make `ownedNFTs` field mutable for some reason.
 Given that field-access now always returns a non-auth reference, now the author needs to introduce a function
@@ -234,19 +234,19 @@ pub resource Collection: NonFungibleToken.Collection {
     pub var ownedNFTs: @{UInt64: NonFungibleToken.NFT}
 
     // Provide a function that returns a mutable reference.
-    pub fun getMutableNFTs() auth(Mutable) &{UInt64: NonFungibleToken.NFT} {
-        return &self.ownedNFTs as auth(Mutable) &{UInt64: NonFungibleToken.NFT}
+    pub fun getMutableNFTs() auth(Mutate) &{UInt64: NonFungibleToken.NFT} {
+        return &self.ownedNFTs as auth(Mutate) &{UInt64: NonFungibleToken.NFT}
     }
 }
 ```
 
-Now the mutable operation is possible via the `auth(Mutable)` reference,
+Now the mutable operation is possible via the `auth(Mutate)` reference,
 
 ```cadence
 // Get a mutable reference
 var ownedNFTsRef = collectionRef.getMutableNFTs()
 
-// `ownedNFTsRef` is a dictionary reference with auth{Mutable} entitlement.
+// `ownedNFTsRef` is a dictionary reference with auth{Mutate} entitlement.
 
 var len = ownedNFTsRef.length        // OK
 
@@ -255,7 +255,7 @@ ownedNFTsRef["someNFT"] <- someNft   // OK
 
 ### Drawbacks
 
-It is now possible to have a function that modifies the receiver, but is declared without the `Mutable` entitlement
+It is now possible to have a function that modifies the receiver, but is declared without the `Mutate` entitlement
 requirements.
 
 ```cadence
@@ -269,7 +269,7 @@ pub resource Collection: NonFungibleToken.Collection {
 }
 ```
 
-Assume the author set the access modifier of the `delete` method to be `pub` instead of `access(Mutable)`.
+Assume the author set the access modifier of the `delete` method to be `pub` instead of `access(Mutate)`.
 Now anyone with an un-entitled reference to `Collection` can modify `ownedNFTs`.
 
 However, this is in a way a good thing to have, and eliminates the problem of the previous 
