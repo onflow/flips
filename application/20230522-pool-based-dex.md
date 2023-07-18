@@ -56,7 +56,7 @@ pub resource interface ExactSwapAndReturnValue {
 
 pub resource interface ImmediateSwap {
 
-    /// @notice It will Swap the source token for to target token
+    /// @notice It will Swap the source token for the target token
     ///
     /// If the user wants to swap USDC to FLOW then the
     /// sourceToTargetTokenPath is [Type<USDC>, Type<FLOW>] and
@@ -221,7 +221,7 @@ pub resource interface ImmediateSwapQuotation {
 
 ### Drawbacks
 
-There is no real drawbacks because of this FLIP.
+One limitation of this FLIP is that it restricts the organic emergence and development of tools within the DeFi ecosystem based on user demand and technical requirements. Consequently, we may find ourselves constrained by a standard that fails to adequately address significant aspects of DeFi.
 
 ### Alternatives Considered
 
@@ -255,7 +255,7 @@ TODO
 
 ### User Impact
 
-AMMs on FLOW are required to conform to the proposed FLIP in order to offer a seamless experience to users. Nevertheless, end-users will not perceive any significant changes in the user interface. However, this implementation will simplify the lives of dApp developers and smart contract developers on the FLOW blockchain.
+AMMs on FLOW are strongly encouraged to conform to the proposed FLIP in order to offer a seamless experience to users. Nevertheless, end-users will not perceive any significant changes in the user interface. However, this implementation will simplify the lives of dApp developers and smart contract developers on the FLOW blockchain.
 
 ## Related Issues
 
