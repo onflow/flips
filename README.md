@@ -74,8 +74,8 @@ Everyone is welcome to propose and provide feedback on a FLIP.
 
 A **FLIP author** writes a FLIP and is committed to championing it through the process.
 
-A **FLIP sponsor** is any maintainer who sponsors the FLIP and will shepherd it
-through the FLIP review process.
+If deemend necessary, a FLIP author may have a **FLIP sponsor** who helps shepherd the
+FLIP review process.
 
 A **review committee** is a group of maintainers who are responsible for the strategic direction of components, subcomponents, and public APIs.
 They have the responsibility to accept or reject the adoption of the FLIP via a community vote.
@@ -102,12 +102,9 @@ After writing the FLIP draft, gather feedback from project contributors and main
 
 Once the FLIP is ready for review:
 
-1. _(Optional)_ Recruit a sponsor from the maintainers of the project for which your FLIP concerns.
+1. _(Optional)_ Recruit a sponsor from the maintainers of the project for which your FLIP concerns. A sponsor may help streamline the review process and moderate the discussion with the community.
 
-   You are not required to recruit a sponsor; this step is entirely optional.
-   However, a sponsor acts as a valuable resource who can streamline the review process and increase the likelihood of your FLIP being accepted.
-
-   If you do recruit a sponsor, identify them in the FLIP before posting the PR in step 2.
+   Please note that you are not required to recruit a sponsor; this step is entirely optional. If howevever, you do recruit a sponsor, identify them in the FLIP before posting the PR in step 2.
 
 2. Submit your FLIP as a pull request to this repository ([`onflow/flips`](https://github.com/onflow/flips)).
 
@@ -119,7 +116,7 @@ Once the FLIP is ready for review:
    create a directory of the form `YYYYMMDD-descriptive-name` in which to store those files.
 
    Include the header table and the contents of the **Objective** section in the comment of your pull request, using Markdown.
-   Include a mention of any of the GitHub handles of co-authors, reviewers and sponsors.
+   Include a mention of any of the GitHub handles of co-authors, reviewers and, if applicable, sponsors.
 
    At the top of the PR identify how long the comment period will be.
    This should be a minimum of two weeks from posting the PR.
@@ -127,7 +124,7 @@ Once the FLIP is ready for review:
 3. Send a message to the #developers channel on [Discord](https://discord.gg/flow)
    with a brief description, and a link to the PR and a request for review.
 
-4. The sponsor may request a review committee meeting after sufficient discussion has taken place.
+4. The author may request a review committee meeting after sufficient discussion has taken place.
    This meeting will include the FLIP author, core contributors and interested community members.
    If discussion is lively, wait until it has settled before going to review.
    The goal of the review meeting is to resolve minor issues;
@@ -137,11 +134,7 @@ Once the FLIP is ready for review:
    FLIPs will be merged into this repository ([`onflow/flips`](https://github.com/onflow/flips))
    with the outcome of the review process (approval, rejection).
 
-6. Implementations of a successful FLIP should reference it in their documentation,
-   and work with the sponsor to successfully land the code.
-
-While implementation code is not necessary to start the FLIP process,
-its existence in full or part may help the design discussion.
+6. Implementations of a successful FLIP should reference it in their documentation. While implementation code is not necessary to start the FLIP process, its existence in full or part may help the design discussion.
 
 If in any doubt about this process, feel free to ask on [Discord](https://discord.gg/flow),
 the [community forum](https://forum.onflow.org/), or file an issue in this repository
@@ -177,13 +170,13 @@ Review committees must:
 * provide reasons for their decisions
 
 If a review committee requires changes before acceptance,
-it is the responsibility of the sponsor to ensure these are made and seek subsequent approval from the committee members.
+it is the responsibility of the author (and/or sponsor, if applicable) to ensure these are made and seek subsequent approval from the committee members.
 
-## FLIP sponsors
+## FLIP sponsors (optional)
 
-A sponsor is a Flow maintainer responsible for ensuring the best possible outcome of the FLIP process.
+A sponsor is a Flow maintainer, selected by the author at will, and is responsible for ensuring the best possible outcome of the FLIP process.
 
-In particular this includes:
+In particular a sponsor may help with the following-
 
 * advocating for the proposed design
 * guiding the FLIP to adhere to existing design and style conventions
@@ -198,7 +191,6 @@ While we encourage and celebrate every contributor, the bar for FLIP acceptance 
 A design may be rejected or need significant revision at any one of these stages:
 
 * initial design conversations on the [Flow community forum](https://forum.onflow.org/) or [Discord server](https://discord.gg/flow)
-* failure to recruit a sponsor
 * critical objections during the feedback phase
 * failure to achieve consensus during the design review
 * concerns raised during implementation (e.g., inability to achieve backwards
