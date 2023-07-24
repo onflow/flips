@@ -3,7 +3,7 @@ status: draft
 flip: NNN (do not set)
 authors: Daniel Sainati (daniel.sainati@dapperlabs.com)
 sponsor: Daniel Sainati (daniel.sainati@dapperlabs.com)
-updated: 2023-07-11
+updated: 2023-07-24
 ---
 
 # Remove Type Requirements from Cadence
@@ -55,7 +55,27 @@ the primary use-case for this feature (requiring contracts to define certain eve
 
 ## User Benefit
 
-This will simplify the language for users.  
+This will simplify the language for users.  As an example, a contract previously written with a type requirement like so:
+
+```
+contract interface Interface {
+
+    struct NestedType {}
+
+    fun foo(v: NestedType) {}
+}
+```
+
+would instead be written as 
+
+```
+contract interface Interface {
+
+    struct interface NestedInterface {}
+
+    fun foo(v: {NestedInterface}) {}
+}
+```
 
 ## Design Proposal
 
@@ -80,8 +100,11 @@ to the concrete contract.
 
 We can remove this unnecessary code duplication by changing the semantics of this code to instead
 define a concrete event type `Foo`, which can be referenced as such within `Interface` (i.e. if it is 
-emitted by a condition or default implementation of one of `Interface`'s functions), or as a qualified
-type `Interface.Foo` elsewhere. 
+emitted by a condition or default implementation of one of `Interface`'s functions). Note that 
+the semantics of `emit` require that the emitted event is defined in the same scope as the `emit` statement, 
+so `Foo` would not be emittable outside of `Interface`. This is in order to ensure that the author
+of `Interface` and `Foo` can be certain that all emitted `Foo` events originate from `Interface` code, and 
+cannot originate from elsewhere. 
 
 ### Ban Non-Event Concrete Type Declarations in Interfaces
 
@@ -121,6 +144,3 @@ contract interfaces that provide the type requirements will instead break. These
 as they are not actually nested type definitions. 
 
 ## Questions and Discussion Topics
-
-* Between banning all non-event nested concrete definitions and changing them to behave like the proposed
-new event definitions, which do we prefer?
