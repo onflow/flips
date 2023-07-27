@@ -1,12 +1,12 @@
 ---
 status: draft
-flip: [xxx]
+flip: 123
 authors: Tarak Ben Youssef (tarak.benyoussef@dapperlabs.com)
 sponsor: 
 updated: 2023-07-27
 ---
 
-# FLIP [xxx]: commit reveal scheme for non-reverted randomness
+# FLIP 123: commit reveal scheme for non-reverted randomness
 
 ## Objective
 
