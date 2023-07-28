@@ -37,14 +37,14 @@ The proposed design is a commit-reveal pattern.
 The solution requires infrastructure changes to provide new data to the transaction execution environment:
 
  1. a new FVM function that exposes the current block's SoR (more precisely a derived value from the protocol `SoR_A`) to Cadence runtime. Note that `unsafeRandom` only exposes randoms derived from `SoR_A` through a pseudo-random generator (PRG) but not the `SoR_A` itself. 
- 2. a new system core-contract that stores a limited history of SoRs for the past `N` blocks. The new FVM function in (1) is only available to the history contract, and is not available to other non-system transactions. Note that system-transactions in Flow are executed at the end of each block, after all non-system transactions of the block are executed. The proposal suggests to add a new system transaction that adds the current block's `SoR_A` to the SoR history contract (it also removes the oldest block's `SoR_A`). The contract indexes the SoR history by block height. 
+ 2. a new system core-contract that stores a limited history of SoRs for the past `N` blocks. The new FVM function in (1) is only available to the history contract, and is not available to other non-system transactions. Note that system-transactions in Flow are executed at the end of each block, after all non-system transactions of the block are executed. The proposal suggests to change the system transaction so that it adds the current block's `SoR_A` to the SoR history contract (it also removes the oldest block's `SoR_A`). The contract indexes the SoR history by block height. 
  3. an on-chain implementation of a PRG is required. A PRG is initialized with an SoR and can generate a sequence of random numbers for an application. It's up to the application to use a suitable PRG instance. At least one recommended PRG implementation should be provided as part of the FLIP implementation (precise instance to be determined).
 
 Once the changes above are available, a commit-reveal scheme can be implemented as follows. The coin toss example described [earlier](#motivation) will be used for illustration:
 
- - when a user submits a bidding transaction, the coin toss contract stores the block height where the bid was made and stores the bid amount on the application contract. This is a commitment by the user to use the SoR at the current block. Note that the current block's `SoR_A` isn't known to the transaction execution environment, and therefore the transaction has no way to inspect the random outcome and predict the coin toss result. The current block's `SoR_A` is only available once added to the history core-contract, which only happens at the end of the block's execution. 
- - the coin toss contract grants the user a limited window of time (i.e a block height range) to reveal the results and claim any winnings. Failing to do so, the user loses the bid amount in favour of the coin toss contract.  
- - within the valid window, a user can submit a second transaction to call the coin toss contract and resolve the bid. The coin toss contract looks up the committed block height of the user, then uses the block height to query the past-block's `SoR_A` on the history SoR core-contract.
+ - when a user submits a bidding transaction, the bid amount is transferred to the coin toss contract, and the block height where the bid was made is stored. This is a commitment by the user to use the SoR at the current block. Note that the current block's `SoR_A` isn't known to the transaction execution environment, and therefore the transaction has no way to inspect the random outcome and predict the coin toss result. The current block's `SoR_A` is only available once added to the history core-contract, which only happens at the end of the block's execution. 
+ - the coin toss contract grants the user a limited window of time (i.e a block height range) to reveal the results and claim any winnings. Failing to do so, the bid amount remains in the coin toss contract. The user expiry window can only be less or equal to `N`, since the history contract is limited to the past `N` blocks.
+ - the user can submit a second transaction to call the coin toss contract and resolve the bid. The coin toss contract looks up the committed block height of the user. If the call is made within the valid window, the contract uses the block height to query the past-block's `SoR_A` on the history SoR core-contract, .
  - the coin toss contract uses a PRG seeded by the queried `SoR_A` and diversified using a specific information to the use-case (a user ID or resource ID for instance). Diversification does not add any new entropy to the SoR's entropy, but avoids generating the same outcome for different use-cases. If a diversifier (or salt) isn't used, all users that committed a bid on the same block would either win or lose.
  - The PRG is used to generate the random result and resolve the bid. Note that the user can make the transaction abort after inspecting a losing result. However, the bid amount would be lost anyway when the allocated window expires.
 
@@ -94,13 +94,14 @@ cointossCommit(bet: @FlowToken.Vault) : @Receipt {
     return <- receipt
 }
 
-const let expiryWindowLength = 1000000
-
 cointossReveal(receipt: @Receipt) : @FlowToken.Vault {
 		let currentBlock = getCurrentBlock().height
 		if receipt.commitBlock >= currentBlock {
 			panic("cannot reveal yet")
 		}
+        // `expiryWindowLength` is optionally defined by the application to be less than `N`.
+        //  if not `N` would be implicitly used as an expiry window.
+        const let expiryWindowLength = 1000000
         if receipt.commitBlock + expiryWindowLength > currentBlock {
             return <-FlowToken.createEmptyVault()
         }
@@ -115,7 +116,7 @@ cointossReveal(receipt: @Receipt) : @FlowToken.Vault {
 		return <-self.reserve.withdraw(amount: receipt.betAmount * 2)
 }
 
-fun randomCoin(atBlock: UInt64, salt: [UInt8]) : UInt8 {
+fun randomCoin(atBlock: UInt64, salt: UInt64) : UInt8 {
     let sor = SoRHistory.getSoR(atBlock)
     var prg = createPRG(sor, salt)
     let rand = prg.Uint64()
