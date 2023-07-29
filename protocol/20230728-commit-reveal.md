@@ -86,40 +86,44 @@ Here is an example of a coin toss contract with one function to commit a bid, an
 import SoRHistory from 0xFLOWSORHISTORY
 
 cointossCommit(bet: @FlowToken.Vault) : @Receipt {
-		let receipt <- create Receipt(
-					betAmount: bet.balance,
-					commitBlock: getCurrentBlock().height
-		)
-		self.reserve.deposit(from: <-bet)
+	let receipt <- create Receipt(
+				betAmount: bet.balance,
+				// commit to use randomness at the current block (still unknown)
+				commitBlock: getCurrentBlock().height
+	)
+	// commit the bet
+	self.reserve.deposit(from: <-bet)
     return <- receipt
 }
 
 cointossReveal(receipt: @Receipt) : @FlowToken.Vault {
-		let currentBlock = getCurrentBlock().height
-		if receipt.commitBlock >= currentBlock {
-			panic("cannot reveal yet")
-		}
-        // `expiryWindowLength` is optionally defined by the application to be less than `N`.
-        //  if not `N` would be implicitly used as an expiry window.
-        const let expiryWindowLength = 1000000
-        if receipt.commitBlock + expiryWindowLength > currentBlock {
-            return <-FlowToken.createEmptyVault()
-        }
-		
-		let coin = randomCoin(atBlock: receipt.commitBlock, salt: receipt.id)
-		destroy receipt
+	let currentBlock = getCurrentBlock().height
+	if receipt.commitBlock >= currentBlock {
+		panic("cannot reveal yet")
+	}
+	// `expiryWindowLength` is optionally defined by the application to be less than `N`.
+	//  if not `N` would be implicitly used as an expiry window.
+	const let expiryWindowLength = 1000000
+	if receipt.commitBlock + expiryWindowLength > currentBlock {
+		return <-FlowToken.createEmptyVault()
+	}
+	
+	let coin = randomCoin(atBlock: receipt.commitBlock, salt: receipt.id)
+	destroy receipt
 
-		if coin == 1 {
-			return <-FlowToken.createEmptyVault()
-		}
-		
-		return <-self.reserve.withdraw(amount: receipt.betAmount * 2)
+	if coin == 1 {
+		return <-FlowToken.createEmptyVault()
+	}
+	
+	return <-self.reserve.withdraw(amount: receipt.betAmount * 2)
 }
 
 fun randomCoin(atBlock: UInt64, salt: UInt64) : UInt8 {
-    let sor = SoRHistory.getSoR(atBlock)
-    var prg = createPRG(sor, salt)
-    let rand = prg.Uint64()
-    return rand & 1
+	// query the SoR history core-contract
+	let sor = SoRHistory.getSoR(atBlock)
+	// instantiate a PRG
+	var prg = createPRG(sor, salt)
+	let rand = prg.Uint64()
+	return rand & 1
 }
 ```
