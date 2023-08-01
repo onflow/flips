@@ -446,7 +446,7 @@ Unlinking and retargeting issued capabilities would change to getting a CapCon a
 ```cadence
 let capCon = issuer.capabilities.storage.getController(byCapabilityID: capabilityID)
 
-capCon.revoke()
+capCon.delete()
 // or
 capCon.retarget(target: /storage/counter2)
 ```
