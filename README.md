@@ -114,7 +114,7 @@ Once the FLIP is ready for review:
 
    Note the issue number that gets assigned e.g. for issue https://github.com/onflow/flips/issues/76 the issue number is `76`.
    
-4. Create your FLIP as a pull request to this repository ([`onflow/flips`](https://github.com/onflow/flips)).
+3. Create your FLIP as a pull request to this repository ([`onflow/flips`](https://github.com/onflow/flips)).
 
    Name your FLIP file using the [template](./yyyymmdd-flip-template.md) `YYYYMMDD-descriptive-name.md`,
    where YYYYMMDD is the date of submission, and ‘descriptive-name’ relates to the title of your FLIP.
@@ -123,28 +123,28 @@ Once the FLIP is ready for review:
    If you have images or other auxiliary files,
    create a directory of the form `YYYYMMDD-descriptive-name` in which to store those files.
 
-   Include the header table and the contents of the **Objective** section in the comment of your pull request, using Markdown.
-   Include a mention of any of the GitHub handles of co-authors, reviewers and, if applicable, sponsors.
+   Use the issue number generated in step 2 as the FLIP number.
+
+   Mention the FLIP issue by copying the github url or the issue in the comment section.
 
    At the top of the PR identify how long the comment period will be.
    This should be a minimum of two weeks from posting the PR.
 
    
-
-3. Send a message to the #developers channel on [Discord](https://discord.gg/flow)
+5. Send a message to the #developers channel on [Discord](https://discord.gg/flow)
    with a brief description, and a link to the PR and a request for review.
 
-4. The author may request a review committee meeting after sufficient discussion has taken place.
+6. The author may request a review committee meeting after sufficient discussion has taken place.
    This meeting will include the FLIP author, core contributors and interested community members.
-   If discussion is lively, wait until it has settled before going to review.
+   If the discussion is lively, wait until it has settled before going to review.
    The goal of the review meeting is to resolve minor issues;
    consensus should be reached on major issues beforehand.
 
-5. The meeting may approve the FLIP, reject it, or require changes before it can be considered again.
+7. The meeting may approve the FLIP, reject it, or require changes before it can be considered again.
    FLIPs will be merged into this repository ([`onflow/flips`](https://github.com/onflow/flips))
    with the outcome of the review process (approval, rejection).
 
-6. Implementations of a successful FLIP should reference it in their documentation. While implementation code is not necessary to start the FLIP process, its existence in full or part may help the design discussion.
+8. Implementations of a successful FLIP should reference it in their documentation. While implementation code is not necessary to start the FLIP process, its existence in full or part may help the design discussion.
 
 If in any doubt about this process, feel free to ask on [Discord](https://discord.gg/flow),
 the [community forum](https://forum.onflow.org/), or file an issue in this repository
