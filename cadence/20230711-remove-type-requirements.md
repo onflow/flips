@@ -6,7 +6,7 @@ sponsor: Daniel Sainati (daniel.sainati@dapperlabs.com)
 updated: 2023-07-24
 ---
 
-# Remove Type Requirements from Cadence
+# FLIP 118: Remove Type Requirements from Cadence
 
 ## Objective
 
