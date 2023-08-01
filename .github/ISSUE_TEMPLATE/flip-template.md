@@ -1,5 +1,5 @@
 ---
-name: FLIP template
+name: FLIP issue template
 about: Template to create a FLIP
 title: Flip Description e.g.Dynamic Inclusion fees
 labels: Proposed
