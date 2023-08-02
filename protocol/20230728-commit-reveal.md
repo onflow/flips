@@ -84,8 +84,9 @@ Here is an example of a coin toss contract with one function to commit a bid, an
 
 ```
 import SoRHistory from 0xFLOWSORHISTORY
+import PRG from 0xPRGIMPLEMENTATION
 
-cointossCommit(bet: @FlowToken.Vault) : @Receipt {
+fun commitCointoss(bet: @FlowToken.Vault): @Receipt {
 	let receipt <- create Receipt(
 				betAmount: bet.balance,
 				// commit to use randomness at the current block (still unknown)
@@ -96,18 +97,13 @@ cointossCommit(bet: @FlowToken.Vault) : @Receipt {
     return <- receipt
 }
 
-cointossReveal(receipt: @Receipt) : @FlowToken.Vault {
+fun revealCointoss(receipt: @Receipt): @FlowToken.Vault {
 	let currentBlock = getCurrentBlock().height
 	if receipt.commitBlock >= currentBlock {
 		panic("cannot reveal yet")
 	}
-	// `expiryWindowLength` is optionally defined by the application to be less than `N`.
-	//  if not `N` would be implicitly used as an expiry window.
-	const let expiryWindowLength = 1000000
-	if receipt.commitBlock + expiryWindowLength > currentBlock {
-		return <-FlowToken.createEmptyVault()
-	}
 	
+	let winnings = receipt.betAmount * 2
 	let coin = randomCoin(atBlock: receipt.commitBlock, salt: receipt.id)
 	destroy receipt
 
@@ -115,15 +111,18 @@ cointossReveal(receipt: @Receipt) : @FlowToken.Vault {
 		return <-FlowToken.createEmptyVault()
 	}
 	
-	return <-self.reserve.withdraw(amount: receipt.betAmount * 2)
+	return <-self.reserve.withdraw(amount: winnings)
 }
 
-fun randomCoin(atBlock: UInt64, salt: UInt64) : UInt8 {
+fun randomCoin(atBlock: UInt64, salt: UInt64): UInt8 {
 	// query the SoR history core-contract
+	// if `atBlock` is too far in the past, `getSoR` panics
 	let sor = SoRHistory.getSoR(atBlock)
-	// instantiate a PRG
-	var prg = createPRG(sor, salt)
+	// instantiate a PRG object using external `createPRG` that takes a `seed` 
+	// and `salt` and returns a pseudo-random-generator object
+	let prg = PRG.createPRG(sor, salt)
+	// derive a 64-bit random using the object `prg`
 	let rand = prg.Uint64()
-	return rand & 1
+	return UInt8(rand & 1)
 }
 ```
