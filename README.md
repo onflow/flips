@@ -106,13 +106,13 @@ Once the FLIP is ready for review:
 
    Please note that you are not required to recruit a sponsor; this step is entirely optional. If you recruit a sponsor, identify them in the FLIP before posting the PR in step 2.
 
-2. Create an [issue](https://github.com/onflow/flips/issues/new/choose) using the FLIP issue template. The title of the issue should be title of your FLIP e.g. "Dynamic Inclusion fees".
+2. Create an [issue](https://github.com/onflow/flips/issues/new/choose) using the FLIP issue template. The title of the issue should be the title of your FLIP e.g. "Dynamic Inclusion fees".
 
    Assign an appropriate label for the type of the FLIP (one of `flip:application`, `flip:governance`, `flip:protocol`, `flip:cadence`)
 
    Submit the issue.
 
-   Note the issue number that gets assigned e.g. for issue https://github.com/onflow/flips/issues/76 the issue number is `76`.
+   Note the issue number that gets assigned e.g. for issue https://github.com/onflow/flips/issues/76, the issue number is `76`.
    
 3. Create your FLIP as a pull request to this repository ([`onflow/flips`](https://github.com/onflow/flips)).
 
@@ -132,7 +132,7 @@ Once the FLIP is ready for review:
 
    
 5. Send a message to the #developers channel on [Discord](https://discord.gg/flow)
-   with a brief description, and a link to the PR and a request for review.
+   with a brief description, a link to the PR and a request for review.
 
 6. The author may request a review committee meeting after sufficient discussion has taken place.
    This meeting will include the FLIP author, core contributors and interested community members.
