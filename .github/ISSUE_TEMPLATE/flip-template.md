@@ -1,5 +1,6 @@
 ---
 name: FLIP issue template
+projects: "onflow/37"
 about: Template to create a FLIP
 title: Flip Description e.g.Dynamic Inclusion fees
 labels: Proposed
