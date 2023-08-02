@@ -735,6 +735,24 @@ For example, to get access to the storage of account at address 0x1:
 let ref = getAuthAccount<auth(Storage) &Account>(0x1)
 ```
 
+### Adjust `account` Field of Contracts
+
+All contracts have a a pre-declared field `account`, which currently has the type `AuthAccount`.
+
+The field's type is changed to `auth(Storage, Contracts, Keys, Inbox, Capabilities) &Account`.
+
+### Replace `AuthAccount` constructor with `Account` constructor
+
+The constructor function `fun AuthAccount(payer: AuthAccount): AuthAccount` creates a new account,
+given an account which is charged the cost for the creation.
+
+This function is replaced with the new function
+`fun Account(payer: auth(BorrowValue | Storage) &Account): auth(Storage, Contracts, Keys, Inbox, Capabilities) &Account`.
+Like before, it creates a new account, but now returns a fully-entitled reference to the new account.
+Like before, an account must pay for the creation,
+but given that the charging only requires borrowing a [fungible token vault](https://github.com/onflow/flow-ft) from storage,
+only those entitlements are necessary.
+
 ### Drawbacks
 
 This proposal depends on several language features: references, entitlements, entitlement mappings, field access on references, etc.
