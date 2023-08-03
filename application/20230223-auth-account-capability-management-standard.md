@@ -26,11 +26,7 @@ updated: 2023-02-23
 - [Design Proposal](#design-proposal)
     - [Bird's-Eye View](#birds-eye-view)
     - [Lower-Level Details](#lower-level-details)
-        - [HybridCustody](#hybridcustody)
-        - [CapabilityFactory](#capabilityfactory)
-        - [CapabilityFilter](#capabilityfilter)
-        - [CapabilityProxy](#capabilityproxy)
-    - [Example Implementation](#example-implementation)
+        - [Contracts and Constructs](#contracts-and-constructs)
     - [Considered For Inclusion](#considered-for-inclusion)
         - [Events](#events)
         - [MetadataViews Standards Implementation](#metadataviews-standards-implementation)
@@ -69,7 +65,7 @@ updated: 2023-02-23
 
 # Context
 
-One of Flow’s biggest advantages is its ease of user onboarding; however, as discussed recently, the current state does not [go far enough](https://flow.com/post/flow-blockchain-mainstream-adoption-easy-onboarding-wallets). With the focus on [hybrid custody](https://forum.onflow.org/t/hybrid-custody/4016) and [progressive onboarding flows](https://youtu.be/0eYX_S4jUYM) and the recent work on [AuthAccount capabilities](https://github.com/onflow/flips/pull/53), there is a need for a mechanism to both maintain these capabilities as well as enable dApps to facilitate user interactions that deal with those sub-accounts and the assets within them.
+One of Flow’s biggest advantages is its ease of user onboarding; however, the current state does not [go far enough](https://flow.com/post/flow-blockchain-mainstream-adoption-easy-onboarding-wallets). With the focus on [hybrid custody](https://forum.onflow.org/t/hybrid-custody/4016) and [progressive onboarding flows](https://youtu.be/0eYX_S4jUYM) and the recent work on [AuthAccount capabilities](https://github.com/onflow/flips/pull/53), there is a need for a mechanism to both maintain these capabilities as well as enable dApps to facilitate user interactions that deal with those sub-accounts and the assets within them.
 
 # Objective
 
@@ -82,34 +78,38 @@ Before continuing, let’s clear up some common misconceptions about what’s be
 
 ## Goals
 
-This FLIP proposes a standard for the creation and management of child accounts to support  progressive onboarding models. The standard defines the resource representing the parent-child relationship between accounts, identifies an account as a parent and/or child, and related management functions including:
+This FLIP proposes a standard for the creation and management of child accounts to support  progressive onboarding models. The standard defines the resources representing the parent-child relationship between accounts, identifies an account as a parent and/or child, and related management functions including:
 
-- Child account creation
 - Child AuthAccount capability management
-- Viewing existing child accounts
-- Adding an account as a child account
-- Revoking hybrid custody approval/access granted to a child account
 - Identifying an account’s child accounts
 - Identifying an account’s parent account(s)
+- Distinguishing between parent account & owning account
+- Adding/removing an account as a child account
+- Revoking hybrid custody approval/access granted to a child account from child account owner
+- Empowering child account owners (i.e. applications) to define restrictions on parent account access
+- Patterns for sharing castable Capabilities via parent-child access path
 - Implement useful events builders can rely on
 
 # Ongoing Work
 
-Community-led efforts to collaboratively iterate to a final solution that works for all parties end-to-end can be found in [flowtyio/restricted-child-accounts](https://github.com/Flowtyio/restricted-child-account). This FLIP has been updated to reflect the latest design raised by [@austinkline](https://github.com/austinkline) in [this forum post](https://forum.onflow.org/t/hybrid-custody-restrictions-on-linked-accounts/4561) to address a number of concerns with the original design put forth in this FLIP.
+Community-led efforts to collaboratively iterate toward a final solution that works for all parties end-to-end can be found in [onflow/hybrid-custody](https://github.com/Flowtyio/restricted-child-account), originally named `flowtyio/restricted-child-accounts`. This FLIP has been updated to reflect the current iteration on the design originally raised by [@austinkline](https://github.com/austinkline) in [this forum post](https://forum.onflow.org/t/hybrid-custody-restrictions-on-linked-accounts/4561) to address a number of concerns with the original design put forth in this FLIP.
 
 ## Previous Work
 
-Below are contract and dApp implementations that were used as sandboxes for on-chain gaming, native attachments, progressive onboarding and eventually culminated in the development of this FLIP:
+Below are contract and dApp implementations that were used as sandboxes for onchain gaming, progressive onboarding, eventually culminateing in the development of this FLIP and hybrid custody as it will beployed to Mainnet:
 
 - [Simplified linked accounts Cadence](https://github.com/onflow/linked-accounts)
-- [Linked accounts Cadence in context](https://github.com/onflow/sc-eng-gaming/tree/sisyphusSmiling/child-account-auth-acct-cap)
+- [Hybrid Custody Cadence in context](https://github.com/onflow/sc-eng-gaming)
 - [Walletless onboarding dApp example](https://github.com/onflow/walletless-arcade-example)
-- [v1 Testnet contract deployment](https://f.dnz.dev/0x1b655847a90e644a/ChildAccount)
-- [v2 Testnet contract deployment](https://f.dnz.dev/0x1b655847a90e644a/LinkedAccounts)
+- [v0.0 ChildAccount contract deployment](https://f.dnz.dev/0x1b655847a90e644a/ChildAccount)
+- [v0.1 LinkedAccounts contract deployment](https://f.dnz.dev/0x1b655847a90e644a/LinkedAccounts)
+- [v1.0 HybridCustody contracts deployment](https://f.dnz.dev/0x96b15ff6dfde11fe)
+- [v2.0 HybridCustody contracts deployment](https://f.dnz.dev/0x294e44e1ec6993c6)
 
 ## Proposal Updates
 
 - **05.05.23**: Major design change covering new HybridCustody + supporting contracts, introducing the ability for app developers to define and encapsulate retrictions on the access given to parent accounts.
+- **08.01.23**: Verbiage changes and updates to HybridCustody contract suite.
 
 # Motivation
 
@@ -163,383 +163,62 @@ As we'll see below, the promise of real ownership enabled by Hybrid Custody is s
 
 ## Lower-Level Details
 
-![restricted_child_accounts_low_level](./20230223-auth-account-capability-management-standard-resources/restricted_child_accounts_low_level.png)
-*This diagram depicts the composition of resources and Capabilities involved in this design*
+### Contracts and Constructs
 
-Taking a look at the [current implementation](https://github.com/Flowtyio/restricted-child-account), you'll find the following constructs:
+Below are the contracts involved in the Hybrid Custody construction. The first three come together in the `HybridCustody` contract, so we'll start with those for some context before taking a look at a diagram.
 
-### HybridCustody
+#### CapabilityFilter
 
-- `Manager` - A resource associated with a parent account that will allow its owner to store and access Capabilities which mediate access on child accounts. These can be Capabilities with restrictions (`accounts`) or without restrictions (`ownedAccounts`), mapping to Capabilities on `ProxyAccount` and `ChildAccount` respectively. Enables the addition of delegated Capabilities, retrieval of Capabilities in child accounts, and querying a `Manager`'s child accounts. A manager can also set a filter on the Capabilities it can be granted from a child account which can be helpful if a user is managing child accounts from a custodial wallet that wants to prevent access on specific Capabilities (e.g. `FungibleToken.Vault`).
-- `ProxyAccount` - This resource lives in a child account and maintains a Capability on a `ChildAccount` along with other Capabilities that regulate Capability retrieval from said `ChildAccount`. This resource also serves as a pointer to its related "parent" account who holds a Capability on it from a `Manager` resource.
-- `ChildAccount` - This resource also lives in a child account, encapsulating an AuthAccount Capability on the account in which it's stored. It also maintains state on the parent accounts that have delegated access, its current owner, as well as functionality that enables the owner to revoke parent access and grant account ownership by delegating a Capability on itself to said owner.
+The resources in this contract are variations of `Filter` interface implementations. In short, their job is to determine if a given Capability is allowed - in essence, a filter rule to determine whether a Capability is accessible or not based on its underlying Type.
 
-### CapabilityFactory
-
-- `Manager` - Motivated by the need to retrieve typed Capabilities from child accounts, this resource maintains `Factory` structs which retrieve Capabilities that can be cast by the caller.
-
-### CapabilityFilter
-
-- `DenylistFilter` - Types defined in this filter are those that should not be accessible. This and all following `Filter` implementations link Capabilities that are stored in a `ProxyAccount` as a, well filter, on the Capability Types accessible from a child account.
+- `DenylistFilter` - Types defined in this filter are those that should not be accessible. This and all following `Filter` implementations link Capabilities that are stored in a `ChildAccount` as a, well filter, on the Capability Types accessible from a child account.
 - `AllowlistFilter` - Types defined in this filter are those which are accessible
 - `AllowAllFilter` - Can be counted on to allow all types of capabilities
 
-### CapabilityProxy
+#### CapabilityFactory
 
-- `Proxy` - Tasked with storing and retrieving arbitrary Capabilities and intended to be segmented similar to current public & public models for Capability access via `GetterPublic` and `GetterPrivate` interfaces respectively. This resource in stored in a child account and a Capability on it is maintained by a `ProxyAccount`.
+Constructs in this contract deal with defining access patterns (in `Factory` struct implementations) for specific Capabilities from accounts such that retrieved Capabilities are castable by the caller.
 
-## Example Implementation
+- `Manager` - Motivated by the need to retrieve typed Capabilities from child accounts, this resource maintains `Factory` structs which retrieve Capabilities that can be cast by the caller. A given `Factory` implementation defines how to access a Capability of a certain type from an account.
+
+#### CapabilityDelegator
+
+As it's named, this contract defines a `Delegator` resource that enables the delegation of arbitrary and "naked" Capabilities.
+
+- `Delegator` - Tasked with storing and retrieving arbitrary Capabilities and intended to be segmented similar to current public & public models for Capability access via `GetterPublic` and `GetterPrivate` interfaces respectively. This resource in stored in a child account and a Capability on it is maintained by a `ChildAccount`.
+
+#### HybridCustody
+
+This contract pulls together all of those listed above to enable, well, Hybrid Custody.
+
+- `Manager` - A resource associated with a parent account that will allow its owner to store and access Capabilities which mediate access on child accounts. These can be Capabilities with restrictions (`childAccounts`) or without restrictions (`ownedAccounts`), mapping to Capabilities on `ChildAccount` and `OwnedAccount` respectively. Enables the addition of delegated Capabilities, retrieval of Capabilities in child accounts, and querying a `Manager`'s child accounts. A manager can also set a filter on the Capabilities it can be granted from a child account which can be helpful if a user is managing child accounts from a custodial wallet that wants to prevent access on specific Capabilities (e.g. `FungibleToken.Vault`).
+- `ChildAccount` - This resource lives in a child account and maintains a Capability on an `OwnedAccount` along with other Capabilities that regulate Capability retrieval from said `OwnedAccount`. This resource also serves as a pointer to its related "parent" account who holds a Capability on it from a `Manager` resource.
+- `OwnedAccount` - This resource also lives in a child account, encapsulating an AuthAccount Capability on the account in which it's stored. It also maintains state on the parent accounts that have delegated access, its current owner, as well as functionality that enables the owner to revoke parent access and grant account ownership by delegating a Capability on itself to said owner.
+
+#### Tying it All Together
+
+![hybrid_custody_low_level](./20230223-auth-account-capability-management-standard-resources/hybrid_custody_low_level.png)
+*This diagram depicts the composition of resources and Capabilities involved in this design*
+
+Taking a look at the child account above, we see three resources - `OwnedAccount`, `ChildAccount`, and `Delegator`. The `OwnedAccount` encapsulates a Capability on the child account's AuthAccount while the `ChildAccount` encapsulates Capabilities on facets of the `OwnedAccount`.
+
+In addition to access on the `OwnedAccount`, the `ChildAccount` also has Capabilities on a `CapabilityFactory.Manager` and `CapabilityFilter.Filter`. Together, these two Capabilities enable the delegating application to encapsulate both access patterns and rules around how to access and which types of Capabilities are accessible.
+
+Ultimately, the parent account's access on the child account is mediated through a `Manager` which itself maintains a Capability on the `ChildAccount`.
+
+> :information_source: Note that the diagram above depicts the parent account having both restricted and owned access to the child account via `ChildAccount` and `OwnedAccount` Capabilities respectively; however, this is unlikely to be the case for virtually all users. For the vast majority of users, their hybrid custody access will be mediated via a `ChildAccount` Capability in their `Manager.childAccounts`.
+
+#### Original Implementation Diagram
+
+For reference, here is the diagram that was originally submitted by Austin Kline depicting the relationships & rough interfaces.
 
 ![restricted_child_accounts_overview](./20230223-auth-account-capability-management-standard-resources/restricted_child_accounts_overview.png)
-*Above you'll find the composition of resources and Capabilities along with relevant interfaces*
 
 The constructs listed above have been prototyped and interface references are available for reference below. Development is ongoing and up-to-date implementation can be found in [this repo](https://github.com/Flowtyio/restricted-child-account).
 
-<details>
-<summary>Manager</summary>
+### Interfaces
 
-```cadence
-/// Entry point for a parent to borrow its child account and obtain capabilities or
-/// perform other actions on the child account
-pub resource interface ManagerPrivate {
-    pub fun borrowAccount(addr: Address): &{AccountPrivate, AccountPublic, MetadataViews.Resolver}?
-    pub fun removeChild(addr: Address)
-    pub fun removeOwned(addr: Address)
-    pub fun borrowOwnedAccount(addr: Address): &{Account, ChildAccountPublic, ChildAccountPrivate}?
-    pub fun setManagerCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>?, childAddress: Address)
-}
-
-/// Functions anyone can call on a manager to get information about an account such as
-/// What child accounts it has
-pub resource interface ManagerPublic {
-    pub fun borrowAccountPublic(addr: Address): &{AccountPublic, MetadataViews.Resolver}?
-    pub fun getChildAddresses(): [Address]
-    pub fun getOwnedAddresses(): [Address]
-}
-
-
-/// A resource for an account which fills the Parent role of the Child-Parent account
-/// management Model. A Manager can redeem or remove child accounts, and obtain any capabilities
-/// exposed by the child account to them.
-pub resource Manager: ManagerPrivate, ManagerPublic, MetadataResolver.ResolverCollection {
-    pub let accounts: {{Address: Capability<&{AccountPrivate, AccountPublic, MetadataViews.Resolver}>}
-    pub let ownedAccounts: {Address: Capability<&{Account, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver}>}
-    // A bucket of structs so that the Manager resource can be easily extended with new functionality.
-    pub let data: {String: AnyStruct}
-    // A bucket of resources so that the Manager resource can be easily extended with new functionality.
-    pub let resources: @{String: AnyResource}
-    /// An optional filter to gate what capabilities are permitted to be returned from a proxy account
-    /// For example, Dapper Wallet parent account's should not be able to retrieve any FungibleToken Provider capabilities.
-    pub let filter: Capability<&{CapabilityFilter.Filter}>?
-
-    pub fun addAccount(_ cap: Capability<&{AccountPrivate, AccountPublic, MetadataViews.Resolver}>) {
-        pre {
-            self.accounts[cap.address] == nil: "There is already a child account with this address"
-        }
-    }
-    pub fun setManagerCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>?, childAddress: Address)
-    pub fun removeChild(addr: Address)
-    pub fun addOwnedAccount(_ cap: Capability<&{Account, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver}>) {
-        pre {
-            self.ownedAccounts[cap.address] == nil: "There is already a child account with this address"
-        }
-    }
-    pub fun getAddresses(): [Address]
-    pub fun borrowAccount(addr: Address): &{AccountPrivate, AccountPublic}?
-    pub fun borrowAccountPublic(addr: Address): &{AccountPublic}?
-    pub fun borrowOwnedAccount(addr: Address): &{Account, ChildAccountPublic, ChildAccountPrivate}?
-    pub fun removeOwned(addr: Address)
-    pub fun giveOwnerShip(addr: Address, to: Address)
-    pub fun getChildAddresses(): [Address]
-    pub fun getOwnedAddresses(): [Address]
-    pub fun getViews(): [Type]
-    pub fun resolveView(_ view: Type): AnyStruct?
-}
-```
-</details>
-
-<details>
-<summary>ProxyAccount</summary>
-<code>
-
-```cadence
-/// Public methods exposed on a proxy account resource. ChildAccountPublic will share
-/// some methods here, but isn't necessarily the same
-pub resource interface AccountPublic {
-    pub fun getPublicCapability(path: PublicPath, type: Type): Capability?
-    pub fun getPublicCapFromProxy(type: Type): Capability?
-    pub fun getAddress(): Address
-}
-
-/// Methods only accessible to the designated parent of a ProxyAccount
-pub resource interface AccountPrivate {
-    pub fun getCapability(path: CapabilityPath, type: Type): Capability? {
-        post {
-            result == nil || [true, nil].contains(self.getManagerCapabilityFilter()?.allowed(cap: result!)): "Capability is not allowed by this account's Parent"
-        }
-    }
-    pub fun getPublicCapability(path: PublicPath, type: Type): Capability?
-    pub fun getManagerCapabilityFilter():  &{CapabilityFilter.Filter}?
-    pub fun getPrivateCapFromProxy(type: Type): Capability? {
-        post {
-            result == nil || [true, nil].contains(self.getManagerCapabilityFilter()?.allowed(cap: result!)): "Capability is not allowed by this account's Parent"
-        }
-    }
-    pub fun getPublicCapFromProxy(type: Type): Capability?
-    access(contract) fun redeemedCallback(_ addr: Address)
-    access(contract) fun setManagerCapabilityFilter(_ managerCapabilityFilter: Capability<&{CapabilityFilter.Filter}>?)
-    access(contract) fun setDisplay(_ d: MetadataViews.Display)
-    access(contract) fun parentRemoveChildCallback(parent: Address)
-}
-
-/// The ProxyAccount resource sits between a child account and a parent and is stored on the same account as the child account.
-/// Once created, a private capability to the proxy account is shared with the intended parent. The parent account
-/// will accept this proxy capability into its own manager resource and use it to interact with the child account.
-/// Because the ProxyAccount resource exists on the child account itself, whoever owns the child account will be able to manage all
-/// ProxyAccount resources it shares, without worrying about whether the upstream parent can do anything to prevent it.
-pub resource ProxyAccount: AccountPrivate, AccountPublic, MetadataResolver.Resolver {
-    access(self) let childCap: Capability<&{BorrowableAccount, ChildAccountPublic}>
-
-    // The CapabilityFactory Manager is a ProxyAccount's way of limiting what types can be asked for
-    // by its parent account. The CapabilityFactory returns Capabilities which can be
-    // casted to their appropriate types once obtained, but only if the child account has configured their 
-    // factory to allow it. For instance, a ProxyAccout might choose to expose NonFungibleToken.Provider, but not
-    // FungibleToken.Provider
-    pub var factory: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>
-
-    // The CapabilityFilter is a restriction put at the front of obtaining any non-public Capability.
-    // Some wallets might want to give access to NonFungibleToken.Provider, but only to **some** of the collections it
-    // manages, not all of them.
-    pub var filter: Capability<&{CapabilityFilter.Filter}>
-
-    // The CapabilityProxy is a way to share one-off capabilities by the child account. These capabilities can be public OR private
-    // and are separate from the factory which returns a capability at a given path as a certain type. When using the CapabilityProxy,
-    // you do not have the ability to specify which path a capability came from. For instance, Dapper Wallet might choose to expose
-    // a Capability to their Full TopShot collection, but only to the path that the collection exists in.
-    pub let proxy: Capability<&CapabilityProxy.Proxy{CapabilityProxy.GetterPublic, CapabilityProxy.GetterPrivate}>
-
-    // managerCapabilityFilter is a component optionally given to a proxy account when a manager redeems it. If this filter
-    // is not nil, any Capability returned through the `getCapability` function checks that the manager allows access first.
-    access(self) var managerCapabilityFilter: Capability<&{CapabilityFilter.Filter}>?
-
-    pub let parent: Address
-
-    pub fun getAddress(): Address
-    access(contract) fun redeemedCallback(_ addr: Address)
-    access(contract) fun setManagerCapabilityFilter(_ managerCapabilityFilter: Capability<&{CapabilityFilter.Filter}>?)
-    pub fun setCapabilityFactory(_ cap: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>)
-    pub fun setCapabilityFilter(_ cap: Capability<&{CapabilityFilter.Filter}>)
-    access(contract) fun setDisplay(_ d: MetadataViews.Display)
-    // The main function to a child account's capabilities from a parent account. When a PrivatePath type is used, 
-    // the CapabilityFilter will be borrowed and the Capability being returned will be checked against it to 
-    // ensure that borrowing is permitted
-    pub fun getCapability(path: CapabilityPath, type: Type): Capability?
-    pub fun getPrivateCapFromProxy(type: Type): Capability?
-    pub fun getPublicCapFromProxy(type: Type): Capability?
-    pub fun getPublicCapability(path: PublicPath, type: Type): Capability?
-    pub fun getManagerCapabilityFilter():  &{CapabilityFilter.Filter}?
-    access(contract) fun setRedeemed(_ addr: Address)
-    pub fun borrowCapabilityProxy(): &CapabilityProxy.Proxy?
-    pub fun getViews(): [Type]
-    pub fun resolveView(_ view: Type): AnyStruct?
-    access(contract) fun parentRemoveChildCallback(parent: Address)
-}
-```
-</code>
-</details>
-
-<details>
-<summary>ChildAccount</summary>
-
-```cadence
-// Public methods anyone can call on a child account
-pub resource interface ChildAccountPublic {
-    pub fun getParentsAddresses(): [Address]
-    // Returns all parent addresses of this child account, and whether they have already
-    // redeemed the parent has redeemed the account (true) or has not (false)
-    pub fun getParentStatuses(): {Address: Bool}
-    // Returns true if the given address is a parent of this child and has redeemed it.
-    // Returns false if the given address is a parent of this child and has NOT redeemed it.
-    // returns nil if the given address it not a parent of this child account.
-    pub fun getRedeemedStatus(addr: Address): Bool?
-    // A callback function to mark a parent as redeemed on the child account.
-    access(contract) fun setRedeemed(_ addr: Address)
-}
-
-// Accessible to the owner of the ChildAccount.
-pub resource interface ChildAccountPrivate {
-    // Deletes the proxy account resource being used to share access to this child account with the
-    // supplied parent address, and unlinks the paths it was using to reach the proxy account
-    pub fun removeParent(parent: Address): Bool
-    // Sets up a new ProxyAccount resource for the given parentAddress to redeem.
-    // This proxy account uses the supplied factory and filter to manage what can be obtained
-    // from the child account, and a new CapabilityProxy resource is created for the sharing of one-off
-    // capabilities. Each of these pieces of access control are managed through the child account.
-    pub fun publishToParent(
-        parentAddress: Address,
-        factory: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>,
-        filter: Capability<&{CapabilityFilter.Filter}>
-    ) {
-        pre {
-            factory.check(): "Invalid CapabilityFactory.Getter Capability provided"
-            filter.check(): "Invalid CapabilityFilter Capability provided"
-        }
-    }
-    // Passes ownership of this child account to the given address. Once executed, all active keys on 
-    // the child account will be revoked, and the active AuthAccount Capability being used by to obtain capabilities
-    // will be rotated, preventing anyone without the newly generated capability from gaining access to the account.
-    pub fun giveOwnership(to: Address)
-    // Revokes all keys on an account, unlinks all currently active AuthAccount capabilities, then makes a new one and replaces the
-    // @ChildAccount's underlying AuthAccount Capability with the new one to ensure that all parent accounts can still operate normally.
-    // Unless this method is executed via the giveOwnership function, this will leave an account **without** an owner.
-    // USE WITH EXTREME CAUTION.
-    pub fun seal()
-    // Override the existing CapabilityFactory Capability for a given parent. This will allow the owner of the account
-    // to start managing their own factory of capabilities to be able to retrieve
-    pub fun setCapabilityFactoryForParent(parent: Address, cap: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>) {
-        pre {
-            cap.check(): "Invalid CapabilityFactory.Getter Capability provided"
-        }
-    }
-    // Override the existing CapabilityFilter Capability for a given parent. This will allow the owner of the account
-    // to start managing their own filter for retrieving Capabilities on Private Paths
-    pub fun setCapabilityFilterForParent(parent: Address, cap: Capability<&{CapabilityFilter.Filter}>) {
-        pre {
-            cap.check(): "Invalid CapabilityFilter Capability provided"
-        }
-    }
-    // Adds a capability to a parent's managed @ProxyAccount resource. The Capability can be made public,
-    // permitting anyone to borrow it.
-    pub fun addCapabilityToProxy(parent: Address, _ cap: Capability, isPublic: Bool)
-
-    pub fun removeCapabilityFromProxy(parent: Address, _ cap: Capability)
-}
-
-
-/*
-ChildAccount
-A resource which sits on the account it manages to make it easier for apps to configure the behavior they want to permit.
-A ChildAccount can be used to create ProxyAccount resources and share them publish them to other addresses.
-
-The ChildAccount can also be used to pass ownership of an account off to another address, or to relinquish ownership entirely,
-marking the account as owned by no one. Note that even if there isn't an owner, the parent accounts would still exist, allowing
-a form of Hybrid Custody which has no true owner over an account, but shared partial ownership.
-*/
-pub resource ChildAccount: Account, BorrowableAccount, ChildAccountPublic, ChildAccountPrivate, MetadataResolver.Resolver {
-    priv var acct: Capability<&AuthAccount>
-
-    pub let parents: {Address: Bool}
-    pub var acctOwner: Address?
-    pub var relinquishedOwnership: Bool
-
-    access(contract) fun setRedeemed(_ addr: Address) {
-        pre {
-            self.parents[addr] != nil: "address is not waiting to be redeemed"
-        }
-    }
-
-    /*
-    publishToParent
-    A helper method to make it easier to manage what parents an account has configured.
-    The steps to sharing this ChildAccount with a new parent are:
-
-    1. Create a new CapabilityProxy for the ProxyAccount resource being created. We make a new one here because
-        CapabilityProxy types are meant to be shared explicitly. Making one shared base-line of capabilities might
-        introuce an unforseen behavior where an app accidentally shared something to all accounts when it only meant to go
-        to one of them. It is better for parent accounts to have less access than they might have anticipated, than for a child
-        to have given out access it did not intend to.
-    2. Create a new Capability<&{BorrowableAccount}> which has its own unique path for the parent to share this child account with.
-        We make new ones each time so that you can revoke access from one parent, without destroying them all. A new Link is made each time
-        based on the address being shared to allow this fine-grained control, but it is all managed by the ChildAccount resource itself.
-    3. A new @ProxyAccount resource is created and saved, using the CapabilityProxy made in step one, and our CapabilityFactory and CapabilityFilter
-        Capabilities. Once saved, public and private links are configured for the ProxyAccount.
-    4. Publish the newly made private link to the designated parent's inbox for them to claim on their @Manager resource.
-    */
-    pub fun publishToParent(
-        parentAddress: Address,
-        factory: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>,
-        filter: Capability<&{CapabilityFilter.Filter}>
-    )
-    pub fun borrowAccount(): &AuthAccount
-    pub fun getParentsAddresses(): [Address]
-    pub fun isChildOf(_ addr: Address): Bool
-    // returns nil if the given address is not a parent, false if the parent
-    // has not redeemed the child account yet, and true if they have
-    pub fun getRedeemedStatus(addr: Address): Bool?
-    pub fun getParentStatuses(): {Address: Bool}
-    /*
-    removeParent
-    Unlinks all paths configured when publishing an account, and destroy's the @ProxyAccount resource
-    configured for the provided parent address. Once done, the parent will not have any valid capabilities
-    with which to access the child account.
-    */
-    pub fun removeParent(parent: Address): Bool
-    pub fun getAddress(): Address
-    pub fun getOwner(): Address?
-    pub fun giveOwnership(to: Address)
-    // Revokes all keys on an account, unlinks all currently active AuthAccount capabilities, then makes a new one and replaces the
-    // @ChildAccount's underlying AuthAccount Capability with the new one to ensure that all parent accounts can still operate normally.
-    // Unless this method is executed via the giveOwnership function, this will leave an account **without** an owner.
-    // USE WITH EXTREME CAUTION.
-    pub fun seal()
-    pub fun borrowProxyAccount(parent: Address): &ProxyAccount?
-    pub fun setCapabilityFactoryForParent(parent: Address, cap: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>)
-    pub fun setCapabilityFilterForParent(parent: Address, cap: Capability<&{CapabilityFilter.Filter}>)
-    pub fun borrowCapabilityProxyForParent(parent: Address): &CapabilityProxy.Proxy?
-    pub fun addCapabilityToProxy(parent: Address, _ cap: Capability, isPublic: Bool)
-    pub fun removeCapabilityFromProxy(parent: Address, _ cap: Capability)
-    pub fun getViews(): [Type]
-    pub fun resolveView(_ view: Type): AnyStruct?
-    pub fun setDisplay(_ d: MetadataViews.Display)
-}
-```
-</details>
-
-<details>
-<summary>Proxy</summary>
-
-```cadence
-pub resource interface GetterPrivate {
-    pub fun getPrivateCapability(_ type: Type): Capability? {
-        post {
-            result == nil || type.isSubtype(of: result.getType()): "incorrect returned capability type"
-        }
-    }
-
-    pub fun findFirstPrivateType(_ type: Type): Type?
-    pub fun getAllPrivate(): [Capability]
-}
-
-pub resource interface GetterPublic {
-    pub fun getPublicCapability(_ type: Type): Capability? {
-        post {
-            result == nil || type.isSubtype(of: result.getType()): "incorrect returned capability type "
-        }
-    }
-
-    pub fun findFirstPublicType(_ type: Type): Type?
-    pub fun getAllPublic(): [Capability]
-}
-
-pub resource Proxy: GetterPublic, GetterPrivate {
-    access(self) let privateCapabilities: {Type: Capability}
-    access(self) let publicCapabilities: {Type: Capability}
-
-    // ------ Begin Getter methods
-    pub fun getPublicCapability(_ type: Type): Capability?
-    pub fun getPrivateCapability(_ type: Type): Capability?
-    pub fun getAllPublic(): [Capability] 
-    pub fun getAllPrivate(): [Capability]
-    pub fun findFirstPublicType(_ type: Type): Type?
-    pub fun findFirstPrivateType(_ type: Type): Type?
-    // ------- End Getter methods
-    pub fun addCapability(cap: Capability, isPublic: Bool)
-    pub fun removeCapability(cap: Capability)
-}
-```
-</details>
-
-</details>
+The interfaces below are those implemented in the current implementation of [HybridCustody contracts](https://github.com/onflow/hybrid-custody).
 
 <details>
 <summary>Filters</summary>
@@ -595,14 +274,424 @@ pub struct interface Factory {
 }
 
 pub resource interface Getter {
+    pub fun getSupportedTypes(): [Type]
     pub fun getFactory(_ t: Type): {CapabilityFactory.Factory}?
 }
 
 pub resource Manager: Getter {
     pub let factories: {Type: {CapabilityFactory.Factory}}
 
+    pub fun getSupportedTypes(): [Type]
     pub fun addFactory(_ t: Type, _ f: {CapabilityFactory.Factory})
+    pub fun updateFactory(_ t: Type, _ f: {CapabilityFactory.Factory})
+    pub fun removeFactory(_ t: Type): {CapabilityFactory.Factory}?
     pub fun getFactory(_ t: Type): {CapabilityFactory.Factory}?
+}
+```
+</details>
+
+<details>
+<summary>Delegator</summary>
+
+```cadence
+pub resource interface GetterPrivate {
+    pub fun getPrivateCapability(_ type: Type): Capability? {
+        post {
+            result == nil || type.isSubtype(of: result.getType()): "incorrect returned capability type"
+        }
+    }
+    pub fun findFirstPrivateType(_ type: Type): Type?
+    pub fun getAllPrivate(): [Capability]
+}
+
+pub resource interface GetterPublic {
+    pub fun getPublicCapability(_ type: Type): Capability? {
+        post {
+            result == nil || type.isSubtype(of: result.getType()): "incorrect returned capability type "
+        }
+    }
+    pub fun findFirstPublicType(_ type: Type): Type?
+    pub fun getAllPublic(): [Capability]
+}
+
+pub resource Delegator: GetterPublic, GetterPrivate {
+    access(self) let privateCapabilities: {Type: Capability}
+    access(self) let publicCapabilities: {Type: Capability}
+
+    // ------ Begin Getter methods
+    pub fun getPublicCapability(_ type: Type): Capability?
+    pub fun getPrivateCapability(_ type: Type): Capability?
+    pub fun getAllPublic(): [Capability] 
+    pub fun getAllPrivate(): [Capability]
+    pub fun findFirstPublicType(_ type: Type): Type?
+    pub fun findFirstPrivateType(_ type: Type): Type?
+    // ------- End Getter methods
+    pub fun addCapability(cap: Capability, isPublic: Bool)
+    pub fun removeCapability(cap: Capability)
+}
+```
+</details>
+
+<details>
+<summary>Manager</summary>
+
+```cadence
+/// Entry point for a parent to borrow its child account and obtain capabilities or
+/// perform other actions on the child account
+pub resource interface ManagerPrivate {
+    pub fun addAccount(cap: Capability<&{AccountPrivate, AccountPublic, MetadataViews.Resolver}>)
+    pub fun borrowAccount(addr: Address): &{AccountPrivate, AccountPublic, MetadataViews.Resolver}?
+    pub fun removeChild(addr: Address)
+    pub fun addOwnedAccount(cap: Capability<&{OwnedAccountPrivate, OwnedAccountPublic, MetadataViews.Resolver}>)
+    pub fun borrowOwnedAccount(addr: Address): &{OwnedAccountPrivate, OwnedAccountPublic, MetadataViews.Resolver}?
+    pub fun removeOwned(addr: Address)
+    pub fun setManagerCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>?, childAddress: Address) {
+        pre {
+            cap == nil || cap!.check(): "Invalid Manager Capability Filter"
+        }
+    }
+}
+
+/// Functions anyone can call on a manager to get information about an account such as
+/// What child accounts it has
+pub resource interface ManagerPublic {
+    pub fun borrowAccountPublic(addr: Address): &{AccountPublic, MetadataViews.Resolver}?
+    pub fun getChildAddresses(): [Address]
+    pub fun getOwnedAddresses(): [Address]
+    pub fun getChildAccountDisplay(address: Address): MetadataViews.Display?
+    access(contract) fun removeParentCallback(child: Address)
+}
+
+
+/// A resource for an account which fills the Parent role of the Child-Parent account management Model. A Manager
+/// can redeem or remove child accounts, and obtain any capabilities exposed by the child account to them.
+pub resource Manager: ManagerPrivate, ManagerPublic, MetadataResolver.Resolver {
+    pub let childAccounts: {{Address: Capability<&{AccountPrivate, AccountPublic, MetadataViews.Resolver}>}
+    pub let ownedAccounts: {Address: Capability<&{Account, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver}>}
+    // A bucket of structs so that the Manager resource can be easily extended with new functionality.
+    pub let data: {String: AnyStruct}
+    // A bucket of resources so that the Manager resource can be easily extended with new functionality.
+    pub let resources: @{String: AnyResource}
+    /// An optional filter to gate what capabilities are permitted to be returned from a child account
+    /// For example, Dapper Wallet parent account's should not be able to retrieve any FungibleToken Provider capabilities.
+    pub let filter: Capability<&{CapabilityFilter.Filter}>?
+    
+    pub fun setChildAccountDisplay(address: Address, _ d: MetadataViews.Display?) {
+        pre {
+            self.childAccounts[address] != nil: "There is no child account with this address"
+        }
+    }
+    pub fun addAccount(_ cap: Capability<&{AccountPrivate, AccountPublic, MetadataViews.Resolver}>) {
+        pre {
+            self.accounts[cap.address] == nil: "There is already a child account with this address"
+        }
+    }
+    pub fun setDefaultManagerCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>?) {
+        pre {
+            cap == nil || cap!.check(): "supplied capability must be nil or check must pass"
+        }
+    }
+    pub fun setManagerCapabilityFilter(cap: Capability<&{CapabilityFilter.Filter}>?, childAddress: Address)
+    pub fun removeChild(addr: Address)
+    access(contract) fun removeParentCallback(child: Address)
+    pub fun addOwnedAccount(_ cap: Capability<&{Account, ChildAccountPublic, ChildAccountPrivate, MetadataViews.Resolver}>) {
+        pre {
+            self.ownedAccounts[cap.address] == nil: "There is already a child account with this address"
+        }
+    }
+    pub fun getAddresses(): [Address]
+    pub fun borrowAccount(addr: Address): &{AccountPrivate, AccountPublic}?
+    pub fun borrowAccountPublic(addr: Address): &{AccountPublic}?
+    pub fun borrowOwnedAccount(addr: Address): &{Account, ChildAccountPublic, ChildAccountPrivate}?
+    pub fun removeOwned(addr: Address)
+    pub fun giveOwnerShip(addr: Address, to: Address)
+    pub fun getChildAddresses(): [Address]
+    pub fun getOwnedAddresses(): [Address]
+    pub fun getViews(): [Type]
+    pub fun resolveView(_ view: Type): AnyStruct?
+}
+```
+</details>
+
+<details>
+<summary>ChildAccount</summary>
+<code>
+
+```cadence
+/// Public methods exposed on a ChildAccount resource. OwnedAccountPublic will share some methods here, but isn't
+/// necessarily the same.
+pub resource interface AccountPublic {
+    pub fun getPublicCapability(path: PublicPath, type: Type): Capability?
+    pub fun getPublicCapFromDelegator(type: Type): Capability?
+    pub fun getAddress(): Address
+}
+
+/// Methods accessible to the designated parent of a ChildAccount
+pub resource interface AccountPrivate {
+    pub fun getCapability(path: CapabilityPath, type: Type): Capability? {
+        post {
+            result == nil || [true, nil].contains(self.getManagerCapabilityFilter()?.allowed(cap: result!)):
+                "Capability is not allowed by this account's Parent"
+        }
+    }
+    pub fun getPublicCapability(path: PublicPath, type: Type): Capability?
+    pub fun getManagerCapabilityFilter():  &{CapabilityFilter.Filter}?
+    pub fun getPublicCapFromDelegator(type: Type): Capability?
+    pub fun getPrivateCapFromDelegator(type: Type): Capability? {
+        post {
+            result == nil || [true, nil].contains(self.getManagerCapabilityFilter()?.allowed(cap: result!)):
+                "Capability is not allowed by this account's Parent"
+        }
+    }
+    access(contract) fun redeemedCallback(_ addr: Address)
+    access(contract) fun setManagerCapabilityFilter(_ managerCapabilityFilter: Capability<&{CapabilityFilter.Filter}>?) {
+        pre {
+            managerCapabilityFilter == nil || managerCapabilityFilter!.check(): "Invalid Manager Capability Filter"
+        }
+    }
+    access(contract) fun parentRemoveChildCallback(parent: Address)
+}
+
+/// The ChildAccount resource sits between a child account and a parent and is stored on the same account as the
+/// child account. Once created, a private capability to the child account is shared with the intended parent. The
+/// parent account will accept this child capability into its own manager resource and use it to interact with the
+/// child account.
+/// 
+/// Because the ChildAccount resource exists on the child account itself, whoever owns the child account will be
+/// able to manage all ChildAccount resources it shares, without worrying about whether the upstream parent can do
+/// anything to prevent it.
+pub resource ChildAccount: AccountPrivate, AccountPublic, MetadataViews.Resolver {
+    /// A Capability providing access to the underlying child account via Capability on its OwnedAccount
+    access(self) let childCap: Capability<&{BorrowableAccount, OwnedAccountPublic, MetadataViews.Resolver}>
+    // The CapabilityFactory Manager is a ChildAccount's way of limiting what types can be asked for by its parent
+    // account. The CapabilityFactory returns Capabilities which can be casted to their appropriate types once
+    // obtained, but only if the child account has configured their factory to allow it. For instance, a
+    // ChildAccount might choose to expose NonFungibleToken.Provider, but not FungibleToken.Provider
+    pub var factory: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>
+    // The CapabilityFilter is a restriction put at the front of obtaining any non-public Capability. Some wallets
+    // might want to give access to NonFungibleToken.Provider, but only to **some** of the collections it manages,
+    // not all of them.
+    pub var filter: Capability<&{CapabilityFilter.Filter}>
+    // The CapabilityDelegator is a way to share one-off capabilities from the child account. These capabilities
+    // can be public OR private and are separate from the factory which returns a capability at a given path as a 
+    // certain type. When using the CapabilityDelegator, you do not have the ability to specify which path a
+    // capability came from. For instance, Dapper Wallet might choose to expose a Capability to their Full TopShot
+    // collection, but only to the path that the collection exists in.
+    pub let delegator: Capability<&CapabilityDelegator.Delegator{CapabilityDelegator.GetterPublic, CapabilityDelegator.GetterPrivate}>
+    // managerCapabilityFilter is a component optionally given to a child account when a manager redeems it. If
+    // this filter is not nil, any Capability returned through the `getCapability` function checks that the
+    // manager allows access first.
+    access(self) var managerCapabilityFilter: Capability<&{CapabilityFilter.Filter}>?
+    // A bucket of structs so that the ChildAccount resource can be easily extended with new functionality.
+    access(self) let data: {String: AnyStruct}
+    // A bucket of resources so that the ChildAccount resource can be easily extended with new functionality.
+    access(self) let resources: @{String: AnyResource}
+    // ChildAccount resources have a 1:1 association with parent accounts, the named parent Address here is the 
+    // one with a Capability on this resource.
+    pub let parent: Address
+
+    pub fun getAddress(): Address
+    access(contract) fun redeemedCallback(_ addr: Address)
+    access(contract) fun setManagerCapabilityFilter(_ managerCapabilityFilter: Capability<&{CapabilityFilter.Filter}>?)
+    pub fun setCapabilityFactory(_ cap: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>)
+    pub fun setCapabilityFilter(_ cap: Capability<&{CapabilityFilter.Filter}>)
+    access(contract) fun setDisplay(_ d: MetadataViews.Display)
+    // The main function to a child account's capabilities from a parent account. When a PrivatePath type is used, 
+    // the CapabilityFilter will be borrowed and the Capability being returned will be checked against it to 
+    // ensure that borrowing is permitted
+    pub fun getCapability(path: CapabilityPath, type: Type): Capability?
+    pub fun getPrivateCapFromDelegator(type: Type): Capability?
+    pub fun getPublicCapFromDelegator(type: Type): Capability?
+    pub fun getPublicCapability(path: PublicPath, type: Type): Capability?
+    pub fun getManagerCapabilityFilter():  &{CapabilityFilter.Filter}?
+    access(contract) fun setRedeemed(_ addr: Address)
+    pub fun borrowCapabilityDelegator(): &CapabilityDelegator.Delegator?
+    pub fun getViews(): [Type]
+    pub fun resolveView(_ view: Type): AnyStruct?
+    access(contract) fun parentRemoveChildCallback(parent: Address)
+}
+```
+</code>
+</details>
+
+<details>
+<summary>OwnedAccount</summary>
+
+```cadence
+
+/// An OwnedAccount shares the BorrowableAccount capability to itelf with ChildAccount resources
+pub resource interface BorrowableAccount {
+    access(contract) fun borrowAccount(): &AuthAccount
+    /// Returns whether the encapsulated AuthAccount Capability is valid
+    pub fun check(): Bool
+}
+
+/// Public methods anyone can call on an OwnedAccount
+pub resource interface OwnedAccountPublic {
+    /// Returns the addresses of all parent accounts
+    pub fun getParentAddresses(): [Address]
+
+    /// Returns associated parent addresses and their redeemed status - true if redeemed, false if pending
+    pub fun getParentStatuses(): {Address: Bool}
+
+    /// Returns true if the given address is a parent of this child and has redeemed it. Returns false if the given
+    /// address is a parent of this child and has NOT redeemed it. Returns nil if the given address it not a parent
+    /// of this child account.
+    pub fun getRedeemedStatus(addr: Address): Bool?
+
+    /// A callback function to mark a parent as redeemed on the child account.
+    access(contract) fun setRedeemed(_ addr: Address)
+}
+
+/// Private interface accessible to the owner of the OwnedAccount
+pub resource interface OwnedAccountPrivate {
+    /// Deletes the ChildAccount resource being used to share access to this OwnedAccount with the supplied parent
+    /// address, and unlinks the paths it was using to reach the underlying account.
+    pub fun removeParent(parent: Address): Bool
+
+    /// Sets up a new ChildAccount resource for the given parentAddress to redeem. This child account uses the
+    /// supplied factory and filter to manage what can be obtained from the child account, and a new
+    /// CapabilityDelegator resource is created for the sharing of one-off capabilities. Each of these pieces of
+    /// access control are managed through the child account.
+    pub fun publishToParent(
+        parentAddress: Address,
+        factory: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>,
+        filter: Capability<&{CapabilityFilter.Filter}>
+    ) {
+        pre {
+            factory.check(): "Invalid CapabilityFactory.Getter Capability provided"
+            filter.check(): "Invalid CapabilityFilter Capability provided"
+        }
+    }
+
+    /// Passes ownership of this child account to the given address. Once executed, all active keys on the child
+    /// account will be revoked, and the active AuthAccount Capability being used by to obtain capabilities will be
+    /// rotated, preventing anyone without the newly generated Capability from gaining access to the account.
+    pub fun giveOwnership(to: Address)
+
+    /// Revokes all keys on an account, unlinks all currently active AuthAccount capabilities, then makes a new one
+    /// and replaces the OwnedAccount's underlying AuthAccount Capability with the new one to ensure that all
+    /// parent accounts can still operate normally.
+    /// Unless this method is executed via the giveOwnership function, this will leave an account **without** an
+    /// owner.
+    /// USE WITH EXTREME CAUTION.
+    pub fun seal()
+
+    // setCapabilityFactoryForParent
+    // Override the existing CapabilityFactory Capability for a given parent. This will allow the owner of the
+    // account to start managing their own factory of capabilities to be able to retrieve
+    pub fun setCapabilityFactoryForParent(parent: Address, cap: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>) {
+        pre {
+            cap.check(): "Invalid CapabilityFactory.Getter Capability provided"
+        }
+    }
+
+    /// Override the existing CapabilityFilter Capability for a given parent. This will allow the owner of the
+    /// account to start managing their own filter for retrieving Capabilities on Private Paths
+    pub fun setCapabilityFilterForParent(parent: Address, cap: Capability<&{CapabilityFilter.Filter}>) {
+        pre {
+            cap.check(): "Invalid CapabilityFilter Capability provided"
+        }
+    }
+
+    /// Adds a capability to a parent's managed @ChildAccount resource. The Capability can be made public,
+    /// permitting anyone to borrow it.
+    pub fun addCapabilityToDelegator(parent: Address, cap: Capability, isPublic: Bool) {
+        pre {
+            cap.check<&AnyResource>(): "Invalid Capability provided"
+        }
+    }
+
+    /// Removes a Capability from the CapabilityDelegator used by the specified parent address
+    pub fun removeCapabilityFromDelegator(parent: Address, cap: Capability)
+
+    /// Returns the address of this OwnedAccount
+    pub fun getAddress(): Address
+    
+    /// Checks if this OwnedAccount is a child of the specified address
+    pub fun isChildOf(_ addr: Address): Bool
+
+    /// Returns all addresses which are parents of this OwnedAccount
+    pub fun getParentAddresses(): [Address]
+
+    /// Borrows this OwnedAccount's AuthAccount Capability
+    pub fun borrowAccount(): &AuthAccount?
+
+    /// Returns the current owner of this account, if there is one
+    pub fun getOwner(): Address?
+
+    /// Returns the pending owner of this account, if there is one
+    pub fun getPendingOwner(): Address?
+
+    /// A callback which is invoked when a parent redeems an owned account
+    access(contract) fun setOwnerCallback(_ addr: Address)
+    
+    /// Destroys all outstanding AuthAccount capabilities on this owned account, and creates a new one for the
+    /// OwnedAccount to use
+    pub fun rotateAuthAccount()
+
+    /// Revokes all keys on this account
+    pub fun revokeAllKeys()
+}
+
+
+/// A resource which sits on the account it manages to make it easier for apps to configure the behavior they want 
+/// to permit. An OwnedAccount can be used to create ChildAccount resources and share them, publishing them to
+/// other addresses.
+/// 
+/// The OwnedAccount can also be used to pass ownership of an account off to another address, or to relinquish
+/// ownership entirely, marking the account as owned by no one. Note that even if there isn't an owner, the parent
+/// accounts would still exist, allowing a form of Hybrid Custody which has no true owner over an account, but
+/// shared partial ownership.
+///
+pub resource OwnedAccount: OwnedAccountPrivate, BorrowableAccount, OwnedAccountPublic, MetadataViews.Resolver {
+    access(self) var acct: Capability<&AuthAccount>
+    pub let parents: {Address: Bool}
+    pub var pendingOwner: Address?
+    pub var acctOwner: Address?
+    pub var currentlyOwned: Bool
+
+    access(contract) fun setRedeemed(_ addr: Address) {
+        pre {
+            self.parents[addr] != nil: "address is not waiting to be redeemed"
+        }
+    }
+    access(contract) fun setOwnerCallback(_ addr: Address) {
+        pre {
+            self.pendingOwner == addr: "Address does not match pending owner!"
+        }
+    }
+    pub fun publishToParent(
+        parentAddress: Address,
+        factory: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>,
+        filter: Capability<&{CapabilityFilter.Filter}>
+    )
+    pub fun check(): Bool
+    pub fun borrowAccount(): &AuthAccount
+    pub fun getParentsAddresses(): [Address]
+    pub fun isChildOf(_ addr: Address): Bool
+    pub fun getRedeemedStatus(addr: Address): Bool?
+    pub fun getParentStatuses(): {Address: Bool}
+    pub fun removeParent(parent: Address): Bool
+    pub fun getAddress(): Address
+    pub fun getOwner(): Address?
+    pub fun giveOwnership(to: Address)
+    pub fun revokeAllKeys() {
+    pub fun rotateAuthAccount()
+    /// Revokes all keys on an account, unlinks all currently active AuthAccount capabilities, then makes a new one
+    /// and replaces the @OwnedAccount's underlying AuthAccount Capability with the new one to ensure that all parent
+    /// accounts can still operate normally.
+    /// Unless this method is executed via the giveOwnership function, this will leave an account **without** an owner.
+    pub fun seal()
+    pub fun borrowChildAccount(parent: Address): &ChildAccount?
+    pub fun setCapabilityFactoryForParent(parent: Address, cap: Capability<&CapabilityFactory.Manager{CapabilityFactory.Getter}>)
+    pub fun setCapabilityFilterForParent(parent: Address, cap: Capability<&{CapabilityFilter.Filter}>)
+    pub fun borrowCapabilityDelegatorForParent(parent: Address): &CapabilityDelegator.Delegator?
+    pub fun addCapabilityToDelegator(parent: Address, _ cap: Capability, isPublic: Bool)
+    pub fun removeCapabilityFromDelegator(parent: Address, _ cap: Capability)
+    pub fun getViews(): [Type]
+    pub fun resolveView(_ view: Type): AnyStruct?
+    pub fun setDisplay(_ d: MetadataViews.Display)
 }
 ```
 </details>
@@ -613,53 +702,72 @@ pub resource Manager: Getter {
 
 > The following proposed events are in addition to the AuthAccount Capability linking event `flow.AccountLinked(address: Address, path: PrivatePath)` implemented in the Cadence [AuthAccount Capability linking API](https://github.com/onflow/flips/pull/53#issuecomment-1452777257) whenever an account is linked via `AuthAccount.linkAccount(PrivatePath)`.
 
-As some members of the community have voiced, using a shared standard contract can present challenges to dApps subscibing to events on the contract. Ultimately, how do they know which events are relevant to their users' accounts?
+As some builders have voiced, using a shared standard contract can present challenges to dApps subscibing to events on the contract. Ultimately, how do they know which events are relevant to their users' accounts?
 
-With this in mind, the following events and values have been proposed, though additional feedback is requested as the hope is these events can be as helpful as possible to dApps relying on this shared standard.
+Events have been a topic of discussion and iteration (see PRs [#20](https://github.com/onflow/hybrid-custody/pull/20), [#82](https://github.com/onflow/hybrid-custody/pull/82), [#83](https://github.com/onflow/hybrid-custody/pull/83), & [#123](https://github.com/onflow/hybrid-custody/pull/123)) and the following events have been elected:
 
-- **Linking Accounts & Removing Linked Accounts** - Whenever an account is added as a child of a parent account - IOW when a Capability is added/removed to/from a `Manager` - an event is emitted denoting both sides of the link. Other events include coverage for actions involved in readying a child account to be claimed by a `Manager` resource.
+- **Publishing a ChildAccount and Adding & Removing ChildAccount to Manager** - Whenever an account is added as a child of a parent account - IOW when a Capability is added/removed to/from a `Manager` - an event is emitted denoting both sides of the link. Other events include coverage for actions involved in readying a child account to be claimed by a `Manager` resource.
     ```cadence
-    pub event ProxyAccountPublished(childAcctID: UInt64, proxyAcctID: UInt64, capProxyID: UInt64, factoryID: UInt64, filterID: UInt64, filterType: Type, child: Address, pendingParent: Address)
-    pub event ChildAccountRedeemed(id: UInt64, child: Address, parent: Address)
-    pub event RemovedParent(id: UInt64, child: Address, parent: Address)
-    /* proxy: Manager.accounts | !proxy: Manager.ownedAccounts | active: added | !active: removed */
-    pub event AccountUpdated(id: UInt64?, child: Address, parent: Address, proxy: Bool, active: Bool)
+    /// ChildAccount ready to be redeemed by emitted pendingParent
+    pub event ChildAccountPublished(
+        ownedAcctID: UInt64,
+        childAcctID: UInt64,
+        capDelegatorID: UInt64,
+        factoryID: UInt64,
+        filterID: UInt64,
+        filterType: Type,
+        child: Address,
+        pendingParent: Address
+    )
+    // ChildAccount added/removed from Manager
+    // - active  : added to Manager
+    // - !active : removed from Manager
+    pub event AccountUpdated(id: UInt64?, child: Address, parent: Address, active: Bool)
     ```
 
 - **Grant/Revoke Capabilities from Child Accounts** - Emitted when access to a Capability has been granted from a child account.
     ```cadence
-    /* CapabilityProxy - isPublic: Proxy.publicCapabilities | !isPublic: Proxy.privateCapabilities | active: added | !active: removed */
-    pub event ProxyUpdated(id: UInt64, capabilityType: Type, isPublic: Bool, active: Bool)
+    /* CapabilityDelegator - isPublic: Delegator.publicCapabilities | !isPublic: Delegator.privateCapabilities | active: added | !active: removed */
+    pub event DelegatorUpdated(id: UInt64, capabilityType: Type, isPublic: Bool, active: Bool)
+
     /* CapabilityFilter - active: added | !active: removed */
     pub event FilterUpdated(id: UInt64, filterType: Type, type: Type, active: Bool)
     ```
 
-- **Ownership Actions** - A `ChildAccount` resource has the ability to delegate ownership to another account, providing unrestricted access to the account via its encapsulated AuthAccount Capability. This is an important action and deserves relevant events.
+- **Ownership Actions** - An `OwnedAccount` resource has the ability to delegate ownership to another account, providing unrestricted access to the account via its encapsulated AuthAccount Capability. This is an important action and deserves relevant events.
     ```cadence
-    pub event OwnershipGranted(id: UInt64, child: Address, owner: Address)
+    pub event OwnershipGranted(ownedAcctID: UInt64, child: Address, previousOwner: Address?, pendingOwner: Address)
     pub event AccountSealed(id: UInt64, address: Address, parents: [Address])
+    /// OwnedAccount added/removed from Manager
+    ///     active && owner != nil  : added to Manager 
+    ///     !active && owner == nil : removed from Manager
+    pub event OwnershipUpdated(id: UInt64, child: Address, previousOwner: Address?, owner: Address?, active: Bool)
     ```
 
-- **Creation of Standard Resources** - Emitted when a `Manager`, `ChildAccount` and `Proxy` are created. Since the `Manager` creation method is a public contract methods, there isn't any data we can include related to the caller. However, this event could be helpful from a data analysis & user behavior perspective allowing us to gain insight into the adoption of this standard.
+- **Creation of Standard Resources** - Emitted when a `Manager`, `ChildAccount` and `Delegator` are created. Since the `Manager` creation method is a public contract methods, there isn't any data we can include related to the caller. However, this event could be helpful from a data analysis & user behavior perspective allowing us to gain insight into the adoption of Hybrid Custody as a whole.
     ```cadence
     /* HybridCustody */
     pub event CreatedManager(id: UInt64)
     pub event CreatedChildAccount(id: UInt64, child: Address)
-    /* CapabilityProxy */
-    pub event ProxyCreated(id: UInt64)
+    /* CapabilityDelegator */
+    pub event DelegatorCreated(id: UInt64)
     ```
 
 ### MetadataViews Standards Implementation
 
 While not yet implemented, `MetadataViews` interfaces lend themselves well to the need for identifying the purposes of child accounts. For example, a user would want to identify which child account is associated with their MonsterMaker game and which is their social media app account, etc. Leveraging these existing metadata interfaces makes it easy for builders to resolve metadata about a user's linked accounts, at least in regards to the account's association/purpose.
 
-Implementation of the standard is easy enough, but we'll want to consider guidance on source of truth as developer-defined metadata presents a phishing vector. An attacker could create an account with standard resources and attached metadata resembling a victim's account, then publish it for the victim to claim. The victim might then inadvertently then claim the account transfer NFTs or funds to that account which the attacker could then siphon. Requiring user signature to add accounts to their `Manager` helps prevent this, but building out user notifications on `ProxyAccountPublished` presents at minimum a spam vector that could lead to user action exposing them to phishing attacks. A combination of on- and off-chain pet names have been raised a potential construct to minimize the risk associated with these sorts of attack vectors.
+Implementation of the standard is easy enough, but we'll want to consider guidance on source of truth as developer-defined metadata presents a phishing vector. An attacker could create an account with standard resources and attached metadata resembling a victim's account, then publish it for the victim to claim. The victim might then inadvertently then claim the account transfer NFTs or funds to that account which the attacker could then siphon.
 
-With regard to the metadata scheme, this deserves further discussion, and [a PR](https://github.com/Flowtyio/restricted-child-account/pull/22) was recently submitted as a touchpoint of dicusssion for [the issue](https://github.com/Flowtyio/restricted-child-account/issues/18).
+Requiring user signature to add accounts to their `Manager` helps prevent phishing, but building out user notifications on `ChildAccountPublished` presents at minimum a spam vector that could result in user action exposing them to phishing attacks. A combination of on- and off-chain pet names have been raised a potential construct to minimize the risk associated with these sorts of attack vectors.
+
+For the moment, it's recommended that providers disable inbox notification for `OwnershipGranted` and `ChildAccountPublished` events, instead allowing account linking to occur in the initiating application. This practice reduces the chance users will be fooled as they won't be notified of published attempts and anyone interested in leveraging hybrid custody as an attack vector must first onboard users and convince them to add valuable assets to the app-custodied child accounts, vastly increasing the cost an attack.
+
+With regard to the metadata scheme, both `OwnedAccount` resources have an optional `display` field, and while it can't be enforced, it's recommended that application developers add a `Display` view that accurately represents the account's association. A parent account can also set a `Display` view for a `ChildAccount` via their manager, but note that these mechanisms aren't foolproof and are not to be used as a source of provenance - a topic that has been raised, but has been decided to be out of scope as a requirement for a Hybrid Custody solution.
 
 ### Storage Iteration Convenience Methods
 
-To support developers integrate with Hybrid Custody accounts, it will be essential that we provide example scripts (if not in-built helper methods). Inspecting balances across all of a user's associated accounts is one common use case.
+To support developers integrating with Hybrid Custody accounts, it will be essential that we provide example scripts (if not in-built helper methods). Inspecting balances across all of a user's associated accounts is one common use case.
 
 Note that this script doesn't check if the a user has access to the Vaults in those accounts which will be an important consideration in production environments
 
@@ -671,85 +779,31 @@ The most simple use case for this is when dealing with a FT that multiple child 
 ```cadence
 import "FungibleToken"
 import "MetadataViews"
-import "FungibleTokenMetadataViews"
 import "HybridCustody"
 
-/// Custom struct to easily communicate vault data to a client
-pub struct VaultInfo {
-    pub let name: String?
-    pub let symbol: String?
-    pub var balance: UFix64
-    pub let description: String?
-    pub let externalURL: String?
-    pub let logos: MetadataViews.Medias?
-    pub let storagePathIdentifier: String
-    pub let receiverPathIdentifier: String?
-    pub let providerPathIdentifier: String?
-
-    init(
-        name: String?,
-        symbol: String?,
-        balance: UFix64,
-        description: String?,
-        externalURL: String?,
-        logos: MetadataViews.Medias?,
-        storagePathIdentifier: String,
-        receiverPathIdentifier: String?,
-        providerPathIdentifier: String?
-    ) {
-        self.name = name
-        self.symbol = symbol
-        self.balance = balance
-        self.description = description
-        self.externalURL = externalURL
-        self.logos = logos
-        self.storagePathIdentifier = storagePathIdentifier
-        self.receiverPathIdentifier = receiverPathIdentifier
-        self.providerPathIdentifier = providerPathIdentifier
-    }
-
-    pub fun addBalance(_ addition: UFix64) {
-        self.balance = self.balance + addition
-    }
-}
-
-/// Returns a dictionary of VaultInfo indexed on the Type of Vault
-pub fun getAllVaultInfoInAddressStorage(_ address: Address): {Type: VaultInfo} {
+/// Returns a mapping of balances indexed on the Type of resource containing the balance
+///
+pub fun getAllBalancesInStorage(_ address: Address): {Type: UFix64} {
     // Get the account
     let account: AuthAccount = getAuthAccount(address)
     // Init for return value
-    let balances: {Type: VaultInfo} = {}
+    let balances: {Type: UFix64} = {}
+    // Track seen Types in array
+    let seen: [Type] = []
     // Assign the type we'll need
-    let vaultType: Type = Type<@{FungibleToken.Balance, MetadataViews.Resolver}>()
-    let ftViewType: Type= Type<FungibleTokenMetadataViews.FTView>()
+    let balanceType: Type = Type<@{FungibleToken.Balance}>()
     // Iterate over all stored items & get the path if the type is what we're looking for
     account.forEachStored(fun (path: StoragePath, type: Type): Bool {
-        if type.isSubtype(of: vaultType) {
-            // Get a reference to the vault & its balance
-            if let vaultRef = account.borrow<&{FungibleToken.Balance, MetadataViews.Resolver}>(from: path) {
-                let balance = vaultRef.balance
-                // Attempt to resolve metadata on the vault
-                if let ftView = vaultRef.resolveView(ftViewType) as! FungibleTokenMetadataViews.FTView? {
-                    // Insert a new info struct if it's the first time we've seen the vault type
-                    if !balances.containsKey(type) {
-                        let vaultInfo = VaultInfo(
-                            name: ftView.ftDisplay?.name ?? vaultRef.getType().identifier,
-                            symbol: ftView.ftDisplay?.symbol,
-                            balance: balance,
-                            description: ftView.ftDisplay?.description,
-                            externalURL: ftView.ftDisplay?.externalURL?.url,
-                            logos: ftView.ftDisplay?.logos,
-                            storagePathIdentifier: path.toString(),
-                            receiverPathIdentifier: ftView.ftVaultData?.receiverPath?.toString(),
-                            providerPathIdentifier: ftView.ftVaultData?.providerPath?.toString()
-                        )
-                        balances.insert(key: type, vaultInfo)
-                    } else {
-                        // Otherwise just update the balance of the vault (unlikely we'll see the same type twice in
-                        // the same account, but we want to cover the case)
-                        balances[type]!.addBalance(balance)
-                    }
-                }
+        if type.isInstance(balanceType) || type.isSubtype(of: balanceType) {
+            // Get a reference to the resource & its balance
+            let vaultRef = account.borrow<&{FungibleToken.Balance}>(from: path)!
+            // Insert a new values if it's the first time we've seen the type
+            if !seen.contains(type) {
+                balances.insert(key: type, vaultRef.balance)
+            } else {
+                // Otherwise just update the balance of the vault (unlikely we'll see the same type twice in
+                // the same account, but we want to cover the case)
+                balances[type] = balances[type]! + vaultRef.balance
             }
         }
         return true
@@ -757,53 +811,37 @@ pub fun getAllVaultInfoInAddressStorage(_ address: Address): {Type: VaultInfo} {
     return balances
 }
 
-/// Takes two dictionaries containing VaultInfo structs indexed on the type of vault they represent &
-/// returns a single dictionary containg the summed balance of each respective vault type
-pub fun merge(_ d1: {Type: VaultInfo}, _ d2: {Type: VaultInfo}): {Type: VaultInfo} {
-    for type in d1.keys {
-        if d2.containsKey(type) {
-            d1[type]!.addBalance(d2[type]!.balance)
-        }
-    }
+/// Queries for FT.Vault balance of all FT.Vaults in the specified account and all of its associated accounts
+///
+pub fun main(address: Address): {Address: {Type: UFix64}} {
 
-    return d1
-}
-
-pub fun main(address: Address): {Type: VaultInfo} {
-    // Get the balance info for the given address
-    var balances: {Type: VaultInfo} = getAllVaultInfoInAddressStorage(address)
+    // Get the balance for the given address
+    let balances: {Address: {Type: UFix64}} = { address: getAllBalancesInStorage(address) }
+    // Tracking Addresses we've come across to prevent overwriting balances (more efficient than checking dict entries (?))
+    let seen: [Address] = [address]
     
-    /* Iterate over any child accounts */ 
+    /* Iterate over any associated accounts */ 
     //
-    // Get reference to HybridCustody.Manager if it exists
-    if let managerRef = getAccount(address)
-        .getCapability<&{HybridCustody.ManagerPublic}>(
-            HybridCustody.ManagerPublicPath
-        ).borrow() {
-        // Iterate over each linked child account in Collection
-        for childAddress in managerRef.getChildAddresses() {
-            // Ensure all vault type balances are pooled across all addresses
-            balances = merge(balances, getAllVaultInfoInAddressStorage(childAddress))
+    if let managerRef = getAuthAccount(address)
+        .borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath) {
+        
+        for childAccount in managerRef.getChildAddresses() {
+            balances.insert(key: childAccount, getAllBalancesInStorage(address))
+            seen.append(childAccount)
         }
-        for ownedAddress in managerRef.getOwnedAddresses() {
-            // Ensure all vault type balances are pooled across all addresses
-            balances = merge(balances, getAllVaultInfoInAddressStorage(ownedAddress))
+
+        for ownedAccount in managerRef.getOwnedAddresses() {
+            if seen.contains(ownedAccount) == false {
+                balances.insert(key: ownedAccount, getAllBalancesInStorage(address))
+                seen.append(ownedAccount)
+            }
         }
     }
+
     return balances 
 }
- 
 ```
 </details>
-
-But we could include this functionality in the contract in some different ways. For example, we could add to `Manager` the following methods:
-
-```cadence
-pub fun getChildNFTIDs(publicPath: PublicPath, collectionType: Type): {Address: [UInt64]}
-pub fun withdrawChildNFT(tokenPath: PublicPath, tokenID: UInt64, child: Address): @NonFungibleToken.NFT
-```
-
-Those convenience methods would allow vaults or collections to easily accessible across all child accounts from one parent at the same time. However, iteration over a large number of accounts and/or unexpected path naming conventions within those accounts might lead to unexpected behavior and encourage reliance on iteration at the script layer anyway.
 
 ## Discoverability
 
@@ -811,7 +849,97 @@ The notion of discoverability has come up a number of times throughout conversat
 
 Metadata views and resolution helps answer the question of the purpose of a child account. Scripts can help us discover the contents of a given accounts.
 
-The remaining question - what access is allowed on an account via `ProxyAccount` Capability - has not been settled, but is in discussion in [this issue](https://github.com/Flowtyio/restricted-child-account/issues/19). The idea is to include helper methods within a `ProxyAccount` that will enable easy querying on the accessibility a said resource and Capability can facilitate on a child account.
+The remaining question - what access is allowed on an account via `ChildAccount` Capability - is largely a matter of leveraging rich scripts. Since testnet deployment, builders have provided very helpful feedback that has helped grow the repository of helpful boilerplate scripts. The hope is we'll be able to continue growing these over time and at some point leverage FLIX, FCL plugins, and perhaps other SDKs to enhance developer experience when interacting with Hybrid Custody accounts.
+
+Below is one common use case example demonstrating how we can determine accessible assets in child accounts:
+
+<details> 
+<summary>Getting Accessible Child Account NFTs</summary>
+
+```cadence
+import "HybridCustody"
+import "NonFungibleToken"
+import "MetadataViews"
+
+// source: https://github.com/onflow/hybrid-custody/blob/main/scripts/hybrid-custody/get_accessible_child_account_nfts.cdc
+//
+// This script iterates through a parent's child accounts, 
+// identifies private paths with an accessible NonFungibleToken.Provider, and returns the corresponding typeIds
+pub fun main(addr: Address): AnyStruct {
+  let manager = getAuthAccount(addr).borrow<&HybridCustody.Manager>(from: HybridCustody.ManagerStoragePath) ?? panic ("manager does not exist")
+
+  var typeIdsWithProvider = {} as {Address: [String]}
+
+  // Address -> nft UUID -> Display
+  var nftViews = {} as {Address: {UInt64: MetadataViews.Display}} 
+
+  
+  let providerType = Type<Capability<&{NonFungibleToken.Provider}>>()
+  let collectionType: Type = Type<@{NonFungibleToken.CollectionPublic}>()
+
+  // Iterate through child accounts
+  for address in manager.getChildAddresses() {
+    let acct = getAuthAccount(address)
+    let foundTypes: [String] = []
+    let views: {UInt64: MetadataViews.Display} = {}
+    let childAcct = manager.borrowAccount(addr: address) ?? panic("child account not found")
+    // get all private paths
+    acct.forEachPrivate(fun (path: PrivatePath, type: Type): Bool {
+      // Check which private paths have NFT Provider AND can be borrowed
+      if !type.isSubtype(of: providerType){
+        return true
+      }
+      if let cap = childAcct.getCapability(path: path, type: Type<&{NonFungibleToken.Provider}>()) {
+        let providerCap = cap as! Capability<&{NonFungibleToken.Provider}> 
+
+        if !providerCap.check(){
+          // if this isn't a provider capability, exit the account iteration function for this path
+          return true
+        }
+        foundTypes.append(cap.borrow<&AnyResource>()!.getType().identifier)
+      }
+      return true
+    })
+    typeIdsWithProvider[address] = foundTypes
+
+    // iterate storage, check if typeIdsWithProvider contains the typeId, if so, add to views
+    acct.forEachStored(fun (path: StoragePath, type: Type): Bool {
+
+      if typeIdsWithProvider[address] == nil {
+        return true
+      }
+
+      for key in typeIdsWithProvider.keys {
+        for idx, value in typeIdsWithProvider[key]! {
+          let value = typeIdsWithProvider[key]!
+
+          if value[idx] != type.identifier {
+            continue
+          } else {
+            if type.isInstance(collectionType) {
+              continue
+            }
+            if let collection = acct.borrow<&{NonFungibleToken.CollectionPublic}>(from: path) { 
+              // Iterate over IDs & resolve the view
+              for id in collection.getIDs() {
+                let nft = collection.borrowNFT(id: id)
+                if let display = nft.resolveView(Type<MetadataViews.Display>())! as? MetadataViews.Display {
+                  views.insert(key: nft.uuid, display)
+                }
+              }
+            }
+            continue
+          }
+        }
+      }
+      return true
+    })
+    nftViews[address] = views
+  }
+  return nftViews
+}
+```
+</details>
 
 # Drawbacks
 
@@ -825,7 +953,7 @@ Queries involving storage iteration over a large number of accounts might encoun
 
 ### Sources of Truth
 
-Another consideration is preserving the `Manager`, `ProxyAccount` and `ChildAccount` state values as accurate sources of truth for the status of a particular account link. Just as we rely on keys to determine access to an account, so too should we be able to determine from a parent account if it has a capability for another account. Inversely, from a child account we should be able to determine if another account has delegated authority and the address of that account.
+Another consideration is preserving the `Manager`, `ChildAccount` and `OwnedAccount` state values as accurate sources of truth for the status of a particular account link. Just as we rely on keys to determine access to an account, so too should we be able to determine from a parent account if it has a capability for another account. Inversely, from a child account we should be able to determine if another account has delegated authority and the address of that account.
 
 ### Auditability and Revocation
 
@@ -841,7 +969,7 @@ When it comes to accessing a user’s saved AuthAccount Capabilities, it is poss
 
 With that said, signing a malicious transaction today means you are at risk within the scope of that transaction. Signing a malicious transaction in a world of AuthAccount Capabilities means a bad actor could issue themselves a Capability on your account or one of your child accounts to perform their attack at a later time.
 
-One way to prevent this is to make accessing issued AuthAccount Capabilities ephemeral, limiting the scope of the attack to the time scope of the transaction. Another is to rely on events emitted whenever an owned account's AuthAccount Capability is retrieved from the `ChildAccount`. Yet another measure would include emitting an event any time an AuthAccount Capability is linked.
+One way to prevent this is to make accessing issued AuthAccount Capabilities ephemeral, limiting the scope of the attack to the time scope of the transaction. Another is to rely on events emitted whenever an owned account's AuthAccount Capability is retrieved from the `ChildAccount`. Yet another measure would include emitting an event any time an AuthAccount Capability is linked, which is the case when the Capability is linked at a new path.
 
 ```cadence
 // Let's say a parent account is signing a transaction in which a reference to
@@ -865,13 +993,15 @@ let accountCap: Capability<&AuthAccount> = ownedAccountRef.getAccountCapability(
 
 Taken together, these measures enable wallet providers to at least notify relevant user’s when any of their accounts trigger an AuthAccount Capability-related event. Such a flow would be similar to the notification you receive from a Web2 identity provider whenever you authorize a new app (e.g. sign in with Google to DapperLabs and Google will let you know you linked your accounts).
 
+With all this said, however, this does not feel entirely different than the risk vectors present by simply signing a transaction.
+
 ### Lack of Ultimate Control
 
 Initially, the idea of Hybrid Custody was to give user's ultimate control over their app accounts. However, over time it became evident this model would not be reasonable for application developers to implement.
 
 The response to the concerns was to place custody and control of Hybrid Custody accounts in the hands of the implementing developers. This means the current proposal is interoperable with existing custodial and funding infrastructure. The tradeoff here is that, at least initially, users have secondary access on these accounts - an application could cut off their access at any time, or another party could be given ownership of the account, superceding the user's access rights.
 
-What this design foregoes in user sovereignty and property rights it makes up for in developer ergonomics and feasibility. A balance is necessary here for the sake of developer ergonomics and adoption of the this feature, and it's believed that this user-restricted access model strikes an appropriate balance.
+What this design foregoes in user sovereignty and property rights it makes up for in developer ergonomics and feasibility. A balance is necessary here for the sake of application developer experience and adoption of the this feature, and it's believed that this user-restricted access model strikes an appropriate balance.
 
 # **Alternatives Considered**
 
@@ -930,24 +1060,26 @@ Under the proposed design, account creation and funding can be done any way you'
 
 Given the idea of progressive onboarding, we’ll need to add existing accounts as child accounts. This can be done either by a multisig transaction by the parent & child account, or via the `AuthAccount.Inbox` methods `publish()` and `claim()` across two transactions.
 
-The parent can the take the child account’s Capability & call `Manager.addAccount()` to create the on-chain link between accounts & preserve the child account’s `ProxyAccount` Capability.
+The parent can the take the child account’s Capability & call `Manager.addAccount()` to create the on-chain link between accounts & preserve the child account’s `ChildAccount` Capability.
 
 For more on this process, see [this walkthrough](#adding-an-account-as-a-child-account-aka-account-linking).
 
+> :information_source: As mentioned previously, it's recommended that the entire Hybrid Custody linking process be completed via the linking application.
+
 ## Revoking a child account
 
-Revocation in this construct involves removing the `ProxyAccount` Capability from the parent’s `Manager`. This can be done via `Manager.removeChild()` method. However, this is only one side of revocation.
+Revocation in this construct involves removing the `ChildAccount` Capability from the parent’s `Manager`. This can be done via `Manager.removeChild()` method. However, this is only one side of revocation.
 
 ## Granting ownership
 
-The other sort of revocation is one in which the current owner or custodian of a delegator account grants ownership to the requesting parent account. Note that a parent account does not have authority to initiate this process on their own, and must rely on the application to both enable and execute this process which may even force the application to surrender its access on the account entirely. This process involves the custodial party calling `ChildAccount.giveOwnership()` which revokes:
+The other sort of revocation is one in which the current owner or custodian of a delegator account grants ownership to the requesting parent account. Note that a parent account does not have authority to initiate this process on their own, and must rely on the application to both enable and execute this process which may even force the application to surrender its access on the account entirely. This process involves the custodial party calling `OwnedAccount.giveOwnership()` which revokes:
 
 1. Key access
 2. AuthAccount Capability access - at least any not at a deterministically generated path
 
 With regards to key access, if a developer account custodied the keys, they will be revoked. The granted owner could add a key once they have claimed ownership of the account.
 
-With regards to Capabilities on the child account, the `ChildAccount.seal()` method unlinks any AuthAccount Capabilities and relinks a Capability at a path generated at runtime.
+With regards to Capabilities on the child account, the `OwnedAccount.seal()` method unlinks any AuthAccount Capabilities and relinks a Capability at a path generated at runtime. The aformentioned method, calls `OwnedAccount.rotateAuthAccount()` and `OwnedAccount.revokeAllKeys()`, either of which could be called individually. Extreme caution should be taken when dealing with any of these three methods.
 
 The motivation for total revocation when granting ownership is due to the potential regulatory risks involved with sharing unrestricted access on an account with an unknown party. 
 
@@ -955,7 +1087,7 @@ Many custodial applications have gone through great pains to prevent users from 
 
 ## Granting access to child account Capabilities
 
-It's clear that access to typed Capabilities is a requirement for this standard to be useful. `CapabilityFactory` constructs enable retrieval of castable Capabilities while `CapabilityProxy` interfaces and resources enable developers to share arbitrary Capabilities with a parent account. Additionally, `CapabilityFilter` resources enable developers to set rules on the Capabilitites a parent account can access.
+It's clear that access to typed Capabilities is a requirement for this standard to be useful. `CapabilityFactory` constructs enable retrieval of castable Capabilities while `CapabilityDelegator` interfaces and resources enable developers to share arbitrary Capabilities with a parent account. Additionally, `CapabilityFilter` resources enable developers to set rules on the Capabilitites a parent account can access.
 
 As an example, a developer likely wouldn't want to include access to a child account's `FlowToken.Vault` in an `AllowlistFilter`. So one option would be to enumerate the types allowed in an `AllowlistFilter` and include a `Factory` in a `CapabilityFactory.Manager` that returns the desired typed Capabilities, such as an NFT `Collection` related to the app they're building. That way, a user could access the `Collection` from their main account, but the developer can be assured that any $FLOW used to fund the child account's storage remains safe from linked parent accounts.
 
@@ -974,16 +1106,16 @@ When delegating access, the delegator ("child") account needs to be configured w
     - Add any `Factory` structs to return typed Capabilities a delegatee ("parent") will need access to
 1. Save `CapabilityFilter.Allowlist` (or other `Filter`) and link as `{CapabilityFilter.Filter}` in public
     - Add any Types a delegatee ("parent") will need access to
-1. Save `HybridCustody.ChildAccount` and link as `{BorrowableAccount, ChildAccountPublic, ChildAccountPrivate}` in private and `{ChildAccountPublic}` in public
-1. Get reference to `HybridCustody.ChildAccount` and call `publishToParent()`, providing public Capabilities to previously configured `{Filter}` and `{Getter}`
-    - This creates and saves a `CapabilityProxy.Proxy` specific to the parent, linking as `{GetterPrivate}` and `{GetterPublic}` in private and public respectively
-    - Also in scope, a `ProxyAccount` is created, linking as `{AccountPrivate, AccountPublic}` in private and publishing this Capability for the parent to claim
+1. Save `HybridCustody.OwnedAccount` and link as `{HybridCustody.BorrowableAccount, HybridCustody.OwnedAccountPublic, MetadataViews.Resolver}` in private and `{HybridCustody.OwnedAccountPublic, MetadataViews.Resolver}` in public
+1. Get reference to `HybridCustody.OwnedAccount` and call `publishToParent()`, providing public Capabilities to previously configured `{Filter}` and `{Getter}`
+    - This creates and saves a `CapabilityDelegator.Delegator` specific to the parent, linking as `{GetterPrivate}` and `{GetterPublic}` in private and public respectively
+    - Also in scope, a `ChildAccount` is created, linking as `{AccountPrivate, AccountPublic, MetadataViews.Resolver}` in private and publishing this Capability for the parent to claim
 
 Once published, a user need to accept the published Capability and add it to their `Manager` resource
 
 1. Save `HybridCustody.Manager` and link as `{HybridCustody.ManagerPrivate, HybridCustody.ManagerPublic}` in private and `{HybridCustody.ManagerPublic}` in public
-1. Getting a reference to `Manager`, claim the published Capability on the created `ProxyAccount`
-    - This Capability is then inserted into the `Manager.accounts` mapping, indexed on the delegator account's `Address`
+1. Getting a reference to `Manager`, claim the published Capability on the created `ChildAccount`
+    - This Capability is then inserted into the `Manager.childAccounts` mapping, indexed on the delegator account's `Address`
 
 ## Using a Child Account’s NFT Collection
 
@@ -1002,12 +1134,12 @@ transaction(childAddress: Address, withdrawID: UInt64) {
         let managerRef: &HybridCustody.Manager = signer.borrow<&HybridCustody.Manager>(
                 from: HybridCustody.ManagerStoragePath
             ) ?? panic("Could not borrow reference to HybridCustody.Manager!")
-        // Borrow a reference to the signer's specified ProxyAccount
-        let proxyAccountRef: &{HybridCustody.AccountPrivate, HybridCustody.AccountPublic} = managerRef.borrowAccount(addr: childAddress)
-            ?? panic("Signer does not have access to specified ProxyAccount")
+        // Borrow a reference to the signer's specified ChildAccount
+        let childAccount: &{AccountPrivate, AccountPublic, MetadataViews.Resolver} = managerRef.borrowAccount(addr: childAddress)
+            ?? panic("Signer does not have access to specified ChildAccount")
         let collectionData = ExampleNFT.resolveView(Type<MetadataViews.NFTCollectionData>())! as! MetadataViews.NFTCollectionData
         // Get a Capability
-        let cap = proxyAccountRef.getCapability(
+        let cap = childAccount.getCapability(
                 path: collectionData.providerPath, type: Type<&{NonFungibleToken.Provider}>()
             ) ?? panic("Could not borrow a reference to the child account's ExampleNFT Provider!")
         // Cast the Capability as the one we want and borrow
@@ -1033,21 +1165,14 @@ Our hope is that if/when this Flip is adopted, this feature will be useful for a
 
 # Questions and Discussion Topics
 
-## Verbiage
-
-While the “parent-child” name implies an account hierarchy, it doesn’t necessarily map to the hybrid custody model that this standard works to support. There are number of other ideas for this hierarchical linked account relationship that could serve as better alternatives we’re hoping for input and consensus on. Share your opinion and provide others if you think there’s a better fit.
-
-- Parent-child account
-- Main-secondary account
-- Principal-proxy account
-- Hybrid custody account
-- Linked Accounts
-
 ## Open Questions
 
-- [ ] How will entitlements factor in to contract implementation and upgradability?
-- [ ] What metadata should be included with the introduction of this standard, and who should have authority to assign & mutate said metadata among all relevant resources?
-- [ ] Potentially overlapping with metadata, what discoverability methods should be included to reveal a user's access rights on an account?
+- [X] ~~How will entitlements factor in to contract implementation and upgradability?~~
+    - A: Since entitlements aren't yet feature complete, this is currently an unknown. However, Austin Kline has scoped this out as an upgradable/migratable change should entitlements make their way to Mainnet.
+- [X] ~~What metadata should be included with the introduction of this standard, and who should have authority to assign & mutate said metadata among all relevant resources?~~
+    - A: `Display` views are supported by `HybridCustody` resources with the flexibility of adding more in data buckets as well as via future contract updates should there be a conensus demanding it.
+- [X] ~~Potentially overlapping with metadata, what discoverability methods should be included to reveal a user's access rights on an account?~~
+    - A: For the sake of scalability, it's recommended that any queries to determine access be done via the script layer. Existing scripts demonstrate that the primitives exist for the question of accessibility, at least for the vast majority of use cases, to exists and enough flexibility is present at deployment time for changes to enhance the current state.
 - [X] ~~Are there any additional events and/or event data that should be included in this standard?~~
     - A: See [PR](https://github.com/Flowtyio/restricted-child-account/pull/20)
 - [X] ~~Is the limitation of public `deposit()` functionality fly too far away from the NFT standard such that its use is not warranted?~~
@@ -1055,11 +1180,11 @@ While the “parent-child” name implies an account hierarchy, it doesn’t nec
 - [X] ~~Where do Capability Controllers fit in and can they reduce some of the concerns around auditing and revocation of AuthAccount Capabilities?~~
     - A: Any Capability Controller access is done in function scope and would be an upgradable change. If anything, the feature should enhance security guarantees without much refactor needed.
 - [ ] ~~Should child accounts be allowed to have multiple parent accounts?~~
-    - A: Yes and they will be mediated by a single owning `ChildAccount` managing `ProxyAccount` access for each parent
+    - A: Yes and they will be mediated by a single owning `OwnedAccount` managing `ChildAccount` access for each parent
 - [X] ~~Linking AuthAccounts is possible outside of the mechanisms defined in this standard. How does a user know who else has secondary access to their child accounts.~~
     - A: Until CapCons, this is not technically possible and will need to be addressed via communication and education
 - [X] ~~Do we want `Manager` to be able to revoke other `Manager`s’ access to a child account? For example, let’s say I have access to a set of child accounts and I want to remove anyone else’s access to those accounts - should I be able to and how would I do that if so?~~
-    - A: In the current implementation, only the custodian and the parent "owner" of a `ChildAccount` can remove other parents' access
+    - A: In the current implementation, only the custodian and the parent "owner" of a `OwnedAccount` can remove other parents' access
 
 # References
 
@@ -1073,3 +1198,4 @@ While the “parent-child” name implies an account hierarchy, it doesn’t nec
 - [Child Account dApp implementation](https://github.com/onflow/flow-games-retro)
 - [Super User AuthAccount Forum Post](https://forum.onflow.org/t/super-user-account/4088/2?u=gio_on_flow)
 - [Hybrid Custody & Restrictions on LinkedAccounts Forum Post](https://forum.onflow.org/t/hybrid-custody-restrictions-on-linked-accounts/4561/)
+- [Hybrid Custody MVP App Demo](https://walletless-arcade-game.vercel.app/)
