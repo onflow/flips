@@ -125,6 +125,17 @@ such as commit-reveal schemes can be proposed in a separate FLIP.
 
 ## Questions and Discussion Topics
 
+### Randomness in script execution
+
+`executeScriptAtBlock` and `ExecuteScriptAtLatestBlock` are used to execute Cadence read-only code against the execution state at a past sealed block or the latest sealed blocked, respectively. With the entropy being extracted from the protocol state, `executeScriptAtBlock` may require reading the protocol state at a past block, which is not guaranteed to be stored by Flow nodes. Moreover, the FVM implementation of `random` requires a transaction hash which is not possible with script execution (scripts are not executed as part of a transaction). For these reasons, it is not possible to replicate Cadence's `random` behavior in scripts. It is not possible to retrieve the same random numbers when calling `random` as a transaction or as a script. 
+
+We can define an alternative behavior for `random` in scripts. These following options are possible:
+ 1. panic
+ 2. return a constant (zero value of the type)
+ 3. return pseudo-random numbers using a weak source of entropy
+
+Option (1) can cause confusion because valid Cadence code would fail when run as a script. Option (3) can also cause confusion as the returned numbers may look "random" while they are different than the numbers returned by a transaction, and are therefore not useful for users. (2) avoids panicking and may remind users that randomness doesn't work properly on scripts. This FLIP suggests to choose option (2).
+
 ### Possible confusion with renaming
 
 - concern: this change may communicate the wrong idea to Cadence users. Although from the protocol perspective randomness is no longer "unsafe", Cadence users will probably not consider it to be such. As far as they are concerned, the randomness (used naively) is still "unsafe" because it is still exploitable by a transaction that reverts to post-select a favorable result. Changing the name of the function to remove the unsafe prefix would suggest to developers that the function is "safe" in the sense that it is immune to this exploit, which it's not. Users can use certain patterns to make their randomness truly safe, but they need to structure their code in a specific way for this to work. The worry is that developers won't realize they need to do this without the built-in warning that a name like unsafeRandom provides. It's preferred to have the name indicate that the user needs to do something additional beyond just calling the function to get a random number; something like revertibleRandom, for example.
