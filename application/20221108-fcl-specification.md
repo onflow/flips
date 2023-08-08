@@ -143,7 +143,7 @@ In this section we define the schema of objects used in the protocol. While they
 
 For the schema definition language we choose TypeScript, so that the schema closely resembles the actual type definitions one would use when making an FCL implementation.
 
-**Note that currently there are no official type definitions available for FCL. If you are using TypeScript, you will have to create your own type definitions (possibly based on the schema definitions presented in this document).**
+**Note that currently the official type definitions available for FCL are not fully implemented. If you are using TypeScript, you will have to create your own type definitions for some structures (possibly based on the schema definitions presented in this document).**
 
 #### <a id="fclobjects"></a> FCL Objects
 
@@ -283,7 +283,7 @@ Each response back to FCL must be "wrapped" in a `PollingResponse`. The `status`
 
 In summary, zero or more `PENDING` responses should be followed by a non-pending response. It is entirely acceptable for your service to immediately return an `APPROVED` Polling Response, skipping a `PENDING` state.
 
-See also [PollingResponse](https://github.com/onflow/flow-js-sdk/blob/master/packages/fcl/src/current-user/normalize/polling-response.js).
+See also [PollingResponse](https://github.com/onflow/fcl-js/blob/master/packages/fcl/src/normalizers/service/polling-response.js).
 
 Here are some examples of valid `PollingResponse` objects:
 
@@ -466,7 +466,7 @@ interface CompositeSignature extends ObjectBase {
 }
 ```
 
-See also [CompositeSignature](https://github.com/onflow/flow-js-sdk/blob/master/packages/fcl/src/current-user/normalize/composite-signature.js).
+See also [CompositeSignature](https://github.com/onflow/fcl-js/tree/master/packages/fcl/src/normalizers/service/composite-signature.js).
 
 ##### <a id="presignable"></a> `PreSignable`
 
@@ -548,12 +548,12 @@ https://github.com/onflow/fcl-js/blob/master/packages/fcl/src/normalizers/servic
 ##### `frame`
 
 TODO
-[frame](https://github.com/onflow/flow-js-sdk/blob/master/packages/fcl/src/current-user/normalize/frame.js)
+[frame](https://github.com/onflow/fcl-js/tree/master/packages/fcl/src/normalizers/service/frame.js)
 
 ##### `local-view`
 
 TODO
-[local-view](https://github.com/onflow/flow-js-sdk/blob/master/packages/fcl/src/current-user/normalize/local-view.js)
+[local-view](https://github.com/onflow/fcl-js/tree/master/packages/fcl/src/normalizers/service/local-view.js)
 
 [FCL Normalizers](https://github.com/onflow/fcl-js/tree/master/packages/fcl/src/normalizers/service)
 
@@ -575,7 +575,7 @@ Ultimately we want to do this back and forth via a secure back-channel (https re
 
 Where possible, you should aim to provide a back-channel support for services, and only fall back to a front-channel if absolutely necessary.
 
-Back-channel communications use `method: "HTTP/POST"`, while front-channel communications use `method: "IFRAME/RPC"`, `method: "POP/RPC"`, `method: "TAB/RPC` and `method: "EXT/RPC"`.
+Back-channel communications use `method: "HTTP/POST"`, while front-channel communications use `method: "IFRAME/RPC"`, `method: "POP/RPC"`, `method: "TAB/RPC`, `method: "EXT/RPC"`, and `method: "DEEPLINK/RPC"`
 
 | Service Method | Front | Back |
 | -------------- | ----- | ---- |
@@ -584,6 +584,7 @@ Back-channel communications use `method: "HTTP/POST"`, while front-channel commu
 | POP/RPC        | ✅    | ⛔   |
 | TAB/RPC        | ✅    | ⛔   |
 | EXT/RPC        | ✅    | ⛔   |
+| DEEPLINK/RPC   | ✅    | ⛔   |
 
 It's important to note that regardless of the method of communication, the data that is sent back and forth between the parties involved is the same.
 
@@ -643,7 +644,14 @@ FCL will use that `BackChannelRpc` to request a new `PollingResponse` which itse
 If it is `APPROVED` FCL will return, otherwise if it is `DECLINED` FCL will error. However, if it is `PENDING`, it will use the `BackChannelRpc` supplied in the new `PollingResponse` updates field. It will repeat this cycle until it is either `APPROVED` or `DECLINED`.
 
 There is an additional optional feature that `HTTP/POST` enables in the first `PollingResponse` that is returned.
-This optional feature is the ability for FCL to render an iframe, popup or new tab, and it can be triggered by supplying a service `type: "VIEW/IFRAME"`, `type: "VIEW/POP"` or `type: "VIEW/TAB"` and the `endpoint` that the wallet wishes to render in the `local` field of the `PollingResponse`. This is a great way for a wallet provider to switch to a webpage if displaying a UI is necessary for the service it is performing.
+This optional feature is the ability for FCL to render an iframe, popup, new tab or to open a mobile browser, and it can be triggered by supplying a service `type: "VIEW/IFRAME"`, `type: "VIEW/POP"`, `type: "VIEW/TAB"`, or `type: "VIEW/MOBILE_BROWSER"` and the `endpoint` that the wallet wishes to render in the `local` field of the `PollingResponse`. This is a great way for a wallet provider to switch to a webpage if displaying a UI is necessary for the service it is performing.
+
+###### VIEW/MOBILE_BROWSER
+
+Specifically for mobile platforms there is a service `type: "VIEW/MOBILE_BROWSER"`. It works almost the same way as `type: "VIEW/IFRAME"` with an exception that it doesn't communicate back to the app as it doesn't have `window.postMessage` method.
+
+*NOTE: You also need to call `window.close()` when you finish processing the request on the page specifically for Android, as it is NOT possible to control the mobile browser window from the app after openning it (you cannot close the mobile browser from the app)* 
+
 
 ![HTTP/POST Diagram](https://raw.githubusercontent.com/onflow/flow-js-sdk/master/packages/fcl/assets/service-method-diagrams/http-post.png)
 
@@ -694,6 +702,81 @@ chrome.tabs.sendMessage(tabs[0].id, {
 ```
 
 ![EXT/RPC Diagram](https://raw.githubusercontent.com/onflow/flow-js-sdk/master/packages/fcl/assets/service-method-diagrams/ext-rpc.png)
+
+
+##### <a id="deeplinkrpc"></a> DEEPLINK/RPC (Front Channel)
+
+`DEEPLINK/RPC` works somewhat similar to `IFRAME/RPC`:
+
+- A mobile browser is opened 
+  - URL comes from the `endpoint` in the service
+  - message `body` and `config` are encoded (`JSON.stringify`) in `fclMessageJson` URL param
+- The browser handler attaches an event listener to the browser object (iOS) or listense to deeplink changes (Android)
+- The wallet sends back an `"APPROVED"` or `"DECLINED"` message. (It should redirect back to the application using a deeplink redirect url passed in `fcl_redirect_url` and the redirect url should contain `fclResponseJson` URL param with stringified data object). This can be simplified using `WalletUtils.approve` and `WalletUtils.decline`
+  - If it's approved, the response's data field will need to be what FCL is expecting.
+  - If it's declined, the response's reason field should say why it was declined.
+
+```javascript
+export const WalletUtils.approve = data => {
+  sendMsgToFCL("FCL:VIEW:RESPONSE", {
+    f_vsn: "1.0.0",
+    status: "APPROVED",
+    reason: null,
+    data: data,
+  })
+}
+
+export const WalletUtils.decline = reason => {
+  sendMsgToFCL("FCL:VIEW:RESPONSE", {
+    f_vsn: "1.0.0",
+    status: "DECLINED",
+    reason: reason,
+    data: null,
+  })
+}
+```
+
+Redirect happen automatically with `sendMsgToFCL` call if you're using standard FCL Wallet Utils, as it checks `fcl_redirect_url` in URL params
+
+Unlike `IFRAME/RPC` this strategy cannot provide non-terminal status updates (`PENDING` and `REDIRECT`) from the wallet back to the application as any `sendMsgToFCL` call will cause a Deeplink redirect back to the application.
+
+ServiceTypes, BodyTypes and Expected ReturnValues
+|    ServiceType | BodyType    | ReturnValue 
+|---------------:|-------------|----------------------
+|          authn | ---         | AuthnResponse
+|          authz | Signable    | CompositeSignature
+|      pre-authz | PreSignable | PreAuthzResponse
+| user-signature | Signable    | [CompositeSignature]
+      
+
+
+```mermaid
+%%{init: { 'sequence': {'noteAlign': 'left'} }}%%
+sequenceDiagram
+    participant App/FCL
+    participant Wallet/API
+    participant Mobile Browser
+    note over App/FCL: import { config } from "@onflow/fcl"<br/>config({<br/>#emsp;"discovery.authn.endpoint": "https://wallet.com/api/discovery",<br/>#emsp;"app.detail.title": "My Awesome App",<br/>#emsp;"app.detail.icon": "https://app.com/assets/icon.jpg",<br/>})
+
+    App/FCL ->> Wallet/API: http POST https://wallet.com/api/discovery
+    activate Wallet/API
+    note right of App/FCL: BODY {<br/>#emsp;"supportedStrategies": [<br/>#emsp;#emsp;"HTTP/POST",<br/>#emsp;#emsp;"DEEPLINK/RPC"<br/>#emsp;],<br/>#emsp;...BodyType,<br/>}
+    Wallet/API ->> App/FCL: POST response with available services
+    deactivate Wallet/API
+    note left of Wallet/API: [{<br/>#emsp;"f_type": "Service",#emsp;<br/>#emsp;"f_vsn": "1.0.0",<br/>#emsp;"type": ServiceType,<br/>#emsp;"method": "DEEPLINK/RPC",<br/>#emsp;"endpoint": "https://wallet.com/_A_",<br/>#emsp;"data": { "foo": "bar" },<br/>#emsp;"params": { "omg": "rawr" },<br/>},...]
+    App/FCL ->> Mobile Browser: http GET https://wallet.com/_A_
+    activate Mobile Browser
+    note right of App/FCL: URLSearchParams {<br/>#emsp;"fclMessageJson": `${JSON.Stringify({...body, config})}`},<br/>#emsp;"fcl_redirect_url": appDeeplinkUrl,<br/>#emsp;...<br/>}
+    alt Approved
+        Mobile Browser->>App/FCL: Redirect to appDeeplinkUrl
+        note left of Mobile Browser: URLSearchParams {<br/>#emsp;"fclResponseJson": {<br/>#emsp;#emsp;"status": "APPROVED",<br/>#emsp;#emsp;"data": ReturnValue,<br/>#emsp;}<br/>}
+    else Declined
+        Mobile Browser->>App/FCL: Redirect to appDeeplinkUrl
+        note left of Mobile Browser: URLSearchParams {<br/>#emsp;"fclResponseJson": {<br/>#emsp;#emsp;"status": "DECLINED",<br/>#emsp;#emsp;"reason": "The user didn't want to do it ...",<br/>#emsp;}<br/>}
+    end
+    deactivate Mobile Browser
+
+```
 
 #### <a id="servicemethodplugins"></a> Service Method Plugins
 
