@@ -189,7 +189,7 @@ As it's named, this contract defines a `Delegator` resource that enables the del
 
 #### HybridCustody
 
-This contract pulls together all of those listed above to enable, well, Hybrid Custody.
+This contract pulls together all of those listed above to enable Hybrid Custody.
 
 - `Manager` - A resource associated with a parent account that will allow its owner to store and access Capabilities which mediate access on child accounts. These can be Capabilities with restrictions (`childAccounts`) or without restrictions (`ownedAccounts`), mapping to Capabilities on `ChildAccount` and `OwnedAccount` respectively. Enables the addition of delegated Capabilities, retrieval of Capabilities in child accounts, and querying a `Manager`'s child accounts. A manager can also set a filter on the Capabilities it can be granted from a child account which can be helpful if a user is managing child accounts from a custodial wallet that wants to prevent access on specific Capabilities (e.g. `FungibleToken.Vault`).
 - `ChildAccount` - This resource lives in a child account and maintains a Capability on an `OwnedAccount` along with other Capabilities that regulate Capability retrieval from said `OwnedAccount`. This resource also serves as a pointer to its related "parent" account who holds a Capability on it from a `Manager` resource.
