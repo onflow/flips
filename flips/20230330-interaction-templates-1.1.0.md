@@ -181,7 +181,7 @@ Here is an example `InteractionTemplate` for a "Transfer FLOW" transaction:
     ],
     cadence: // Cadence code this interaction executes.
     `
-    import FlowToken from 0xFLOWTOKENADDRESS
+    import "FlowToken"
     transaction(amount: UFix64, to: Address) {
         let vault: @FungibleToken.Vault
         prepare(signer: AuthAccount) {
@@ -201,7 +201,6 @@ Here is an example `InteractionTemplate` for a "Transfer FLOW" transaction:
     `,
     dependencies: [
       {
-        placeholder: "0xFLOWTOKENADDRESS", // Network (mainnet || testnet) dependent locations for 0xFUNGIBLETOKENADDRESS contract.
         contracts: [
           {
             contract: "FlowToken",
@@ -594,10 +593,8 @@ template-dependency-contract         = [
     sha3_256(template-dependency-contract-name),
     [ ...template-dependency-contract-network ]
 ]
-template-dependency-addr-placeholder = Placeholder address
-template-dependency                  = [
-    sha3_256(template-dependency-addr-placeholder),
-    [ ...template-dependency-contract ]
+template-dependency                  = [ 
+  ...template-dependency-contract 
 ]
 
 
@@ -842,9 +839,6 @@ sha3_256(MESSAGE)
             {
               "type": "object",
               "properties": {
-                "address": {
-                  "type": "string"
-                },
                 "contracts": {
                   "type": "array",
                   "items": [
@@ -892,7 +886,6 @@ sha3_256(MESSAGE)
                 }
               },
               "required": [
-                "address",
                 "contracts"
               ]
             }
