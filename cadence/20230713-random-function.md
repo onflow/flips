@@ -10,12 +10,16 @@ updated: 2023-07-13
 
 ## Objective
 
-The purpose is to rename the current `fun unsafeRandom(): UInt64` function to
+The purpose is :
+- to rename the current `fun unsafeRandom(): UInt64` function to
 `fun random(): UInt64`.
 This can be done by introducing a new `random` function, and eventually
 deprecating `unsafeRandom` (breaking change).
+- to expand the current function to a more safe and convenient `fun random<T: UnsignedInteger>([modulo: T]): T` where `UnsignedInteger` covers more Cadence's unsigned integer types and `modulo` is an optional upper-bound argument.
 
 ## Motivation
+
+### function rename
 
 The Flow Virtual Machine (FVM) provides the implementation of `unsafeRandom`
 as part of the Flow protocol. The FVM implementation has been using the block hash as
@@ -40,6 +44,12 @@ deterministic sequence of randoms.
 These measures make the `unsafeRandom` unpredictable to the transaction execution environment
 and unbiasable by all transaction code prior to the random function call.
 
+### function generalized header
+
+Many applications require a random number less than an upper-bound `N` rather than a random number without constraints. For example, sampling a random element from an array requires picking a random index less than the array size. `N` is commonly called the modulo. In security-sensitive applications, it is important to maintain a uniform distribution of the random output. Returning the remainder of the division of a 64-bits number by `N` (using the modulo operation `%`) is known to result in a biased distribution where smaller outputs are more likely to be sampled than larger ones. This is known as the "modulo bias". There are safe solutions to avoid the modulo bias such as rejection sampling and large modulo reduction. Although these solutions can be implemented purely in Cadence, it is safer to provide the secure functions and abstract the complexity away from developers. This also avoids using unsafe methods. The FLIP suggests to add an optional unsigned-integer argument `N` to the `random` function. If `N` is provided, the returned random is uniformly sampled strictly less than `N`. The function errors if `N` is equal to `0`. If `N` is not provided, the returned output has no constraints.
+
+A more convenient way of using `random` is to cover unsigned integer types `UInt8`, `UInt16`, `UInt32`, `UInt64`, `UInt128`, `UInt256`, `Word8`, `Word16`, `Word32`, `Word64`. The type applies to the optional argument `modulo` as well as the returned value. This would abstract the complexity of generating randoms of different types using 64-bits values as a building block. The new suggested function signature is therefore `fun random<T: UnsignedInteger>([modulo: T]): T`, where `T` can be any type from the above list.
+
 ## User Benefit
 
 Cadence uses the prefix `unsafe` to warn developers of the risks of using
@@ -47,13 +57,14 @@ the random function. Such risks are addressed by the FVM recent updates
 and developers can safely rely on the random function. Removing the prefix
 clarifies the possible confusion about the function safety.
 
+The generalized function signature offers safe and more flexible ways to use randomness. Without such change, developers are required to implement extra logic and take the risk of making mistakes.
+
 ## Design Proposal
 
 1. As a first step:
-  - rename Cadence's [runtime interface](https://github.com/onflow/cadence/blob/8a128022e0a5171f4c3a173911944a2f43548b98/runtime/interface.go#L107) `UnsafeRandom` to
-  `Random`.
-  - add a new Cadence function `fun random(): UInt64`, backed
-  by a safe implementation in the FVM. `fun unsafeRandom(): UInt64` remains
+  - update Cadence's [runtime interface](https://github.com/onflow/cadence/blob/8a128022e0a5171f4c3a173911944a2f43548b98/runtime/interface.go#L107) `UnsafeRandom() (uint64, error)` to `ReadRandom(byte[]) error`.
+  - add a new Cadence function `fun random<T: UnsignedInteger>([modulo: T]): T`, backed
+  by a safe FVM implementation. `fun unsafeRandom(): UInt64` remains
   available to avoid immediate breaking changes. Note that both functions
   would be backed by the same safe FVM implementation.
 2. As a second step, deprecate `fun unsafeRandom(): UInt64` as part of the
@@ -65,17 +76,11 @@ Step (2) in [Design Proposal](#design-proposal) introduces a breaking change.
 
 ### Alternatives Considered
 
-- `fun random<T: UnsignedInteger>(): T` can provide more flexibility
-to developers. However, any random output of type `T` can be built using `fun random(): UInt64`.
-Adding a new built-in function can still be considered.
-- An optional modulus can be added as a input `fun random([modulus; UInt64]): UInt64` to produce
-a random number less than `modulus`. In particular, a safe implementation that
-provides a uniformly distributed output (reducing the modulo bias), suitable for cryptographic applications
-could be added. However, such implementation can be built using `fun random(): UInt64`.
+The generalized function signature could be omitted from the proposal because it is possible to implement `fun random<T: UnsignedInteger>([modulus; T]): T` purely on Cadence using `fun random(): UInt64`. However, this requires developers to be familiar with safe low-level implementations and it may result in bugs and vulnerabilities. It is safer to have these tools provided natively by Cadence.
 
 ### Performance Implications
 
-None
+The `random` function using the optional modulo argument `N` is obviously slower than when `N` is not provided. The extra cost is required to provide the safety and uniformity of the output distribution.
 
 ### Dependencies
 
@@ -83,7 +88,7 @@ None
 
 ### Engineering Impact
 
-None
+The Cadence repository needs to implement the generalized function signature (optional argument and extra types).
 
 ### Best Practices
 
@@ -106,8 +111,14 @@ abortion scenario. This limitation is inherent to any smart contract platform th
 
 ### Tutorials and Examples
 
-The `random` function can be used exactly the same way as
-`unsafeRandom`.
+```
+let r1 = randomUInt8()                    // r1 is of type `UInt8`
+let r2 = randomWord16()                   // r2 is of type `Word16`
+let r3 = randomUInt128(UInt128(3))        // r3 is of type `UInt128` and is strictly less than 3
+let r4 = randomUInt128(UInt128(1 << 100)) // r4 is of type `UInt128` and is of at most 100 bits
+let r5 = randomWord64(Word64(r1))         // r5 is of type `Word64` and is strictly less than `r1`
+let r6 = randomUInt64(UInt64(0))          // this would panic
+```
 
 ### Compatibility
 
@@ -121,7 +132,7 @@ Please see [Design Proposal](#design-proposal) for details on user impact.
 
 As mentioned in [Best Practices](#best-practices) section, the current proposal and the new FVM implementation
 do not propose solutions for the transaction abortion issue. Solutions to abortion
-such as commit-reveal schemes can be proposed in a separate FLIP.
+such as commit-reveal schemes can be proposed in a [separate FLIP](https://github.com/onflow/flips/pull/123).
 
 ## Questions and Discussion Topics
 
