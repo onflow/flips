@@ -377,22 +377,24 @@ For each dependency of the interaction (each contract that is imported in the ca
 
 ```javascript
 let contract_imported_in_interaction_cadence = ...
-let horizen = [contract_imported_in_interaction_cadence]
 let import_hash = ""
 
-for contract in horizen {
+function processContract(contract) {
   let contract_code = getContract(contract)
   let contract_hash = hash(contract_code) // SHA3-256 hash represented as hex string
   let contract_imports = getContractImports(contract_code)
 
   import_hash = import_hash + contract_hash
 
-  for contract_import in contract_imports {
-    horizen.push(contract_import)
+  for (let contract_import of contract_imports) {
+    processContract(contract_import)
   }
 }
 
+processContract(contract_imported_in_interaction_cadence)
+
 let pin = hash(import_hash) // SHA3-256 hash represented as hex string
+
 ```
 
 #### `data.arguments`
