@@ -1048,7 +1048,7 @@ As this FLIP introduces a standard contract and set of resources, best practices
 1. Creating and funding child accounts
 2. Linking existing accounts as a user’s child account
 3. Removing a child account
-4. **TODO**: Granting ownership of a child account to a parent
+4. Granting ownership of a child account to a parent
 
 ## Creating and Funding Child Accounts
 
