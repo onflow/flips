@@ -291,7 +291,7 @@ Here is an example `InteractionTemplate` for a "Transfer FLOW" transaction:
             ]
           }
         ],
-        balance: "0xFUNGIBLETOKENADDRESS.FungibleToken" // The token this argument acts upon.
+        balance: "FungibleToken" // The token this argument acts upon.
       },
       {
         label: "to",
@@ -410,7 +410,7 @@ A powerful feature of Cadence is the ability for transactions to have well defin
 Example "Transfer Token" transaction cadence code with an unfilled in execution phase:
 
 ```text
-import FungibleToken from 0xFUNGIBLETOKENADDRESS
+import "FungibleToken"
 transaction(amount: UFix64, to: Address) {
     let vault: @FungibleToken.Vault
     let receiverBalanceBefore: UFix64
