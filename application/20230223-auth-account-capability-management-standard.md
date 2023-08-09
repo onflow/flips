@@ -130,7 +130,7 @@ Accomplishing this vision successfully - success here meaning building a secure 
 - As a user, why would I want a separate account I share access with? Doesn’t that put all of my assets at custodial risk?
     - Again, only the child account shares access with another party, meaning your main account is safe from custodial risk. In fact, partitioning assets across accounts in this way enhances security over a model that requires all transactions be signed by your main account. A user can keep all of their more valuable assets in their main account, out of reach without a user-signed transaction, while keeping less valuable dApp assets in a shared account for ease of use.
 - As an application developer, won't I expose myself to undue risk by giving a user access on an account I have custody of?
-    - The newly proposed design introduces the ability to restrict delegated access. This means that you can set the rules on what a user can access via the delegation you grant them, thereby setting their scope as you define it. For example, want users to be able to access an NFT Collection in your app-custodied account? That can be easily configured!
+    - The newly proposed design introduces the ability to restrict delegated access. This means that you can set the rules on what a user can access via the delegation you grant them, thereby setting their scope as you define it. For example, want users to only be able to access an NFT Collection in your app-custodied account? That can be easily configured!
 
 # User Benefit
 
