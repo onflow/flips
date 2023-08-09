@@ -193,7 +193,7 @@ it is the responsibility of the author (and/or sponsor, if applicable) to ensure
 
 A sponsor is a Flow maintainer, selected by the author at will, and is responsible for ensuring the best possible outcome of the FLIP process.
 
-In particular, a sponsor may help with the following-
+In particular, a sponsor may help with the following:
 
 * advocating for the proposed design
 * guiding the FLIP to adhere to existing design and style conventions
