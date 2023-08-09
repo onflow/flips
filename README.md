@@ -106,7 +106,7 @@ Once the FLIP is ready for review:
 
    Please note that you are not required to recruit a sponsor; this step is entirely optional. If you recruit a sponsor, identify them in the FLIP before posting the PR in step 2.
 
-2. Create an [issue](https://github.com/onflow/flips/issues/new/choose) using the FLIP issue template. The title of the issue should be the title of your FLIP e.g. "Dynamic Inclusion fees".
+2. Create an [issue](https://github.com/onflow/flips/issues/new/choose) using the FLIP issue template. The title of the issue should be the title of your FLIP, e.g., "Dynamic Inclusion fees".
 
    Assign an appropriate label for the type of the FLIP (one of `flip:application`, `flip:governance`, `flip:protocol`, `flip:cadence`).
    If you do not have the permission, you may need to ask the sponsor to assist you.
