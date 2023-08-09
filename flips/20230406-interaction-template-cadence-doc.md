@@ -42,23 +42,23 @@ Interaction Template Cadence Doc supports the following declarations:
 
 - `@lang` declares the default BCP-47 language tag for all messages in the Interaction Template Cadence Doc (defaults to 'en-US').
 
-- `@message` declares information about a transaction/script argument
+- `@message` declares information about a transaction/script
 
-  - `@message [key]` the field `key` declares what key this argument message is for (eg: 'title' or 'description')
-  - `@message [key]: [message]` the field `message` declares the human readable message to associate with the argument
+  - `@message [key]` the field `key` declares what key this message is for (eg: 'title' or 'description')
+  - `@message [key]: [message]` the field `message` declares the human readable message to associate with transaction/script
   - `@message [translation] [key]: [message]` the optional field `translation` declares a BCP-47 language tag to declare the translation of the message, (default to @lang).
 
-- `@parameter` declares information about a transaction/script argument
+- `@parameter` declares information about a transaction/script parameter
 
-  - `@parameter [(optional)key]` the optional field `key` declares what key this argument message is for (eg: 'title' or 'description', default to 'title')
-  - `@parameter [(optional)key] [label]` the field `label` declares which transaction/script argument this declaration is for
-  - `@parameter [(optional)key] [label]: [message]` the field `message` declares the human readable message to associate with the argument
+  - `@parameter [(optional)key]` the optional field `key` declares what key this parameter message is for (eg: 'title' or 'description', default to 'title')
+  - `@parameter [(optional)key] [label]` the field `label` declares which transaction/script parameter this declaration is for
+  - `@parameter [(optional)key] [label]: [message]` the field `message` declares the human readable message to associate with the parameter
   - `@parameter [(optional)translation] [key] [label]: [message]` the optional field `translation` declares a BCP-47 language tag to declare the translation of the message, (default to @lang).
 
 - `@balance`
 
-  - `@balance [label]` the field `label` declares the argument label this declaration is for.
-  - `@balance [label]: [contract]` the field `contract` declares the contract on the account which defines the type of balance this argument.
+  - `@balance [label]` the field `label` declares the parameter label this declaration is for.
+  - `@balance [label]: [contract]` the field `contract` declares the contract on the account which defines the type of balance this parameter.
 
 - `@translate [...translation]` declares a list of BCP-47 language tags to use translate all messages.
 
@@ -69,9 +69,8 @@ import "FungibleToken"
 import "FlowToken"
 
 /**
-Transfer Tokens
-
-Transfer tokens from one account to another
+@message title: Transfer Tokens
+@message description: Transfer tokens from one account to another
 
 @version 1.0.0
 
@@ -111,9 +110,9 @@ import "FungibleToken"
 import "FlowToken"
 
 /**
-Flow Token Balance
-
-Get account Flow Token balance
+@message title: Flow Token Balance
+@message description: Get account Flow Token balance
+@message returns: Flow account balance
 
 @version 1.0.0
 
@@ -151,6 +150,7 @@ The Interaction Template Cadence Doc JSON file must be in following format:
     - A `arguments` field, which is an object with:
       - `[label]` key subfields, where `label` is the label of an argument of the Cadence transaction or script, with value being an object with:
         - `[key]` key subfields, where `key` is the key of each message, with value being the translation of that message for `lang`
+
 
 This is an example of Interaction Template Cadence Doc for a transaction (as a JSON file):
 
@@ -196,12 +196,62 @@ This is an example of Interaction Template Cadence Doc for a transaction (as a J
       "description": "将代币从一个账户转移到另一个账户"
     },
     "arguments": {
-      "recipient": {
-        "to": "令牌将转到的 Flow 帐户"
+      "to": {
+        "title": "令牌将转到的 Flow 帐户"
       },
       "amount": {
         "title": "要发送的 FLOW 代币数量"
       }
+    }
+  }
+]
+```
+
+Example for a script 
+Adds "returns" to messages to give context of the return value of the script
+
+```json
+[
+  {
+    "version": "1.0.0",
+    "lang": "en-US",
+    "messages": {
+      "title": "Flow Token Balance",
+      "description": "Get account Flow Token balance",
+      "returns": "Flow account balance"
+    },
+    "arguments": {
+      "address": {
+        "title": "Flow account address"
+      },
+    },
+  },
+  {
+    "version": "1.0.0",
+    "lang": "fr-FR",
+    "messages": {
+      "title": "Solde du Token Flow",
+      "description": "Obtenez le solde du token Flow du compte Flow",
+      "returns": "Solde du compte Flow"
+    },
+    "arguments": {
+      "address": {
+        "title": "Adresse du compte Flow"
+      },      
+    },
+  },
+  {
+    "version": "1.0.0",
+    "lang": "zh-CN",
+    "messages": {
+      "title": "Flow 代币余额",
+      "description": "获取账户的Flow 代币余额",
+      "returns": "Flow 账户余额"
+    },
+    "arguments": {
+      "address": {
+        "title": "Flow 账户地址"
+      },
     }
   }
 ]
