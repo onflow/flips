@@ -136,6 +136,7 @@ Once the FLIP is ready for review:
    with a brief description, a link to the PR and a request for review.
 
 5. On the FLIP issue that was created earlier in Step 2, set the status under the "FLIPs Tracker" project to `Proposed`. 
+   If you do not have the permission, you may need to ask the sponsor to assist you.
 
 6. The author may request a review committee meeting after sufficient discussion has taken place.
    This meeting will include the FLIP author, core contributors and interested community members.
