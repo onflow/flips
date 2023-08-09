@@ -778,6 +778,8 @@ sequenceDiagram
 
 ```
 
+*NOTE: react-native implementation needs `discovery.authn.endpoint` config to point to be defined. See below.*
+
 #### <a id="servicemethodplugins"></a> Service Method Plugins
 
 TODO
@@ -817,6 +819,9 @@ config({
 ```
 
 If the method specified is `IFRAME/RPC`, `POP/RPC` or `TAB/RPC`, then the URL specified as `discovery.wallet` will be rendered as a webpage. If the configured method is `EXT/RPC`, `discovery.wallet` should be set to the extension's `authn` `endpoint`. Otherwise, if the method specified is `HTTP/POST`, then the authentication process will happen over HTTP requests. (While authentication can be accomplished using any of those service methods, this example will use the `IFRAME/RPC` service method.)
+
+For `DEEPLINK/RPC` method it's required to specify `discovery.authn.endpoint` as an API endpoint, that should return an array of Authn Service with method
+These services could be consumed by `useServiceDiscovery` react hook.
 
 Once the Authentication webpage is rendered, the extension popup is enabled, or the API is ready, you then need to tell FCL that it is ready. You will do this by sending a message to FCL, and FCL will send back a message with some additional information that you can use about the application requesting authentication on behalf of the user.
 
