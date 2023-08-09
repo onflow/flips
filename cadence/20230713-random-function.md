@@ -62,13 +62,12 @@ The generalized function signature offers safe and more flexible ways to use ran
 ## Design Proposal
 
 1. As a first step:
-  - update Cadence's [runtime interface](https://github.com/onflow/cadence/blob/8a128022e0a5171f4c3a173911944a2f43548b98/runtime/interface.go#L107) `UnsafeRandom() (uint64, error)` to `ReadRandom(byte[]) error`.
-  - add a new Cadence function `fun random<T: UnsignedInteger>([modulo: T]): T`, backed
-  by a safe FVM implementation. `fun unsafeRandom(): UInt64` remains
-  available to avoid immediate breaking changes. Note that both functions
-  would be backed by the same safe FVM implementation.
+  - Update Cadence's [runtime interface](https://github.com/onflow/cadence/blob/8a128022e0a5171f4c3a173911944a2f43548b98/runtime/interface.go#L107) `UnsafeRandom() (uint64, error)` to `ReadRandom(byte[]) error`.
+  - Add a new Cadence function `fun random<T: UnsignedInteger>([modulo: T]): T`, backed by a safe FVM implementation. 
+    `fun unsafeRandom(): UInt64` remains available to avoid immediate breaking changes. 
+    Note that both functions will be backed by the same safe FVM implementation.
 2. As a second step, deprecate `fun unsafeRandom(): UInt64` as part of the
-stable cadence release (Cadence v1.0).
+Stable Cadence release (aka Cadence v1.0).
 
 ### Drawbacks
 
