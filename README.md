@@ -147,7 +147,8 @@ Once the FLIP is ready for review:
    FLIPs will be merged into this repository ([`onflow/flips`](https://github.com/onflow/flips))
    with the outcome of the review process (approval, rejection).
 
-8. Update the status of the FLIP issue under the "FLIPs Tracker" project as per the outcome of step 7 (`Accepted` or `Rejected`)
+8. Update the status of the FLIP issue under the "FLIPs Tracker" project as per the outcome of step 7 (`Accepted` or `Rejected`).
+   If you do not have the permission, you may need to ask the sponsor to assist you.
 
 9. Implementations of a successful FLIP should reference it in their documentation. While implementation code is not necessary to start the FLIP process, its existence in full or part may help the design discussion.
 
