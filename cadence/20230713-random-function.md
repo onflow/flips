@@ -10,12 +10,13 @@ updated: 2023-07-13
 
 ## Objective
 
-The purpose is :
-- to rename the current `fun unsafeRandom(): UInt64` function to
+The purpose of this FLIP is to:
+- Rename the current `fun unsafeRandom(): UInt64` function to
 `fun random(): UInt64`.
 This can be done by introducing a new `random` function, and eventually
 deprecating `unsafeRandom` (breaking change).
-- to expand the current function to a more safe and convenient `fun random<T: UnsignedInteger>([modulo: T]): T` where `UnsignedInteger` covers more Cadence's unsigned integer types and `modulo` is an optional upper-bound argument.
+- Expand the current function to a more safe and convenient `fun random<T: UnsignedInteger>([modulo: T]): T`,
+where `UnsignedInteger` covers more Cadence's unsigned integer types, and `modulo` is an optional upper-bound argument.
 
 ## Motivation
 
@@ -29,9 +30,10 @@ hence the `unsafe` suffix in the function name.
 
 FVM is [undergoing changes](https://github.com/onflow/flow-go/pull/4498) that update the source of entropy
 to rely on the secure distributed randomness generated within the Flow
-protocol by [the random beacon](https://arxiv.org/pdf/2002.07403.pdf) component. The Flow beacon
-is designed to generate decentralized, unbiased, unpredictable and verifiable
-randomness. Miners have negligible control to bias or predict the beacon
+protocol by [the random beacon](https://arxiv.org/pdf/2002.07403.pdf) component. 
+The Flow beacon is designed to generate decentralized, unbiased, unpredictable and verifiable
+randomness. 
+Miners have negligible control to bias or predict the beacon
 output.
 
 Moreover, FVM is using extra measures to safely extend the secure source of entropy into
@@ -48,16 +50,22 @@ and unbiasable by all transaction code prior to the random function call.
 
 Many applications require a random number less than an upper-bound `N` rather than a random number without constraints. For example, sampling a random element from an array requires picking a random index less than the array size. `N` is commonly called the modulo. In security-sensitive applications, it is important to maintain a uniform distribution of the random output. Returning the remainder of the division of a 64-bits number by `N` (using the modulo operation `%`) is known to result in a biased distribution where smaller outputs are more likely to be sampled than larger ones. This is known as the "modulo bias". There are safe solutions to avoid the modulo bias such as rejection sampling and large modulo reduction. Although these solutions can be implemented purely in Cadence, it is safer to provide the secure functions and abstract the complexity away from developers. This also avoids using unsafe methods. The FLIP suggests to add an optional unsigned-integer argument `N` to the `random` function. If `N` is provided, the returned random is uniformly sampled strictly less than `N`. The function errors if `N` is equal to `0`. If `N` is not provided, the returned output has no constraints.
 
-A more convenient way of using `random` is to cover unsigned integer types `UInt8`, `UInt16`, `UInt32`, `UInt64`, `UInt128`, `UInt256`, `Word8`, `Word16`, `Word32`, `Word64`. The type applies to the optional argument `modulo` as well as the returned value. This would abstract the complexity of generating randoms of different types using 64-bits values as a building block. The new suggested function signature is therefore `fun random<T: UnsignedInteger>([modulo: T]): T`, where `T` can be any type from the above list.
+A more convenient way of using `random` is to cover other unsigned integer types (`UInt8`, `UInt16`, `UInt32`, `UInt64`, `UInt128`, `UInt256`, `Word8`, `Word16`, `Word32`, `Word64`). 
+The type applies to the optional argument `modulo` as well as the returned value. 
+This would abstract the complexity of generating randoms of different types using 64-bits values as a building block. 
+The new suggested function signature is therefore `fun random<T: UnsignedInteger>([modulo: T]): T`, 
+where `T` can be any type from the above list.
 
 ## User Benefit
 
 Cadence uses the prefix `unsafe` to warn developers of the risks of using
-the random function. Such risks are addressed by the FVM recent updates
-and developers can safely rely on the random function. Removing the prefix
-clarifies the possible confusion about the function safety.
+the random function. 
+Such risks are addressed by the FVM recent updates
+and developers can safely rely on the random function. 
+Removing the prefix clarifies the possible confusion about the function safety.
 
-The generalized function signature offers safe and more flexible ways to use randomness. Without such change, developers are required to implement extra logic and take the risk of making mistakes.
+The generalized function signature offers safe and more flexible ways to use randomness. 
+Without such change, developers are required to implement extra logic and take the risk of making mistakes.
 
 ## Design Proposal
 
@@ -75,7 +83,9 @@ Step (2) in [Design Proposal](#design-proposal) introduces a breaking change.
 
 ### Alternatives Considered
 
-The generalized function signature could be omitted from the proposal because it is possible to implement `fun random<T: UnsignedInteger>([modulus; T]): T` purely on Cadence using `fun random(): UInt64`. However, this requires developers to be familiar with safe low-level implementations and it may result in bugs and vulnerabilities. It is safer to have these tools provided natively by Cadence.
+The generalized function signature could be omitted from the proposal because it is possible to implement `fun random<T: UnsignedInteger>([modulus; T]): T` purely on Cadence using `fun random(): UInt64`. 
+However, this requires developers to be familiar with safe low-level implementations and it may result in bugs and vulnerabilities. 
+It is safer to have these tools provided natively by Cadence.
 
 ### Performance Implications
 
