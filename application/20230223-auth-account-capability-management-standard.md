@@ -92,11 +92,11 @@ This FLIP proposes a standard for the creation and management of child accounts 
 
 # Ongoing Work
 
-Community-led efforts to collaboratively iterate toward a final solution that works for all parties end-to-end can be found in [onflow/hybrid-custody](https://github.com/Flowtyio/restricted-child-account), originally named `flowtyio/restricted-child-accounts`. This FLIP has been updated to reflect the current iteration on the design originally raised by [@austinkline](https://github.com/austinkline) in [this forum post](https://forum.onflow.org/t/hybrid-custody-restrictions-on-linked-accounts/4561) to address a number of concerns with the original design put forth in this FLIP.
+Community-led efforts to collaboratively iterate toward a final solution that works for all parties end-to-end can be found in [onflow/hybrid-custody](https://github.com/Flowtyio/restricted-child-account), originally named `flowtyio/restricted-child-accounts`. This FLIP reflects design updates and revisions raised by [@austinkline](https://github.com/austinkline) to [this forum post](https://forum.onflow.org/t/hybrid-custody-restrictions-on-linked-accounts/4561) and addresses concerns with the original design that was proposed in this FLIP.
 
 ## Previous Work
 
-Below are contract and dApp implementations that were used as sandboxes for onchain gaming, progressive onboarding, eventually culminateing in the development of this FLIP and hybrid custody as it will beployed to Mainnet:
+Below are contract and dApp implementations that were used as sandboxes for onchain gaming, progressive onboarding, eventually culminating in the development of this FLIP and hybrid custody as it will be deployed to Mainnet:
 
 - [Simplified linked accounts Cadence](https://github.com/onflow/linked-accounts)
 - [Hybrid Custody Cadence in context](https://github.com/onflow/sc-eng-gaming)
@@ -134,17 +134,17 @@ Accomplishing this vision successfully - success here meaning building a secure 
 
 # User Benefit
 
-A standard resource managing all child account capabilities allows for a unified user experience, enabling any dApp in the ecosystem to connect a user’s primary wallet and get global context into the entirety of the user’s accounts and assets that would otherwise be fragmented and unknown. For the end user, this means:
+A standard resource managing all child account capabilities allows for a unified user experience and prevents the risk of fragmentation, or loss of visibility around capabilities, when handling child accounts. It also enables dApps to connect a user’s primary wallet to access a singular global context across all child accounts and assets. For the end user, this means:
 
 - Greater organization of their app accounts and assets across them
-- Reduced risk of forgetting about assets in secondary accounts
-- Reduced custodial risk to assets in their main account due to partitioned access between parent and child accounts
+- Reduced risk of forgetting about assets in child accounts
+- Ensure the security of a user's main account due to partitioned access between parent and child accounts
 - Fewer transfers needed to engage with assets in child accounts as connected dApps can leverage the standard child account managing resource to utilize capabilities across multiple linked accounts within a single signed transaction
-- Unified asset balance views across all of their accounts (e.g. Alice has 3 accounts with TokenA Vaults, but only needs to know the sum of all their balances; Alice has 3 accounts with NFTs but is only interested in viewing her total collection overview on a marketplace profile page)
+- Unified asset balance views across all of their accounts (e.g. Alice has 3 child accounts with TokenA Vaults, but only needs to know the sum of all their balances; Alice has 3 child accounts with NFTs but is only interested in viewing her total collection overview on a marketplace profile page)
 
 And for builders:
 
-- Clear expectations on where child account capabilities will reside and how to engage with them
+- Standardization to define clear expectations on where child account capabilities will reside and how to engage with them
 - The ability to create self-custodial dApps leveraging web2 onboarding flows with the added flexibility of delegating shared control of an app account to a user in the future
 - Newly included ability to define and set restrictions on the Capabilities a parent account has access to on an account your app custodies
 - Easily tap into an ecosystem-wide differentiating feature not possible anywhere else in the industry
@@ -157,7 +157,7 @@ And for builders:
 
 At a high level, a user will have delegated access on an app-custodied account - access mediated by resources which encapsulate developer-defined and instantiated rules, regulating user access on the account to that which the developer has allowed.
 
-The notion of restricting access emerged out of a need to conform with existing custodial infrastructure in a manner that reduces regulatory risk for developers, thereby reducing the burden of implementation. Prior iterations did not adequately account for the issues created for developers and custodian services by sharing unrestricted access on app accounts.
+Support for access restrictions applied to custodied accounts directly addresses the need for regulatory compliance and mitigation of regulatory risk for developers. This also removes the burden of implementation complexity often experienced with compliance. 
 
 As we'll see below, the promise of real ownership enabled by Hybrid Custody is still realized in that a user can access assets in their child accounts; however, this is now possible without outsized burden and risk on the implementing applications. Additionally, this new approach accounts for a path to "promotion", allowing for users to take control of their shared access accounts while preserving developer safety and expectations.
 
