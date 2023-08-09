@@ -575,7 +575,7 @@ Ultimately we want to do this back and forth via a secure back-channel (https re
 
 Where possible, you should aim to provide a back-channel support for services, and only fall back to a front-channel if absolutely necessary.
 
-Back-channel communications use `method: "HTTP/POST"`, while front-channel communications use `method: "IFRAME/RPC"`, `method: "POP/RPC"`, `method: "TAB/RPC`, `method: "EXT/RPC"`, and `method: "DEEPLINK/RPC"`
+Back-channel communications use `method: "HTTP/POST"`, while front-channel communications use `method: "IFRAME/RPC"`, `method: "POP/RPC"`, `method: "TAB/RPC`, `method: "EXT/RPC"`, and `method: "DEEPLINK/RPC"`.
 
 | Service Method | Front | Back |
 | -------------- | ----- | ---- |
@@ -650,7 +650,7 @@ This optional feature is the ability for FCL to render an iframe, popup, new tab
 
 Specifically for mobile platforms there is a service `type: "VIEW/MOBILE_BROWSER"`. It works almost the same way as `type: "VIEW/IFRAME"` with an exception that it doesn't communicate back to the app as it doesn't have `window.postMessage` method.
 
-*NOTE: You also need to call `window.close()` when you finish processing the request on the page specifically for Android, as it is NOT possible to control the mobile browser window from the app after openning it (you cannot close the mobile browser from the app)* 
+*NOTE: You also need to call `window.close()` when you finish processing the request on the page specifically for Android, as it is NOT possible to control the mobile browser window from the app after openning it (you cannot close the mobile browser from the app).*
 
 
 ![HTTP/POST Diagram](https://raw.githubusercontent.com/onflow/flow-js-sdk/master/packages/fcl/assets/service-method-diagrams/http-post.png)
@@ -708,12 +708,12 @@ chrome.tabs.sendMessage(tabs[0].id, {
 
 `DEEPLINK/RPC` works somewhat similar to `IFRAME/RPC`:
 
-- A mobile browser is opened 
+- A mobile browser is opened:
   - URL comes from the `endpoint` in the service
-  - message `body` and `config` are encoded (`JSON.stringify`) in `fclMessageJson` URL param
+  - message `body` and `config` are encoded (`JSON.stringify`) in `fclMessageJson` URL param;
 - The browser handler attaches an event listener to the browser object (iOS) or listense to deeplink changes (Android)
-- The wallet sends back an `"APPROVED"` or `"DECLINED"` message. (It should redirect back to the application using a deeplink redirect url passed in `fcl_redirect_url` and the redirect url should contain `fclResponseJson` URL param with stringified data object). This can be simplified using `WalletUtils.approve` and `WalletUtils.decline`
-  - If it's approved, the response's data field will need to be what FCL is expecting.
+- The wallet sends back an `"APPROVED"` or `"DECLINED"` message. (It should redirect back to the application using a deeplink redirect url passed in `fcl_redirect_url` and the redirect url should contain `fclResponseJson` URL param with stringified data object). This can be simplified using `WalletUtils.approve` and `WalletUtils.decline`,
+  - If it's approved, the response's data field will need to be what FCL is expecting,
   - If it's declined, the response's reason field should say why it was declined.
 
 ```javascript
