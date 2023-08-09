@@ -21,11 +21,11 @@ deprecating `unsafeRandom` (breaking change).
 
 ### Function Rename
 
-The Flow Virtual Machine (FVM) provides the implementation of `unsafeRandom`
-as part of the Flow protocol. The FVM implementation has been using the block hash as
-a source of entropy. This source can be manipulated by miners (i.e consensus nodes)
-and should not be relied on to derive secure randomness, hence the `unsafe`
-suffix in the function name.
+The Flow Virtual Machine (FVM) provides the implementation of `unsafeRandom` as part of the Flow protocol. 
+The FVM implementation has been using the block hash as a source of entropy. 
+This source can be manipulated by miners (i.e consensus nodes)
+and should not be relied on to derive secure randomness, 
+hence the `unsafe` suffix in the function name.
 
 FVM is [undergoing changes](https://github.com/onflow/flow-go/pull/4498) that update the source of entropy
 to rely on the secure distributed randomness generated within the Flow
