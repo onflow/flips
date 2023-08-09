@@ -2,7 +2,7 @@
 name: FLIP issue template
 projects: "github/37"
 about: Template to create a FLIP
-title: Flip Description e.g.Dynamic Inclusion fees
+title: FLIP title, e.g., "Dynamic Inclusion fees"
 labels: Proposed
 assignees: ''
 
