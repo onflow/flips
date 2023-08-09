@@ -19,7 +19,7 @@ deprecating `unsafeRandom` (breaking change).
 
 ## Motivation
 
-### function rename
+### Function Rename
 
 The Flow Virtual Machine (FVM) provides the implementation of `unsafeRandom`
 as part of the Flow protocol. The FVM implementation has been using the block hash as
