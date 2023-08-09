@@ -762,8 +762,8 @@ sequenceDiagram
     activate Wallet/API
     note right of App/FCL: BODY {<br/>#emsp;"supportedStrategies": [<br/>#emsp;#emsp;"HTTP/POST",<br/>#emsp;#emsp;"DEEPLINK/RPC"<br/>#emsp;],<br/>#emsp;...BodyType,<br/>}
     Wallet/API ->> App/FCL: POST response with available services
-    deactivate Wallet/API
     note left of Wallet/API: [{<br/>#emsp;"f_type": "Service",#emsp;<br/>#emsp;"f_vsn": "1.0.0",<br/>#emsp;"type": ServiceType,<br/>#emsp;"method": "DEEPLINK/RPC",<br/>#emsp;"endpoint": "https://wallet.com/_A_",<br/>#emsp;"data": { "foo": "bar" },<br/>#emsp;"params": { "omg": "rawr" },<br/>},...]
+    deactivate Wallet/API
     App/FCL ->> Mobile Browser: http GET https://wallet.com/_A_
     activate Mobile Browser
     note right of App/FCL: URLSearchParams {<br/>#emsp;"fclMessageJson": `${JSON.Stringify({...body, config})}`},<br/>#emsp;"fcl_redirect_url": appDeeplinkUrl,<br/>#emsp;...<br/>}
