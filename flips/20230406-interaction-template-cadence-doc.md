@@ -48,25 +48,25 @@ Interaction Template Cadence Doc supports the following declarations:
   - `@message [key]: [message]` the field `message` declares the human readable message to associate with the argument
   - `@message [translation] [key]: [message]` the optional field `translation` declares a BCP-47 language tag to declare the translation of the message, (default to @lang).
 
-- `@argument` declares information about a transaction/script argument
+- `@parameter` declares information about a transaction/script argument
 
-  - `@argument [(optional)key]` the optional field `key` declares what key this argument message is for (eg: 'title' or 'description', default to 'title')
-  - `@argument [(optional)key] [label]` the field `label` declares which transaction/script argument this declaration is for
-  - `@argument [(optional)key] [label]: [message]` the field `message` declares the human readable message to associate with the argument
-  - `@argument [(optional)translation] [key] [label]: [message]` the optional field `translation` declares a BCP-47 language tag to declare the translation of the message, (default to @lang).
+  - `@parameter [(optional)key]` the optional field `key` declares what key this argument message is for (eg: 'title' or 'description', default to 'title')
+  - `@parameter [(optional)key] [label]` the field `label` declares which transaction/script argument this declaration is for
+  - `@parameter [(optional)key] [label]: [message]` the field `message` declares the human readable message to associate with the argument
+  - `@parameter [(optional)translation] [key] [label]: [message]` the optional field `translation` declares a BCP-47 language tag to declare the translation of the message, (default to @lang).
 
 - `@balance`
 
   - `@balance [label]` the field `label` declares the argument label this declaration is for.
-  - `@balance [label]: [placeholder].[contract]` the field `placeholder` declares the address placeholder, the field `contract` declares the contract on the account represented by `placeholder` which defines the type of balance this argument is for (eg: 0xFungibleTokenAddress.).
+  - `@balance [label]: [contract]` the field `contract` declares the contract on the account which defines the type of balance this argument.
 
 - `@translate [...translation]` declares a list of BCP-47 language tags to use translate all messages.
 
 This is an example of Interaction Template Cadence Doc for a transaction:
 
 ```cadence
-import FungibleToken from 0xFUNGIBLETOKENADDRESS
-import FlowToken from 0xFLOWTOKENADDRESS
+import "FungibleToken"
+import "FlowToken"
 
 /**
 Transfer Tokens
@@ -77,14 +77,14 @@ Transfer tokens from one account to another
 
 @lang en-US
 
-@argument title amount: Amount
-@argument title to: To
-@argument description amount: The amount of FLOW tokens to send
-@argument description to: The Flow account the tokens will go to
+@parameter title amount: Amount
+@parameter title to: To
+@parameter description amount: The amount of FLOW tokens to send
+@parameter description to: The Flow account the tokens will go to
 
 @translate fr-FR cn-CN
 
-@balance amount: 0xFLOWTOKENADDRESS.FlowToken
+@balance amount: FlowToken
 */
 transaction(amount: UFix64, to: Address) {
   let vault: @FungibleToken.Vault
@@ -102,6 +102,36 @@ transaction(amount: UFix64, to: Address) {
       .deposit(from: <-self.vault)
   }
 }
+```
+
+This is an example of Interaction Template Cadence Doc for a script:
+
+```cadence
+import "FungibleToken"
+import "FlowToken"
+
+/**
+Flow Token Balance
+
+Get account Flow Token balance
+
+@version 1.0.0
+
+@lang en-US
+
+@parameter title address: Address
+@parameter description address: Get Flow token balance of Flow account
+
+@translate fr-FR cn-CN
+
+*/
+pub fun main(address: Address): UFix64 {
+    let account = getAccount(address)
+    let vaultRef = account.getCapability(/public/flowTokenBalance).borrow<&FlowToken.Vault{FungibleToken.Balance}>() ?? panic("Failed to borrow Flow Token balance reference")
+
+    return vaultRef.balance
+}
+
 ```
 
 ### As a separate JSON file
