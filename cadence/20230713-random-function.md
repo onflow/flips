@@ -121,12 +121,12 @@ abortion scenario. This limitation is inherent to any smart contract platform th
 ### Tutorials and Examples
 
 ```
-let r1 = randomUInt8()                    // r1 is of type `UInt8`
-let r2 = randomWord16()                   // r2 is of type `Word16`
-let r3 = randomUInt128(UInt128(3))        // r3 is of type `UInt128` and is strictly less than 3
-let r4 = randomUInt128(UInt128(1 << 100)) // r4 is of type `UInt128` and is of at most 100 bits
-let r5 = randomWord64(Word64(r1))         // r5 is of type `Word64` and is strictly less than `r1`
-let r6 = randomUInt64(UInt64(0))          // this would panic
+let r1 = random<UInt8>()                    // r1 is of type `UInt8`
+let r2 = random<Word16>()                   // r2 is of type `Word16`
+let r3 = random<UInt128>(3)                 // r3 is of type `UInt128` and is strictly less than 3
+let r4 = random<UInt128>(1 << 100)          // r4 is of type `UInt128` and is of at most 100 bits
+let r5 = random<Word64>(Word64(r1))         // r5 is of type `Word64` and is strictly less than `r1`
+let r6 = random<UInt64>(0)                  // panics
 ```
 
 ### Compatibility
