@@ -126,7 +126,7 @@ Once the FLIP is ready for review:
 
    Use the issue number generated in step 2 as the FLIP number.
 
-   Mention the FLIP issue by copying the github url or the issue in the comment section.
+   Mention the FLIP issue by copying the GitHub URL or the issue in the comment section.
 
    At the top of the PR identify how long the comment period will be.
    This should be a minimum of two weeks from posting the PR.
