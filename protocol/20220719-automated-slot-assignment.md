@@ -1,13 +1,13 @@
 ---
-status: Implemented
-flip: FLIP-1057
-title: Automated Slot Assignment
+status: implemented
+flip: 1057
 forum: https://forum.onflow.org/t/flip-1057-automated-slot-assignment/3447
 authors: Paul Gebheim (paul.gebheim@dapperlabs.com)
-editor: Jose Meija (jose.mejia@dapperlabs.com)
+editors: Jose Meija (jose.mejia@dapperlabs.com)
+updated: 2022-07-19
 ---
 
-# Automated Slot Assignment
+# FLIP 1057: Automated Slot Assignment
 
 ## Abstract
 
@@ -30,8 +30,8 @@ The changes required to allow automatic staking slot assignment will be within t
 - At the end of each epoch, nodes which have requested a slot and deposited the minimum stake should be assigned to the available staking slots.
     - If `count(pending nodes) <= count(released slots)` then assign all pending nodes to available slots
     - else; using `unsafe_random` select from `pending nodes` to fill the available slots.
-        
-        
+
+
 
 ## Example Configurations
 

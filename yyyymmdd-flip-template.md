@@ -1,12 +1,12 @@
 ---
 status: draft 
-flip: NNN (do not set)
+flip: NNN (set to PR number)
 authors: My Name (me@example.org), AN Other (you@example.org) 
 sponsor: AN Expert (core-contributor@example.org) 
 updated: YYYY-MM-DD 
 ---
 
-# Title of FLIP
+# FLIP NNN: Title of FLIP
 
 ## Objective
 

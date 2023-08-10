@@ -1,12 +1,12 @@
 ---
-status: Implemented
+status: implemented
 flip: FLIP-57
 authors: Joshua Hannan (joshua.hannan@dapperlabs.com)
-sponsor: Joshua Hannan (joshua.hannan@dapperlabs.com) 
+sponsor: Joshua Hannan (joshua.hannan@dapperlabs.com)
 updated: 2023-01-11
 ---
 
-# Access Node Staking Minimum
+# FLIP 57: Access Node Staking Minimum
 
 ## Objective
 
@@ -73,7 +73,7 @@ This change would benefit users operating Access Node by preventing attackers fr
 Remove any restrictions in the contract that do not account for access nodes committing tokens as stake, such as in
 [`getTotalStaked`](https://github.com/onflow/flow-core-contracts/blob/master/contracts/FlowIDTableStaking.cdc#L1406)
 
-The service account committee runs a transaction, 
+The service account committee runs a transaction,
 [`set_minimums.cdc`](https://github.com/onflow/flow-core-contracts/blob/master/transactions/idTableStaking/admin/change_minimums.cdc)
 to set the access node minimum to the desired value.
 
@@ -97,7 +97,7 @@ There should be no performance changes with this update.
 ### Dependencies
 
 This change will not affect any standard transactions or scripts.
-Users who are registering access nodes will need to be made aware that 
+Users who are registering access nodes will need to be made aware that
 they must commit tokens for their node for all future registrations.
 
 Existing access nodes who are currently registered and staked
@@ -110,7 +110,7 @@ they will be removed by the protocol.
 
 ### Engineering Impact
 
-This is a small change that can be easily tested and maintained. 
+This is a small change that can be easily tested and maintained.
 
 ### User Impact
 
@@ -136,4 +136,4 @@ Is the staking minimum reasonable for access nodes?
 Does the upgrade and rollout plan make sense?
 
 How long should the window be for existing access nodes
-to commit their stake before they are removed? 
+to commit their stake before they are removed?

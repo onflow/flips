@@ -1,11 +1,12 @@
 ---
-status: Proposed
+status: Implemented
 flip: GOV-2
-title: Enable Automatic Rewards Payouts
 forum: https://forum.onflow.org/t/flip-gov-2-enable-automatic-staking-rewards/3438
 authors: Paul Gebheim (paul.gebheim@dapperlabs.com)
-editor: Jose Mejia (jose.mejia@dapperlabs.com)
+editors: Jose Mejia (jose.mejia@dapperlabs.com)
 ---
+
+# FLIP GOV-2: Enable Automatic Rewards Payouts
 
 ## Abstract
 
@@ -19,7 +20,6 @@ Rewards to node operators and delegators have been paid via a service account in
 
 We propose a staged rollout for automatic reward payouts on Flow mainnet as follows:
 
-
 | Date | Action | Status |
 |-|-|-|
 | Wednesday, July 20th | Set [reward rate for automatic rewards](https://github.com/onflow/service-account/pull/152) using $1.05^\frac{1}{52} - 1= 0.00093871$| ✅ Done |
@@ -30,4 +30,4 @@ We propose a staged rollout for automatic reward payouts on Flow mainnet as foll
 ## Resources
 - [Transaction: Set Reward Rate](https://github.com/onflow/service-account/pull/152)
 - [Transaction: Enable Automatic Rewards](https://github.com/onflow/flow-core-contracts/blob/master/transactions/epoch/admin/set_automatic_rewards.cdc)
-- [Core Contracts: Automatic Rewards Calculation Logic](https://github.com/onflow/flow-core-contracts/blob/master/contracts/epochs/FlowEpoch.cdc#L484-L505) 
+- [Core Contracts: Automatic Rewards Calculation Logic](https://github.com/onflow/flow-core-contracts/blob/master/contracts/epochs/FlowEpoch.cdc#L484-L505)
