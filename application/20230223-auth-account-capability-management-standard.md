@@ -131,6 +131,8 @@ Accomplishing this vision successfully - success here meaning building a secure 
     - Again, only the child account shares access with another party, meaning your main account is safe from custodial risk. In fact, partitioning assets across accounts in this way enhances security over a model that requires all transactions be signed by your main account. A user can keep all of their more valuable assets in their main account, out of reach without a user-signed transaction, while keeping less valuable dApp assets in a shared account for ease of use.
 - As an application developer, won't I expose myself to undue risk by giving a user access on an account I have custody of?
     - The newly proposed design introduces the ability to restrict delegated access. This means that you can set the rules on what a user can access via the delegation you grant them, thereby setting their scope as you define it. For example, want users to only be able to access an NFT Collection in your app-custodied account? That can be easily configured!
+- This standard and design introduce a lot of complexity. Could this not have been solved in other ways, such as through the use of keys or other approaches?
+    - There were a number of previous iterations and designs preceding the Restricted Child Account proposal from Flowty and can be found in [Alternatives Considered](#alternatives-considered) where the issues and limitations of those approaches are detailed.
 
 # User Benefit
 
