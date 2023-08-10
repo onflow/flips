@@ -16,7 +16,7 @@ The purpose of this FLIP is to:
 This can be done by introducing a new `random` function, and eventually
 deprecating `unsafeRandom` (breaking change).
 - Expand the current function to a more safe and convenient `fun random<T: UnsignedInteger>([modulo: T]): T`,
-where `UnsignedInteger` covers more Cadence's unsigned integer types, and `modulo` is an optional upper-bound argument.
+where `UnsignedInteger` covers all Cadence's fixed-size unsigned integer types, and `modulo` is an optional upper-bound argument.
 
 ## Motivation
 
@@ -50,11 +50,12 @@ and unbiasable by all transaction code prior to the random function call.
 
 Many applications require a random number less than an upper-bound `N` rather than a random number without constraints. For example, sampling a random element from an array requires picking a random index less than the array size. `N` is commonly called the modulo. In security-sensitive applications, it is important to maintain a uniform distribution of the random output. Returning the remainder of the division of a 64-bits number by `N` (using the modulo operation `%`) is known to result in a biased distribution where smaller outputs are more likely to be sampled than larger ones. This is known as the "modulo bias". There are safe solutions to avoid the modulo bias such as rejection sampling and large modulo reduction. Although these solutions can be implemented purely in Cadence, it is safer to provide the secure functions and abstract the complexity away from developers. This also avoids using unsafe methods. The FLIP suggests to add an optional unsigned-integer argument `N` to the `random` function. If `N` is provided, the returned random is uniformly sampled strictly less than `N`. The function errors if `N` is equal to `0`. If `N` is not provided, the returned output has no constraints.
 
-A more convenient way of using `random` is to cover other unsigned integer types (`UInt8`, `UInt16`, `UInt32`, `UInt64`, `UInt128`, `UInt256`, `Word8`, `Word16`, `Word32`, `Word64`). 
+A more convenient way of using `random` is to cover all fixed-size unsigned integer types (`UInt8`, `UInt16`, `UInt32`, `UInt64`, `UInt128`, `UInt256`, `Word8`, `Word16`, `Word32`, `Word64`).
 The type applies to the optional argument `modulo` as well as the returned value. 
 This would abstract the complexity of generating randoms of different types using 64-bits values as a building block. 
 The new suggested function signature is therefore `fun random<T: UnsignedInteger>([modulo: T]): T`, 
 where `T` can be any type from the above list.
+Note that `UInt` is a variable-size type and is not supported by the function.
 
 ## User Benefit
 
