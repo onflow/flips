@@ -74,8 +74,7 @@ Everyone is welcome to propose and provide feedback on a FLIP.
 
 A **FLIP author** writes a FLIP and is committed to championing it through the process.
 
-If deemend necessary, a FLIP author may have a **FLIP sponsor** who helps shepherd the
-FLIP review process.
+A FLIP author will find a **FLIP sponsor** who helps shepherd the FLIP review process.
 
 A **review committee** is a group of maintainers who are responsible for the strategic direction of components, subcomponents, and public APIs.
 They have the responsibility to accept or reject the adoption of the FLIP via a community vote.
@@ -102,9 +101,7 @@ After writing the FLIP draft, gather feedback from project contributors and main
 
 Once the FLIP is ready for review:
 
-1. _(Optional)_ Recruit a sponsor from the maintainers of the project for which your FLIP concerns. A sponsor may help streamline the review process and moderate the discussion with the community.
-
-   Please note that you are not required to recruit a sponsor; this step is entirely optional. If you recruit a sponsor, identify them in the FLIP before posting the PR in step 2.
+1. Recruit a [sponsor](#flip-sponsors) from the maintainers or the active contributors of the project for which your FLIP concerns. A sponsor may help streamline the review process and moderate the discussion with the community
 
 2. Create an [issue](https://github.com/onflow/flips/issues/new/choose) using the FLIP issue template. The title of the issue should be the title of your FLIP, e.g., "Dynamic Inclusion fees".
 
@@ -190,7 +187,7 @@ Review committees must:
 If a review committee requires changes before acceptance,
 it is the responsibility of the author (and/or sponsor, if applicable) to ensure these are made and seek subsequent approval from the committee members.
 
-## FLIP sponsors (optional)
+## FLIP sponsors
 
 A sponsor is a Flow maintainer, selected by the author at will, and is responsible for ensuring the best possible outcome of the FLIP process.
 
@@ -202,6 +199,7 @@ In particular, a sponsor may help with the following:
 * if the FLIP is approved and moves to implementation:
   * ensuring proposed implementation adheres to the design
   * liaison with appropriate parties to successfully land implementation
+* update the status of the issue created for the FLIP
 
 ## Keeping the bar high
 
