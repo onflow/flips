@@ -270,7 +270,7 @@ struct Account {
         /// If there is already an object stored under the given path, the program aborts.
         ///
         /// The path must be a storage path, i.e., only the domain `storage` is allowed.
-        access(SaveValue)
+        access(Storage | SaveValue)
         fun save<T: Storable>(_ value: T, to: StoragePath)
 
         /// Reads the type of an object from the account's storage which is stored under the given path,
@@ -296,7 +296,7 @@ struct Account {
         /// The given type must not necessarily be exactly the same as the type of the loaded object.
         ///
         /// The path must be a storage path, i.e., only the domain `storage` is allowed.
-        access(LoadValue)
+        access(Storage | LoadValue)
         fun load<T: Storable>(from: StoragePath): T?
 
         /// Returns a copy of a structure stored in account storage under the given path,
@@ -334,7 +334,7 @@ struct Account {
         /// The given type must not necessarily be exactly the same as the type of the borrowed object.
         ///
         /// The path must be a storage path, i.e., only the domain `storage` is allowed
-        access(BorrowValue)
+        access(Storage | BorrowValue)
         view fun borrow<T: &Any>(from: StoragePath): T?
 
         /// Iterate over all the public paths of an account,
@@ -394,7 +394,7 @@ struct Account {
         /// or if the given name does not match the name of the contract/contract interface declaration in the code.
         ///
         /// Returns the deployed contract.
-        access(AddContract)
+        access(Contracts | AddContract)
         fun add(
             name: String,
             code: [UInt8]
@@ -414,7 +414,7 @@ struct Account {
         /// or if the given name does not match the name of the contract/contract interface declaration in the code.
         ///
         /// Returns the deployed contract for the updated contract.
-        access(UpdateContract)
+        access(Contracts | UpdateContract)
         fun update(name: String, code: [UInt8]): DeployedContract
 
         /// Returns the deployed contract for the contract/contract interface with the given name in the account, if any.
@@ -428,7 +428,7 @@ struct Account {
         /// Returns the removed deployed contract, if any.
         ///
         /// Returns nil if no contract/contract interface with the given name exists in the account.
-        access(RemoveContract)
+        access(Contracts | RemoveContract)
         fun remove(name: String): DeployedContract?
 
         /// Returns a reference of the given type to the contract with the given name in the account, if any.
@@ -445,7 +445,7 @@ struct Account {
         /// Adds a new key with the given hashing algorithm and a weight.
         ///
         /// Returns the added key.
-        access(AddKey)
+        access(Keys | AddKey)
         fun add(
             publicKey: PublicKey,
             hashAlgorithm: HashAlgorithm,
@@ -461,7 +461,7 @@ struct Account {
         /// Marks the key at the given index revoked, but does not delete it.
         ///
         /// Returns the revoked key if it exists, or nil otherwise.
-        access(RevokeKey)
+        access(Keys | RevokeKey)
         fun revoke(keyIndex: Int): AccountKey?
 
         /// Iterate over all unrevoked keys in this account,
@@ -483,7 +483,7 @@ struct Account {
 
         /// Publishes a new Capability under the given name,
         /// to be claimed by the specified recipient.
-        access(PublishInboxCapability)
+        access(Inbox | PublishInboxCapability)
         fun publish(_ value: Capability, name: String, recipient: Address)
 
         /// Unpublishes a Capability previously published by this account.
@@ -491,7 +491,7 @@ struct Account {
         /// Returns `nil` if no Capability is published under the given name.
         ///
         /// Errors if the Capability under that name does not match the provided type.
-        access(UnpublishInboxCapability)
+        access(Inbox | UnpublishInboxCapability)
         fun unpublish<T: &Any>(_ name: String): Capability<T>?
 
         /// Claims a Capability previously published by the specified provider.
@@ -500,7 +500,7 @@ struct Account {
         /// or if this account is not its intended recipient.
         ///
         /// Errors if the Capability under that name does not match the provided type.
-        access(ClaimInboxCapability)
+        access(Inbox | ClaimInboxCapability)
         fun claim<T: &Any>(_ name: String, provider: Address): Capability<T>?
     }
 
@@ -532,14 +532,14 @@ struct Account {
         /// If there is already a capability published under the given path, the program aborts.
         ///
         /// The path must be a public path, i.e., only the domain `public` is allowed.
-        access(PublishCapability)
+        access(Capabilities | PublishCapability)
         fun publish(_ capability: Capability, at: PublicPath)
 
         /// Unpublish the capability published at the given path.
         ///
         /// Returns the capability if one was published at the path.
         /// Returns nil if no capability was published at the path.
-        access(UnpublishCapability)
+        access(Capabilities | UnpublishCapability)
         fun unpublish(_ path: PublicPath): Capability?
     }
 
@@ -549,11 +549,11 @@ struct Account {
         /// Get the storage capability controller for the capability with the specified ID.
         ///
         /// Returns nil if the ID does not reference an existing storage capability.
-        access(GetStorageCapabilityController)
+        access(Capabilities | StorageCapabilities | GetStorageCapabilityController)
         view fun getController(byCapabilityID: UInt64): &StorageCapabilityController?
 
         /// Get all storage capability controllers for capabilities that target this storage path
-        access(GetStorageCapabilityController)
+        access(Capabilities | StorageCapabilities | GetStorageCapabilityController)
         view fun getControllers(forPath: StoragePath): [&StorageCapabilityController]
 
         /// Iterate over all storage capability controllers for capabilities that target this storage path,
@@ -566,14 +566,14 @@ struct Account {
         /// or a storage capability controller is retargeted from or to the path,
         /// then the callback must stop iteration by returning false.
         /// Otherwise, iteration aborts.
-        access(GetStorageCapabilityController)
+        access(Capabilities | StorageCapabilities | GetStorageCapabilityController)
         fun forEachController(
             forPath: StoragePath,
             _ function: fun(&StorageCapabilityController): Bool
         )
 
         /// Issue/create a new storage capability.
-        access(IssueStorageCapabilityController)
+        access(Capabilities | StorageCapabilities | IssueStorageCapabilityController)
         fun issue<T: &Any>(_ path: StoragePath): Capability<T>
     }
 
@@ -582,11 +582,11 @@ struct Account {
         /// Get capability controller for capability with the specified ID.
         ///
         /// Returns nil if the ID does not reference an existing account capability.
-        access(GetAccountCapabilityController)
+        access(Capabilities | AccountCapabilities | GetAccountCapabilityController)
         view fun getController(byCapabilityID: UInt64): &AccountCapabilityController?
 
         /// Get all capability controllers for all account capabilities.
-        access(GetAccountCapabilityController)
+        access(Capabilities | AccountCapabilities | GetAccountCapabilityController)
         view fun getControllers(): [&AccountCapabilityController]
 
         /// Iterate over all account capability controllers for all account capabilities,
@@ -598,12 +598,12 @@ struct Account {
         /// or an existing account capability controller for the account is deleted,
         /// then the callback must stop iteration by returning false.
         /// Otherwise, iteration aborts.
-        access(GetAccountCapabilityController)
+        access(Capabilities | AccountCapabilities | GetAccountCapabilityController)
         fun forEachController(_ function: fun(&AccountCapabilityController): Bool)
 
         /// Issue/create a new account capability.
-        access(IssueAccountCapabilityController)
-        fun issue<T: &Account{}>(): Capability<T>
+        access(Capabilities | AccountCapabilities | IssueAccountCapabilityController)
+        fun issue<T: &Account>(): Capability<T>
     }
 }
 
