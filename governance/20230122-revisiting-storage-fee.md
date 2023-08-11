@@ -8,6 +8,8 @@ updated: 2023-01-22
 
 # FLIP GOV-5: Revisiting Flow storage minimum account balance
 
+This FLIP is being discussed [here](https://forum.onflow.org/t/flip-66-revisiting-flow-storage-minimum-account-balance/4241).
+
 ## Introduction
 
 Flow incentivizes mindful use of on-chain storage through economic means.
