@@ -37,11 +37,11 @@ A pattern that has emerged in the Flow community is for contract developers to h
 
 ### Interaction Metadata
 
-A cadence script or transaction alone does not contain metadata about itself. Often, application and wallet developers may display a _human readable_ title or description about a transaction before requesting it to be signed by a user. They may wish to display a title and description about each argument it needs to collect from the user, or information about how the transaction will impact the user's account and assets. The metadata a developer might consume in their application could take many forms and be used for many purposes.
+A cadence script or transaction alone does not contain metadata about itself. Often, application and wallet developers may display a _human readable_ title or description about a transaction before requesting it to be signed by a user. They may wish to display a title and description about each parameter it needs to collect from the user, or information about how the transaction will impact the user's account and assets. The metadata a developer might consume in their application could take many forms and be used for many purposes.
 
 An application or wallet may also want to know what a transaction will _do_ to protect against performing actions that will produce an undesirable result. For example, an application / wallet may wish to prevent a user from executing a transaction that sends more FLOW tokens from their account than they have, because that transaction will fail. An application / wallet may also want to know what version of an interaction's dependency tree it was created against, since because contracts on Flow are mutable, an interaction may change in functionality if its dependencies change.
 
-Currently, applications and wallets are left to come up with their own metadata around the transactions they support. For example, on Flow Port, for each transaction it supports, it has included a title and description for it, along with titles and descriptions of each argument. Contract developers do not yet have a standardized way to provide metadata around their interactions that can be consumable by the applications and wallets that engage with them.
+Currently, applications and wallets are left to come up with their own metadata around the transactions they support. For example, on Flow Port, for each transaction it supports, it has included a title and description for it, along with titles and descriptions of each parameter. Contract developers do not yet have a standardized way to provide metadata around their interactions that can be consumable by the applications and wallets that engage with them.
 
 ## Objective
 
@@ -67,7 +67,7 @@ Many interactions aim to achieve the same class of action according to how that 
 
 For example, different marketplaces may have different mechanics behind how a user may "List" their asset on them, but across all implementations, the action "List" is what they all aim to do.
 
-Interaction Interfaces aim to standardize these actions by defining classes of actions, and a set of arguments that Interactions that implement these actions must consume.
+Interaction Interfaces aim to standardize these actions by defining classes of actions, and a set of parameters that Interactions that implement these actions must consume.
 
 Here is an example of an `InteractionTemplateInterface` for "Fungible Token Transfer":
 
@@ -79,7 +79,7 @@ Here is an example of an `InteractionTemplateInterface` for "Fungible Token Tran
     data: {
         flip: "FLIP-XXXX",
         title: "Fungible Token Transfer",
-        arguments: [
+        parameters: [
             {
               key: "amount",
               index: 0,
@@ -113,13 +113,13 @@ The FLIP number that this interface was established.
 
 The title of the interface as specified in the FLIP where it was established.
 
-#### `data.arguments`
+#### `data.parameter`
 
-The arguments that an interaction that implements this interface must consume. It specifies the name, index and type of each argument.
+The parameters that an interaction that implements this interface must consume. It specifies the name, index and type of each parameter.
 
-In this example, the `InteractionTemplateInterface` defines an interface for Interactions that wish implement it. It defines the arguments the implementing Interaction must have. It also references the FLIP where the `InteractionTemplateInterface` is defined. Interfaces should be defined through the FLIP process, since community consensus should be achieved as the interaction will be used by many parties.
+In this example, the `InteractionTemplateInterface` defines an interface for Interactions that wish implement it. It defines the parameters the implementing Interaction must have. It also references the FLIP where the `InteractionTemplateInterface` is defined. Interfaces should be defined through the FLIP process, since community consensus should be achieved as the interaction will be used by many parties.
 
-Applications can support executing Interactions that conform to such Interfaces. For example, an application or wallet that displays a users resources may want to display transfer buttons beside each resource a user owns. When the user presses the transfer button, the application can execute the specific Transfer Interaction corresponding to that resources project. Since each of the Transfer Interactions for each project could conform to the same Interface, the application can reuse logic between each, and know how to supply information to each due to the standardized arguments they consume.
+Applications can support executing Interactions that conform to such Interfaces. For example, an application or wallet that displays a users resources may want to display transfer buttons beside each resource a user owns. When the user presses the transfer button, the application can execute the specific Transfer Interaction corresponding to that resources project. Since each of the Transfer Interactions for each project could conform to the same Interface, the application can reuse logic between each, and know how to supply information to each due to the standardized parameters they consume.
 
 ### Interaction Templates
 
@@ -127,7 +127,7 @@ Interaction Templates are both metadata and the Cadence for a transaction or scr
 
 - Human readable, internationalized messages about the interaction
 - The Cadence code to carry out the interaction
-- Information about arguments such as internationalized human readable messages and what the arguments act upon.
+- Information about parameters such as internationalized human readable messages and what the parameters act upon.
 - The Interface the Interaction conforms to, if applicable.
 - Contract dependencies the Interaction engages with, pinned to a version of their dependency tree.
 
@@ -166,7 +166,7 @@ Here is an example `InteractionTemplate` for a "Transfer FLOW" transaction:
         i18n: [ // Internationalised (BCP-47) set of human readable messages about the interaction
           {
             tag: "en-US",
-            translation: "Transfer {amount} FLOW to {to}", // Messages might consume arguments.
+            translation: "Transfer {amount} FLOW to {to}", // Messages might consume parameters.
           },
           {
             tag: "fr-FR",
@@ -250,18 +250,18 @@ Here is an example `InteractionTemplate` for a "Transfer FLOW" transaction:
         ]
       }
     ],
-    arguments: [
+    parameters: [
       {
         label: "amount",
         index: 0,
         type: "UFix64",
-        messages: [ // Set of human readable messages about the argument
+        messages: [ // Set of human readable messages about the parameter
           {
             key: "title",
-            i18n: [ // Internationalised (BCP-47) set of human readable messages about the argument
+            i18n: [ // Internationalised (BCP-47) set of human readable messages about the parameter
               {
                 tag: "en-US",
-                translation: "Amount", // Messages might consume arguments.
+                translation: "Amount", // Messages might consume parameters.
               },
               {
                 tag: "fr-FR",
@@ -275,10 +275,10 @@ Here is an example `InteractionTemplate` for a "Transfer FLOW" transaction:
           },
           {
             key: "description",
-            i18n: [ // Internationalised (BCP-47) set of human readable messages about the argument
+            i18n: [ // Internationalised (BCP-47) set of human readable messages about the parameter
               {
                 tag: "en-US",
-                translation: "Amount of FLOW token to transfer", // Messages might consume arguments.
+                translation: "Amount of FLOW token to transfer", // Messages might consume parameters.
               },
               {
                 tag: "fr-FR",
@@ -291,19 +291,19 @@ Here is an example `InteractionTemplate` for a "Transfer FLOW" transaction:
             ]
           }
         ],
-        balance: "FungibleToken" // The token this argument acts upon.
+        balance: "FungibleToken" // The token this parameter acts upon.
       },
       {
         label: "to",
         index: 1,
         type: "Address",
-        messages: [ // Set of human readable messages about the argument
+        messages: [ // Set of human readable messages about the parameter
           {
             key: "title",
-            i18n: [ // Internationalised (BCP-47) set of human readable messages about the argument
+            i18n: [ // Internationalised (BCP-47) set of human readable messages about the parameter
               {
                 tag: "en-US",
-                translation: "To", // Messages might consume arguments.
+                translation: "To", // Messages might consume parameters.
               },
               {
                 tag: "fr-FR",
@@ -317,10 +317,10 @@ Here is an example `InteractionTemplate` for a "Transfer FLOW" transaction:
           },
           {
             key: "description",
-            i18n: [ // Internationalised (BCP-47) set of human readable messages about the argument
+            i18n: [ // Internationalised (BCP-47) set of human readable messages about the parameter
               {
                 tag: "en-US",
-                translation: "Amount of FLOW token to transfer", // Messages might consume arguments.
+                translation: "Amount of FLOW token to transfer", // Messages might consume parameters.
               },
               {
                 tag: "fr-FR",
@@ -365,7 +365,7 @@ The identifier of the interface this interaction template implements. Not all in
 
 #### `data.messages`
 
-Internationalized, human readable messages explaining the interaction. For each message, there can be any number of translations provided. Translations should use [BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) language tags. Messages may also consume arguments, which correspond to the arguments supplied to the transaction.
+Internationalized, human readable messages explaining the interaction. For each message, there can be any number of translations provided. Translations should use [BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) language tags. Messages may also consume parameters, which correspond to the parameters supplied to the transaction.
 
 #### `data.cadence`
 
@@ -397,11 +397,11 @@ let pin = hash(import_hash) // SHA3-256 hash represented as hex string
 
 ```
 
-#### `data.arguments`
+#### `data.parameters`
 
-Internationalized, human readable messages explaining each of the cadence arguments. For each message, there can be any number of translations provided. Translations should use [BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) language tags.
+Internationalized, human readable messages explaining each of the cadence parameters. For each message, there can be any number of translations provided. Translations should use [BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) language tags.
 
-Arguments may correspond to a balance of a fungible or identifier of a non-fungible token. In this case, the balance or identifier the argument corresponds to should point to its dependency identifier.
+Parameter may correspond to a balance of a fungible or identifier of a non-fungible token. In this case, the balance or identifier the parameter corresponds to should point to its dependency identifier.
 
 #### Arbitrary Execution Phase
 
@@ -600,28 +600,28 @@ template-dependency                  = [
 ]
 
 
-template-argument-content-message-key-content   = UTF-8 string content of the message
-template-argument-content-message-key-bcp47-tag = BCP-47 language tag
-template-argument-content-message-translation   = [
-  sha3_256(template-argument-content-message-key-bcp47-tag),
-  sha3_256(template-argument-content-message-key-content)
+template-parameter-content-message-key-content   = UTF-8 string content of the message
+template-parameter-content-message-key-bcp47-tag = BCP-47 language tag
+template-parameter-content-message-translation   = [
+  sha3_256(template-parameter-content-message-key-bcp47-tag),
+  sha3_256(template-parameter-content-message-key-content)
 ]
-template-argument-content-message-key           = Key for a template message (eg: "title", "description" etc)
-template-argument-content-message = [
-    sha3_256(template-argument-content-message-key),
-    [ ...template-argument-content-message-translation ]
+template-parameter-content-message-key           = Key for a template message (eg: "title", "description" etc)
+template-parameter-content-message = [
+    sha3_256(template-parameter-content-message-key),
+    [ ...template-parameter-content-message-translation ]
 ]
-template-argument-content-index   = Cadence type of argument
-template-argument-content-index   = Index of argument in cadence transaction or script
-template-argument-content-balance = Fully qualified contract identifier of a token this argument acts upon | ""
-template-argument-content         = [
-    sha3_256(template-argument-content-index),
-    sha3_256(template-argument-content-type),
-    sha3_256(template-argument-content-balance),
-    [ ...template-argument-content-message ]
+template-parameter-content-index   = Cadence type of parameter
+template-parameter-content-index   = Index of parameter in cadence transaction or script
+template-parameter-content-balance = Fully qualified contract identifier of a token this parameter acts upon | ""
+template-parameter-content         = [
+    sha3_256(template-parameter-content-index),
+    sha3_256(template-parameter-content-type),
+    sha3_256(template-parameter-content-balance),
+    [ ...template-parameter-content-message ]
 ]
-template-argument-label         = Label for an argument
-template-argument               = [ sha3_256(template-argument-label), [ ...template-argument-content ]]
+template-parameter-label         = Label for an parameter
+template-parameter               = [ sha3_256(template-parameter-label), [ ...template-parameter-content ]]
 
 template-f-version            = Version of the InteractionTemplate data structure being serialized.
 template-f-type               = "InteractionTemplate"
@@ -630,7 +630,7 @@ template-interface            = ID of the InteractionTemplateInterface this temp
 template-messages             = [ ...template-message ] | []
 template-cadence              = Cadence content of the template
 template-dependencies         = [ ...template-dependency ] | []
-template-arguments            = [ ...template-argument ] | []
+template-parameters            = [ ...template-parameter ] | []
 
 template-encoded              = RLP([
     sha3_256(template-f-type),
@@ -640,7 +640,7 @@ template-encoded              = RLP([
     template-messages,
     sha3_256(template-cadence),
     template-dependencies,
-    template-arguments
+    template-parameters
 ])
 
 template-encoded-hex          = hex( template-encoded )
@@ -666,23 +666,23 @@ sha3_256(MESSAGE)
 ```text
 interface-f-version            = Version of the InteractionTemplateInterface data structure being serialized.
 interface-f-type               = "InteractionTemplateInterface"
-interface-argument-type        = Cadence type of the argument
-interface-argument-index       = Index of the argument
-interface-argument-label       = Label of the argument
-interface-argument             = [
-    sha3_256(interface-argument-label),
-    sha3_256(interface-argument-index),
-    sha3_256(interface-argument-type)
+interface-parameter-type        = Cadence type of the parameter
+interface-parameter-index       = Index of the parameter
+interface-parameter-label       = Label of the parameter
+interface-parameter             = [
+    sha3_256(interface-parameter-label),
+    sha3_256(interface-parameter-index),
+    sha3_256(interface-parameter-type)
 ]
 
 interface-flip                 = FLIP the interface was established in (eg: "FLIP-XXXX")
-interface-arguments            = [ ...interface-argument ] | []
+interface-parameters            = [ ...interface-parameter ] | []
 
 interface-encoded              = RLP([
     sha3_256(interface-f-type),
     sha3_256(interface-f-version),
     sha3_256(interface-flip),
-    interface-arguments
+    interface-parameters
 ])
 
 interface-encoded-hex          = hex( interface-encoded )
@@ -893,7 +893,7 @@ sha3_256(MESSAGE)
             }
           ]
         },
-        "arguments": {
+        "parameters": {
           "type": "array",
           "items": [
             {
@@ -1023,7 +1023,7 @@ sha3_256(MESSAGE)
         "messages",
         "cadence",
         "dependencies",
-        "arguments"
+        "parameters"
       ]
     }
   },
@@ -1061,7 +1061,7 @@ sha3_256(MESSAGE)
         "title": {
           "type": "string"
         },
-        "arguments": {
+        "parameters": {
           "type": "array",
           "items": [
             {
@@ -1089,7 +1089,7 @@ sha3_256(MESSAGE)
       "required": [
         "flip",
         "title",
-        "arguments"
+        "parameters"
       ]
     }
   },
