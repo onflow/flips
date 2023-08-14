@@ -100,7 +100,7 @@ Of these, 6 distinct categories of operations were identified (note that some de
 * Other complex operations: this destructor performs some logic that is not included in these categories (e.g. function call, resource movement). 211 of the complex destructors are of this kind. 
 
 Based on this data, we can see that the two largest use cases for complex destructors currently is emitting an event signalling destruction, and decrementing the total supply for a token of some kind. 
-While developers cannot actually on this logic to actually execute (events will not be emitted nor supply decremented when a resource is sent to a burner account), these use cases would be most
+While developers cannot actually rely on this logic to actually execute (events will not be emitted nor supply decremented when a resource is sent to a burner account), these use cases would be most
 negatively impacted by this change. 
 
 The Condition/Assertion and Panic categories are uncommon, and also anti-patterns. 
