@@ -38,7 +38,7 @@ Interaction Template Cadence Doc supports the following declarations:
 
 - The second paragraph of Interaction Template Cadence Doc declares the 'description' message. It must be in the language declared by the @lang declaration.
 
-- `@version` declares the version of Interaction Template Cadence Doc to use. The initial version is `1.0.0`.
+- `@f_version` declares the version of Interaction Template Cadence Doc to use. The initial version is `1.0.0`.
 
 - `@lang` declares the default BCP-47 language tag for all messages in the Interaction Template Cadence Doc (defaults to 'en-US').
 
@@ -60,8 +60,6 @@ Interaction Template Cadence Doc supports the following declarations:
   - `@balance [label]` the field `label` declares the parameter label this declaration is for.
   - `@balance [label]: [contract]` the field `contract` declares the contract on the account which defines the type of balance this parameter.
 
-- `@translate [...translation]` declares a list of BCP-47 language tags to use translate all messages.
-
 This is an example of Interaction Template Cadence Doc for a transaction:
 
 ```cadence
@@ -72,7 +70,7 @@ import "FlowToken"
 @message title: Transfer Tokens
 @message description: Transfer tokens from one account to another
 
-@version 1.0.0
+@f_version 1.1.0
 
 @lang en-US
 
@@ -80,8 +78,6 @@ import "FlowToken"
 @parameter title to: To
 @parameter description amount: The amount of FLOW tokens to send
 @parameter description to: The Flow account the tokens will go to
-
-@translate fr-FR cn-CN
 
 @balance amount: FlowToken
 */
@@ -114,14 +110,12 @@ import "FlowToken"
 @message description: Get account Flow Token balance
 @message returns: Flow account balance
 
-@version 1.0.0
+@f_version 1.1.0
 
 @lang en-US
 
 @parameter title address: Address
 @parameter description address: Get Flow token balance of Flow account
-
-@translate fr-FR cn-CN
 
 */
 pub fun main(address: Address): UFix64 {
@@ -135,7 +129,7 @@ pub fun main(address: Address): UFix64 {
 
 ### As a separate JSON file
 
-Instead of including Interaction Template Cadence Doc directly inside a Cadence transaction or script, it could be included as a separate JSON file.
+Instead of including Interaction Template Cadence Doc directly inside a Cadence transaction or script, it could be included as a separate JSON file. 
 
 If there is Interaction Template Cadence Doc both within the Cadence transaction or script, and in a corresponding JSON file as well, the content of the Interaction Template Cadence Doc in the Cadence transaction or script takes precedent.
 
@@ -143,27 +137,27 @@ The Interaction Template Cadence Doc JSON file must be in following format:
 
 - An array of InteractionTemplateCadenceDoc objects
   - Each InteractionTemplateCadenceDoc must include:
-    - A `version` field, denoting the version of the InteractionTemplateCadenceDoc object (The initial version is `1.0.0`).
+    - A `f_version` field, denoting the version of the InteractionTemplateCadenceDoc object (The initial version is `1.0.0`).
     - A `lang` field, denoting the BCP-47 language tag representing the language of the InteractionTemplateCadenceDoc object
     - A `messages` field, which is an object with:
       - `[key]` key subfields, where `key` is the key of each message, with value being the translation of that message for `lang`
-    - A `arguments` field, which is an object with:
-      - `[label]` key subfields, where `label` is the label of an argument of the Cadence transaction or script, with value being an object with:
+    - A `parameters` field, which is an object with:
+      - `[label]` key subfields, where `label` is the label of an parameter of the Cadence transaction or script, with value being an object with:
         - `[key]` key subfields, where `key` is the key of each message, with value being the translation of that message for `lang`
 
 
-This is an example of Interaction Template Cadence Doc for a transaction (as a JSON file):
+This is an example of optional Interaction Template Cadence Doc for a transaction (as a JSON file):
 
 ```json
 [
   {
-    "version": "1.0.0",
+    "f_version": "1.1.0",
     "lang": "en-US",
     "messages": {
       "title": "Transfer Tokens",
       "description": "Transfer tokens from one account to another"
     },
-    "arguments": {
+    "parameters": {
       "to": {
         "title": "The Flow account the tokens will go to"
       },
@@ -173,13 +167,13 @@ This is an example of Interaction Template Cadence Doc for a transaction (as a J
     }
   },
   {
-    "version": "1.0.0",
+    "f_version": "1.1.0",
     "lang": "fr-FR",
     "messages": {
       "title": "Jetons de transfert",
       "description": "Transférer des jetons d'un compte à un autre"
     },
-    "arguments": {
+    "parameters": {
       "to": {
         "title": "Le compte Flow auquel les jetons iront"
       },
@@ -189,13 +183,13 @@ This is an example of Interaction Template Cadence Doc for a transaction (as a J
     }
   },
   {
-    "version": "1.0.0",
+    "f_version": "1.1.0",
     "lang": "zh-CN",
     "messages": {
       "title": "转移代币",
       "description": "将代币从一个账户转移到另一个账户"
     },
-    "arguments": {
+    "parameters": {
       "to": {
         "title": "令牌将转到的 Flow 帐户"
       },
@@ -213,42 +207,42 @@ Adds "returns" to messages to give context of the return value of the script
 ```json
 [
   {
-    "version": "1.0.0",
+    "f_version": "1.1.0",
     "lang": "en-US",
     "messages": {
       "title": "Flow Token Balance",
       "description": "Get account Flow Token balance",
       "returns": "Flow account balance"
     },
-    "arguments": {
+    "parameters": {
       "address": {
         "title": "Flow account address"
       },
     },
   },
   {
-    "version": "1.0.0",
+    "f_version": "1.1.0",
     "lang": "fr-FR",
     "messages": {
       "title": "Solde du Token Flow",
       "description": "Obtenez le solde du token Flow du compte Flow",
       "returns": "Solde du compte Flow"
     },
-    "arguments": {
+    "parameters": {
       "address": {
         "title": "Adresse du compte Flow"
       },      
     },
   },
   {
-    "version": "1.0.0",
+    "f_version": "1.1.0",
     "lang": "zh-CN",
     "messages": {
       "title": "Flow 代币余额",
       "description": "获取账户的Flow 代币余额",
       "returns": "Flow 账户余额"
     },
-    "arguments": {
+    "parameters": {
       "address": {
         "title": "Flow 账户地址"
       },
