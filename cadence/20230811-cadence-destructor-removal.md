@@ -71,6 +71,17 @@ This will break a large amount of existing code, and further increase the Stable
 
 This will not be backwards compatible. 
 
+### Alternatives Considered
+
+There has been some other discussion of potential alternatives to this in the past for solving the "trolling attack". 
+The attack relies on a user defining an aborting destructor to make it impossible to destroy an attachment, and as such potential solutions
+have been proposed to specifically ban panicking or aborting operations in destructors, or to have some kind of try-catch mechanism to continue
+destruction after an abort. 
+
+The issue with both of these solutions is their technical complexity; we estimate that either would take between 6 months to a year to design and
+implement, and as they are both breaking changes, we would need to delay the release of Stable Cadence until the feature was complete. The hope
+with this proposal is that the simpler change would both solve the problem and allow a faster release of Stable Cadence, with all its attendant benefits.
+
 ### User Impact
 
 To evaluate the impact of this change, existing contracts on Mainnet were surveyed. 
