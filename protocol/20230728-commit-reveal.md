@@ -17,7 +17,7 @@ so that it's not possible to revert non-favorable randomized transaction results
 
 ## Motivation
 
-The Flow Virtual Machine (FVM) underwent [changes](https://github.com/onflow/flow-go/pull/4498) that made the Cadence randomness function `unsafeRandom` (a new name is being discussed in [another FLIP](https://github.com/onflow/flips/pull/120)) backed by an unbiasable, unpredictable and verifiable distributed randomness. The distributed randomness is generated within the Flow protocol for every block and we refer to it by source of randomness [SoR], as in the original [Flow paper](https://arxiv.org/pdf/2002.07403.pdf)
+The Flow Virtual Machine (FVM) underwent [changes](https://github.com/onflow/flow-go/pull/4498) that made the Cadence randomness function `unsafeRandom` (a new name is being discussed in [another FLIP](https://github.com/onflow/flips/pull/120)) backed by an unbiasable, unpredictable and verifiable distributed randomness. The distributed randomness is generated within the Flow protocol for every block and we refer to it by source of randomness SoR, as in the original [Flow paper](https://arxiv.org/pdf/2002.07403.pdf).
 
 The Cadence function can be used safely in some applications where the transaction results are NOT deliberately reverted after the random number is revealed (a contract distributing random NFTs to registered users or on-chian lucky draw). 
 
@@ -36,7 +36,7 @@ The proposed design is a commit-reveal pattern.
 
 The solution requires infrastructure changes to provide new data to the transaction execution environment:
 
- 1. a new FVM function that exposes the current block's SoR (more precisely a derived value from the protocol `SoR_A`) to Cadence runtime. Note that `unsafeRandom` only exposes randoms derived from `SoR_A` through a pseudo-random generator (PRG) but not the `SoR_A` itself. 
+ 1. a new FVM function that exposes the current block's SoR (more precisely a derived value from the protocol `SoR_A`) to Cadence runtime. Note that `unsafeRandom` only exposes randoms derived from SoR through a pseudo-random generator (PRG) but not the SoR itself. 
  2. a new system core-contract that stores a limited history of SoRs for the past `N` blocks. The new FVM function in (1) is only available to the history contract, and is not available to other non-system transactions. Note that system-transactions in Flow are executed at the end of each block, after all non-system transactions of the block are executed. The proposal suggests to change the system transaction so that it adds the current block's `SoR_A` to the SoR history contract (it also removes the oldest block's `SoR_A`). The contract indexes the SoR history by block height. 
  3. an on-chain implementation of a PRG is required. A PRG is initialized with an SoR and can generate a sequence of random numbers for an application. It's up to the application to use a suitable PRG instance. At least one recommended PRG implementation should be provided as part of the FLIP implementation (precise instance to be determined).
 
@@ -93,6 +93,8 @@ fun commitCointoss(bet: @FlowToken.Vault): @Receipt {
 				commitBlock: getCurrentBlock().height
 	)
 	// commit the bet
+	// `self.reserve` is a `@FlowToken.Vault` field defined on the app contract
+	//  and represents a pool of funds
 	self.reserve.deposit(from: <-bet)
     return <- receipt
 }
@@ -111,6 +113,8 @@ fun revealCointoss(receipt: @Receipt): @FlowToken.Vault {
 		return <-FlowToken.createEmptyVault()
 	}
 	
+	// `self.reserve` is a `@FlowToken.Vault` field defined on the app contract
+	//  and represents a pool of funds
 	return <-self.reserve.withdraw(amount: winnings)
 }
 
