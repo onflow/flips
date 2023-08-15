@@ -1,5 +1,5 @@
 ---
-status: Accepted 
+status: Implemented
 flip: 72
 title: AuthAccount Capability Management
 forum: https://forum.onflow.org/t/account-linking-authaccount-capabilities-management/4314
@@ -104,7 +104,7 @@ Below are contract and dApp implementations that were used as sandboxes for onch
 
 - **05.05.23**: Major design change covering new HybridCustody + supporting contracts, introducing the ability for app developers to define and encapsulate retrictions on the access given to parent accounts.
 - **08.01.23**: Verbiage changes and updates to HybridCustody contract suite.
-- **08.15.21**: Moved from "Proposed" to "Accepted"
+- **08.15.21**: Moved from "Proposed" to "Implemented" with mainnet deployment to [`0xd8a7e05a7ac670c0`](https://f.dnz.dev/0xd8a7e05a7ac670c0) and source repo at [@onflow/hybrid-custody](https://github.com/onflow/hybrid-custody)
 
 # Motivation
 
