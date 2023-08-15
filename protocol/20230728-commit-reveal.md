@@ -83,8 +83,8 @@ The points 1, 2 and 3 in [the design proposal](#design-proposal) need to be buil
 Here is an example of a coin toss contract with one function to commit a bid, and another function to resolve the bid:
 
 ```
-import SoRHistory from 0xFLOWSORHISTORY
-import PRG from 0xPRGIMPLEMENTATION
+import SoRHistory from "SoRHistory"
+import PRG from "PRG"
 
 fun commitCointoss(bet: @FlowToken.Vault): @Receipt {
 	let receipt <- create Receipt(
