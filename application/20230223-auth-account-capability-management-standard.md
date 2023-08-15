@@ -1,5 +1,5 @@
 ---
-status: Proposed 
+status: Accepted 
 flip: 72
 title: AuthAccount Capability Management
 forum: https://forum.onflow.org/t/account-linking-authaccount-capabilities-management/4314
@@ -16,7 +16,7 @@ updated: 2023-02-23
 - [Context](#context)
 - [Objective](#objective)
     - [Non-goals](#non-goals)
-    - [Goals](#essential)
+    - [Goals](#goals)
 - [Ongoing Work](#ongoing-work)
     - [Previous Work](#previous-work)
     - [Proposal Updates](#proposal-updates)
@@ -44,21 +44,15 @@ updated: 2023-02-23
     - [Native Notion of Child Accounts](#native-notion-of-child-accounts)
 - [Best Practices](#best-practices)
     - [Creating and Funding Child Accounts](#creating-and-funding-child-accounts)
-        - [DApp-Funded, DApp-Custodied](#dapp-funded-dapp-custodied)
-        - [DApp-Funded, User-Custodied](#dapp-funded-user-custodied)
-        - [User-Funded, DApp-Custodied](#user-funded-dapp-custodied)
-        - [User-Funded, User-Custodied](#user-funded-user-custodied)
-    - [Linking existing account as child account](#linking-existing-account-as-child-account)
-    - [Revoking a child account](#revoking-a-child-account)
-    - [Granting a child account Capabilities](#granting-a-child-account-capabilities)
+    - [Linking Existing Account as Child Account](#linking-existing-account-as-child-account)
+    - [Revoking a Child Account](#revoking-a-child-account)
+    - [Granting Ownership](#granting-ownership)
 - [Tutorials and Examples](#tutorials-and-examples)
     - [Adding an Account as a Child Account](#adding-an-account-as-a-child-account-aka-account-linking)
-    - [Using a Child Account's FlowToken Vault](#using-a-child-accounts-flowtoken-vault)
+    - [Using a Child Account’s NFT Collection](#using-a-child-accounts-nft-collection)
 - [Compatibility](#compatibility)
 - [User Impact](#user-impact)
-- [Questions and Discussion Topics](#questions-and-discussion-topics)
-    - [Verbiage](#verbiage)
-    - [Open Questions](#open-questions)
+- [Open Questions](#open-questions)
 - [References](#references)
 
 </details>
@@ -110,6 +104,7 @@ Below are contract and dApp implementations that were used as sandboxes for onch
 
 - **05.05.23**: Major design change covering new HybridCustody + supporting contracts, introducing the ability for app developers to define and encapsulate retrictions on the access given to parent accounts.
 - **08.01.23**: Verbiage changes and updates to HybridCustody contract suite.
+- **08.15.21**: Moved from "Proposed" to "Accepted"
 
 # Motivation
 
@@ -1058,7 +1053,7 @@ Aside from implementing onboarding flows & account linking, you'll want to also 
 
 Under the proposed design, account creation and funding can be done any way you'd normally create an account on Flow. Alternatively, there are custodial services that have plans to build APIs which developers can leverage to easily implement Walletless Onboarding and eventually Hybrid Custody into their applications.
 
-## Linking existing account as child account
+## Linking Existing Account as Child Account
 
 Given the idea of progressive onboarding, we’ll need to add existing accounts as child accounts. This can be done either by a multisig transaction by the parent & child account, or via the `AuthAccount.Inbox` methods `publish()` and `claim()` across two transactions.
 
@@ -1068,11 +1063,11 @@ For more on this process, see [this walkthrough](#adding-an-account-as-a-child-a
 
 > :information_source: As mentioned previously, it's recommended that the entire Hybrid Custody linking process be completed via the linking application.
 
-## Revoking a child account
+## Revoking a Child Account
 
 Revocation in this construct involves removing the `ChildAccount` Capability from the parent’s `Manager`. This can be done via `Manager.removeChild()` method. However, this is only one side of revocation.
 
-## Granting ownership
+## Granting Ownership
 
 The other sort of revocation is one in which the current owner or custodian of a delegator account grants ownership to the requesting parent account. Note that a parent account does not have authority to initiate this process on their own, and must rely on the application to both enable and execute this process which may even force the application to surrender its access on the account entirely. This process involves the custodial party calling `OwnedAccount.giveOwnership()` which revokes:
 
@@ -1087,7 +1082,7 @@ The motivation for total revocation when granting ownership is due to the potent
 
 Many custodial applications have gone through great pains to prevent users from having access to fungible tokens, and arbitrarily delegating total access on custodied accounts presents not only technical complexity, but could also imply legal obligations that developers are not prepared or do not wish to deal with. As such, it's recommended that if developers do decide to grant full ownership over accounts to users, they concurrently relinquish application access on those accounts.
 
-## Granting access to child account Capabilities
+## Granting Access to Child Account Capabilities
 
 It's clear that access to typed Capabilities is a requirement for this standard to be useful. `CapabilityFactory` constructs enable retrieval of castable Capabilities while `CapabilityDelegator` interfaces and resources enable developers to share arbitrary Capabilities with a parent account. Additionally, `CapabilityFilter` resources enable developers to set rules on the Capabilitites a parent account can access.
 
@@ -1165,9 +1160,7 @@ The standards being discussed in this Flip are additive, and thus do not imply a
 
 Our hope is that if/when this Flip is adopted, this feature will be useful for a number of different use cases. We can see child accounts being especially useful for gaming and perhaps even as a new airdrop mechanism, allowing creators to conduct airdrops tied to Web2 identities. As such, we’re hoping to provide as many examples and supporting scripts & transactions we can think of to facilitate progressive onboarding as well as account + storage iteration to get Flow builders started implementing this standard into their projects where they see fit.
 
-# Questions and Discussion Topics
-
-## Open Questions
+# Open Questions
 
 - [X] ~~How will entitlements factor in to contract implementation and upgradability?~~
     - A: Since entitlements aren't yet feature complete, this is currently an unknown. However, Austin Kline has scoped this out as an upgradable/migratable change should entitlements make their way to Mainnet.
@@ -1181,7 +1174,7 @@ Our hope is that if/when this Flip is adopted, this feature will be useful for a
     - A: We are no longer implementing the NFT standard in this contract, and have made additions to `Manager` private
 - [X] ~~Where do Capability Controllers fit in and can they reduce some of the concerns around auditing and revocation of AuthAccount Capabilities?~~
     - A: Any Capability Controller access is done in function scope and would be an upgradable change. If anything, the feature should enhance security guarantees without much refactor needed.
-- [ ] ~~Should child accounts be allowed to have multiple parent accounts?~~
+- [X] ~~Should child accounts be allowed to have multiple parent accounts?~~
     - A: Yes and they will be mediated by a single owning `OwnedAccount` managing `ChildAccount` access for each parent
 - [X] ~~Linking AuthAccounts is possible outside of the mechanisms defined in this standard. How does a user know who else has secondary access to their child accounts.~~
     - A: Until CapCons, this is not technically possible and will need to be addressed via communication and education
