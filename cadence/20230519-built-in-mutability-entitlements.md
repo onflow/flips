@@ -1,9 +1,9 @@
 ---
-status: proposed
+status: accepted
 flip: 86
 authors: Supun Setunga (supun.setunga@dapperlabs.com)
 sponsor: Supun Setunga (supun.setunga@dapperlabs.com)
-updated: 2023-05-19
+updated: 2023-08-15
 ---
 
 # Introduce Built-in Mutability Entitlements
