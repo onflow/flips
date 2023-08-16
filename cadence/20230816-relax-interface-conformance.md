@@ -16,7 +16,7 @@ coming from a different interface.
 
 ## Motivation
 
-Assume there are two interfaces, `Receiver`) interface declares an empty `isSupportedVaultType` function.
+Assume there are two interfaces, `Receiver` interface declares an empty `isSupportedVaultType` function.
 The  second interface `Vault` conforms to the `Receiver` interface and provides a default implementation
 to the `isSupportedVaultType` function.
 
