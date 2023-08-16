@@ -1,9 +1,9 @@
 ---
-status: proposed 
-flip: NNN (do not set)
+status: accepted 
+flip: 112
 authors: Satyam Agrawal (satyam.agrawal@dapperlabs.com)
 sponsor: Jonny (Increment.Fi) (hsyjonny@gmail.com) 
-updated: 2023-06-09 
+updated: 2023-08-16 
 ---
 
 # Pool-Based DEX Swap Standard
