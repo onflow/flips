@@ -17,10 +17,10 @@ Instead, any nested resources will automatically be destroyed when the resource 
 ## Motivation
 
 The primary motivation for this is to resolve the "trolling attack" that can be used to 
-exploit the attachments feature, whereby an attachment with a `panic`ing destructor is added to a resource 
+exploit resources and attachments, whereby a `panic`ing destructor is added to a resource or attachment
 without the owner's knowledge, and thus unremovably takes up space in an account. By removing the ability
 to declare custom destructors, malicious actors would not be able to prevent the destruction or removal 
-of an attachment. 
+of a resource or attachment. 
 
 ### Background Context
 
