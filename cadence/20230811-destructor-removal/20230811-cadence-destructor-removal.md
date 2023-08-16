@@ -22,6 +22,31 @@ without the owner's knowledge, and thus unremovably takes up space in an account
 to declare custom destructors, malicious actors would not be able to prevent the destruction or removal 
 of an attachment. 
 
+### Background Context
+
+Previous discussions around the attachments/deletion trolling attack have already uncovered a few particular takeaways:
+
+* Not a problem with attachments. Rather, already today, the inability to force delete a resource is a problem – attachments worsen the situation
+* The contents of a resource are potentially a bigger problem than the storage usage of the resource
+* The ability of a user to delete is more important than the ability of the type author to prevent the deletion
+* “Follow-up logic” needs to be separate from destruction, destruction needs to always succeed (e.g. FT total supply)
+* Current order of destructors should ideally be kept
+* Either side (user and author) could troll, e.g. author could prevent destruction, but user could also prevent destructor logic to fail
+
+As such, solution proposals that either only address the storage cost aspect of the problem,
+only address the attachments-specific portion of the problem,
+or otherwise do not ensure that a user is always able to delete any resource they own, are not sufficient for addressing this issue. 
+
+We have proposed other solutions to this in the past, including:
+
+* Try-Catch, where a destructor would be required to catch any potential panics and handle them in a way that guarantees successful deletion 
+of the resource.
+* Banning panicking operations in a destructor entirely
+* Successfully cleaning up a resource when its destructor panics before aborting execution
+* Separating destruction into a two-phase process that separates clean-up from actually deleting the resource
+
+The issue with all of these is either that they significantly complicate the language, are technically very challenging to implement, or both. 
+
 ## User Benefit
 
 The primary benefit of this change would be the ability to enable the attachments feature without any
