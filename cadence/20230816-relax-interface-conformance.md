@@ -35,7 +35,7 @@ access(all) resource interface Vault: Receiver {    // Static error
 access(all) resource VaultImpl: Vault {}
 ```
 
-Currently, this reports an error saying `` `isSupportedVaultType` function of `Vault` conflicts with a function with the same name in `Balance` ``.
+Currently, this reports an error saying `` `isSupportedVaultType` function of `Vault` conflicts with a function with the same name in `Receiver` ``.
 
 ## User Benefit
 
