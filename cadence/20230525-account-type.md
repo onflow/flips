@@ -1,9 +1,9 @@
 ---
-status: proposed
+status: approved
 flip: 92
 authors: Bastian Müller (bastian@dapperlabs.com)
 sponsor: Bastian Müller (bastian@dapperlabs.com)
-updated: 2023-05-25
+updated: 2023-08-15
 ---
 
 # FLIP 92: Account Type
