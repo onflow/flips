@@ -10,9 +10,12 @@ updated: 2023-08-16
 
 ## Objective
 
-This FLIP proposes to relax a restriction associated with interface conformance,
-by allowing empty function declarations defined in other interfaces to coexist with a default function implementation
-coming from a different interface.
+A previous FLIP (https://github.com/onflow/flips/blob/main/cadence/20230503-improve-conformance.md) improved interface
+conformance by allowing conditions defined in other interfaces to coexist with a default function implementation coming
+from a different interface.
+
+This FLIP proposes to relax this restriction further, by also allowing empty function declarations defined in other
+interfaces to coexist with a default function implementation coming from a different interface.
 
 ## Motivation
 
@@ -36,6 +39,29 @@ access(all) resource VaultImpl: Vault {}
 ```
 
 Currently, this reports an error saying `` `isSupportedVaultType` function of `Vault` conflicts with a function with the same name in `Receiver` ``.
+
+However, it is possible to make this work by adding a dummy condition to the function in `Receiver`.
+e.g.
+
+```cadence
+access(all) resource interface Receiver {
+    access(all) view fun isSupportedVaultType(): {Type: Bool} {
+        pre { true }
+    }
+}
+
+access(all) resource interface Vault: Receiver {    // OK
+
+    access(all) view fun isSupportedVaultType(): {Type: Bool} {
+        // Implementation...
+    }
+}
+
+access(all) resource VaultImpl: Vault {}
+```
+
+Likewise, restricting empty declarations from coexisting with default functions doesn't really add any value or safety,
+as it can be workaround by adding a condition. Rather, it only reduces the composability.
 
 ## User Benefit
 
