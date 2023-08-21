@@ -74,8 +74,7 @@ Everyone is welcome to propose and provide feedback on a FLIP.
 
 A **FLIP author** writes a FLIP and is committed to championing it through the process.
 
-If deemend necessary, a FLIP author may have a **FLIP sponsor** who helps shepherd the
-FLIP review process.
+A FLIP author will find a **FLIP sponsor** who helps shepherd the FLIP review process.
 
 A **review committee** is a group of maintainers who are responsible for the strategic direction of components, subcomponents, and public APIs.
 They have the responsibility to accept or reject the adoption of the FLIP via a community vote.
@@ -102,11 +101,18 @@ After writing the FLIP draft, gather feedback from project contributors and main
 
 Once the FLIP is ready for review:
 
-1. _(Optional)_ Recruit a sponsor from the maintainers of the project for which your FLIP concerns. A sponsor may help streamline the review process and moderate the discussion with the community.
+1. Recruit a [sponsor](#flip-sponsors) from the maintainers or the active contributors of the project for which your FLIP concerns. A sponsor may help streamline the review process and moderate the discussion with the community
 
-   Please note that you are not required to recruit a sponsor; this step is entirely optional. If howevever, you do recruit a sponsor, identify them in the FLIP before posting the PR in step 2.
 
-2. Submit your FLIP as a pull request to this repository ([`onflow/flips`](https://github.com/onflow/flips)).
+2. Create an [issue](https://github.com/onflow/flips/issues/new/choose) by using one of the FLIP issue templates based on the type of the FLIP - `application`, `governance`, `cadence` or `protocol`.
+   The title of the issue should be the title of your FLIP, e.g., "Dynamic Inclusion fees".
+
+    Submit the issue.
+
+    Note the issue number that gets assigned. For example, for issue https://github.com/onflow/flips/issues/76, the issue number is `76`.
+
+ 
+3. Create your FLIP as a pull request to this repository ([`onflow/flips`](https://github.com/onflow/flips)).
 
    Name your FLIP file using the [template](./yyyymmdd-flip-template.md) `YYYYMMDD-descriptive-name.md`,
    where YYYYMMDD is the date of submission, and ‘descriptive-name’ relates to the title of your FLIP.
@@ -115,48 +121,62 @@ Once the FLIP is ready for review:
    If you have images or other auxiliary files,
    create a directory of the form `YYYYMMDD-descriptive-name` in which to store those files.
 
-   Include the header table and the contents of the **Objective** section in the comment of your pull request, using Markdown.
-   Include a mention of any of the GitHub handles of co-authors, reviewers and, if applicable, sponsors.
+   Use the issue number generated in step 2 as the FLIP number.
+
+   Mention the FLIP issue by copying the GitHub URL or the issue in the comment section.
 
    At the top of the PR identify how long the comment period will be.
    This should be a minimum of two weeks from posting the PR.
 
-3. Send a message to the #developers channel on [Discord](https://discord.gg/flow)
-   with a brief description, and a link to the PR and a request for review.
+   
+4. Send a message to the #developers channel on [Discord](https://discord.gg/flow)
+   with a brief description, a link to the PR and a request for review.
 
-4. The author may request a review committee meeting after sufficient discussion has taken place.
+
+5. On the FLIP issue that was created earlier in Step 2, set the status under the "FLIPs Tracker" project to `Proposed`. 
+   If you do not have the permission, you may need to ask the sponsor to assist you.
+
+
+6. The author may request a review committee meeting after sufficient discussion has taken place.
    This meeting will include the FLIP author, core contributors and interested community members.
-   If discussion is lively, wait until it has settled before going to review.
+   If the discussion is lively, wait until it has settled before going to review.
    The goal of the review meeting is to resolve minor issues;
    consensus should be reached on major issues beforehand.
 
-5. The meeting may approve the FLIP, reject it, or require changes before it can be considered again.
+
+7. The meeting may approve the FLIP, reject it, or require changes before it can be considered again.
    FLIPs will be merged into this repository ([`onflow/flips`](https://github.com/onflow/flips))
    with the outcome of the review process (approval, rejection).
 
-6. Implementations of a successful FLIP should reference it in their documentation. While implementation code is not necessary to start the FLIP process, its existence in full or part may help the design discussion.
+
+8. Update the status of the FLIP issue under the "FLIPs Tracker" project as per the outcome of step 7 (`Accepted` or `Rejected`).
+   If you do not have the permission, you may need to ask the sponsor to assist you.
+
+
+9. Implementations of a successful FLIP should reference it in their documentation. While implementation code is not necessary to start the FLIP process, its existence in full or part may help the design discussion.
+
 
 If in any doubt about this process, feel free to ask on [Discord](https://discord.gg/flow),
 the [community forum](https://forum.onflow.org/), or file an issue in this repository
 ([`onflow/flow`](https://github.com/onflow/flow/issues)).
 
 ## Proposal states
-
+* **Drafted:** The FLIP has been drafted but is not yet ready for review.
 * **Proposed:** The FLIP has been proposed and is awaiting review.
-* **Rejected:** The FLIP has been reviewed and been rejected.
+* **Rejected:** The FLIP has been reviewed and rejected.
 * **Accepted:** The FLIP has been accepted and is either awaiting implementation or is actively being implemented.
 * **Implemented (in VERSION):** The FLIP has been implemented.
 
 ## Community members
 
 As the purpose of FLIPs is to ensure the community is well represented and served by new changes to Flow,
-it is the responsibility of community members to participate in reviewing FLIPs where they have an interest in the outcome.
+it is the responsibility of community members to participate in reviewing FLIPs where they are interested in the outcome.
 
 Community members should:
 
-* provide feedback as soon as possible to allow adequate time for consideration
-* read FLIPs thoroughly before providing feedback
-* be civil and constructive (see [Code of Conduct](CODE_OF_CONDUCT.md))
+* Provide feedback as soon as possible to allow adequate time for consideration
+* Read FLIPs thoroughly before providing feedback
+* Be civil and constructive (see [Code of Conduct](CODE_OF_CONDUCT.md))
 
 ## Review committees
 
@@ -172,11 +192,11 @@ Review committees must:
 If a review committee requires changes before acceptance,
 it is the responsibility of the author (and/or sponsor, if applicable) to ensure these are made and seek subsequent approval from the committee members.
 
-## FLIP sponsors (optional)
+## FLIP sponsors
 
 A sponsor is a Flow maintainer, selected by the author at will, and is responsible for ensuring the best possible outcome of the FLIP process.
 
-In particular a sponsor may help with the following-
+In particular, a sponsor may help with the following:
 
 * advocating for the proposed design
 * guiding the FLIP to adhere to existing design and style conventions
@@ -184,6 +204,7 @@ In particular a sponsor may help with the following-
 * if the FLIP is approved and moves to implementation:
   * ensuring proposed implementation adheres to the design
   * liaison with appropriate parties to successfully land implementation
+* update the status of the issue created for the FLIP
 
 ## Keeping the bar high
 
@@ -206,7 +227,7 @@ Use the template [from GitHub](./yyyymmdd-flip-template.md), being sure to follo
 ## FLIP Evaluation
 
 FLIPs should be evaluated for their impact on the three pillars of Flow. These are:
-* **Community** - consider how the FLIP will impact the ability for others to participate in the ongoing design and operation of the Flow network and the applications which depend on it.
+* **Community** - consider how the FLIP will impact the ability of others to participate in the ongoing design and operation of the Flow network and the applications which depend on it.
 * **Empowerment** - consider how the FLIP will improve the economic opportunity for creators, contributors and participants in the community. The FLIP should result in a net positive on the marginal benefits and costs to all the impacted individuals (who choose to register their preference/vote on an issue).
 * **Reliability** - and finally, think about how the FLIP will impact the consistency, observability, verifiability, and overall performance of the Flow network for its users.
 
