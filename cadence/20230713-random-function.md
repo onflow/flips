@@ -148,14 +148,9 @@ such as commit-reveal schemes can be proposed in a [separate FLIP](https://githu
 
 ### Randomness in script execution
 
-`executeScriptAtBlock` and `ExecuteScriptAtLatestBlock` are used to execute Cadence read-only code against the execution state at a past sealed block or the latest sealed blocked, respectively. With the entropy being extracted from the protocol state, `executeScriptAtBlock` may require reading the protocol state at a past block, which is not guaranteed to be stored by Flow nodes. Moreover, the FVM implementation of `random` requires a transaction hash which is not possible with script execution (scripts are not executed as part of a transaction). For these reasons, it is not possible to replicate Cadence's `random` behavior in scripts. It is not possible to retrieve the same random numbers when calling `random` as a transaction or as a script. 
-
-We can define an alternative behavior for `random` in scripts. These following options are possible:
- 1. panic
- 2. return a constant (zero value of the type)
- 3. return pseudo-random numbers using a weak source of entropy
-
-Option (1) can cause confusion because valid Cadence code would fail when run as a script. Option (3) can also cause confusion as the returned numbers may look "random" while they are different than the numbers returned by a transaction, and are therefore not useful for users. (2) avoids panicking and may remind users that randomness doesn't work properly on scripts. This FLIP suggests to choose option (2).
+`executeScriptAtBlock` and `ExecuteScriptAtLatestBlock` are used to execute Cadence read-only code against the execution state at a past sealed block or the latest sealed blocked, respectively. 
+The FVM implementation of `random` uses the transaction hash to diversify the random sequence per transaction. For this reason, it is not possible to replicate Cadence's `random` behavior in scripts. Although scrips would use the same randomness source as transactions to derive randoms. It is not possible to retrieve the same random numbers when calling `random` as a transaction or as a script.
+The FLIP suggests to also diversify the random sequence per script using the hash of the script text. 
 
 ### Possible confusion with renaming
 
