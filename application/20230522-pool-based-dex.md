@@ -89,6 +89,14 @@ pub resource interface ImmediateSwap {
 		recipient: Capability<&{FungibleToken.Receiver}>,
         remainingSourceTokenRecipient: Capability<&{FungibleToken.Receiver}>
 	)
+    {
+        pre {
+            expiry >= getCurrentBlock().timestamp : "Expired swap request"
+            recipient.check() : "Provided recipient capability can not be borrowed"
+            sourceToTargetTokenPath.length >= 2 : "Incorrect source to target token path"
+            sourceVault.balance > 0.0 : "Swap is not permitted for zero source vault balance"
+        }
+    }
 
 
     /// @notice It will Swap the source token for to target token and          
@@ -121,8 +129,17 @@ pub resource interface ImmediateSwap {
 		sourceToTargetTokenPath: [Type],
 		sourceVault: @FungibleToken.Vault,
 		exactTargetAmount: UFix64,
-		expiry: UInt64
-	): @ExactSwapAndReturnValue
+		expiry: UFix64
+	): @ExactSwapAndReturnValue {
+        pre {
+            expiry >= getCurrentBlock().timestamp : "Expired swap request"
+            sourceToTargetTokenPath.length >= 2 : "Incorrect source to target token path"
+            sourceVault.balance > 0.0 : "Swap is not permitted for zero source vault balance"
+        }
+        post {
+            result.targetTokenVault.balance == exactTargetAmount : "Unable to perform exact swap"
+        } 
+    }
 
 }
 
@@ -134,7 +151,6 @@ Events play a pivotal role in enhancing discoverability within a system; thus, t
    /// Below event get emitted during `swapExactSourceToTargetTokenUsingPath` & `swapExactSourceToTargetTokenUsingPathAndReturn`
    /// function call.
    ///
-   /// @param senderAddress:    Address who initiated the swap. // TODO: It is not possible to know as per the proposed interface.
    /// @param receiverAddress:  Address who receives target token, It is optional because in case of 
    /// `swapExactSourceToTargetTokenUsingPathAndReturn` function target token vault would be returned instead of movement of funds in
    ///  receiver capability.
@@ -143,7 +159,6 @@ Events play a pivotal role in enhancing discoverability within a system; thus, t
    /// @param sourceToken: Type of sourceToken. eg. Type<FLOW>
    /// @param targetToken: Type of targetToken. eg. Type<USDC>
    pub event Swap(
-        senderAddress: Address,
         receiverAddress: Address?,
         sourceTokenAmount: UFix64,
         receivedTargetTokenAmount: UFix64,
