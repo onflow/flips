@@ -97,13 +97,18 @@ will solve it. Specifically, the FLIP will:
 
 Once the FLIP is ready for review:
 
-1. _(Optional)_ Recruit a sponsor from the maintainers of the project for which your FLIP concerns.
+1. Recruit a [sponsor](#flip-sponsors) from the maintainers or the active contributors of the project for which your FLIP concerns. A sponsor may help streamline the review process and moderate the discussion with the community
 
-   You are not required to recruit a sponsor; this step is entirely optional. However, a sponsor acts as a valuable resource who    can streamline the review process and increase the likelihood of your FLIP being accepted.
 
-   If you do recruit a sponsor, identify them in the FLIP before posting the PR in step 2.
+2. Create an [issue](https://github.com/onflow/flips/issues/new/choose) by using one of the FLIP issue templates based on the type of the FLIP - `application`, `governance`, `cadence` or `protocol`.
+   The title of the issue should be the title of your FLIP, e.g., "Dynamic Inclusion fees".
 
-2. Submit your FLIP as a pull request to this repository ([`onflow/flips`](https://github.com/onflow/flips)).
+   Submit the issue.
+
+   Note the issue number that gets assigned. For example, for issue https://github.com/onflow/flips/issues/76, the issue number is `76`.
+
+
+3. Create your FLIP as a pull request to this repository ([`onflow/flips`](https://github.com/onflow/flips)).
 
    Name your FLIP file using the [template](./yyyymmdd-flip-template.md) `YYYYMMDD-descriptive-name.md`,
    where YYYYMMDD is the date of submission, and ‘descriptive-name’ relates to the title of your FLIP.
@@ -112,14 +117,14 @@ Once the FLIP is ready for review:
    If you have images or other auxiliary files,
    create a directory of the form `YYYYMMDD-descriptive-name` in which to store those files.
 
-   Include the header table and the contents of the **Objective** section in the comment of your pull request, using Markdown.
-   Include a mention of any of the GitHub handles of co-authors, reviewers and sponsors.
+   Use the issue number generated in step 2 as the FLIP number.
+
+   Mention the FLIP issue by copying the GitHub URL or the issue in the comment section.
 
    At the top of the PR identify how long the comment period will be.
    This should be a minimum of two weeks from posting the PR.
 
-3. Send a message to the #developers channel on [Discord](https://discord.gg/flow)
-   with a brief description, and a link to the PR and a request for review.
+4. Send a message to the #developers channel on [Discord](https://discord.gg/flow) with a brief description, a link to the PR and a request for review
 
 ### Managing Community Discussion
 
@@ -137,7 +142,9 @@ Once the FLIP is ready for review:
    FLIPs will be merged into this repository ([`onflow/flips`](https://github.com/onflow/flips)),
    stating the outcome of the review process (approval, rejection), once known.
 
-2. Implementations of a successful FLIP should reference it in their documentation,
+2. Update the status of the FLIP issue under the "FLIPs Tracker" project as per the outcome of step 7 (`Accepted` or `Rejected`). If you do not have the permission, you may need to ask the sponsor to assist you.
+
+3. Implementations of a successful FLIP should reference it in their documentation,
    and work with the sponsor to successfully land the code.
 
    Note that While implementation code is not necessary to start the FLIP process, its existence in full or part may help the design discussion.
@@ -190,6 +197,7 @@ In particular this includes:
 * if the FLIP is approved and moves to implementation:
     * ensuring proposed implementation adheres to the design
     * liaison with appropriate parties to successfully land implementation
+* update the status of the issue created for the FLIP for the Flip tracker project.
 
 ## Keeping the bar high
 
