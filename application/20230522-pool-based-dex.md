@@ -1,9 +1,9 @@
 ---
-status: proposed 
-flip: NNN (do not set)
+status: accepted 
+flip: 112
 authors: Satyam Agrawal (satyam.agrawal@dapperlabs.com)
 sponsor: Jonny (Increment.Fi) (hsyjonny@gmail.com) 
-updated: 2023-06-09 
+updated: 2023-08-16 
 ---
 
 # Pool-Based DEX Swap Standard
@@ -82,7 +82,7 @@ pub resource interface ImmediateSwap {
     /// @param recipient:               A valid capability that receives target token after the completion of function execution.
     /// @param remainingSourceTokenRecipient: A valid capability that receives surplus source token after the completion of function execution.
 	pub fun swapExactSourceToTargetTokenUsingPath(
-		sourceToTargetTokenPath: Type[],
+		sourceToTargetTokenPath: [Type],
 		sourceVault: @FungibleToken.Vault,
 		exactTargetAmount: UFix64,
 		expiry: UFix64,
@@ -118,11 +118,11 @@ pub resource interface ImmediateSwap {
     /// @param expiry:                  Unix timestamp after which trade would get invalidated.
     /// @return A valid vault that holds target token and an optional vault that may hold leftover source tokens.
 	pub fun swapExactSourceToTargetTokenUsingPathAndReturn(
-		sourceToTargetTokenPath: Type[],
+		sourceToTargetTokenPath: [Type],
 		sourceVault: @FungibleToken.Vault,
 		exactTargetAmount: UFix64,
 		expiry: UInt64
-	): ExactSwapAndReturnValue
+	): @ExactSwapAndReturnValue
 
 }
 
@@ -190,7 +190,7 @@ pub resource interface ImmediateSwapQuotation {
     /// @return Amount of target token user would get after selling `sourceAmount`.
     ///
 	pub fun getExactSellQuoteUsingPath(
-	   sourceToTargetTokenPath: Type[],
+	   sourceToTargetTokenPath: [Type],
 	   sourceAmount: UFix64
     ): UFix64?
 
@@ -213,7 +213,7 @@ pub resource interface ImmediateSwapQuotation {
     /// @return Amount of source token user has to pay to buy provided `targetAmount` of target token.
     ///
     pub fun getExactBuyQuoteUsingPath(
-        sourceToTargetTokenPath: Type[],
+        sourceToTargetTokenPath: [Type],
         targetAmount: UFix64
     ): UFix64?
 ```
