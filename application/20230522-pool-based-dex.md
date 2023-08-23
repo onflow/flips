@@ -51,7 +51,7 @@ pub resource interface ExactSwapAndReturnValue {
     /// after a swap. 
     pub let targetTokenVault: @FungibleToken.Vault
     /// It is an optional vault that holds the leftover source tokens after a swap.
-    pub let remainingSourceTokenVault: @FungibleToken.Vault?
+    pub var remainingSourceTokenVault: @FungibleToken.Vault?
 }
 
 pub resource interface ImmediateSwap {
