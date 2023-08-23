@@ -93,7 +93,7 @@ will solve it. Specifically, the FLIP will:
 1. Continue to expand the rough sketch into a draft using the FLIP template and further refine the proposal on the forums.
 2. After writing the FLIP draft, gather feedback from project contributors and maintainers before submitting it.
 
-## Submitting the FLIP
+### Submitting the FLIP
 
 Once the FLIP is ready for review:
 
