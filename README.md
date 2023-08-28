@@ -154,11 +154,12 @@ the [community forum](https://forum.onflow.org/), or file an issue in this repos
 ([`onflow/flow`](https://github.com/onflow/flow/issues)).
 
 ## Proposal states
-
+* **Drafted:** The FLIP in its early stage and is being ideated. 
 * **Proposed:** The FLIP has been proposed and is awaiting review.
 * **Rejected:** The FLIP has been reviewed and been rejected.
 * **Accepted:** The FLIP has been accepted and is either awaiting implementation or is actively being implemented.
-* **Implemented (in VERSION):** The FLIP has been implemented.
+* **Implemented:** The FLIP has been implemented and the changes have merged into the codebase.
+* **Released:** The FLIP is live on Flow mainnet.
 
 ## Community members
 
