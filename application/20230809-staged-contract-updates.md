@@ -29,15 +29,56 @@ execution to an automated service run by Flow as a part of the ecosystem-wide po
 
 ## User Benefit
 
-As implied above, this contract and update service would allow developers to configure and schedule their update deployment onchain.
+This contract would benefit developers by making it easy for them to stage and even automate contract updates after
+breaking improvements and, by extension, users by minimizing perceived downtime.
 
 ## Design Proposal
 
+### Context
+
+Updates to a network of dependent contracts must occur according to their dependency ordering. Even when properly ordered, any dependent contracts must wait for their dependencies to complete state changes in the execution environment before they can successfully update. This state change can only occur after the dependency updating transaction completes. This is an important note in designing a wide-scale update mechanism because it means we must batch updates in stages, with each stage updating the suite of contracts at the same level of the dependency graph.
+
+If we were to take the following set of contracts with the pictured dependency graph and attempt to update them in a single transaction, the attempt would fail. This is because `B` depends on `A`, and `A`'s updates won't yet take effect until after the transaction has successfully executed.
+
+![Simple dependency graph](./20230809-staged-contract-updates-resources/simple_dependency_graph.png)
+
+*Sequencing a set of contracts into discrete update transactions, order labeled on the right.*
+
+Instead, we update `A` in one transaction, `B` in the following, and lastly `C` in a final transaction. Given a larger number of contracts, we could update multiple contracts in a single transaction, but the updates would need to be batched with contracts at a similar maximum depth in their dependency graph.
+
+![Simple dependency graph](./20230809-staged-contract-updates-resources/bigger_dependency_graph.png)
+
+Take for instance the graph above. We would stage `[A, D]` in the first transaction, `[B, E]` in another, and finally `C` could be updated. Keep this mental model in mind as we put together this staged approach in the design below.
+
 ### Overview
+
+> :information_source: The proposed design is largely informed by experimenting with a working prototype which can be found in [this repo](https://github.com/sisyphusSmiling/contract-updater)
+
+Proposed is a single contract implementation defining a primary resource - referred to here as `Updater` - encapsulating
+a bundle of ordered contract updates, themselves bundled more granularly into stages. A developer provides AuthAccount
+Capabilities on the contract hosting accounts, staged and ordered update configuration details (contract address, name,
+and code) to this resource on initialization as well as a blockheight boundary, at or beyond which updates should be
+deployed.
+
+The owner of this resource can then call `Updater.update()` to execute the updates bundled into the current deployment
+stage. The current stage is incremented every time `update()` is called, with `updateComplete` set to true once all
+deployment stages have been attempted.
+
+In addition to the `Updater`, the `Delegatee` can capture delegated `Updater` Capabilities. This allows a developer to
+codify their deployment details in an `Updater`, save the resource in their account, and offload the entirety of their
+contract updates to a trusted party via `Delegatee`.
+
+With respect to Stable Cadence support, the idea is to provide a Flow-hosted `Delegatee` that executes delegated updates (after updating core contracts) following the spork upgrade.
 
 ### Implementation Details
 
+
+
 #### Interfaces
+
+![ContractUpdater interface overview](./20230809-staged-contract-updates-resources/interface_overview.png)
+
+*The overview above outlines the interface of `ContractUpdater` and each of its defined constructs. Expand the toggles below to view each component in more detail.*
 
 <details>
 <summary>struct ContractUpdate</summary>
@@ -158,7 +199,8 @@ pub resource Delegatee : DelegateePublic {
 </details>
 
 
-#### Events
+<details>
+<summary>Events</summary>
 
 ```cadence
 pub event UpdaterCreated(updaterUUID: UInt64, blockUpdateBoundary: UInt64)
@@ -174,8 +216,10 @@ pub event UpdaterUpdated(
 )
 pub event UpdaterDelegationChanged(updaterUUID: UInt64, updaterAddress: Address?, delegated: Bool)
 ```
+</details>
 
-#### Helper Methods
+<details>
+<summary>Helper Methods</summary>
 
 ```cadence
 /// Returns the Address of the Delegatee associated with this contract
@@ -203,6 +247,8 @@ pub fun createNewUpdater(
 ///
 pub fun createNewDelegatee(): @Delegatee
 ```
+</details>
+
 
 #### Note on Update API
 
@@ -219,25 +265,37 @@ pub fun createNewDelegatee(): @Delegatee
 
 ### Considerations
 
-Update executions via `Delegatee` can't account for the global dependency graph since there is no way to enforce it executes all updates, and so depend on the `Updater`'s creator to sequence the contained deployment appropriately given the contracts to be updated. This means that developers will still want to validate their contracts are both individually Stable Cadence compatible & updatable as well as sequenced correctly within the `Updater` resource.
+Update executions via `Delegatee` can't account for the global dependency graph since ultimately contract account owners have sovereignty over their update path. Therefore, `Delegatee` depends on the `Updater`'s creator to sequence the contained deployment appropriately given the contracts to be updated. This means that developers will still want to validate their contracts are both individually Stable Cadence compatible and updatable, as well as sequenced correctly within the `Updater` resource.
 
-Another consideration is 
+Another consideration is that since we intend to iterate over a large number of updates per transaction, we cannot allow unsuccessful update attempts to interrupt that iteration. Therefore, this mechanism provides no guarantees to the delegator that their updates will be completed successfully or that any stages succeeding a failed contract update will be avoided. The only strong guarantee to delegating parties is that the update deployment encapsulated in their `Updater` will be attempted at or beyond the collective block height boundary.
+
+One significant callout deserving more investigation are the limitations presented by execution limits on both the construction of the `Updater` resource as well as the execution of delegated updates. The former is a concern because it would influence the `Updater` setup while the latter is a concern for update batch size executed by `Delegatee`. The hope is that all delegated updates can be executed within a dozen or so transactions post-spork (based on the current number of mainnet contracts), but benchmarks are needed to determine a well-informed and robust migration protocol.
 
 ### Drawbacks
 
-- All contracts would need to be either a) core contracts or b) owned by the updater
+Since we cannot centrally initiate and organize all contract updates, developers using this should be aware that any updates executed using this design should ensure that their contract dependencies are either core contracts or are entirely owned.
 
 ### Considered Alternatives
 
+One considered alternative was to encapsulate contract updates on a single contract basis instead of bundling staged deployments inside of `Updater`. These atomized contract updates could then be delegated to `Delegatee` and the deployment ordered offchain based on the resolved dependency graph. This sorted update ordering could then be passed to the `Delegatee` in batches, ensuring that all contracts are updated according to their dependencies.
+
+While this sounds much neater and is in essence the approach taken by top-down architectures, with more investigation, this approach is was revealed to be fragile. The thinking here is that since delegating updates cannot be compulsory, the `Delegatee` will inevitably lack full global context and control over contract updates. We cannot take a top-down approach in a system that is fundamentally bottom-up.
+
+The `Delegatee` will inevitably lack the ability to update some members of the full dependency graph. And if some of the contracts that we are tasked with updating depend on those we can't update, all the effort we put neatly resolving updates will ultimately fail. The lift for this approach is significantly higher than the proposed self-defined crowdsourcing design for ultimately the same strength guarantees.
+
 ### Performance Implications
+
+As mentioned above, we'll want to examine performance benchmarks with a focus on `Updater` construction - more generally getting udpate deployments onchain - and `Delegatee` update execution - more generally executing a large number of contract updates in a single transaction.
 
 ### Best Practices
 
 ### Examples
 
+For a working example, see [this repo and README walkthrough]((https://github.com/sisyphusSmiling/contract-updater)) demonstrating the end-to-end setup and update execution flow.
+
 ### Compatibility
 
-### User Impact
+This design is fully compatible with existing and planned featuresets. The only dependency here is the addition of `AuthAccount.contracts.tryUpdate(): DDeploymentResult` (issue found [here](https://github.com/onflow/cadence/issues/2700)) which would enable batched updates without interruption.
 
 ## Related Issues
 
