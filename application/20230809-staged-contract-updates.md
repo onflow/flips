@@ -335,11 +335,11 @@ within the `Updater` resource.
 
 #### Handling Unsuccessful Updates
 
-Another consideration is that since we intend to iterate over a large number of updates per transaction, we cannot allow
-unsuccessful update attempts to interrupt that iteration. Therefore, this mechanism provides no guarantees to the
-delegator that their updates will be completed successfully or that any stages succeeding a failed contract update will
-be avoided. The only strong guarantee to delegating parties is that the update deployment encapsulated in their
-`Updater` will be attempted at or beyond the collective block height boundary.
+Since we intend to iterate over a large number of updates per transaction, we cannot allow unsuccessful update attempts
+to interrupt that iteration. Therefore, this mechanism provides no guarantees to the delegator that their updates will
+be completed successfully or that any stages succeeding a failed contract update will be avoided. The only strong
+guarantee to delegating parties is that the update deployment encapsulated in their `Updater` will be attempted at or
+beyond the collective block height boundary.
 
 #### Examining Performance Constraints
 
@@ -357,18 +357,21 @@ three-fold:
 1. Configuring the `Updater` on initialization requires a fully sorted deployment complete with ordered stages, for
    which there is currently non-existent support. 
 1. Once configured, there is currently no way to test whether the `Updater` will execute all updates successfully.
-1. Once updates are executed, an `Updater` will want to know whether their update deployment completed successfully.
+1. Once updates are executed, an `Updater`'s owner will want to know whether their update deployment completed
+   successfully.
 
 On 1/, it would be helpful to introduce a tool that would output a suggested `Updater` deployment ordering given a set
-of Mainnet contract addresses & names as well as a tool to configure a set of local Flow project into the proper Cadence
+of Mainnet contract addresses & names as well as a tool to configure a local Flow project into the proper Cadence
 json args for easy CLI configuration.
 
-On 2/, planned emulator Stable Cadence previews along with Mainnet mirroring can fill the gaps here. Guides and best
-practices on this front should follow if this FLIP is approved and implemented.
+On 2/, planned Stable Cadence emulator previews along with local Mainnet mirroring can fill the gaps here. Mirror
+mainnet locally with the Stable Cadence preview running, configure you `Updater` based on your updated contracts, then
+simulate the update execution. Guides and best practices on this front should follow if this FLIP is approved and
+implemented.
 
 Regarding 3/, a helpful tool here would be an easy to use dashboard where the `Updater` owner can authenticate and view
 both the current status of their `Updater` resource and any related events and transaction details where their updates
-were executed. This would make it easy for developers to identify issues with their contracts or deployments and
+were executed. This would make it easy for developers to identify issues with their update deployments and
 minimize follow up time.
 
 These gaps are building opportunities beyond the scope of design presented by this FLIP, and contributions on these
@@ -390,28 +393,28 @@ deployment ordered offchain based on the resolved dependency graph. This sorted 
 the `Delegatee` in batches, ensuring that all contracts are updated according to their dependencies.
 
 While this sounds much neater and is in essence the approach taken by top-down architectures, with more investigation,
-this approach is was revealed to be fragile. The thinking here is that since delegating updates cannot be compulsory,
+this approach was revealed to be fragile. The thinking here is that since delegating updates cannot be compulsory,
 the `Delegatee` will inevitably lack full global context and control over contract updates. We cannot take a top-down
 approach in a system that is fundamentally bottom-up.
 
 The `Delegatee` will inevitably lack the ability to update some members of the full dependency graph. And if some of the
-contracts that we are tasked with updating depend on those we can't update, all the effort we put neatly resolving
-updates will ultimately fail. The lift for this approach is significantly higher than the proposed self-defined
-crowdsourcing design for ultimately the same strength guarantees.
+contracts that we are tasked with updating depend on those we can't update, all the effort we invest into neatly
+resolving updates will ultimately fail. The lift for this approach is significantly higher than the proposed
+self-defined crowdsourcing design for essentially similar strength guarantees.
 
 #### Hotswap Contracts
 
 Another alternative is to temporarily allow contract updates to take place intra-transaction by hotswapping contract
-code. Hotswapping here means updating the execution state of the updated contract within the updating transaction. This
-would allow for a bundle of contract updates to occur in a single transaction without the need to batch updates into
-stages based on depth in their dependency graph.
+code. Hotswapping here means updating the execution state of the updated contract within the updating transaction
+instead of at the end. This would allow for a bundle of contract updates to occur in a single transaction without the
+need to batch updates into stages based on depth in their dependency graph.
 
 Taking the example mentioned [previously](#context), instead of executing updates to contracts `A`, `B`, and `C` in
 discrete transactions, we would execute all three updates in a single transaction so long as the updates are
 appropriately ordered. 
 
-However, hotswapping contracts has its own security issues, and likely demands a sizeable implementation effort with
-unknown consequences presenting an undue burden for a single-use feature.
+However, hotswapping contracts comes with its own security concerns, and likely demands a sizeable implementation effort
+with unknown consequences presenting an undue burden for a single-use feature.
 
 ### Performance Implications
 
@@ -429,7 +432,7 @@ contracts or fully owned by the developer since updates are not atomized and ord
 
 ### Examples
 
-For a working example, see [this repo and README walkthrough]((https://github.com/sisyphusSmiling/contract-updater))
+For a working example, see [this repo and README walkthrough](https://github.com/sisyphusSmiling/contract-updater)
 demonstrating the end-to-end setup and update execution flow.
 
 Note that the linked prototype utilizes the currently available `update__experimental()` API, but emulates the proposed
@@ -437,8 +440,8 @@ design in the context of persistent update mechanisms via happy path (i.e. succe
 
 ### Compatibility
 
-This design is fully compatible with existing and planned featuresets. The only dependency here is the addition of
-`AuthAccount.contracts.tryUpdate(): DDeploymentResult` (issue found
+This design is fully compatible with existing and planned featuresets. The only dependency here is the addition of [the
+aforementioned](#note-on-update-api) `Contracts.tryUpdate(): DDeploymentResult` (issue found
 [here](https://github.com/onflow/cadence/issues/2700)) which would enable batched updates without interruption.
 
 ## Related Issues
@@ -454,7 +457,7 @@ This design is fully compatible with existing and planned featuresets. The only 
 
 ## Questions & Discussion Topics
 
-- What are the transaction limits and how do they affect `Updater` setup and execution of updates for large numbers of
-  accounts?
-- Are there other use cases that would benefit from this mechanism?
+- What are the transaction limits - how do they affect `Updater` setup and `Delegatee` update execution for large
+  numbers of accounts?
+- What other persistent use cases would benefit from this mechanism?
 - How many developers would delegate their contract updates if offered the service?
