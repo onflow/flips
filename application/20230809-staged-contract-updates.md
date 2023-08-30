@@ -102,10 +102,14 @@ below to view each component in more detail.*
 <summary>struct ContractUpdate</summary>
 
 ```cadence
+/// Representative of a single contract, its name, code and where it will be deployed
+///
 pub struct ContractUpdate {
     pub let address: Address
     pub let name: String
     pub let code: [UInt8]
+    pub fun toString(): String
+    pub fun stringifyCode(): String
 }
 ```
 </details>
@@ -132,7 +136,7 @@ pub resource interface UpdaterPublic {
     pub fun hasBeenUpdated(): Bool
 }
 
-/// Resource that enables delayed contract updates to a wrapped account at or beyond a specified block height
+/// Resource that enables delayed contract updates to wrapped accounts at or beyond a specified block height
 ///
 pub resource Updater : UpdaterPublic, DelegatedUpdater {
     /// Update to occur at or beyond this block height
@@ -143,7 +147,7 @@ pub resource Updater : UpdaterPublic, DelegatedUpdater {
     /// Capabilities for contract hosting accounts
     access(self) let accounts: {Address: Capability<&AuthAccount>}
     /// Updates ordered by their deployment sequence and staged by their dependency depth
-    /// NOTE: Dev should be careful to validate their dependency tree such that updates are performed from root 
+    /// NOTE: Dev should be careful to validate their dependencies such that updates are performed from root
     /// to leaf dependencies
     access(self) let deployments: [[ContractUpdate]]
     /// Current deployment stage
@@ -151,8 +155,8 @@ pub resource Updater : UpdaterPublic, DelegatedUpdater {
     /// Contracts whose update failed keyed on their deployment stage
     access(self) let failedDeployments: {Int: [String]}
 
-    /// Executes the next update stabe using Account.Contracts.update__experimental() for all contracts defined in
-    /// deployment, returning true if all stages have been attempted and false if stages remain
+    /// Executes the next update stage for all contracts defined in deployment, returning true if all stages have
+    /// been attempted and false if stages remain
     ///
     pub fun update(): Bool
 
@@ -189,8 +193,6 @@ pub resource Delegatee : DelegateePublic {
     // TODO: Block Height - All DelegatedUpdaters must be updated at or beyond this block height
     // access(self) let blockUpdateBoundary: UInt64
     /// Track all delegated updaters
-    // TODO: If we support staged updates, we'll want visibility into the number of stages and progress through all
-    //      maybe removing after stages have been complete or failed
     access(self) let delegatedUpdaters: {UInt64: Capability<&Updater{DelegatedUpdater, UpdaterPublic}>}
 
     /// Checks if the specified DelegatedUpdater Capability is contained and valid
@@ -205,9 +207,8 @@ pub resource Delegatee : DelegateePublic {
     /// Enables Updaters to remove their delegation
     ///
     pub fun removeAsUpdater(updaterCap: Capability<&Updater{DelegatedUpdater, UpdaterPublic}>)
-    /// Executes update on the specified Updater
+    /// Executes update on the specified Updater, removing the Capability once update is completed
     ///
-    // TODO: Consider removing Capabilities once we get signal that the Updater has been completed
     pub fun update(updaterIDs: [UInt64]): [UInt64]
     /// Enables admin removal of a DelegatedUpdater Capability
     ///
