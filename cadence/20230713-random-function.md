@@ -70,7 +70,7 @@ abortion scenario by non-trusted users. This limitation is inherent to any smart
 Note that post-selection is not an issue when the transaction sender is trusted.
 
 Removing the `unsafe` prefix completely would suggest to developers that the function is immune to all exploits. 
-Users may not realize that post-selection needs to be addressed using other patterns or technique without an explicit warning. 
+Users may not realize that post-selection needs to be addressed using other patterns or techniques without an explicit warning. 
 The FLIP suggests to replace the `unsafe` prefix by the `revertible` prefix. 
 `revertible` is descriptive of the remaining issue of the function, 
 and serves as a reminder to developers to read more about the function documentation and be aware of the post-selection issue.
