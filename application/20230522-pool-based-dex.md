@@ -51,7 +51,7 @@ pub resource interface ExactSwapAndReturnValue {
     /// after a swap. 
     pub let targetTokenVault: @FungibleToken.Vault
     /// It is an optional vault that holds the leftover source tokens after a swap.
-    pub var remainingSourceTokenVault: @FungibleToken.Vault?
+    pub let remainingSourceTokenVault: @FungibleToken.Vault?
 }
 
 pub resource interface ImmediateSwap {
@@ -70,7 +70,7 @@ pub resource interface ImmediateSwap {
     /// - Provided `recipient` capability should be valid otherwise the swap would fail.
     /// - If the provided path doesn’t exists then the swap would fail.
     ///
-    /// @param sourceToTargetTokenPath:   Off-chain computed path for reaching source token to target token
+    /// @param sourceToTargetTokenPath:   Off-chain computed path for swapping source token to target token
     ///                                   `sourceToTargetTokenPath[0]` should be the source token type while
     ///                                   `sourceToTargetTokenPath[sourceToTargetTokenPath.length - 1]` should be the target token
     ///                                    and all the remaining intermediaries token types would be necessary swap hops to swap the
@@ -80,7 +80,7 @@ pub resource interface ImmediateSwap {
     ///                                    then function execution would throw a error.
     /// @param expiry:                     Unix timestamp after which trade would get invalidated.
     /// @param recipient:                  A valid capability that receives target token after the completion of function execution.
-    /// @return receivedTargetTokenAmount: Amount of tokens user would received after the swap
+    /// @return receivedTargetTokenAmount: Amount of tokens the user would receive after the swap
 	pub fun swapExactSourceToTargetTokenUsingPath(
 		sourceToTargetTokenPath: [Type],
 		sourceVault: @FungibleToken.Vault,
@@ -96,26 +96,26 @@ pub resource interface ImmediateSwap {
             sourceVault.balance > 0.0 : "Swap is not permitted for zero source vault balance"
         }
         post {
-            result >= minimumTargetTokenAmount: "Minimum target token amount have not received during the swap"
+            result >= minimumTargetTokenAmount: "Minimum target token amount was not received during the swap"
         }
     }
 
 
-    /// @notice It will Swap the exact source token for to target token and          
+    /// @notice This will swap the exact source token for the target token and          
     /// return `FungibleToken.Vault`
     ///
     /// If the user wants to swap USDC to FLOW then the
     /// sourceToTargetTokenPath is [Type<USDC>, Type<FLOW>] and
     /// USDC would be the source token.
     /// 
-    /// This function would be more useful when smart contract is the function call initiator
+    /// This function would be more useful when a smart contract is the function call initiator
     /// and wants to perform some actions using the receiving amount.
     ///
     /// Necessary constraints
     /// - For the given source vault balance, Swapped target token amount should be
     ///   greater than or equal to `minimumTargetTokenAmount`, otherwise swap would fail
     /// - If the swap settlement time i.e getCurrentBlock().timestamp is less than or equal to the provided expiry then the swap would fail
-    /// - If the provided path doesn’t exists then the swap would fail.
+    /// - If the provided path doesn’t exist then the swap would fail.
     ///
     /// @param sourceToTargetTokenPath:  Off-chain computed path for reaching source token to target token
     ///                                 `sourceToTargetTokenPath[0]` should be the source token type while
@@ -125,7 +125,7 @@ pub resource interface ImmediateSwap {
     /// @param sourceVault:              Vault that holds the source token.
     /// @param minimumTargetTokenAmount: Minimum amount expected from the swap, If swapped amount is less than `minimumTargetTokenAmount`
     ///                                  then function execution would throw a error.
-    /// @param expiry:                   Unix timestamp after which trade would get invalidated.
+    /// @param expiry:                   Unix timestamp after which the trade would get invalidated.
     /// @return A valid vault that holds target token and an optional vault that may hold leftover source tokens.
 	pub fun swapExactSourceToTargetTokenUsingPathAndReturn(
 		sourceToTargetTokenPath: [Type],
@@ -143,7 +143,7 @@ pub resource interface ImmediateSwap {
         } 
     }
 
-    /// @notice It will Swap the source token for the target token while expected targetToken amount would be fixed
+    /// @notice This will Swap the source token for the target token while expected targetToken amount would be fixed
     ///
     /// If the user wants to swap USDC to FLOW then the
     /// sourceToTargetTokenPath is [Type<USDC>, Type<FLOW>] and
@@ -185,7 +185,7 @@ pub resource interface ImmediateSwap {
             sourceVault.balance > 0.0 : "Swap is not permitted for zero source vault balance"
         }
         post {
-            result == exactTargetAmount: "Unable to perform source to exact target token swap"
+            result == exactTargetAmount: "Token swap failed because the return amount did not match the specified exactTargetAmount"
         }
     }
 
@@ -227,7 +227,7 @@ pub resource interface ImmediateSwap {
             sourceVault.balance > 0.0 : "Swap is not permitted for zero source vault balance"
         }
         post {
-            result.targetTokenVault.balance == exactTargetAmount : "Unable to perform source to exact target token swap"
+            result.targetTokenVault.balance == exactTargetAmount : "Token swap failed because the return targetTokenVault balance did not match the specified exactTargetAmount"
         } 
     }
 
