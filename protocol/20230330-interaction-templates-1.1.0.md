@@ -128,6 +128,7 @@ Interaction Templates are both metadata and the Cadence for a transaction or scr
 - Human readable, internationalized messages about the interaction
 - The Cadence code to carry out the interaction
 - Information about parameters such as internationalized human readable messages and what the parameters act upon.
+- Information about the output of a script, if applicable.
 - The Interface the Interaction conforms to, if applicable.
 - Contract dependencies the Interaction engages with, pinned to a version of their dependency tree.
 
@@ -339,6 +340,188 @@ Here is an example `InteractionTemplate` for a "Transfer FLOW" transaction:
 }
 ```
 
+
+```javascript
+{
+  f_type: "InteractionTemplate", // Data Type
+  f_version: "1.1.0", // Data Type Version
+  id: "a2b2d73def...aabc5472d2", // Unique ID for the data structure.
+  data: {
+    type: "script", // "transaction" || "script"
+    messages: [
+      {
+        key: "title",
+        i18n: [ // Internationalised (BCP-47) set of human readable messages about the interaction
+          {
+            tag: "en-US",
+            translation: "Get FLOW Balane"
+          },
+          {
+            tag: "fr-FR",
+            translation: "obtenir le solde de FLOW"
+          },
+          {
+            tag: "zh-CN",
+            translation: "获取 Flow 余额"
+          }
+        ]
+      }
+    ],
+    cadence: // Cadence code this interaction executes.
+    `
+      import "FungibleToken"
+      import "FlowToken"
+
+      pub fun main(address: Address): UFix64 {
+          let vaultRef = getAccount(address)
+              .getCapability(/public/flowTokenBalance)
+              .borrow<&FlowToken.Vault{FungibleToken.Balance}>()
+              ?? panic("Could not borrow Balance reference to the Vault")
+
+          return vaultRef.balance
+      }
+    `,
+    dependencies: [
+      {
+        contracts: [
+          {
+            contract: "FlowToken",
+            networks: [
+              {
+                network: "mainnet",
+                address: "0x1654653399040a61", // Address of the account the contract is located.
+                dependency_pin_block_height: 10123123123 // Block height the pin was generated against.
+                dependency_pin: {
+                  pin: "c8cb7cc7a1c2a329de65d83455016bc3a9b53f9668c74ef555032804bac0b25b", // Unique identifier of this contract dependency and it's dependency tree.
+                  pin_self: "38d0cca4b74c4e88213df636b4cfc2eb6e86fd8b2b84579d3b9bffab3e0b1fcb", // Unique identifier of this dependency
+                  pin_contract_name: "FlowToken",
+                  pin_contract_address: "0x1654653399040a61",
+                  imports: [
+                    {
+                      pin: "b8a3ed26c222ed67016a28021d8fee5603b948533cbc992b3c90f71a61b2b312", // Unique identifier of this contract dependency and it's dependency tree.
+                      pin_self: "7bc3056ba5d39d130f45411c2c05bb549db8ce727c11a1cb821136a621be27fb",  // Unique identifier of this dependency
+                      pin_contract_name: "FungibleToken",
+                      pin_contract_address: "0xf233dcee88fe0abe",
+                      imports: []
+                    }
+                  ]
+                },
+              },
+              {
+                network: "testnet",
+                address: "0x7e60df042a9c0868",
+                dependency_pin_block_height: 10123123123, // Block height the pin was generated against.
+                dependency_pin: {
+                  pin: "c8cb7cc7a1c2a329de65d83455016bc3a9b53f9668c74ef555032804bac0b25b", // Unique identifier of this contract dependency and it's dependency tree tree.
+                  pin_self: "38d0cca4b74c4e88213df636b4cfc2eb6e86fd8b2b84579d3b9bffab3e0b1fcb", // Unique identifier of this dependency
+                  pin_contract_name: "FlowToken",
+                  pin_contract_address: "0x7e60df042a9c0868",
+                  imports: [
+                    {
+                      pin: "b8a3ed26c222ed67016a28021d8fee5603b948533cbc992b3c90f71a61b2b312", // Unique identifier of this contract dependency and it's dependency tree.
+                      pin_self: "7bc3056ba5d39d130f45411c2c05bb549db8ce727c11a1cb821136a621be27fb", // Unique identifier of this dependency
+                      pin_contract_name: "FungibleToken",
+                      pin_contract_address: "0x9a0766d93b6608b7",
+                      imports: []
+                    }
+                  ]
+                },
+              },
+            ]
+          },
+          {
+            contract: "FungibleToken",
+            networks: [{
+              network: "mainnet",
+              address: "0xf233dcee88fe0abe",
+              fq_address: "A.0xf233dcee88fe0abe.FungibleToken",
+              contract: "FungibleToken",
+              pin: "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+              pin_contract_name: "FungibleToken",
+              pin_block_height: 34166296
+            }, {
+              network: "testnet",
+              address: "0x9a0766d93b6608b7",
+              fq_address: "A.0x9a0766d93b6608b7.FungibleToken",
+              contract: "FungibleToken",
+              pin: "83c9e3d61d3b5ebf24356a9f17b5b57b12d6d56547abc73e05f820a0ae7d9cf5",
+              pin_contract_name: "FungibleToken",
+              pin_block_height: 74776482             
+            }
+          }]
+          }
+        ]
+      }
+    ],
+    parameters: [
+      {
+        label: "address",
+        index: 1,
+        type: "Address",
+        messages: [ // Set of human readable messages about the parameter
+          {
+            key: "title",
+            i18n: [ // Internationalised (BCP-47) set of human readable messages about the parameter
+              {
+                tag: "en-US",
+                translation: "To", // Messages might consume parameters.
+              },
+              {
+                tag: "fr-FR",
+                translation:  "Pour"
+              },
+              {
+                tag: "zh-CN",
+                translation: "到"
+              }
+            ]
+          },
+          {
+            key: "description",
+            i18n: [ // Internationalised (BCP-47) set of human readable messages about the parameter
+              {
+                tag: "en-US",
+                translation: "Amount of FLOW token to transfer", // Messages might consume parameters.
+              },
+              {
+                tag: "fr-FR",
+                translation:  "Le compte vers lequel transférer les jetons FLOW"
+              },
+              {
+                tag: "zh-CN",
+                translation: "将 FLOW 代币转移到的帐户"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    output: {   // only needed for scripts
+      label: "balance",
+      type: "UFix64",
+      messages: [ // optionally, only needed to give clarification to consumers
+        {
+          key: "description",
+          i18n: [ 
+            {
+              tag: "en-US",
+              translation: "Amount of FLOW token to transfer",
+            },
+            {
+              tag: "fr-FR",
+              translation:  "Le compte vers lequel transférer les jetons FLOW"
+            },
+            {
+              tag: "zh-CN",
+              translation: "将 FLOW 代币转移到的帐户"
+            }
+          ]
+        }
+        ]
+    }  
+}
+```
+
 #### `f_type & f_version`
 
 These fields declare the data structure type and data structure version. The version instructs consumers of this data structure how to operate on it. It also allows the data structure to change in future versions.
@@ -402,6 +585,10 @@ let pin = hash(import_hash) // SHA3-256 hash represented as hex string
 Internationalized, human readable messages explaining each of the cadence parameters. For each message, there can be any number of translations provided. Translations should use [BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) language tags.
 
 Parameter may correspond to a balance of a fungible or identifier of a non-fungible token. In this case, the balance or identifier the parameter corresponds to should point to its dependency identifier.
+
+#### `data.output`
+
+Like data.parameters, human readable messages explaining the result of  a script. Output property is needed for clarification for consumers and for code generators. This will provide better integration.
 
 #### Arbitrary Execution Phase
 
@@ -623,6 +810,24 @@ template-parameter-content         = [
 template-parameter-label         = Label for an parameter
 template-parameter               = [ sha3_256(template-parameter-label), [ ...template-parameter-content ]]
 
+template-output-content-message-key-content   = UTF-8 string content of the message
+template-output-content-message-key-bcp47-tag = BCP-47 language tag
+template-output-content-message-translation   = [
+  sha3_256(template-output-content-message-key-bcp47-tag),
+  sha3_256(template-output-content-message-key-content)
+]
+template-output-content-message-key           = Key for a template message (eg: "title", "description" etc)
+template-output-content-message = [
+    sha3_256(template-output-content-message-key),
+    [ ...template-output-content-message-translation ]
+]
+template-output-content         = [
+    sha3_256(template-output-content-type),
+    [ ...template-output-content-message ]
+]
+template-output-label         = Label for an output
+template-output               = [ sha3_256(template-output-label), [ ...template-output-content ]]
+
 template-f-version            = Version of the InteractionTemplate data structure being serialized.
 template-f-type               = "InteractionTemplate"
 template-type                 = "transaction" | "script"
@@ -631,6 +836,8 @@ template-messages             = [ ...template-message ] | []
 template-cadence              = Cadence content of the template
 template-dependencies         = [ ...template-dependency ] | []
 template-parameters            = [ ...template-parameter ] | []
+template-output            = [ ...template-output ] | {}
+
 
 template-encoded              = RLP([
     sha3_256(template-f-type),
@@ -640,7 +847,8 @@ template-encoded              = RLP([
     template-messages,
     sha3_256(template-cadence),
     template-dependencies,
-    template-parameters
+    template-parameters,
+    template-output
 ])
 
 template-encoded-hex          = hex( template-encoded )
@@ -1014,6 +1222,63 @@ sha3_256(MESSAGE)
                 "messages"
               ]
             }
+          ]
+        },
+        "output": {
+          "type": "object",
+          "properties": {
+            "key": {
+              "type": "string"
+            },
+            "index": {
+              "type": "integer"
+            },
+            "type": {
+              "type": "string"
+            },
+            "messages": {
+              "type": "array",
+              "items": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string"
+                    },
+                    "i18n": {
+                      "type": "array",
+                      "items": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "tag": {
+                              "type": "string",
+                            },
+                            "translation": {
+                              "patternProperties": {
+                                ".*": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "i18n"
+                  ]
+                }
+              ]
+            }
+          },
+          "required": [
+            "key",
+            "index",
+            "type",
+            "messages",
           ]
         }
       },
