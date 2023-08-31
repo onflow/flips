@@ -3,7 +3,7 @@ status: proposed
 flip: NNN (set to PR number)
 authors: Daniel Sainati (daniel.sainati@dapperlabs.com)
 sponsor: Daniel Sainati (daniel.sainati@dapperlabs.com)
-updated: 2023-08-14 
+updated: 2023-08-30 
 ---
 
 # FLIP NNN: Removal of Custom Destructors
@@ -88,6 +88,60 @@ would automatically destroy the `subResource` and `subArray` fields when it itse
 rely on any specific order for the execution of these destructors, but because nothing can happen in destructors except for destruction 
 of sub-resource, it would not be possible for the order to matter. 
 
+### Destruction Events
+
+In order to continue to support the critical use case of off-chain tracking of destroyed resources, 
+support will be added for defining a default event to be automatically emitted whenever a resource is destroyed.
+
+Resource (and resource interface) types will support the definition of a `ResourceDestroyed` event in the body of the resource definition, 
+to be automatically emitted whenever that resource is `destroy`ed. In the case of a resource interface, the `ResourceDestroyed` event 
+would be emitted whenever any resources conforming to that interface are destroyed; this behavior is equivalent to how a `destroy` defined
+in an interface would work today, if an event were emitted in its pre or post conditions. So, for example:
+
+```cadence
+resource interface I {
+    event ResourceDestroyed()
+}
+
+resource interface J {
+    event ResourceDestroyed()
+}
+
+resource R: I, J {
+    event ResourceDestroyed()
+}
+```
+
+if a value of type `@R` is destroyed, three events would be emitted: `I.ResourceDestroyed`, `J.ResourceDestroyed` and `R.ResourceDestroyed`. 
+
+`ResourceDestroyed` events will not be `emit`able normally; any `emit` statement attempting to `emit` one will fail statically. 
+This is to ensure that these events are only emitted on resource destruction. 
+
+Like other events, `ResourceDestroyed` can have fields. 
+However, as this event is emitted automatically rather than manually, the syntax for declaring specifying the values associated with these fields is different.
+Unlike a normal event, which is declared like a function declaration, a `ResourceDestroyed` event is declared like a function _invocation_. So, for example:
+
+```cadence
+resource R {
+    let foo: Int
+
+    event ResourceDestroyed(x: 3, y: self.foo)
+
+    // rest of the resource
+}
+```
+
+In this example, the `R.ResourceDestroyed` event has two fields, `x` and `y`, whose values are specified by the given arguments. 
+In this case `x`'s value is `3`, while `y`'s value is whatever `self.foo` contains at the time that `R` is destroyed. 
+Note that type annotations are not required; the types will be inferred for each field based on the provided arguments. 
+
+The possible arguments are restricted to expressions that cannot possibly abort during evaluation. 
+In particular: constant expressions (e.g. `3`, `"str"` or `true`) or field accesses on `self` (e.g. `self.foo`). 
+Function calls, arithmetic operations, and dereference expressions may abort, and thus are not permitted. 
+
+These arguments are also evaluated lazily when the resource is destroyed; i.e. any field accesses will use the values
+in those fields at time of resource destruction, rather than resource creation. 
+
 ### Drawbacks
 
 This will break a large amount of existing code, and further increase the Stable Cadence migration burden. 
@@ -140,12 +194,3 @@ Move is an example of a resource-based smart contract language that does not all
 
 * Because this proposes to remove support for `destroy` entirely, it would be possible to re-add support back later once
 we can make the method safer with respect to the trolling problem (e.g. by adding support for try-catch).
-
-* It is theoretically plausible for us to special-case support for emitting events and decrementing total supply in destructors in order to maintain 
-support for these use cases. However, there is a large amount of complexity involved, and support would be very restricted. 
-In order to guarantee that the destructor cannot abort execution, we would have to prevent any operations that might possible abort at runtime. In particular, 
-all function calls, array/dictionary accesses and numerical operations would not be permitted. As such, any events that take arguments would need to 
-likely take those arguments as literals or fields on the resource; it would not be possible to do any computation as part of the event emission other than passing arguments. 
-The total supply decrement support would be even more complex; in general subtracting two unsigned integers is not guaranteed not to abort because underflow is possible. 
-We would need to somehow be able to identify programmatically what is and is not a "total supply" variable and allow it to be decremented in some way that cannot abort.
-Is it worth the additional effort to support either of these use cases? 
