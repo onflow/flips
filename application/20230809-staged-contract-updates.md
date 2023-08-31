@@ -1,12 +1,12 @@
 ---
 status: proposed
-flip: X
+flip: [179](https://github.com/onflow/flips/pull/179)
 authors: Giovanni Sanchez (giovanni.sanchez@dapperlabs.com)
 sponsor: Giovanni Sanchez (giovanni.sanchez@dapperlabs.com)
-updated: 08-29-2023
+updated: 08-31-2023
 ---
 
-# FLIP X: Staged Contract Update Mechanism
+# FLIP 179: Staged Contract Update Mechanism
 
 ## Objective
 
@@ -279,7 +279,7 @@ alternatives.
 
 This design is heavily dependent on the existence of an alternative update API that avoids reverting in the event of a
 failed update. Without it, each update would need to be executed in discrete transactions, resulting in at least an
-order of magnitude more transaction executions to achieve the same result as this design as well as more complex signing
+order of magnitude more transaction executions to achieve the same result as this design, as well as more complex signing
 architecture to handle the requisite number of proposal keys for all those transactions.
 
 The proposed `tryUpdate()` API is its own issue (found [here](https://github.com/onflow/cadence/issues/2700)), but is
@@ -321,7 +321,7 @@ pub struct DeploymentResult {
 
 With respect to the topic of this FLIP, the `Updater` can check `DeploymentResult.success` and emit any failed updates
 within the executed stage as well as preserve the failure status within its fields. Direct follow up and intervention by
-the `Updater` owner would then be required correct the issue and manually execute the contract updates.
+the `Updater` owner would then be to correct the issue and manually execute the contract updates.
 
 ### Considerations
 
@@ -362,26 +362,26 @@ three-fold:
 
 On 1/, it would be helpful to introduce a tool that would output a suggested `Updater` deployment ordering given a set
 of Mainnet contract addresses & names as well as a tool to configure a local Flow project into the proper Cadence
-json args for easy CLI configuration.
+json arguments for easy CLI configuration.
 
-On 2/, planned Stable Cadence emulator previews along with local Mainnet mirroring can fill the gaps here. Mirror
-mainnet locally with the Stable Cadence preview running, configure you `Updater` based on your updated contracts, then
-simulate the update execution. Guides and best practices on this front should follow if this FLIP is approved and
-implemented.
+On 2/, planned Stable Cadence emulator previews along with local Mainnet mirroring can fill the gaps here. The workflow
+might look like: Mirror mainnet locally with the Stable Cadence preview running, configure your `Updater` based on your
+updated contracts, then simulate the update execution locally. Guides and best practices on this front should follow if
+this FLIP is approved and implemented.
 
 Regarding 3/, a helpful tool here would be an easy to use dashboard where the `Updater` owner can authenticate and view
 both the current status of their `Updater` resource and any related events and transaction details where their updates
 were executed. This would make it easy for developers to identify issues with their update deployments and
 minimize follow up time.
 
-These gaps are building opportunities beyond the scope of design presented by this FLIP, and contributions on these
-fronts are very welcome.
+These gaps are building opportunities beyond the scope of this design, and contributions on these fronts are very
+welcome.
 
 ### Drawbacks
 
-Since we cannot centrally initiate and organize all contract updates, developers using this should be aware that any
-updates executed using this design should ensure that their contract dependencies are either core contracts or are
-entirely owned.
+Since we cannot centrally organize, coordinate, or initiate all contract updates, developers using this should be aware
+that any updates executed using this design should ensure that their contract dependencies are either core contracts or
+are entirely owned.
 
 ### Considered Alternatives
 
@@ -392,10 +392,10 @@ deployments inside of `Updater`. These atomized contract updates could then be d
 deployment ordered offchain based on the resolved dependency graph. This sorted update ordering could then be passed to
 the `Delegatee` in batches, ensuring that all contracts are updated according to their dependencies.
 
-While this sounds much neater and is in essence the approach taken by top-down architectures, with more investigation,
-this approach was revealed to be fragile. The thinking here is that since delegating updates cannot be compulsory,
-the `Delegatee` will inevitably lack full global context and control over contract updates. We cannot take a top-down
-approach in a system that is fundamentally bottom-up.
+While this sounds much neater and is in essence the approach taken by centralized, top-down architectures, with more
+investigation, this approach was revealed to be fragile. The thinking here is that since delegating updates cannot be
+compulsory, the `Delegatee` will inevitably lack full global context and control over contract updates. We cannot take a
+top-down approach in a system that is fundamentally bottom-up.
 
 The `Delegatee` will inevitably lack the ability to update some members of the full dependency graph. And if some of the
 contracts that we are tasked with updating depend on those we can't update, all the effort we invest into neatly
@@ -414,12 +414,12 @@ discrete transactions, we would execute all three updates in a single transactio
 appropriately ordered. 
 
 However, hotswapping contracts comes with its own security concerns, and likely demands a sizeable implementation effort
-with unknown consequences presenting an undue burden for a single-use feature.
+with unknown consequences presenting an undue burden for what is potentially a single-use feature.
 
 ### Performance Implications
 
 As mentioned above, we'll want to examine performance benchmarks with a focus on `Updater` construction - more generally
-getting udpate deployments onchain - and `Delegatee` update execution - more generally executing a large number of
+saving update deployments onchain - and `Delegatee` update execution - more generally executing a large number of
 contract updates in a single transaction.
 
 ### Best Practices
@@ -441,7 +441,7 @@ design in the context of persistent update mechanisms via happy path (i.e. succe
 ### Compatibility
 
 This design is fully compatible with existing and planned featuresets. The only dependency here is the addition of [the
-aforementioned](#note-on-update-api) `Contracts.tryUpdate(): DDeploymentResult` (issue found
+aforementioned](#note-on-update-api) `Contracts.tryUpdate(): DeploymentResult` (issue found
 [here](https://github.com/onflow/cadence/issues/2700)) which would enable batched updates without interruption.
 
 ## Related Issues
