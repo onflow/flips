@@ -63,6 +63,68 @@ Transitioning to the new storage pricing structure would be a multi-phase proces
 
 Flow's core team is working towards **strengthening FLOW token economics**, and one of the ways to achieve this would be to **price FLOW’s use-cases for the value it generates** for the community vis-a-vis other networks. This proposal is meant to serve as a starting point for community discussions on how potential state scaling problem and storage-exhaustion attacks can be addressed economically with a revised storage pricing structure in the short-term. **The community is invited to share feedback on this post and participate in defining storage price changes** to help elevate Flow’s value capture and ultimately generate improved experience for developers and users on the platform.
 
+## FAQs
+
+1. **Why am I proposing this change?**
+    
+    The proposed change aims to incentivize judicious data storage, safeguard against state exhaustion, and enhance Flow's security by increasing attack costs.
+    
+2. **Why am I prioritizing fee increase among other ideas floating in the community?**
+    
+    There are many thoughts and considerations from the community members on revising various aspects of Flow’s storage framework. I believe that those must be published as FLIPs, discussed and voted upon. In view of the research and engineering costs behind some mature solutions however, I am proposing that a linear pricing based on byte-size be upheld and an increase in the price per data-unit be deliberated.
+    
+3. **If the proposal is passed, what might happen to an old account that has only 0.001 FLOW? Do accounts with low balances need additional deposits to meet the new minimum FLOW balance?**
+    
+    Yes, accounts falling below the minimum would need to make an additional deposit to meet the required balance; in this case an additional deposit of 0.099 FLOW would be required. Accounts exceeding storage limits per the revised fee structure would result in failed transactions, just like it happens right now.
+    
+4. **Can users unlock their accounts and add more FLOW?**
+    
+    Accounts below the minimum cannot perform any actions, even top-ups. Only third parties can top up such accounts. No edits, transactions, or account restoration can occur until the balance is increased. A full rollout plan will therefore be created in conjunction with developers to minimize disruptions.
+    
+5. **Can users swap USDC to FLOW on platforms like [Increment.fi](http://increment.fi/) to add FLOW to their accounts?**
+    
+    No, once again - users cannot self-top their accounts. Only third-party payers can add FLOW to accounts below the minimum.
+    
+6. **Who bears the increased costs - the user or the dApp?**
+    
+    Increased account creation costs would be borne by those paying for new accounts today, aka the dApps, exchanges, wallets, etc. Before the change goes into effect however, Flow Foundation would work with partners to determine the resources and support needed to ensure a smooth transition.
+    
+7. **How straightforward is the account replenishment process? Can dApps/wallets independently manage it?**
+    
+    The ease of the account replenishment procedure can vary among partners, based on their familiarity and background in developing on Flow. However, the Flow Foundation is dedicated to collaborating with partners to identify the necessary resources and assistance required for a seamless transition, aiming to mitigate any disruption for end users. Moreover, ample advance notice regarding this alteration will be given; it will not be an overnight switch.
+    
+8. **Could an increase in failed transactions pose a problem?**
+    
+    I am aware that this is a breaking change, and might result in specific transactions failing, particularly if dApps do not handle the process of account replenishment. However, this challenge will dissipate as dApps top-up the accounts with the required balances. Additionally, note that this challenge is not primarily linked to the alteration in storage fees, but rather pertains to an existing vulnerabilities within dApps - transactions can fail due to a variety of reasons even today, irrespective of these changes. Thus, as long as all parties exceed the minimum requirement, the occurrence of transaction failures should not increase or cause additional problems.
+    
+9. **Why am I not proposing an increase in the transaction fee first?** 
+    
+    The aim is to align storage fee changes with transaction fee adjustments, with a proposal for transaction fee alterations in the discussion stage ([FLIP link](https://forum.onflow.org/t/flip-74-revisiting-flow-transaction-fee/4497)).
+    
+10. **What happens when FLOW price goes up or down? Does this cause affordability challenges for dApps and wallets?**
+    
+    If FLOW market price changes substantially, another proposal adjustment may be initiated at that time. Based on the markets and exogenous factors, the [Tokenomics Working Group](https://github.com/onflow/twg) must continuously analyze the community’s experience and the inflection points that could make adoption challenging for folks, and accordingly propose changes.
+    
+11. **Could this change lead to greater security threats?**
+    
+    In fact, it's quite the opposite. As detailed in the FLIP document, the higher storage fees will serve as a deterrent against storage exhaustion attacks. The 100x fee would help economically deter any deliberate or inadvertent attacks, making them 100x less attractive or financially viable.
+    
+12. **What happens if projects fill random accounts with NFTs and exhaust space? Who bears the cost?**
+    
+    Transactions fail in this case, and no one pays for it.
+    
+13. **If passed, how soon will this be implemented?**
+    
+    The FLIP is actively under discussion and is anticipated to be put up for a community vote sometime around September/ October 2023. Following the voting process and approval of the community, the implementation of this change could take approximately 2-3 months.
+    
+14. **Can users completely destruct accounts and reclaim locked FLOW?**
+    
+    Today, users have the capability to erase data and unlock FLOW tokens, except that they cannot erase their account to retrieve the minimum balance. At present, with a mere 0.001 FLOW minimum balance, this seems reasonable. However, I understand that if the minimum account balance were to increase 100x (to 0.1 FLOW), having the capability to deactivate and recover funds would become more desirable and I urge the community to take up the capability to recover storage space as a separate FLIP.
+    
+15. **How will users know if they have enough balance. In other words, how can users differentiate between total balance and withdraw-able balance?**
+    
+    The “availableBalance” is often obfuscated from UI by developers but can be obtained through Cadence on Flow CLI. UI updates for Flow port and dApps would help demonstrate “availableBalance” as the primary information.
+
 ## Resources
 
 [Flow Storage Parameters](https://developers.flow.com/learn/concepts/storage#storage-parameters)
