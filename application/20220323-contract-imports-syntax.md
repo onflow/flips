@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: implemented
 flip: 892
 authors: Gregor Gololicic @sideninja gregor.gololicic@dapperlabs.com
 sponsor: Gregor Gololicic @sideninja gregor.gololicic@dapperlabs.com
