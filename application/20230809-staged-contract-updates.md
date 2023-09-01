@@ -3,7 +3,7 @@ status: proposed
 flip: [179](https://github.com/onflow/flips/pull/179)
 authors: Giovanni Sanchez (giovanni.sanchez@dapperlabs.com)
 sponsor: Giovanni Sanchez (giovanni.sanchez@dapperlabs.com)
-updated: 08-31-2023
+updated: 2023-08-31
 ---
 
 # FLIP 179: Staged Contract Update Mechanism
