@@ -37,7 +37,7 @@ The proposed design is a commit-reveal pattern.
 The solution requires infrastructure changes to provide new data to the transaction execution environment:
 
  1. a new FVM function that exposes the current block's SoR (more precisely a derived value from the protocol `SoR_A`) to Cadence runtime. Note that `unsafeRandom` only exposes randoms derived from SoR through a pseudo-random generator (PRG) but not the SoR itself. 
- 2. a new system core-contract that stores all history of SoRs indexed by block height (starting from the block height where the feature is deployed).
+ 2. a new system core-contract `RandomBeaconHistory` that stores all history of SoRs indexed by block height (starting from the block height where the feature is deployed).
  The new FVM function in (1) is only available to the history contract, and is not available to other non-system transactions. Note that system-transactions in Flow are executed at the end of each block, after all non-system transactions of the block are executed.
  The proposal suggests to change the system transaction so that it adds the current block's `SoR_A` to the SoR history contract (it also removes the oldest block's `SoR_A`).
  3. an on-chain implementation of a PRG is required. A PRG is initialized with an SoR and can generate a sequence of random numbers for an application. It's up to the application to use a suitable PRG instance. At least one recommended PRG implementation should be provided as part of the FLIP implementation (precise instance to be determined).
@@ -46,14 +46,14 @@ Once the changes above are available, a commit-reveal scheme can be implemented 
 
  - when a user submits a bidding transaction, the bid amount is transferred to the coin toss contract, and the block height where the bid was made is stored. This is a commitment by the user to use the SoR at the current block. Note that the current block's `SoR_A` isn't known to the transaction execution environment, and therefore the transaction has no way to inspect the random outcome and predict the coin toss result. The current block's `SoR_A` is only available once added to the history core-contract, which only happens at the end of the block's execution. 
  - the coin toss contract may grant the user a limited window of time (i.e a block height range) to reveal the results and claim any winnings. Failing to do so, the bid amount remains in the coin toss contract.
- - the user can submit a second transaction to call the coin toss contract and resolve the bid. The coin toss contract looks up the committed block height of the user. If the call is made within the valid window, the contract uses the block height to query the past-block's `SoR_A` on the history SoR core-contract.
+ - the user can submit a second transaction to call the coin toss contract and resolve the bid. The coin toss contract looks up the committed block height of the user. If the call is made within the valid window, the contract uses the block height to query the past-block's `SoR_A` on the core-contract `RandomBeaconHistory`.
  - the coin toss contract uses a PRG seeded by the queried `SoR_A` and diversified using a specific information to the use-case (a user ID or resource ID for instance). Diversification does not add new entropy, but it avoids generating the same outcome for different use-cases. If a diversifier (or salt) isn't used, all users that committed a bid on the same block would either win or lose.
  - The PRG is used to generate the random result and resolve the bid. Note that the user can make the transaction abort after inspecting a losing result. However, the bid amount would be lost anyway when the allocated window expires.
 
   Notes: 
  - SoR is public data that is part of the block's payload in Flow. However, block history in Flow is truncated at each Spork and consensus nodes are not required to keep the full block history. Storing the history in the execution state is a safe way to track past-Spork SoRs since the execution state lives beyond Spork boundaries and is fork-aware. Correctness of the execution state is guaranteed by the verification and sealing processes. This is the reason the proposal suggests to keep the SoR history on a core-contract.
  - With a block rate of 1/second, the minimum raw data storage (not including encoding overhead) is evaluated at 962 MB per year. This is an acceptable overhead given the current execution state size. The SoR history size remains a small percentage of the overall state size.
- - With the proposal above, there will be two ways to use randomness on-chain. One provided by Cadence's `unsafeRandom` (derived from the current block's SoR, let's call it `SoR_B`), and another provided by the SoR history core-contract (past blocks `SoR_A` via the new FVM function). It is important that the protocol uses independent SoRs (`SoR_A` and `SoR_B`), although both are derived from the unique Flow protocol distributed beacon. If `SoR_A` and `SoR_B` are equal, a user could use the Cadence function `unsafeRandom` in the commitment phase to predict the randoms that will be drawn in the future reveal transaction. The independence of SoRs is already enforced because `SoR_B` is [diversified per transaction](https://github.com/onflow/flow-go/blob/f2bc373/fvm/environment/random_generator.go#L94-L100), but extra safety diversification should be added when extracting the [execution SoRs](https://github.com/onflow/flow-go/blob/f2bc373a52912c7a936bee6e78e08246fab32add/state/protocol/prg/customizers.go#L23)(`SoR_A` and `SoR_B`).
+ - With the proposal above, there will be two ways to use randomness on-chain. One provided by Cadence's `unsafeRandom` (derived from the current block's SoR, let's call it `SoR_B`), and another provided by the `RandomBeaconHistory` core-contract (past blocks `SoR_A` via the new FVM function). It is important that the protocol uses independent SoRs (`SoR_A` and `SoR_B`), although both are derived from the unique Flow protocol distributed beacon. If `SoR_A` and `SoR_B` are equal, a user could use the Cadence function `unsafeRandom` in the commitment phase to predict the randoms that will be drawn in the future reveal transaction. The independence of SoRs is already enforced because `SoR_B` is [diversified per transaction](https://github.com/onflow/flow-go/blob/f2bc373/fvm/environment/random_generator.go#L94-L100), but extra safety diversification should be added when extracting the [execution SoRs](https://github.com/onflow/flow-go/blob/f2bc373a52912c7a936bee6e78e08246fab32add/state/protocol/prg/customizers.go#L23)(`SoR_A` and `SoR_B`).
 
 
 ### Drawbacks
@@ -70,7 +70,7 @@ Once the changes above are available, a commit-reveal scheme can be implemented 
 ### Performance Implications
 
 - There is no timing and gas impact other then the PRG is being executed on-chain.
-- The core-contract will have to store the SoR history. This is estimated to less than 1GB per year (not counting the encoding overhead).
+- The core-contract will have to store the SoR history. This is estimated to be less than 1GB per year (not counting the encoding overhead).
 
 ### Dependencies
 
@@ -85,8 +85,10 @@ The points 1, 2 and 3 in [the design proposal](#design-proposal) need to be buil
 Here is an example of a coin toss contract with one function to commit a bid, and another function to resolve the bid:
 
 ```
-import SoRHistory from "SoRHistory"
+import RandomBeaconHistory from "RandomBeaconHistory"
 import PRG from "PRG"
+// PRG implementation is not provided by the FLIP, we assume this contract
+// imports a suitable PRG implementation
 
 fun commitCointoss(bet: @FlowToken.Vault): @Receipt {
 	let receipt <- create Receipt(
@@ -121,12 +123,14 @@ fun revealCointoss(receipt: @Receipt): @FlowToken.Vault {
 }
 
 fun randomCoin(atBlock: UInt64, salt: UInt64): UInt8 {
-	// query the SoR history core-contract
-	// if `atBlock` is too far in the past, `getSoR` panics
-	let sor = SoRHistory.getSoR(atBlock)
+	// query the Random Beacon history core-contract.
+	// if `atBlock` is the current block, `SourceOfRandomnessAtBlock` errors.
+	let sor = RandomBeaconHistory.SourceOfRandomnessAtBlock(atBlock)
+
 	// instantiate a PRG object using external `createPRG` that takes a `seed` 
-	// and `salt` and returns a pseudo-random-generator object
+	// and `salt` and returns a pseudo-random-generator object.
 	let prg = PRG.createPRG(sor, salt)
+
 	// derive a 64-bit random using the object `prg`
 	let rand = prg.Uint64()
 	return UInt8(rand & 1)
