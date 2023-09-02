@@ -122,14 +122,14 @@ fun revealCointoss(receipt: @Receipt): @FlowToken.Vault {
 	return <-self.reserve.withdraw(amount: winnings)
 }
 
-fun randomCoin(atBlock: UInt64, salt: UInt64): UInt8 {
+fun randomCoin(atBlockHeight blockHeight: UInt64, salt: UInt64): UInt8 {
 	// query the Random Beacon history core-contract.
-	// if `atBlock` is the current block, `SourceOfRandomnessAtBlock` errors.
-	let sor = RandomBeaconHistory.SourceOfRandomnessAtBlock(atBlock)
+	// if `blockHeight` is the current block height, `sourceOfRandomness` errors.
+	let sourceOfRandomness = RandomBeaconHistory.sourceOfRandomness(atBlockHeight: blockHeight)
 
 	// instantiate a PRG object using external `createPRG` that takes a `seed` 
 	// and `salt` and returns a pseudo-random-generator object.
-	let prg = PRG.createPRG(sor, salt)
+	let prg = PRG.createPRG(sourceOfRandomness, salt)
 
 	// derive a 64-bit random using the object `prg`
 	let rand = prg.Uint64()
