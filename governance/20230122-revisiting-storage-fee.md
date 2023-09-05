@@ -93,9 +93,9 @@ Flow's core team is working towards **strengthening FLOW token economics**, and 
     
     The ease of the account replenishment procedure can vary among partners, based on their familiarity and background in developing on Flow. However, the Flow Foundation is dedicated to collaborating with partners to identify the necessary resources and assistance required for a seamless transition, aiming to mitigate any disruption for end users. Moreover, ample advance notice regarding this alteration will be given; it will not be an overnight switch.
     
-8. **Won't this change result in a substantial increase in the number of transactions that fail?**
+8. **Could an increase in failed transactions pose a problem?**
     
-    I am aware that this is a breaking change, and might result in specific transactions failing, particularly if dApps do not handle the process of account replenishment. However, this challenge will dissipate as dApps top-up the accounts with the required balances. Additionally, note that this challenge is not primarily linked to the alteration in storage fees, but rather pertains to an existing vulnerabilities within dApps - transactions can fail due to a variety of reasons even today, irrespective of these changes. Thus, as long as all parties meet the minimum requirement, transaction failures should not increase or cause additional problems.
+    I am aware that this is a breaking change, and might result in specific transactions failing, particularly if dApps do not handle the process of account replenishment. However, this challenge will dissipate as dApps top-up the accounts with the required balances. Additionally, note that this challenge is not primarily linked to the alteration in storage fees, but rather pertains to an existing vulnerabilities within dApps - transactions can fail due to a variety of reasons even today, irrespective of these changes. Thus, as long as all parties exceed the minimum requirement, the occurrence of transaction failures should not increase or cause additional problems.
     
 9. **Why am I not proposing an increase in the transaction fee first?** 
     
