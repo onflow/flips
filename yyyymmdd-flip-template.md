@@ -116,7 +116,8 @@ with a fuller picture.
 It's fine if there is no prior art; your ideas are interesting regardless of 
 whether or not they are based on existing work.
 
-## Questions and Discussion Topics
+## Questions and Discussion
 
-Seed this with open questions you require feedback on from the FLIP process. 
+State where you would want the community discussion to take place (choosing between the PR itself, or forum post)
+Seed with open questions you require feedback on from the FLIP process. 
 What parts of the design still need to be defined?
