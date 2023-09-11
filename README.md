@@ -97,8 +97,7 @@ will solve it. Specifically, the FLIP will:
 
 Once the FLIP is ready for review:
 
-1. Recruit a [sponsor](#flip-sponsors) from the maintainers or the active contributors of the project for which your FLIP concerns. A sponsor may help streamline the review process and moderate the discussion with the community
-
+1. Recruit a [sponsor](#flip-sponsors) from the community. A sponsor would usually be a past FLIP author or a core community member who has expertise in the topic that your FLIP concerns, and may help streamline the review process and moderate the discussion with the community.
 
 2. Create an [issue](https://github.com/onflow/flips/issues/new/choose) by using one of the FLIP issue templates based on the type of the FLIP - `application`, `governance`, `cadence` or `protocol`.
    The title of the issue should be the title of your FLIP, e.g., "Dynamic Inclusion fees".
