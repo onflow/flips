@@ -50,6 +50,23 @@ also [penalizing](https://github.com/onflow/flow-go/blob/master/insecure/integra
 Yet, a significant loophole remains: the elimination of authentication data (like signatures) by the GossipSub router during message delivery to the application layer. 
 This eradication obstructs the Flow protocol's ability to trace a message back to its original sender in cases of protocol violations that happen at a level above the GossipSub layer.
 
+## Message Structure in Flow
+At broad level, the Flow-protocol engines send and receive events as `interface{}` types to each other through their `Conduit` interface of the networking layer. Upon receiving 
+an event, the networking layer performs two rounds of encoding before sending it over the wire. 
+- First, the event is [encoded using the CBOR encoding scheme to bytes, which becomes the payload of an internal `messages.Message` protobuf type](https://github.com/onflow/flow-go/blob/master/network/message/message_scope.go#L178-L200).
+- Second, for the unicast cases, the `messages.Message` protobuf type is encoded directly to bytes, and is [written over streams](https://github.com/onflow/flow-go/blob/master/network/p2p/p2pnet/network.go#L650) to the remote node. For the pubsub cases, 
+the `message.Message` protobuf type is [wrapped](https://github.com/onflow/flow-go/blob/master/network/p2p/p2pnode/libp2pNode.go#L422-L438) in a GossipSub envelope `pb.Message` type (internally by the GossipSub), and is gossiped within the network.
+
+Hence, on the receiving path, the networking layer performs two rounds of decoding before delivering the event to the Flow-protocol engines. 
+- For the unicast cases, the networking layer reads the bytes from the stream, and decodes the `messages.Message` protobuf type from the bytes. Then, the `messages.Message.Payload`
+is decoded to an `interface{}` type event using CBOR, and is delivered to the Flow-protocol engines.
+- For the pubsub cases, the networking layer receives the `pb.Message` type from GossipSub, and decodes the `messages.Message` protobuf type from the `pb.Message.Data` bytes. 
+Then, the `messages.Message.Payload` is decoded to an `interface{}` type event using CBOR, and is delivered to the Flow-protocol engines.
+
+In the rest of this FLIP, we refer to `pb.Message` as the GossipSub envelop, and to the `message.Message` as the Flow message. Hence, in a nutshell:
+- For the unicast case, the event is wrapped in a Flow message type.
+- For the pubsub case, the event is wrapped in a Flow message type, which is then wrapped in a GossipSub envelope type.
+- The GossipSub envelop contains the signature of the sender over the entire envelope. The signature is generated using the networking key of the sender by the GossipSub router.
 
 ## Proposal-1: GossipSub Message Forensic (GMF)
 As the first option to (partially) mitigate the gap in the network to hold the malicious senders accountable,
@@ -58,32 +75,39 @@ Flow protocol engines. The principal aim is to enhance message authenticity veri
 focusing on origin identification and event association. Here, we elucidate the method, its interface, and delve into the operational specifics, 
 weighing its pros and cons against potential alternatives.
 In this proposal, we propose a mechanism to share the GossipSub authentication data with the Flow protocol. We call this mechanism
-GossipSub Message Forensic (GMF). The idea is to add a new interface method to the [`EngineRegistry` interface](https://github.com/onflow/flow-go/blob/master/network/network.go#L37-L56). 
+GossipSub Message Forensic (GMF). 
+
+At the current state of the code, the networking layer receives the [raw GossipSub envelop](https://github.com/onflow/flow-go/blob/master/network/p2p/p2pnet/internal/readSubscription.go#L48) from its underlying pubsub router,
+validates it, and passes the incorporated Flow message to for further decoding. The Flow message is then decoded to an `interface{}` type event,
+and is delivered to the Flow protocol engines. The idea is to pass along the GossipSub envelop to the Flow protocol engines together with their `interface{}` type event.
+In this way, the Flow protocol engines can have access to the GossipSub authentication data. The rough idea is depicted in the following figure. 
+Note that it is not a production-ready code, we need to architect the solution in an Object Oriented Manner with proper abstraction and encapsulation of the interface. In this figure,
+we intentionally pass along the envelope together with the event for sake of simplicity. In the actual implementation, we need to abstract the envelope and event in a single object 
+and pass it to the Flow protocol engines. We have to also account for the unicast case that does not have a GossipSub envelop.
+```go
+```go
+// MessageProcessor represents a component which receives messages from the
+// networking layer. Since these messages come from other nodes, which may
+// be Byzantine, implementations must expect and handle arbitrary message inputs
+// (including invalid message types, malformed messages, etc.). Because of this,
+// node-internal messages should NEVER be submitted to a component using Process.
+type MessageProcessor interface {
+    // Process is exposed by engines to accept messages from the networking layer.
+    // Implementations of Process should be non-blocking. In general, Process should
+    // only queue the message internally by the engine for later async processing.
+    Process(channel channels.Channel, originID flow.Identifier, event interface{}, envelope *pb.Message) error
+}
+```
+
+In order to enable the engines with verification capabilities of the envelope signature in this proposal, we add new interface methods to the [`EngineRegistry` interface](https://github.com/onflow/flow-go/blob/master/network/network.go#L37-L56).
 The `EngineRegistry` was previously known as the `Network` interface, and is exposed to individual Flow protocol engines who are interested in receiving the
 messages from the networking layer including the GossipSub protocol. In this approach, the `EngineRegistry` interface is extended
-by two new methods: `GetGossipSubMessageForEvent` and `VerifyGossipSubMessage`. The `GetGossipSubMessageForEvent` method takes an origin 
-identifier as well as an event as input, and returns the GossipSub envelope of the message that is associated with the event and 
-is sent by the origin identifier.
-The `VerifyGossipSubMessage` method takes a origin identifier as well as a GossipSub message as input, and verifies the signature of
-the message against the networking public key of the origin id. 
-The method returns true if the signature is valid, and false otherwise. 
-The event is the scrapped message that is delivered to the application layer by the GossipSub router. The GossipSub envelope
-contains the signature of the message, as well as all the other GossipSub metadata that is needed to verify the signature. 
+by two new methods: `VerifyGossipSubMessage`. The `VerifyGossipSubMessage` method takes an origin identifier, an event `interface{} type`,
+as well as the GossipSub message as input, and verifies the signature of the message against the networking public key of the origin id. 
+The method returns true if the signature is valid, and false otherwise.
 ```go
 
 type EngineRegistry interface {
-	// GetGossipSubMessageForEvent takes a Flow identifier as well as an event as input, and returns the GossipSub envelope of the
-	// message that is associated with the event and is sent by the origin identifier. The event is the scrapped message that is delivered to the application layer by
-	// the GossipSub router. The GossipSub envelope contains the signature of the message, as well as all the other GossipSub metadata
-	// that is needed to verify the signature.
-	// Args:
-	//   - originId: The Flow identifier of the node that originally sent the message.
-	//  - event: The scrapped message that is delivered to the application layer by the GossipSub router.
-	// Returns:
-	//  - message: The GossipSub envelope of the message that is associated with the event.
-	//  - error: An error if the message is not found.
-	GetGossipSubMessageForEvent(originId flow.Identifier, event interface{}) (*pb.Message, error)
-
 	// VerifyGossipSubMessage takes a Flow identifier as well as a GossipSub message as input, and verifies the signature of the
 	// message. The method returns true if the signature is valid, and false otherwise.
 	// Args:
@@ -92,7 +116,7 @@ type EngineRegistry interface {
 	// Returns:
 	//  - bool: True if the signature is valid, and false otherwise.
 	//  - error: An error if the message is not found.
-	VerifyGossipSubMessage(originId flow.Identifier, message *pb.Message) (bool, error)
+	VerifyGossipSubMessage(originId flow.Identifier, event interface{}, message *pb.Message) (bool, error)
 
 	// Other methods are omitted for brevity
 	// ...
@@ -100,11 +124,9 @@ type EngineRegistry interface {
 ```
 
 ### Implementation Complexities
-- This proposal requires the `LibP2PNode` implementation extract the individual [envelopes (i.e., `*pb.Message`)](https://github.com/libp2p/go-libp2p-pubsub/blob/master/pb/rpc.pb.go#L143-L153) from the incoming GossipSub RPCs. 
-  This is done using the [RPC inspector](https://github.com/libp2p/go-libp2p-pubsub/blob/master/pubsub.go#L1031-L1037) dependency injection. We need to implement a new inspector that extract the envelopes in a non-blocking approach. 
-  We should not block an incoming RPC to extract its messages, as it is interfering with the GossipSub router operation and can harm the message delivery rate of the router. 
-- The extracted envelopes are then required to stored persistently by their event id in a forensic component with proper ejection mechanism, 
-  which is exposed to the `GetGossipSubMessageForEvent` to query the envelope corresponding to a `(event, originId)` pair. 
+- This proposal requires refactoring the message processing pipeline of the networking layer to pass along the GossipSub envelop together with the event to the Flow protocol engines. We need to
+  also refactor the `Engine`'s `Process` method in a way that it can accept the GossipSub envelop together with the event. The implementation should account for proper encapsulation and abstraction of the interface, 
+  to also support the unicast case that does not have a GossipSub envelop.
 - This solution also requires replicating the signature verification logic of the GossipSub in `VerifyGossipSubMessage` so that it is accessible to the engines. 
   We need to extend the signature verification mechanism to account for translation of `originId` from `flow.Identifier` to networking key and `peer.ID` (i.e., LibP2P level identifier).
   As the engines are operating based on the `flow.Identifier`, while the GossipSub signatures are generated using the Networking Key of the node.
@@ -113,34 +135,21 @@ type EngineRegistry interface {
 1. The GossipSub authentication data is shared with the Flow protocol, providing attribution for `Multicast` and `Publish` messages.
 2. The interface is easy to use for the engines, as it abstracts the complexity of translating the origin Flow identifier to the GossipSub peer id, and
    verifying the signature of the message against the networking public key of the origin id.
-3. The implementation is not a breaking change and is backward compatible with the current state of the Flow protocol.
+3. The implementation is **not a breaking change** and is backward compatible with the current state of the Flow protocol.
 
 ### Disadvantages
-1. The GossipSub envelope is extractable through an RPC inspector dependency injection, which must be non-blocking and fast (a principle condition
-   imposed by GossipSub). This means that the GossipSub envelope extraction must be done in a separate goroutine _asynchronously_ to the message delivery to the
-   application layer. This entails that there can be a glitch between the message delivery to the application layer and the GossipSub envelope extraction. The potential glitch
-   means that the GossipSub envelope may not be available at the time of the message delivery to the application layer. Accounting for the glitch implies higher complexity in
-   the implementation of the Flow protocol engines (e.g., timeout queries, etc.). Moreover, the glitch may be exploited by the malicious nodes to perform timing
-   attacks on the Flow protocol engines and get away from detection. If an attacker can time the message delivery to the application layer in a way that the 
-   GossipSub envelope is not available at the time of the message delivery, then the attacker can send an invalid message and get away from detection, as when
-   there is no GossipSub envelope available, the Flow protocol engines cannot have forensic evidence to attribute the protocol-level violation to the malicious
-   sender.
-2. Maintaining the GossipSub envelopes poses several challenges:
-   - There must be an eviction policy to remove the GossipSub envelopes from the memory (or disk) after a certain period of time. Lack of an eviction policy may
-     lead to memory (or disk) exhaustion attacks.
-   - Existence of eviction policy may lead to data loss, as the GossipSub envelope may be evicted from the memory (or disk) before the Flow protocol engines
-     can use it to attribute a protocol-level violation to the malicious sender.
-   - Existence of eviction policy may also lead to attacks; if an attacker can time the message delivery to the application layer in a way that the GossipSub
-     envelope is evicted from the memory (or disk) before the Flow protocol engines can use it to attribute a protocol-level violation to the malicious sender,
-     then the attacker can send an invalid message and get away from attribution, as when there is no GossipSub envelope available, the Flow protocol engines cannot
-     have forensic evidence to attribute the protocol-level violation to the malicious sender.
-   - On a happy path when all nodes are honest, the GossipSub envelopes are not needed, and extracting and maintaining them poses a performance overhead.
-3. To construct the GossipSub-level signature on an event, this solution requires maintaining the entire [GossipSub message (i.e., envelope)](https://github.com/libp2p/go-libp2p-pubsub/blob/master/pb/rpc.pb.go#L143-L153) which is more than the event itself. 
-   This is because the GossipSub-level signature is generated on the entire message (i.e., envelope) and not just the event. Hence, this solution requires more memory and disk space.
-4. This solution requires replicating the signature verification logic of the GossipSub router at the engine level (i.e., `VerifyGossipSubMessage`). Changes to the GossipSub signature 
+1. This solution does not cover the unicast messages, as they are not sent through the GossipSub protocol.
+2. To construct the GossipSub-level signature on an event, this solution requires maintaining the entire [GossipSub message (i.e., envelope)](https://github.com/libp2p/go-libp2p-pubsub/blob/master/pb/rpc.pb.go#L143-L153) which is more than the event itself. 
+   This is because the GossipSub-level signature is generated on the entire message (i.e., envelope) and not just the event. Hence, this solution requires more memory footprint.
+3. This solution requires replicating the signature verification logic of the GossipSub router at the engine level (i.e., `VerifyGossipSubMessage`). Changes to the GossipSub signature 
     verification procedure may pose as breaking changes and be a blocker for upgrading and keeping up with GossipSub upgrades.
-5. The Flow node may receive the same message from multiple senders, and this solution requires all those message envelopes to be stored for forensic purposes. 
-6. This solution does not cover the unicast messages, as they are not sent through the GossipSub protocol.
+4. Verification logic is not trivial:
+   - The first step is to ensure the event is wrapped in a GossipSub envelope. If not, the verification fails; for this, we need to replicate the entire encoding path down to the GossipSub level
+      as wrapping the Flow message in the GossipSub envelope is done internally at the GossipSub and is not exposed to the Flow codebase. The replication may also cause another layer of coupling 
+      that causes breaking changes in the future upgrades of GossipSub.
+   - The second step is to verify the signature of the GossipSub envelope against the networking public key of the origin id. This requires translating the origin id from `flow.Identifier` 
+      to networking key and `peer.ID` (i.e., LibP2P level identifier), and replicating the signature verification logic of the GossipSub router, which is another layer of coupling that 
+      causes breaking changes in the future upgrades of GossipSub.
 
 ## Proposal-2: Enforced Flow-level Signing Policy For All Messages
 In this proposal, we introduce the policy to enforce a Flow-level signature for all messages using the staking key of the node. 
@@ -205,19 +214,18 @@ Hence, the engine can attribute a protocol-level violation to the malicious send
 
 ### Advantages
 1. This solution enables Flow protocol with attribution of a protocol-level violation to the malicious sender that originally sent the message.
-2. The implementation is simple; contrary to the GMF proposal, there is no need to extract and maintain the GossipSub envelopes, no extra asynchronous processing, storage, and memory management is needed.
-3. The signature and event are encapsulated together and are passed to the engine as a single `Envelope` object. Hence, the engine does not need to worry about the signature and event
-   being out of sync. The lifecycle of the signature and event are managed by the engine itself as an atomic entity, than dividing the responsibility between the engine and the networking layer.
-4. This solution not only covers the GossipSub messages, but also covers all the messages that are sent through the `Conduit` interface. Hence, it is a more general solution
+2. The implementation is simple; contrary to the GMF proposal, there is no need to maintain and pass-along the GossipSub envelopes and no extra memory footprint.
+3. This solution not only covers the GossipSub messages, but also covers all the messages that are sent through the `Conduit` interface. Hence, it is a more general solution
    that can be used to attribute a protocol-level violation to the malicious sender that originally sent the message, regardless of the protocol that is used to send the message.
    For example, the current state of codebase does not enforce signature policy for the `ChunkDataPack` responses that Execution Nodes send to the Verification Nodes over unicast. Hence,
    a verification node does not have any forensic evidence to attribute a protocol-level violation to the malicious Execution Node that originally sent the message.
-5. The entire authentication data is at the Flow protocol level (i.e., Staking Key) and is not dependent on the GossipSub protocol. Hence, the Flow protocol can attribute a
+4. The entire authentication data is at the Flow protocol level (i.e., Staking Key) and is not dependent on the GossipSub protocol. Hence, the Flow protocol can attribute a
    protocol-level violation to the malicious sender that originally sent the message, regardless of the protocol that is used to send the message, i.e., GossipSub in this case.
-6. `Envelope`-based message representation provides nested authentication, i.e., an envelope generated by sender A can be wrapped as an authenticated evidence by sender B, and so on.
+6. `Envelope`-based message representation provides nested authentication, i.e., an envelope generated by sender A can be wrapped as an authenticated evidence by sender B, and so on, with
+   minimum overhead. This is a powerful feature that can be leveraged to build a robust forensic system.
 
 ### Disadvantages
-1. The implementation is a breaking change and is not backward compatible with the current state of the Flow protocol. We change the `Conduit` interface, which is used by
+1. The implementation is a **breaking change** and is not backward compatible with the current state of the Flow protocol. We change the `Conduit` interface, which is used by
    all the Flow protocol engines to send messages to the networking layer. Hence, all the Flow protocol engines must be refactored to sign the messages that are sent through
    the `Conduit` interface. 
 2. This approach adds a computation overhead to the Flow protocol engines, as the engines must sign all the messages that are sent through the `Conduit` interface, and on the receiving side, the 
