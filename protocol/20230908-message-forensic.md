@@ -142,8 +142,8 @@ type EngineRegistry interface {
    This is because the GossipSub-level signature is generated on the entire message (i.e., envelope) and not just the event. Hence, this solution requires more memory footprint.
 3. This solution requires replicating the signature verification logic of the GossipSub router at the engine level (i.e., `VerifyGossipSubMessage`). Changes to the GossipSub signature 
     verification procedure may pose as breaking changes and be a blocker for upgrading and keeping up with GossipSub upgrades.
-4. Verification logic is not trivial:
-   - The first step is to ensure the event is wrapped in a GossipSub envelope. If not, the verification fails; for this, we need to replicate the entire encoding path down to the GossipSub level
+4. Verification logic is not straightforward, as it requires at least two steps:
+   - The first step is to ensure the event is wrapped in a GossipSub envelope. If not, the verification fails. For this we need to replicate the entire encoding path down to the GossipSub level
       as wrapping the Flow message in the GossipSub envelope is done internally at the GossipSub and is not exposed to the Flow codebase. The replication may also cause another layer of coupling 
       that causes breaking changes in the future upgrades of GossipSub.
    - The second step is to verify the signature of the GossipSub envelope against the networking public key of the origin id. This requires translating the origin id from `flow.Identifier` 
