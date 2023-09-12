@@ -1,9 +1,9 @@
 ---
-status: proposed
+status: accepted
 flip: 120
 authors: Tarak Ben Youssef (tarak.benyoussef@dapperlabs.com)
 sponsor: 
-updated: 2023-07-13
+updated: 2023-08-22
 ---
 
 # FLIP 120: Update unsafeRandom function
