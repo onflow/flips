@@ -85,7 +85,6 @@ Note that it is not a production-ready code, we need to architect the solution i
 we intentionally pass along the envelope together with the event for sake of simplicity. In the actual implementation, we need to abstract the envelope and event in a single object 
 and pass it to the Flow protocol engines. We have to also account for the unicast case that does not have a GossipSub envelop.
 ```go
-```go
 // MessageProcessor represents a component which receives messages from the
 // networking layer. Since these messages come from other nodes, which may
 // be Byzantine, implementations must expect and handle arbitrary message inputs
