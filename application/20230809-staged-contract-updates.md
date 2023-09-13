@@ -23,7 +23,7 @@ to make this migration as quick and seamless as possible, primarily motivated by
 user-perceived downtime. With this in mind, it's in the interest of everyone to provide helpful and reliable tools to
 empower and support developers in upgrading their contracts.
 
-Surely, some developers will prefer to manually excecute updates themselves. However, others may find it useful and
+Surely, some developers will prefer to manually execute updates themselves. However, others may find it useful and
 even preferable to both codify their updated deployment using onchain constructs and additionally delegate update
 execution to an automated service run by Flow as a part of the ecosystem-wide post-spork migration.
 
