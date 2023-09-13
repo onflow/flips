@@ -9,7 +9,11 @@ updated: 2023-09-13
 
 ## Objective
 
-With current controller capabilities, it is possible to re-publish someone else's public capability; as this shift in behavior can cause problems, this FLIP strives to address this issue with minimal disruption.
+With the new controller-based capability API, introduced in [FLIP 798](https://github.com/onflow/flips/blob/main/cadence/20220203-capability-controllers.md), it is possible to re-publish someone else's capability (with `Account.capabilities.publish`).
+
+This was not possible in the previous/currently available linking-based capability API, the function `AuthAccount.link` does not allow targeting another account.
+
+As this shift in behavior can cause problems, this FLIP strives to address this issue with minimal disruption.
 
 ## Motivation
 
