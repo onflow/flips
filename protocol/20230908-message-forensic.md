@@ -66,7 +66,7 @@ Then, the `messages.Message.Payload` is decoded to an `interface{}` type event u
 In the rest of this FLIP, we refer to `pb.Message` as the GossipSub envelop, and to the `message.Message` as the Flow message. Hence, in a nutshell:
 - For the unicast case, the event is wrapped in a Flow message type.
 - For the pubsub case, the event is wrapped in a Flow message type, which is then wrapped in a GossipSub envelope type.
-- The GossipSub envelop contains the signature of the sender over the entire envelope. The signature is generated using the networking key of the sender by the GossipSub router.
+- The GossipSub envelope contains the signature of the sender over the entire envelope. The signature is generated using the networking key of the sender by the GossipSub router.
 
 ## Proposal-1: GossipSub Message Forensic (GMF)
 As the first option to (partially) mitigate the gap in the network to hold the malicious senders accountable,
