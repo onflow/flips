@@ -10,18 +10,18 @@
 ## Summary
 This FLIP discusses and compares two potential solutions for the Message Forensic (MF) system in the Flow protocol 
 — a system that enables Flow protocol to attribute protocol violations to the original malicious sender. 
-The two solutions under consideration are: (1) GossipSub Message Forensic (GMF), and (2) Enforced Flow-level Signing Policy For All Messages. 
+The two solutions under consideration are: (1) GossipSub Message Forensic (GMF), and (2) Flow-level Signing Policy (FSP) For All Messages. 
 We delve into both, listing their pros and cons, to determine which would be more feasible given the considerations of ease of implementation, 
 performance efficiency, and security guarantees.
 
-Our analysis finds the "Enforced Flow-level Signing Policy For All Messages" to be the more promising option, 
+Our analysis finds the "Flow-level Signing Policy (FSP)" to be the more promising option, 
 offering a generalized solution that doesn’t hinge on a specific external protocol to send the message (e.g., GossipSub),
 steering clear of the complexities tied to maintaining GossipSub envelopes and dodging the necessity of duplicating GossipSub 
 router’s signature verification procedure at the engine level. Furthermore, it meshes well with the Flow protocol’s existing state.
 
 ## Review Guide
-This FLIP is presented as a Pull Request (PR) in the `flow-go` repository. We welcome reviewers to express their opinions and share feedback directly on the PR page, aiming for a structured and productive discussion. To aid this, please adhere to one of the following response frameworks:
-1. I favor the "Enforced Flow-level Signing Policy For All Messages" and here are my thoughts:
+This FLIP is presented as a Pull Request (PR) in the `onflow/flips` repository. We welcome reviewers to express their opinions and share feedback directly on the PR page, aiming for a structured and productive discussion. To aid this, please adhere to one of the following response frameworks:
+1. I favor the "Flow-level Signing Policy (FSP)" and here are my thoughts:
 2. I support the "GossipSub Message Forensic (GMF)" approach, articulating my views as follows.
 3. I find both propositions unsatisfactory, elucidating my stance with.
 
@@ -150,7 +150,7 @@ type EngineRegistry interface {
       to networking key and `peer.ID` (i.e., LibP2P level identifier), and replicating the signature verification logic of the GossipSub router, which is another layer of coupling that 
       causes breaking changes in the future upgrades of GossipSub.
 
-## Proposal-2: Flow-level Signing (FLS)
+## Proposal-2: Flow-level Signing Policy (FSP)
 In this proposal, we introduce the policy to enforce a Flow-level signature for all messages using the staking key of the node. 
 The idea is to refactor the [`Conduit` interface](https://github.com/onflow/flow-go/blob/master/network/conduit.go#L26-L57), so that instead of taking an `interface{}` type event, it takes an `Envelope` type event. 
 The `Envelope` type event is a wrapper around the `interface{}` type event, and contains
