@@ -28,7 +28,8 @@ Developers will likely forget to still `get` and check the address of the capabi
 
 ## User Benefit
 
-This proposal aims to add certain restrictions in order to decrease developer burden.
+This proposal aims to add a restriction, in order to decrease developer burden and decrease the risk of bugs and security issues. 
+The restriction already exists in the currently available linking-based capability API, so this proposal simply proposes to keep the existing restriction, and prevent a regression in the API in terms of safety and usability.
 
 ## Design Proposal
 
