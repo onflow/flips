@@ -1,6 +1,6 @@
 | Status        | Proposed                                            |
 :-------------- |:----------------------------------------------------|
-| **FLIP #**    | [4697](https://github.com/onflow/flow-go/pull/4697) |
+| **FLIP #**    | [195](https://github.com/onflow/flips/pull/195) |
 | **Author(s)** | Yahya Hassanzadeh (yahya@dapperlabs.com)            |
 | **Sponsor**   | Yahya Hassanzadeh (yahya@dapperlabs.com)            |
 | **Updated**   | 8 September 2023                                    |
