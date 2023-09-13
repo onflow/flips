@@ -21,7 +21,10 @@ Before the introduction of the new controller-based capabilities API, public cap
 
 A lot of scenarios, such as voting and gating using the proof of Non-Fungible Token (NFT) ownership, usually involve checking if an account owns a certain balance or resource by verifying the public path capability. Now, the responsibility of protection falls on the developers, which is an extra burden and holds the potential of introducing bugs and security issues.
 
-The current suggested method of defence against this issue is always checking for the `address` of the capability or the `owner` of the resource after borrowing. Unfortunately, this is an error-prone approach that developers can easily forget.
+The current suggested method of defence against this issue is always checking for the `address` of the capability or the `owner` of the resource after borrowing. 
+Unfortunately, this is an error-prone approach that developers can easily forget.
+In addition, the new `capabilities.borrow` convenience function gets the capability and borrows it in one call.
+Developers will likely forget to still `get` and check the address of the capability, when needed. 
 
 ## User Benefit
 
