@@ -266,7 +266,7 @@ This retention is especially critical when introducing data structures to new no
 the internal signature by the creator facilitates the verification process, allowing the new node to establish trust in the data structure.
 On the other hand, the envelope-level signature characterizes the node wrapping the data structure, diverging from the creator’s signature found in the data structure itself.
 This approach substantially enhances forensic capabilities. Taking the instance of a scenario where a sender manipulates an execution receipt, compromising its integrity, 
-the system is designed to not just detect the violation via the executor's internal signature but to robustly attribute the breach to the malicious sender ensuring non-repudiation. 
+the system is designed to not just detect the violation via the executor's internal signature but to robustly attribute the breach to the malicious sender (via `Envelope` validation) ensuring non-repudiation.
 This process, backed by irrefutable forensic evidence, strengthens the transparency and accountability to external parties.
 
 To fortify security and streamline verification processes, the proposal at hand suggests a reevaluation of the existing signature protocols.
