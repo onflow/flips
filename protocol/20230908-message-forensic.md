@@ -83,7 +83,7 @@ and is delivered to the Flow protocol engines. The idea is to pass along the Gos
 In this way, the Flow protocol engines can have access to the GossipSub authentication data. The rough idea is depicted in the following figure. 
 Note that it is not a production-ready code, we need to architect the solution in an Object Oriented Manner with proper abstraction and encapsulation of the interface. In this figure,
 we intentionally pass along the envelope together with the event for sake of simplicity. In the actual implementation, we need to abstract the envelope and event in a single object 
-and pass it to the Flow protocol engines. We have to also account for the unicast case that does not have a GossipSub envelop.
+and pass it to the Flow protocol engines. We have to also account for the unicast case that does not have a GossipSub envelope.
 ```go
 // MessageProcessor represents a component which receives messages from the
 // networking layer. Since these messages come from other nodes, which may
