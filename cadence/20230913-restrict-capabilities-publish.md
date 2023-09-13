@@ -37,7 +37,7 @@ I don't think there will be any performance implications.
 
 ### Engineering Impact
 
-There is already a Draft PR implementation (https://github.com/onflow/cadence/pull/2782) 
+There is already a Draft PR implementation by Bastian (https://github.com/onflow/cadence/pull/2782) 
 
 ### Compatibility
 
