@@ -107,7 +107,7 @@ below to view each component in more detail.*
 pub struct ContractUpdate {
     pub let address: Address
     pub let name: String
-    pub let code: [UInt8]
+    pub let code: String
     pub fun toString(): String
     pub fun stringifyCode(): String
 }
