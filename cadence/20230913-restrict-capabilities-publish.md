@@ -19,7 +19,7 @@ As this shift in behavior can cause problems, this FLIP strives to address this 
 
 Before the introduction of the new controller-based capabilities API, public capabilities were guaranteed to point to storage at the same address. However, with the introduction of the API, it is now possible to obtain another account's public capability and republish it as one's own, while still maintaining the link to the other account's storage. 
 
-A lot of scenarios such as voting and gating using the proof of Non-Fungible Token (NFT) ownership, usually involve checking if an account owns a certain balance or resource by verifying the public path capability. Now, the responsibility of protection falls on the developers, which is an extra burden and holds the potential of introducing errors.
+A lot of scenarios, such as voting and gating using the proof of Non-Fungible Token (NFT) ownership, usually involve checking if an account owns a certain balance or resource by verifying the public path capability. Now, the responsibility of protection falls on the developers, which is an extra burden and holds the potential of introducing bugs and security issues.
 
 The current suggested method of defence against this issue is always checking for the `address` of the capability or the `owner` of the resource after borrowing. Unfortunately, this is an error-prone approach that developers can easily forget.
 
