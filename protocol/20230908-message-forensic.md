@@ -39,7 +39,7 @@ on which the message is received. Albeit, the situation differs when the unicast
 sender or other attribution data (e.g., the signature of the original sender in case of a forwarded unicast).
 In such cases, the message is attributed to the sender that is specified in the attribution data. Nevertheless, the current state of
 Flow protocol does not enforce the attribution data to be present in the unicast messages. 
-A prime example is the [`ChunkDataResponse` messages](https://github.com/onflow/flow-go/blob/master/engine/execution/provider/engine.go#L326-L337) sent by the Execution Nodes to the Verification Nodes over a unicast. 
+A prime example is the [`ChunkDataResponse` messages](https://github.com/onflow/flow-go/blob/a85341d949c8a4e42e3d1d62bcf6fbf3d7f76bd9/engine/execution/provider/engine.go#L326-L337) sent by the Execution Nodes to the Verification Nodes over a unicast. 
 Hence a node in Flow protocol cannot prove that a received unicast message is sent by a specific node, unless the message carries the explicit attribution data.
 
 ### Group and All-Node (Multicast and Publish) Message Attribution
