@@ -123,7 +123,7 @@ type EngineRegistry interface {
 ```
 
 ### Implementation Complexities
-- This proposal requires refactoring the message processing pipeline of the networking layer to pass along the GossipSub envelop together with the event to the Flow protocol engines. We need to
+- This proposal requires refactoring the message processing pipeline of the networking layer to pass along the GossipSub envelope together with the event to the Flow protocol engines. We need to
   also refactor the `Engine`'s `Process` method in a way that it can accept the GossipSub envelop together with the event. The implementation should account for proper encapsulation and abstraction of the interface, 
   to also support the unicast case that does not have a GossipSub envelop.
 - This solution also requires replicating the signature verification logic of the GossipSub in `VerifyGossipSubMessage` so that it is accessible to the engines. 
