@@ -150,7 +150,7 @@ type EngineRegistry interface {
       to networking key and `peer.ID` (i.e., LibP2P level identifier), and replicating the signature verification logic of the GossipSub router, which is another layer of coupling that 
       causes breaking changes in the future upgrades of GossipSub.
 
-## Proposal-2: Enforced Flow-level Signing Policy For All Messages
+## Proposal-2: Flow-level Signing (FLS)
 In this proposal, we introduce the policy to enforce a Flow-level signature for all messages using the staking key of the node. 
 The idea is to refactor the [`Conduit` interface](https://github.com/onflow/flow-go/blob/master/network/conduit.go#L26-L57), so that instead of taking an `interface{}` type event, it takes an `Envelope` type event. 
 The `Envelope` type event is a wrapper around the `interface{}` type event, and contains
