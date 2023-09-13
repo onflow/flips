@@ -101,7 +101,7 @@ type MessageProcessor interface {
 In order to enable the engines with verification capabilities of the envelope signature in this proposal, we add new interface methods to the [`EngineRegistry` interface](https://github.com/onflow/flow-go/blob/master/network/network.go#L37-L56).
 The `EngineRegistry` was previously known as the `Network` interface, and is exposed to individual Flow protocol engines who are interested in receiving the
 messages from the networking layer including the GossipSub protocol. In this approach, the `EngineRegistry` interface is extended
-by two new methods: `VerifyGossipSubMessage`. The `VerifyGossipSubMessage` method takes an origin identifier, an event `interface{} type`,
+by one new method: `VerifyGossipSubMessage`. The `VerifyGossipSubMessage` method takes an origin identifier, an event `interface{} type`,
 as well as the GossipSub message as input, and verifies the signature of the message against the networking public key of the origin id. 
 The method returns true if the signature is valid, and false otherwise.
 ```go
