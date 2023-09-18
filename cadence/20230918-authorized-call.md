@@ -337,7 +337,8 @@ access(all) contract SwapGOV {
         }
 
         for pair in self.pairs {
-            auth pair.collectGOVFees();
+            auth getAccount(pair).contracts.borrow<&ISwapPair>(name: "SwapPair")!
+                .collectGOVFees();
         }
     }
 }
@@ -345,7 +346,7 @@ access(all) contract SwapGOV {
 
 ```cadence
 // SwapPair.cdc
-access(all) contract SwapPair {
+access(all) contract SwapPair: ISwapPair {
     access(auth) fun collectGOVFees() {
         pre {
             auth.address == self.gov: "Forbidden"
