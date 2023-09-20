@@ -119,13 +119,13 @@ This is to ensure that these events are only emitted on resource destruction.
 
 Like other events, `ResourceDestroyed` can have fields. 
 However, as this event is emitted automatically rather than manually, the syntax for declaring specifying the values associated with these fields is different.
-Unlike a normal event, which is declared like a function declaration, a `ResourceDestroyed` event is declared like a function _invocation_. So, for example:
+A `ResourceDestroyed` event declaration has support for default arguments provided to its parameters, like so:
 
 ```cadence
 resource R {
-    let foo: Int
+    let foo: String
 
-    event ResourceDestroyed(x: 3, y: self.foo)
+    event ResourceDestroyed(x: Int = 3, y: String = self.foo)
 
     // rest of the resource
 }
@@ -133,7 +133,6 @@ resource R {
 
 In this example, the `R.ResourceDestroyed` event has two fields, `x` and `y`, whose values are specified by the given arguments. 
 In this case `x`'s value is `3`, while `y`'s value is whatever `self.foo` contains at the time that `R` is destroyed. 
-Note that type annotations are not required; the types will be inferred for each field based on the provided arguments. 
 
 The possible arguments are restricted to expressions that cannot possibly abort during evaluation. 
 In particular: constant expressions (e.g. `3`, `"str"` or `true`) or field accesses on `self` (e.g. `self.foo`). 
