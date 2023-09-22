@@ -155,9 +155,10 @@ the [community forum](https://forum.onflow.org/), or file an issue in this repos
 ## Proposal states
 
 * **Proposed:** The FLIP has been proposed and is awaiting review.
-* **Rejected:** The FLIP has been reviewed and been rejected.
+* **Rejected:** The FLIP has been reviewed and rejected.
 * **Accepted:** The FLIP has been accepted and is either awaiting implementation or is actively being implemented.
-* **Implemented (in VERSION):** The FLIP has been implemented.
+* **Implemented:** All changes for the FLIP have been implemented and merged into the main branch of the respective repositories.
+* **Released:** The FLIP is live on Flow mainnet.
 
 ## Community members
 
