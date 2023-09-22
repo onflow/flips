@@ -134,9 +134,22 @@ resource R {
 In this example, the `R.ResourceDestroyed` event has two fields, `x` and `y`, whose values are specified by the given arguments. 
 In this case `x`'s value is `3`, while `y`'s value is whatever `self.foo` contains at the time that `R` is destroyed. 
 
-The possible arguments are restricted to expressions that cannot possibly abort during evaluation. 
-In particular: constant expressions (e.g. `3`, `"str"` or `true`) or field accesses on `self` (e.g. `self.foo`). 
-Function calls, arithmetic operations, and dereference expressions may abort, and thus are not permitted. 
+The possible arguments are restricted to expressions that cannot possibly abort during evaluation. The following expression are allowed:
+* Constant expressions whose type is numerical (e.g. `Int`, `UFix64` or `Word16`), `String`, `Bool`, `Address`,  or `nil` 
+* field accesses (e.g. `self.foo`, `base.nestedResource.bar`, or `foo?.field`) whose type is one of the aforementioned permitted types
+    * the accessed expression must also necessarily obey these restrictions
+* indexed access expressions on dictionaries (e.g. `dict[0]`) whose type is one of the aforementioned permitted types
+    * both the indexed and the indexing expression must also necessarily obey these restrictions
+* attachment access expressions on composites (e.g. `self[A]`) whose type is one of the aforementioned permitted types
+    * the indexed expression must also necessarily obey these restrictions
+    * note that because attachment expressions always return an optional reference to the attachment type, they will only ever be permitted in this context
+      when a field is accesssed on the resulting attachment type like so: `self[A]?.field`
+
+In particular, some expressions that are not allowed because they may abort are:
+* Arithmetic operations (they may overflow or underflow)
+* Array accesses (they may abort if the index is out of bounds)
+* Function calls (they may abort)
+* Dereference or force expressions, which may fail if the reference or optional is `nil`
 
 These arguments are also evaluated lazily when the resource is destroyed; i.e. any field accesses will use the values
 in those fields at time of resource destruction, rather than resource creation. 
