@@ -178,6 +178,23 @@ Here is an example `InteractionTemplate` for a "Transfer FLOW" transaction:
             translation: "将 {amount} FLOW 转移到 {to}"
           }
         ]
+      },
+      {
+        key: "signer",
+        i18n: [ // Internationalised (BCP-47) set of human readable messages about the interaction
+          {
+            tag: "en-US",
+            translation: "Sign this message to transfer FLOW", // Messages might consume parameters.
+          },
+          {
+            tag: "fr-FR",
+            translation:  "Signez ce message pour transférer FLOW."
+          },
+          {
+            tag: "zh-CN",
+            translation: "签署此消息以转移FLOW。"
+          }
+        ]
       }
     ],
     cadence: // Cadence code this interaction executes.
