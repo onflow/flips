@@ -47,13 +47,27 @@ Given that the state of Flow needs to be stored only across a handful of executi
 
 1. storage pricing function would remain a constant multiple of the byte-size of the data to be stored on-chain
 2. pricing (storage capacity per reserved Flow) would increase 100 times, as tabulated below.
-3. minimum account balance however would increase 10 times such that minimum storage capacity reduces from 100kB to 10kB and the minimum balance required changes from 0.001 FLOW providing 100kB storage capacity, to 0.01 FLOW providing 10kB capacity (at a 100x multiple of the current pricing).
+3. minimum account balance however would increase 10 times such that minimum balance required is 0.01 FLOW
+4. 90kb bonus storage would be given to each account, such that storage_available = 90kb + storage_capacity per the pricing function tabulated below
+
+
 
 |                                                      **Current Prices**                                                     |                                                    **Proposed Prices**                                                   |
 |:---------------------------------------------------------------------------------------------------------------------------:|:------------------------------------------------------------------------------------------------------------------------:|
-| 100 MB per 1 reserved FLOW <br>10 MB per 0.1 reserved FLOW<br>1 MB per 0.01 reserved FLOW<br>100 kB per 0.001 reserved FLOW | 100 MB per 100 reserved FLOW<br>10 MB per 10 reserved FLOW<br>1 MB per 1 reserved FLOW<br>10 kB per 0.01 reserved FLOW |
+| 100 MB per 1 reserved FLOW <br>10 MB per 0.1 reserved FLOW<br>1 MB per 0.01 reserved FLOW<br>100 kB per 0.001 reserved FLOW | 100 MB (+90kB bonus) per 100 reserved FLOW<br>10 MB (+90kB bonus) per 10 reserved FLOW<br>1 MB (+90kB bonus) per 1 reserved FLOW<br>10 kB (+90kB bonus) per 0.01 reserved FLOW |
 
-If the proposal is accepted and implemented, users would require a minimum account balance of 0.01 FLOW as part of the account-creation transaction, providing them with up to 10kB of storage capacity, which is what >95% of all accounts use today. As the minimum account balance corresponds to account-creation transactions, this change makes the network more robust to sybil attacks. If the storage used by an account exceeds 10kB, account balance requirements will be calculated based on the prices recommended above and the byte-size of data stored by the account.
+Note that if the proposal is accepted and implemented, all account balance requirements will be calculated based on the prices recommended above and the byte-size of data stored by the account. Here are a few examples to explain how the minimum balance requirement will be calculated - 
+
+•	0.01 FLOW provides 10kB storage capacity (at the new price rate) and a 90kB bonus, thus giving the account a storage capacity of 100kB. In other words, an account that stores < 100kB will be required to maintain a balance of 0.01 FLOW.
+
+•	0.1 FLOW provides 100kB storage capacity (at the new price rate) and a 90kB bonus, thus a total storage capacity of 190kB.
+
+•	0.11 FLOW provides 110kB storage capacity and a 90kB bonus, thus a total storage capacity of 200kB.
+
+•	1 FLOW will provide 1MB storage capacity and a 90kB bonus, and so on.
+
+
+Note that users would require a minimum account balance of 0.01 FLOW as part of the account-creation transaction (which is 10 times than today’s requirement), providing them with up to 100kB of storage capacity (due to the 90kB bonus); this is equivalent to what new accounts get today. As the minimum account balance corresponds to account-creation transactions, this change makes the network more robust to sybil attacks.
 
 With the proposed change in the pricing, Flow would continue to remain ~20x and 140x cheaper than NEAR protocol’s and Solana’s storage prices. Nevertheless, with this increase, Flow would **make deliberate storage-exhaustion attacks more costly, reduce token liquidity to drive broader network benefits, and allow for a sustainable and regulated growth of state.**
 
@@ -119,7 +133,7 @@ Flow's core team is working towards **strengthening FLOW token economics**, and 
     
 14. **Can users completely destruct accounts and reclaim locked FLOW?**
     
-    Today, users have the capability to erase data and unlock FLOW tokens, except that they cannot erase their account to retrieve the minimum balance. At present, with a mere 0.001 FLOW minimum balance, this seems reasonable. However, I understand that if the minimum account balance were to increase 100x (to 0.1 FLOW), having the capability to deactivate and recover funds would become more desirable and I urge the community to take up the capability to recover storage space as a separate FLIP.
+    Today, users have the capability to erase data and unlock FLOW tokens, except that they cannot erase their account to retrieve the minimum balance. At present, with a mere 0.001 FLOW minimum balance, this seems reasonable. However, I understand that if the minimum account balance were to increase 100x, having the capability to deactivate and recover funds would become more desirable and I urge the community to take up the capability to recover storage space as a separate FLIP.
     
 15. **How will users know if they have enough balance. In other words, how can users differentiate between total balance and withdraw-able balance?**
     
