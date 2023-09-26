@@ -3,7 +3,7 @@ status: proposed
 flip: [179](https://github.com/onflow/flips/pull/179)
 authors: Giovanni Sanchez (giovanni.sanchez@dapperlabs.com)
 sponsor: Giovanni Sanchez (giovanni.sanchez@dapperlabs.com)
-updated: 2023-08-31
+updated: 2023-09-26
 ---
 
 # FLIP 179: Staged Contract Update Mechanism
@@ -104,12 +104,12 @@ below to view each component in more detail.*
 ```cadence
 /// Representative of a single contract, its name, code and where it will be deployed
 ///
-pub struct ContractUpdate {
-    pub let address: Address
-    pub let name: String
-    pub let code: String
-    pub fun toString(): String
-    pub fun stringifyCode(): String
+access(all) struct ContractUpdate {
+    access(all) let address: Address
+    access(all) let name: String
+    access(all) let code: String
+    access(all) fun toString(): String
+    access(all) fun codeAsCadence(): String
 }
 ```
 </details>
@@ -118,34 +118,28 @@ pub struct ContractUpdate {
 <summary>resource Updater</summary>
 
 ```cadence
-/// Private Capability enabling delegated updates
-///
-pub resource interface DelegatedUpdater {
-    pub fun update(): Bool
-}
-
 /// Public interface enabling queries about the Updater
 ///
-pub resource interface UpdaterPublic {
-    pub fun getID(): UInt64
-    pub fun getBlockUpdateBoundary(): UInt64
-    pub fun getContractAccountAddresses(): [Address]
-    pub fun getDeployments(): [[ContractUpdate]]
-    pub fun getCurrentDeploymentStage(): Int
-    pub fun getFailedDeployments(): {Int: [String]}
-    pub fun hasBeenUpdated(): Bool
+access(all) resource interface UpdaterPublic {
+    access(all) fun getID(): UInt64
+    access(all) fun getBlockUpdateBoundary(): UInt64
+    access(all) fun getContractAccountAddresses(): [Address]
+    access(all) fun getDeployments(): [[ContractUpdate]]
+    access(all) fun getCurrentDeploymentStage(): Int
+    access(all) fun getFailedDeployments(): {Int: [String]}
+    access(all) fun hasBeenUpdated(): Bool
 }
 
 /// Resource that enables delayed contract updates to wrapped accounts at or beyond a specified block height
 ///
-pub resource Updater : UpdaterPublic, DelegatedUpdater {
+access(all) resource Updater : UpdaterPublic {
     /// Update to occur at or beyond this block height
     // TODO: Consider making this a contract-owned value as it's reflective of the spork height
     access(self) let blockUpdateBoundary: UInt64
     /// Update status for each contract
     access(self) var updateComplete: Bool
     /// Capabilities for contract hosting accounts
-    access(self) let accounts: {Address: Capability<&AuthAccount>}
+    access(self) let accounts: {Address: Capability<auth(UpdateContract) &Account>}
     /// Updates ordered by their deployment sequence and staged by their dependency depth
     /// NOTE: Dev should be careful to validate their dependencies such that updates are performed from root
     /// to leaf dependencies
@@ -158,17 +152,17 @@ pub resource Updater : UpdaterPublic, DelegatedUpdater {
     /// Executes the next update stage for all contracts defined in deployment, returning true if all stages have
     /// been attempted and false if stages remain
     ///
-    pub fun update(): Bool
+    access(all) fun update(): Bool
 
     /* --- Public getters --- */
     //
-    pub fun getID(): UInt64
-    pub fun getBlockUpdateBoundary(): UInt64
-    pub fun getContractAccountAddresses(): [Address]
-    pub fun getDeployments(): [[ContractUpdate]]
-    pub fun getCurrentDeploymentStage(): Int
-    pub fun getFailedDeployments(): {Int: [String]}
-    pub fun hasBeenUpdated(): Bool
+    access(all) fun getID(): UInt64
+    access(all) fun getBlockUpdateBoundary(): UInt64
+    access(all) fun getContractAccountAddresses(): [Address]
+    access(all) fun getDeployments(): [[ContractUpdate]]
+    access(all) fun getCurrentDeploymentStage(): Int
+    access(all) fun getFailedDeployments(): {Int: [String]}
+    access(all) fun hasBeenUpdated(): Bool
 }
 ```
 </details>
@@ -180,39 +174,39 @@ pub resource Updater : UpdaterPublic, DelegatedUpdater {
 ```cadence
 /// Public interface for Delegatee
 ///
-pub resource interface DelegateePublic {
-    pub fun check(id: UInt64): Bool?
-    pub fun getUpdaterIDs(): [UInt64]
-    pub fun delegate(updaterCap: Capability<&Updater{DelegatedUpdater, UpdaterPublic}>)
-    pub fun removeAsUpdater(updaterCap: Capability<&Updater{DelegatedUpdater, UpdaterPublic}>)
+access(all) resource interface DelegateePublic {
+    access(all) fun check(id: UInt64): Bool?
+    access(all) fun getUpdaterIDs(): [UInt64]
+    access(all) fun delegate(updaterCap: Capability<&Updater>)
+    access(all) fun removeAsUpdater(updaterCap: Capability<&Updater>)
 }
 
 /// Resource that executed delegated updates
 ///
-pub resource Delegatee : DelegateePublic {
+access(all) resource Delegatee : DelegateePublic {
     // TODO: Block Height - All DelegatedUpdaters must be updated at or beyond this block height
     // access(self) let blockUpdateBoundary: UInt64
     /// Track all delegated updaters
-    access(self) let delegatedUpdaters: {UInt64: Capability<&Updater{DelegatedUpdater, UpdaterPublic}>}
+    access(self) let delegatedUpdaters: {UInt64: Capability<&Updater>}
 
     /// Checks if the specified DelegatedUpdater Capability is contained and valid
     ///
-    pub fun check(id: UInt64): Bool?
+    access(all) fun check(id: UInt64): Bool?
     /// Returns the IDs of the delegated updaters 
     ///
-    pub fun getUpdaterIDs(): [UInt64]
+    access(all) fun getUpdaterIDs(): [UInt64]
     /// Allows for the delegation of updates to a contract
     ///
-    pub fun delegate(updaterCap: Capability<&Updater{DelegatedUpdater, UpdaterPublic}>)
+    access(all) fun delegate(updaterCap: Capability<&Updater>)
     /// Enables Updaters to remove their delegation
     ///
-    pub fun removeAsUpdater(updaterCap: Capability<&Updater{DelegatedUpdater, UpdaterPublic}>)
+    access(all) fun removeAsUpdater(updaterCap: Capability<&Updater>)
     /// Executes update on the specified Updater, removing the Capability once update is completed
     ///
-    pub fun update(updaterIDs: [UInt64]): [UInt64]
+    access(all) fun update(updaterIDs: [UInt64]): [UInt64]
     /// Enables admin removal of a DelegatedUpdater Capability
     ///
-    pub fun removeDelegatedUpdater(id: UInt64)
+    access(all) fun removeDelegatedUpdater(id: UInt64)
 }
 ```
 </details>
@@ -222,8 +216,8 @@ pub resource Delegatee : DelegateePublic {
 <summary>Events</summary>
 
 ```cadence
-pub event UpdaterCreated(updaterUUID: UInt64, blockUpdateBoundary: UInt64)
-pub event UpdaterUpdated(
+access(all) event UpdaterCreated(updaterUUID: UInt64, blockUpdateBoundary: UInt64)
+access(all) event UpdaterUpdated(
     updaterUUID: UInt64,
     updaterAddress: Address?,
     blockUpdateBoundary: UInt64,
@@ -233,7 +227,7 @@ pub event UpdaterUpdated(
     failedContracts: [String],
     updateComplete: Bool
 )
-pub event UpdaterDelegationChanged(updaterUUID: UInt64, updaterAddress: Address?, delegated: Bool)
+access(all) event UpdaterDelegationChanged(updaterUUID: UInt64, updaterAddress: Address?, delegated: Bool)
 ```
 </details>
 
@@ -243,7 +237,7 @@ pub event UpdaterDelegationChanged(updaterUUID: UInt64, updaterAddress: Address?
 ```cadence
 /// Returns the Address of the Delegatee associated with this contract
 ///
-pub fun getContractDelegateeAddress(): Address
+access(all) fun getContractDelegateeAddress(): Address
 
 /// Helper method that returns the ordered array reflecting sequenced and staged deployments, with each contract
 /// update represented by a ContractUpdate struct.
@@ -252,24 +246,27 @@ pub fun getContractDelegateeAddress(): Address
 /// deployment and the order of the deployments themselves. Each entry in the inner array must be exactly one
 /// key-value pair, where the key is the address of the associated contract name and code.
 ///
-pub fun getDeploymentFromConfig(_ deploymentConfig: [[{Address: {String: String}}]]): [[ContractUpdate]]
+access(all) fun getDeploymentFromConfig(_ deploymentConfig: [[{Address: {String: String}}]]): [[ContractUpdate]]
 
 /// Returns a new Updater resource
 ///
-pub fun createNewUpdater(
+access(all) fun createNewUpdater(
     blockUpdateBoundary: UInt64,
-    accounts: [Capability<&AuthAccount>],
+    accounts: [Capability<auth(UpdateContract) &Account>],
     deployments: [[ContractUpdate]]
 ): @Updater
 
 /// Creates a new Delegatee resource enabling caller to self-host their Delegatee
 ///
-pub fun createNewDelegatee(): @Delegatee
+access(all) fun createNewDelegatee(): @Delegatee
 ```
 </details>
 
 
 #### Note on Update API
+
+> :information_source: The update API discussed below has been implemented - see PR:
+> [onflow/cadence#2769](https://github.com/onflow/cadence/pull/2769)
 
 Currently, [updating a contract](https://developers.flow.com/cadence/language/contracts#updating-a-deployed-contract)
 occurs via the API `Contracts.update__experimental(name: String, code: [UInt8]): DeployedContract` which reverts when an
@@ -286,24 +283,24 @@ The proposed `tryUpdate()` API is its own issue (found [here](https://github.com
 included below for context and consideration:
 
 ```cadence
-pub enum ErrorType: UInt8 {
-  pub case CONTRACT_NOT_FOUND
-  pub case MULTIPLE_CONTRACTS_DECLARED
-  pub case MISMATCHED_NAME
-  pub case UNDEFINED
+access(all) enum ErrorType: UInt8 {
+  access(all) case CONTRACT_NOT_FOUND
+  access(all) case MULTIPLE_CONTRACTS_DECLARED
+  access(all) case MISMATCHED_NAME
+  access(all) case UNDEFINED
 }
 
-pub struct DeploymentError {
-  pub let errorType: ErrorType
-  pub let errorMessage: String
+access(all) struct DeploymentError {
+  access(all) let errorType: ErrorType
+  access(all) let errorMessage: String
 }
 
-pub struct DeploymentResult {
-  pub let success: Bool
-  pub let errorMessage: DeploymentError?
+access(all) struct DeploymentResult {
+  access(all) let success: Bool
+  access(all) let errorMessage: DeploymentError?
 }
 
-pub fun tryUpdate(name: String, code: [UInt8]): DeploymentResult
+access(all) fun tryUpdate(name: String, code: [UInt8]): DeploymentResult
 ```
 
 Ideally this method would return some error message in the event of a failed update; however,
@@ -314,8 +311,8 @@ The proposed path forward then is to return the following `DeploymentResult`, la
 security implication has been mitigated:
 
 ```cadence
-pub struct DeploymentResult {
-  pub let success: Bool
+access(all) struct DeploymentResult {
+  access(all) let success: Bool
 }
 ```
 
