@@ -210,7 +210,7 @@ The change will not break compatibility.
 
 ### User Impact
 
-Little direct user impact. 
+N/A.
 
 ## Related Issues
 
