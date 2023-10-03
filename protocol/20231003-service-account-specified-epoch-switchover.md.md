@@ -15,6 +15,8 @@ updated: 2023-10-03
 
 ## Motivation
 
+[Cruise Control: Automated Block Rate & Epoch Timing (Design)](https://www.notion.so/Cruise-Control-Automated-Block-Rate-Epoch-Timing-Design-4dbcb0dab1394fc7b91966d7d84ad48d?pvs=21) defines an existing system for controlling system block production to achieve a target *block rate*, in turn to achieve a target *epoch switchover time*. This system has been deployed on Mainnet since May.
+
 At the time of writing, the target epoch switchover time is inferred based on a baked-in assumption of week-long epochs, and a configurable weekly switchover time. Therefore, each node’s **Process Variable** (switchover time) is determined by a heuristic, which has several downsides: 
 
 - In extreme edge cases (timing off by several days), different nodes may disagree about the target Process Variable value.
