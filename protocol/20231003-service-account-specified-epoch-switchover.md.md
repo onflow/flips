@@ -1,12 +1,12 @@
 ---
 status: draft 
-flip: NNN (set to the issue number)
+flip: 204 (set to the issue number)
 authors: Jordan Schalm (jordan@dapperlabs.com)
 sponsor: Jordan Schalm (jordan@dapperlabs.com)
 updated: 2023-10-03
 ---
 
-# FLIP NNN: Smart-Contract-Specified Epoch Switchover Timing
+# FLIP 204: Smart-Contract-Specified Epoch Switchover Timing
 
 ## Objective
 
