@@ -1,5 +1,5 @@
 ---
-status: implemented
+status: released
 flip: 200
 authors: Peter Siemens (peter@dapperlabs.com), Jeffery Doyle (jeffrey.doyle@dapperlabs.com)
 sponsor: Peter Siemens (peter@dapperlabs.com)
