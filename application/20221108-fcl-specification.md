@@ -1,5 +1,5 @@
 ---
-status: implemented
+status: released
 flip: 45
 authors: Greg Santos (greg.santos@dapperlabs.com)
 sponsor: Justin Barry (justin.barry@dapperlabs.com)
