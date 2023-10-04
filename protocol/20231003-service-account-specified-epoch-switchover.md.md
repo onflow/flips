@@ -42,7 +42,7 @@ Below are two options for how to configure and compute the `TargetEndTime`. Over
 
 The configuration consists only of the epoch duration. Each epoch’s `TargetEndTime` is computed based on a reference time/view pair obtained via the `getBlock` API. 
 
-```swift
+```cadence
 pub struct EpochTimingConfig {
 	duration: UInt64 // in seconds
 }
@@ -52,12 +52,12 @@ pub struct EpochTimingConfig {
 // Compute the target switchover time based on the current time/view.
 // Invoked when transitioning into the EpochSetup phase.
 pub fun getTargetEndTimeForEpoch(
-	curBlock: Block,
+	currentBlock: Block,
 	epoch: EpochMetadata,
-	config EpochTimingConfig,
+	config: EpochTimingConfig
 ): UInt64 {
-	let now = curBlock.timestamp
-	let viewsToEpochEnd = nextEpoch.finalView - curBlock.view
+	let now = currentBlock.timestamp
+	let viewsToEpochEnd = nextEpoch.finalView - currentBlock.view
 	let estSecondsToNextEpochEnd = UFix64(viewsToNextEpochEnd) / UFix64(nextEpoch.lengthInViews) * config.duration
 	return UInt64(estSecondsToNextEpochEnd)
 }
@@ -66,17 +66,17 @@ pub fun getTargetEndTimeForEpoch(
 ```swift
 // Memorize the end time of each epoch.
 // Invoked when transitioning into a new epoch.
-pub fun memorizeEpochEndTime(curBlock: Block, epoch: EpochMetadata) {
-	epoch.endedAt = curBlock.timestamp
+pub fun memorizeEpochEndTime(currentBlock: Block, epoch: EpochMetadata) {
+	epoch.endedAt = currentBlock.timestamp
 }
 
 // Compute the switchover time based on the last memorized reference timestamp.
-pub fun getTargetEndTimeForEpoch(
-	refEpoch: EpochMetadata,
+pub fun getTargetEndTime(
+	forEpoch refEpoch: EpochMetadata,
 	targetEpochCounter: UInt64,
-	config EpochTimingConfig,
+	config: EpochTimingConfig
 ): UInt64 {
-	return refEpoch.endedAt + config.duration * (targetEpochCounter-refEpoch.counter)
+	return refEpoch.endedAt + config.duration * (targetEpochCounter - refEpoch.counter)
 }
 ```
 
@@ -108,7 +108,7 @@ pub struct EpochTimingConfig {
 // Compute target switchover time based on offset from reference counter/switchover.
 pub fun getTargetEndTimeForEpoch(
 	targetEpochCounter: UInt64,
-	config EpochTimingConfig,
+	config: EpochTimingConfig
 ): UInt64 {
 	return config.refTimestamp + config.duration * (targetEpochCounter-refCounter)
 }
@@ -230,7 +230,7 @@ N/A.
 ### Q&A
 #### What happens during a `resetEpoch`?
 
-In ****************Option 1.1**************** and **2**, the timing of a particular epoch transition does not affect the target timing for other epochs. Therefore, the `TargetEndTime` computation of an epoch during a spork will not behave differently from any other epoch.
+In **Option 1.1** and **2**, the timing of a particular epoch transition does not affect the target timing for other epochs. Therefore, the `TargetEndTime` computation of an epoch during a spork will not behave differently from any other epoch.
 
 #### Why do we set `TargetEndTime` rather than `TargetStartTime`?
 
