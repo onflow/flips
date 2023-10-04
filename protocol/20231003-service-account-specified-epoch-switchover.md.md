@@ -48,7 +48,7 @@ pub struct EpochTimingConfig {
 }
 ```
 
-```swift
+```cadence
 // Compute the target switchover time based on the current time/view.
 // Invoked when transitioning into the EpochSetup phase.
 pub fun getTargetEndTimeForEpoch(
@@ -63,7 +63,7 @@ pub fun getTargetEndTimeForEpoch(
 }
 ```
 
-```swift
+```cadence
 // Memorize the end time of each epoch.
 // Invoked when transitioning into a new epoch.
 pub fun memorizeEpochEndTime(currentBlock: Block, epoch: EpochMetadata) {
@@ -96,7 +96,7 @@ pub fun getTargetEndTime(
 
 The configuration consists of the epoch duration and a reference counter/end-time pair. Each epoch’s `TargetEndTime` is computed solely based on the target epoch’s counter, the reference counter/end-time pair, and the duration.
 
-```swift
+```cadence
 pub struct EpochTimingConfig {
 	duration: UInt64     // in seconds
 	refCounter: UInt64   // the counter of a reference epoch
@@ -104,7 +104,7 @@ pub struct EpochTimingConfig {
 }
 ```
 
-```swift
+```cadence
 // Compute target switchover time based on offset from reference counter/switchover.
 pub fun getTargetEndTimeForEpoch(
 	targetEpochCounter: UInt64,
