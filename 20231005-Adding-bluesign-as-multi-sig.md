@@ -1,4 +1,4 @@
-# FLIP 208: ****Addition of @bluesign as a multi-sig signer****
+# FLIP 208: Addition of @bluesign as a multi-sig signer
 
 | Status        | Draft                                            |
 :-------------- |:---------------------------------------------------- |
