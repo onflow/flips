@@ -31,6 +31,7 @@ At the time of writing, the target epoch switchover time is inferred based on a 
 
 
 - The `FlowEpoch` smart contract determines and broadcasts a `TargetEndTime` for each epoch, within the `EpochSetup` event.
+  - (For informational purposes, we will also include this time in the `EpochStart` event)
 - The `cruisectl.BlockTimeController` component reads this `TargetEndTime` and uses it as the Process Variable value for its PID controller, rather than the current heuristic method.
 
 ### `TargetEndTime` Definition
@@ -48,6 +49,7 @@ pub struct EpochTimingConfig {
 }
 ```
 
+##### Option 1.1
 ```cadence
 // Compute the target switchover time based on the current time/view.
 // Invoked when transitioning into the EpochSetup phase.
@@ -57,12 +59,13 @@ pub fun getTargetEndTimeForEpoch(
 	config: EpochTimingConfig
 ): UInt64 {
 	let now = currentBlock.timestamp
-	let viewsToEpochEnd = nextEpoch.finalView - currentBlock.view
-	let estSecondsToNextEpochEnd = UFix64(viewsToNextEpochEnd) / UFix64(nextEpoch.lengthInViews) * config.duration
+	let viewsToEpochEnd = epoch.finalView - currentBlock.view
+	let estSecondsToNextEpochEnd = UFix64(viewsToEpochEnd) / UFix64(epoch.lengthInViews) * config.duration
 	return UInt64(estSecondsToNextEpochEnd)
 }
 ```
 
+##### Option 1.2
 ```cadence
 // Memorize the end time of each epoch.
 // Invoked when transitioning into a new epoch.
@@ -71,8 +74,8 @@ pub fun memorizeEpochEndTime(currentBlock: Block, epoch: EpochMetadata) {
 }
 
 // Compute the switchover time based on the last memorized reference timestamp.
-pub fun getTargetEndTime(
-	forEpoch refEpoch: EpochMetadata,
+pub fun getTargetEndTimeForEpoch(
+	refEpoch: EpochMetadata,
 	targetEpochCounter: UInt64,
 	config: EpochTimingConfig
 ): UInt64 {
@@ -131,7 +134,9 @@ pub fun getTargetEndTimeForEpoch(
 
 #### Smart Contract
 
-- Add `targetEndTime` field to `EpochSetup` event, `EpochMetadata`
+- Add `targetEndTime` field to `EpochSetup` event, `EpochStart` event
+  - CAUTION: This must be added as the last field to maintain backward-compatibility
+  - NOTE: Unfortunately, since we cannot modify existing structs, we cannot add this field to `EpochMetadata`
 - Add config for determining `targetEndTime` to smart contract `ConfigMetadata`
 - Add logic to compute `targetEndTime` to `startEpochSetup`
 - Add function for service account to adjust new config
