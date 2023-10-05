@@ -1,8 +1,12 @@
-# FLIP 208: Addition of @bluesign as a multi-sig signer
+---
+Status: Draft 
+Flip: 208
+Authors: Kshitij Chaudhary (kshitij.chaudhary@dapperlabs.com)
+Sponsor: Kshitij Chaudhary (kshitij.chaudhary@dapperlabs.com)
+Updated: 2023-10-05
+---
 
-| Status | FLIP | Author | Sponsor | Updated |
-| :---: | :---: | :---: | :---: | :---: |
-| Draft | 208 | Kshitij Chaudhary (kshitij.chaudhary@dapperlabs.com) | Kshitij Chaudhary (kshitij.chaudhary@dapperlabs.com) | 2023-10-05  |
+# FLIP 208: Addition of @bluesign as a multi-sig signer
 
 ## Objective
 
