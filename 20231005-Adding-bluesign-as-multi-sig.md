@@ -18,7 +18,7 @@ Flow employs a robust process for executing protocol-level changes, requiring th
 
 Notably, the multi-sig process on Flow is associated with two principal accounts that oversee critical aspects of the Flow protocol: the service account, responsible for actions related to protocol parameters, and the staking account, which holds resources linked to staked nodes within the network. These accounts are collectively overseen by multiple signatories - representatives from the Flow ecosystem - who participate in meetings where transactions are simultaneously authorized (or rejected) and submitted only if there’s quorum. 
 
-Visit the [service-account page](https://github.com/onflow/service-account) to view all service account transactions.  
+At present, representatives from Animoca, Blocto, Dapper Labs, Find, FlowScan, and Ichi.org collectively hold multi-sig authority over the service account. Each signer is allocated a weight of 250 units, and to validate a transaction, a cumulative total of 1000 units is necessary. Therefore, a minimum of four signers must jointly provide their signatures to authorize the transaction. The transactions deliberated by these signatories may be related to minting tokens, setting fees, slashing rewards, updating network-level contracts, etc; see [account page](https://developers.flow.com/build/basics/accounts#service-accounts) for more details on the powers and abilities of the Flow service account. Additionally, visit the [service-account page](https://github.com/onflow/service-account) to view all service account transactions.
 
 ## Motivation
 
