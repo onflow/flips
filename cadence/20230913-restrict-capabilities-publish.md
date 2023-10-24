@@ -1,8 +1,9 @@
 ---
-status: draft 
+status: accepted 
 flip: 196 
 authors: Deniz Mert Edincik (deniz@edincik.com)
-updated: 2023-09-13
+sponsors: Bastian Mueller (bastian@dapperlabs.com)
+updated: 2023-10-24
 ---
 
 # FLIP 196: Restrict capabilities.publish to account's own capabilities
