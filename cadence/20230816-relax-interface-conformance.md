@@ -1,9 +1,9 @@
 ---
-status: accepted
+status: approved
 flip: 134
 authors: Supun Setunga (supun.setunga@dapperlabs.com)
 sponsor: Supun Setunga (supun.setunga@dapperlabs.com)
-updated: 2023-08-16
+updated: 2023-10-24
 ---
 
 # FLIP 134: Relax interface conformance restrictions
