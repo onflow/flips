@@ -1,6 +1,6 @@
 ---
-status: draft 
-flip: NNN (set to the issue number)
+status: approved 
+flip: 210
 authors: Daniel Sainati (daniel.sainati@dapperlabs.com)
 sponsor: Daniel Sainati (daniel.sainati@dapperlabs.com)
 updated: 2023-10-16
