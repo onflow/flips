@@ -1,9 +1,9 @@
 ---
-status: draft
+status: accepted
 flip: 211
 authors: Bastian Mueller (bastian@dapperlabs.com)
 sponsor: Bastian Mueller (bastian@dapperlabs.com)
-updated: 2023-10-16
+updated: 2023-10-24
 ---
 
 # FLIP 211: Reject references to references.
