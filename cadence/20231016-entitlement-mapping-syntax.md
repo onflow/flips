@@ -17,7 +17,23 @@ This proposes a syntax change to make entitlement-mapped fields more visually di
 User feedback has indicated that entitlement mappings are too easy to confuse with entitlements, 
 and since one of them has default behavior for public access and the other prevents it, 
 it can be difficult to reason about what fields and functions are publicly available in the presence
-of both entitled and mapped fields
+of both entitled and mapped fields.
+
+For example, given some definitions:
+
+```
+entitlement X
+entitlement Y
+entitlement mapping M {
+    X -> Y
+}
+resource R {
+    access(X) let foo: T
+    access(M) let bar: T
+}
+```
+
+It is not immediately obvious that given a reference `r` of type `&R`, `r.foo` would fail statically but `r.bar` would succeed and produce a `&T` reference.
 
 ## User Benefit
 
