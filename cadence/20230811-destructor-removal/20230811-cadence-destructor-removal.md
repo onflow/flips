@@ -6,7 +6,7 @@ sponsor: Daniel Sainati (daniel.sainati@dapperlabs.com)
 updated: 2023-08-30 
 ---
 
-# FLIP NNN: Removal of Custom Destructors
+# FLIP 131: Removal of Custom Destructors
 
 ## Objective
 
