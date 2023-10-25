@@ -1,6 +1,6 @@
 ---
 status: proposed 
-flip: NNN (set to PR number)
+flip: 131
 authors: Daniel Sainati (daniel.sainati@dapperlabs.com)
 sponsor: Daniel Sainati (daniel.sainati@dapperlabs.com)
 updated: 2023-08-30 
@@ -21,6 +21,11 @@ exploit resources and attachments, whereby a `panic`ing destructor is added to a
 without the owner's knowledge, and thus unremovably takes up space in an account. By removing the ability
 to declare custom destructors, malicious actors would not be able to prevent the destruction or removal 
 of a resource or attachment. 
+
+In addition to trolling, the existence of customizeable destructors also requires developers to be extremely careful
+when writing contracts because they can have arbitrary side effects. Developers could, for example, write a destructor for a
+`Vault` that "destroys" the `Vault` by moving its funds elsewhere, rather than burning them. This becomes even more dangerous
+in the presence of attachments because developers cannot always know a priori what destructors will even run when a given resource is destroyed.
 
 ### Background Context
 
@@ -64,7 +69,7 @@ As such, removing support for custom destructors would prevent developers being 
 ## Design Proposal
 
 The design is simple; `destroy` will no longer be a declarable special function. Instead, 
-when a resource is destroyed, any nested resources in that resource will be iteratively destroyed as well. Effectively,
+when a resource is destroyed, any nested resources in that resource will be recursively destroyed as well. Effectively,
 the behavior will be the same as if the author of the `destroy` method had simply done the minimal implementation of that method, 
 destroying sub-resources and nothing else. 
 
@@ -86,7 +91,8 @@ resource R {
 
 would automatically destroy the `subResource` and `subArray` fields when it itself is destroyed. Users would not be able to 
 rely on any specific order for the execution of these destructors, but because nothing can happen in destructors except for destruction 
-of sub-resource, it would not be possible for the order to matter. 
+of sub-resource, it would not be possible for the order to matter. The order is deterministic (in the way that iterating over an atree dictionary 
+is deterministic), but will not be specified by the language.
 
 ### Destruction Events
 
@@ -160,7 +166,9 @@ This will break a large amount of existing code, and further increase the Stable
 
 ### Compatibility
 
-This will not be backwards compatible. 
+This will not be backwards compatible. Developers will need to restructure their contracts accordingly. 
+Destructors that were previously used to guarantee event emission can be rewritten with default events, but 
+cases that actually used `panic` or performed state tracking in destructors will need to be restructured. 
 
 ### Alternatives Considered
 
