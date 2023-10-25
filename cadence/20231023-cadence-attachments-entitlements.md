@@ -3,15 +3,16 @@ status: draft
 flip: NNN (set to the issue number)
 authors: Daniel Sainati (daniel.sainati@dapperlabs.com)
 sponsor: Daniel Sainati (daniel.sainati@dapperlabs.com)
-updated: 2023-10-23 
+updated: 2023-10-24 
 ---
 
-# FLIP NNN: Attachment Entitlements Reversion
+# FLIP NNN: Attachment + Entitlements
 
 ## Objective
 
 This FLIP proposes to remove the ability for attachments to `require` entitlements to their `base`, 
-to remove a foot-gun from the language. 
+to remove a foot-gun from the language, and replace it with a per-function entitlement inference for
+the `base` and `self` variables in attachments.
 
 ## Motivation
 
