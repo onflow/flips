@@ -18,8 +18,7 @@ to remove a foot-gun from the language.
 Currently, attachments present a major foot-gun with respect to their interaction with entitlements.
 Consider the following example, in which an attachment is used to backdoor a resource:
 
-```
-
+```cadence
 // standard code
 access(all) entitlement Withdraw
 access(all) entitlement Deposit
@@ -96,28 +95,42 @@ This would enable contract authors to write their contracts in a more natural, i
 
 This proposes two main changes to how attachments and entitlements interact:
 
-1) `base` is always unentitled. Instead of allowing attachment authors to ask for specific entitlements to the `base` reference with `require` syntax, the `base` reference in an attachment is always unentitled. This means that no entitled methods on the base resource will be callable at any point, and thus will limit attachments to interaction only with the "publicly" visible portion of a resource. This would prevent the backdooring example above by preventing the definition of `Backdoor`; `sneakyWithdraw` would never be defineable because `base` will not be entitled to `Withdraw`. 
-
-2) The `self` reference will be changed to have differing entitlements from function to function. Specifically, given some attachment definition:
+1) Removing the `require entitlement` syntax from `attachment` declarations, along with the ability to declare `attachment`s with mapped access. Instead, 
+all attachments will be declared with `access(all)` access on their declaration, and the entitlements of the `self` and `base` references in each function will be
+determined by the entitlements used in the access of that function. So, for example, the `Backdoor` attachment above would fail if written as:
 
     ```
-    entitlement mapping M {
-        // ...
-    }
-
-    access(M) attachment A for R {
-        access(X) fun foo() { ... } 
+    access(all) attachment Backdoor for Vault {
+        access(all) fun sneakyWithdraw(amount: UFix64): @Vault {
+            return <- base.withdraw(amount: amount)
+        }
     }
     ```
 
-    Within `foo`, `self` would be entitled to `X`. In general, within a method body, the `self` reference would always just be entitled to the set of entitlements requested by that method. This change is not strictly necessary for fixing the backdooring problem, but is important to allow us to eventually re-enable entitlements 
-    on the `base` later down the line, should we have a non-breaking means for doing so. 
+    Here, `sneakyWithdraw` withdraw would not type check because it is declared as `access(all)`, meaning that `self` and `base` are unentitled in its body. Conversely, if
+    the definition were written as
+
+    ```
+    access(all) attachment Backdoor for Vault {
+        access(Withdraw) fun sneakyWithdraw(amount: UFix64): @Vault {
+            return <- base.withdraw(amount: amount)
+        }
+    }
+    ```
+
+    This definition would type check, as since `sneakyWithdraw` has `Withdraw` access, this means that `self` and `base` are entitled to `Withdraw` in its body.
+    This brings us to the second proposed change:
+
+2) Attachment access always propagates entitlements from its base as if through the `Identity` map. Equivalently, `v[A]` always produces a reference to `A` that is entitled to the same entitlements as `v`. This means that in the above example, the definition of `sneakyWithdraw` is safe because a `Withdraw`-entitled reference to 
+`Backdoor` can only be obtained from a `Withdraw`-entitled reference to `Vault`. 
+
+    Note that this necessarily implies that attachments can only support the same entitlements that exist on the `base` value. I.e. an attachment defined for some
+    `R` that only has entitlements `X` and `Y` will itself only support `X` and `Y`. 
 
 ### Drawbacks
 
-This does necessarily limit some use cases; in this limited model it will not be possible to write attachments that interact with 
-any entitled methods on the `base`. Howevever, this proposal does still leave open the possibility of entitlement inference/checking for the `base`
-to be re-added in a non-breaking way after the release of Cadence 1.0.
+This does necessarily limit some use cases; it will no longer be possible to define separate entitlements for attachments for any new functionality that they may
+add on top of what the base can do. However, this is the least limiting solution we identified. 
 
 ### Alternatives Considered
 
@@ -158,21 +171,5 @@ to resolve this backdooring issue would be to require that any `Vault` reference
 
     It could be possible to split the `BConverter` into two attachments `BDepositor` and `BWithdrawer` that each has only one of the two functions and thus requires only one of the two entitlements. Then someone with an `auth(Deposit) &AVault` could access a `BDepositor`, while a `auth(Withdraw) &AVault` would be necessary for to access a `BWithdrawer`. However, this only works when the entitlements in an attachment can be cleanly split like in this example, in more complex use cases this may not be feasible. It furthermore encourages a coding pattern where attachments must only handle exactly one piece of functionality, and "composition" attachments would become necessary to handle interaction between these many different kinds of attachments. Given that the presence of a sub attachment cannot be guaranteed statically, this would also require attachment authors to explicitly handle all possible combinations of sub-attachments that may or may not be necessary for their logic. 
 
-3) Revert to the old version of attachment entitlement inference originally proposed in the entitlements FLIP. This FLIP originally proposed a mechanism for inferring the entitlements of the `base` reference in an attachment for each method based on the entitlements of that method and the mapping that was used to define the attachment. I.e. for some attachment declaration:
-
-    ```
-    entitlement mapping M {
-    // ...
-    }
-
-    access(M) attachment A for R {
-        access(X) fun foo() { ... } 
-    }
-    ```
-
-    We would infer the entitlements that `base` has in the body of `foo` based on `M` and `X`; specifically, `base` in `foo` would be entitled to `M⁻¹(X)` . Essentially, given that an `X` entitlement to `A` is only available via access on an `R` that is entitled to at least `M⁻¹(X)`, this inference is reverse-engineering the entitlements that the `base` would have needed to have in order to make `foo` callable on `A`. 
-
-    This is extremely complicated, and we moved away from this proposal for the sake of simplicity, to not further complicate an already complex feature. However, were we to move back to this model it would fully resolve the backdooring issue without sacrificing any expressivity on the part of the attachment author or the resource author. 
-
-While each of these 3 alternatives present a solution to the backdooring problem, we ultimately selected the proposed solution because it solves the issue while also 
-leaving open the most future improvemetns. By restricting `base` to unentitled references only, in the future we can add more functionality to enable using entitlements with `base` without making any breaking changes. By contrast, each of these 3 proposals would require a breaking change in order to make any alterations to how entitlements interact with `base`. 
+3) Simply remove support for entitlements on attachments. This proposal is maximally safe, in that there is minimal risk of security issues, since it will be impossible
+to access any entitled features of the `base` reference. It is, however, also quite limiting, in that it would prevent a large number of potential attachment use cases from being expressible in Cadence. 
