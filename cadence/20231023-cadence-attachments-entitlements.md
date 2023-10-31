@@ -1,12 +1,12 @@
 ---
-status: draft 
-flip: NNN (set to the issue number)
+status: proposed 
+flip: 217 (set to the issue number)
 authors: Daniel Sainati (daniel.sainati@dapperlabs.com)
 sponsor: Daniel Sainati (daniel.sainati@dapperlabs.com)
 updated: 2023-10-24 
 ---
 
-# FLIP NNN: Attachment + Entitlements
+# FLIP 217: Attachment + Entitlements
 
 ## Objective
 
