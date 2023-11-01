@@ -1,6 +1,6 @@
 ---
 status: proposed 
-flip: 217 (set to the issue number)
+flip: 217
 authors: Daniel Sainati (daniel.sainati@dapperlabs.com)
 sponsor: Daniel Sainati (daniel.sainati@dapperlabs.com)
 updated: 2023-10-24 
