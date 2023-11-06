@@ -127,6 +127,8 @@ Once the FLIP is ready for review:
 
 ### Managing Community Discussion
 
+**Note** - The Author can decide whether they'd like the community discussion to occur within the Github PR or forum post. This choice can be indicated in the FLIP template's final section, titled "Questions and discussion.
+
 1. The FLIP author and sponsor should actively engage in community discussions, providing thorough responses to inquiries and addressing any concerns raised by community members in a timely and respectful manner.
 
 2. The sponsor may request a review committee meeting after sufficient discussion has taken place.
