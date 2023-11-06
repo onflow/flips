@@ -155,7 +155,7 @@ the [community forum](https://forum.onflow.org/), or file an issue in this repos
 ([`onflow/flow`](https://github.com/onflow/flow/issues)).
 
 ## Proposal states
-
+* **Drafted:** The FLIP is in its early stage and is being ideated. 
 * **Proposed:** The FLIP has been proposed and is awaiting review.
 * **Rejected:** The FLIP has been reviewed and rejected.
 * **Accepted:** The FLIP has been accepted and is either awaiting implementation or is actively being implemented.
