@@ -131,6 +131,7 @@ pub fun getTargetEndTimeForEpoch(
 
 
 ### Implementation Plan
+See also [ZenHub epic](https://github.com/onflow/flow-go/issues/4948).
 
 #### Smart Contract
 
@@ -162,21 +163,14 @@ pub fun getTargetEndTimeForEpoch(
     - Default value for deploying `FlowEpoch`
 
 ### Deployment Plan
+#### Mainnet24 (Nov 8 2023)
+1. Prepare patch which makes `EpochSetup` parsing forward-compatible (accept events with the extra `TargetEndTime` field, but discard it).
+2. Rolling upgrade **all nodes** to this patch version.
+3. Upgrade `FlowEpoch` contract.
 
-As usual, deploy to Canary → Testnet → Mainnet
-
-1. Upgrade `FlowEpoch`
-    
-    <aside>
-    ⚠️ Caution: First, ensure service event conversion logic is tolerant of additional fields (ignores additional fields)
-    
-    </aside>
-    
-2. Upgrade Consensus Nodes
-    
-    *Comment: Since we are modifying the EpochSetup model, this will likely require a spork.*
-    
-
+#### Mainnet25 (Q1-Q2 2024)
+- Deploy `flow-go` version implementing FLIP 204.
+- Since we have already upgraded the contract, no backward-compatibility in `flow-go` code is required (besides the patch above, which will remain on the `mainnet24` branch)
 
 ### Drawbacks
 
