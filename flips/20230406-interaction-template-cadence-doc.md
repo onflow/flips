@@ -1,12 +1,12 @@
-# Interaction Template Cadence Doc (v1.0.0)
+---
+status: approved 
+flip: 163
+authors: Bjarte Karslen (bjartek@find.xyz), Jeffrey Doyle (jeffrey.doyle@dapperlabs.com)
+sponsor: Jeffrey Doyle (jeffrey.doyle@dapperlabs.com)    
+updated: 2023-04-06                                                                      |
+---
 
-| Status        | Proposed                                                                        |
-| :------------ | :------------------------------------------------------------------------------ |
-| **FLIP #**    | 163                                                                             |
-| **Forum**     | TBD                                                                             |
-| **Author(s)** | Bjarte Karslen (bjartek@find.xyz), Jeffrey Doyle (jeffrey.doyle@dapperlabs.com) |
-| **Sponsor**   | Jeffrey Doyle (jeffrey.doyle@dapperlabs.com)                                    |
-| **Updated**   | 2023-04-06                                                                      |
+# FLIP 163: Interaction Template Cadence Doc (v1.0.0)
 
 ## Objective
 
