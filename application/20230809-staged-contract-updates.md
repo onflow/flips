@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 flip: [179](https://github.com/onflow/flips/pull/179)
 authors: Giovanni Sanchez (giovanni.sanchez@dapperlabs.com)
 sponsor: Giovanni Sanchez (giovanni.sanchez@dapperlabs.com)
