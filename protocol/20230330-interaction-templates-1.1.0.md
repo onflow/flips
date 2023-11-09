@@ -2,9 +2,9 @@
 
 | Status        | Proposed                                                       |
 | :------------ | :------------------------------------------------------------- |
-| **FLIP #**    | --                                                             |
+| **FLIP #**    | 219                                                            |
 | **Forum**     | https://forum.onflow.org/t/flip-934-interaction-templates/3080 |
-| **Author(s)** | Jeffrey Doyle (jeffrey.doyle@dapperlabs.com)                   |
+| **Author(s)** | Jeffrey Doyle (jeffrey.doyle@dapperlabs.com), Bjarte Karlsen (bjarte@find.xyz), Tom Haile (tom.haile@dapperlabs.com), Brian Pistone (dev@boiseitguru.com), Akos Erdos (wfalcon0x808@gmail.com) |
 | **Sponsor**   | Jeffrey Doyle (jeffrey.doyle@dapperlabs.com)                   |
 | **Updated**   | 2023-03-30                                                     |
 
