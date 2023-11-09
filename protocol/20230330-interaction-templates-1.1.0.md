@@ -197,26 +197,37 @@ Here is an example `InteractionTemplate` for a "Transfer FLOW" transaction:
         ]
       }
     ],
-    cadence: // Cadence code this interaction executes.
-    `
-    import "FlowToken"
-    transaction(amount: UFix64, to: Address) {
-        let vault: @FungibleToken.Vault
-        prepare(signer: AuthAccount) {
-            %%self.vault <- signer
-            .borrow<&{FungibleToken.Provider}>(from: /storage/flowTokenVault)!
-            .withdraw(amount: amount)
+    cadence: { // Cadence code this interaction executes.
+      body: `
+        import "FlowToken"
+        transaction(amount: UFix64, to: Address) {
+            let vault: @FungibleToken.Vault
+            prepare(signer: AuthAccount) {
+                %%self.vault <- signer
+                .borrow<&{FungibleToken.Provider}>(from: /storage/flowTokenVault)!
+                .withdraw(amount: amount)
 
-            self.vault <- FungibleToken.getVault(signer)
+                self.vault <- FungibleToken.getVault(signer)
+            }
+            execute {
+                getAccount(to)
+                .getCapability(/public/flowTokenReceiver)!
+                .borrow<&{FungibleToken.Receiver}>()!
+                .deposit(from: <-self.vault)
+            }
         }
-        execute {
-            getAccount(to)
-            .getCapability(/public/flowTokenReceiver)!
-            .borrow<&{FungibleToken.Receiver}>()!
-            .deposit(from: <-self.vault)
+        `,
+        pins: [
+        {
+          network: "mainnet",
+          pin: "186e262ce6fe06b5075ec6569a0e5482a79c471881182612d8e4a665c2977f3e"
+        },
+        {
+          network: "testnet",
+          pin: "f93977d7a297f559e97259cb2a95fed0f87cfeec46c5257a26adc26a260d6c4c"
         }
-    }
-    `,
+      ]
+    },   
     dependencies: [
       {
         contracts: [
@@ -384,8 +395,8 @@ Here is an example `InteractionTemplate` for a "Transfer FLOW" transaction:
         ]
       }
     ],
-    cadence: // Cadence code this interaction executes.
-    `
+    cadence: { // Cadence code this interaction executes.
+      body: `
       import "FungibleToken"
       import "FlowToken"
 
@@ -398,6 +409,17 @@ Here is an example `InteractionTemplate` for a "Transfer FLOW" transaction:
           return vaultRef.balance
       }
     `,
+      pins: [
+        {
+          network: "mainnet",
+          pin: "f4355ea07422d5b1cfebff8c609748dccb4e9a1a5c75d0d197df254232a90e6f"
+        },
+        {
+          network: "testnet",
+          pin: "7e26be0b1efbbe08dfccc343f31ba0fc631573227c67afbc11e5ff7b6baca964"
+        }
+      ]
+    },
     dependencies: [
       {
         contracts: [
@@ -569,7 +591,23 @@ Internationalized, human readable messages explaining the interaction. For each 
 
 #### `data.cadence`
 
-The cadence code the interaction executes.
+The cadence code the interaction executes along with hash values of the fully qualified cadence. If the cadence has imports, the imports are resolved. Example `import "FungibleToken` becomes `import FungibleToken from 0x7e60df042a9c0868` for mainnet and `import FungibleToken from 0x9a0766d93b6608b7` for testnet. 
+
+Full example below would sha256 hash to `4ca967e0c3849d2a1d9a80dab7adf6a9c8b51b35a183a201fd69f1eadcd600fb`
+```cadence
+import FungibleToken from 0x7e60df042a9c0868
+import FlowToken from 0x9a0766d93b6608b7
+
+pub fun main(address: Address): UFix64 {
+    let vaultRef = getAccount(address)
+        .getCapability(/public/flowTokenBalance)
+        .borrow<&FlowToken.Vault{FungibleToken.Balance}>()
+        ?? panic("Could not borrow Balance reference to the Vault")
+
+    return vaultRef.balance
+}
+```
+
 
 #### `data.dependencies`
 
@@ -845,12 +883,22 @@ template-output-content         = [
 template-output-label         = Label for an output
 template-output               = [ sha3_256(template-output-label), [ ...template-output-content ]]
 
+template-cadence-networks     = [
+  sha3_256(cadence-pins-network), 
+  sha3_256(cadence-pins-pin)
+]
+template-cadence-content      = [
+  sha3_256(cadence.body),
+  [...template-cadence-networks]
+]
+
+
 template-f-version            = Version of the InteractionTemplate data structure being serialized.
 template-f-type               = "InteractionTemplate"
 template-type                 = "transaction" | "script"
 template-interface            = ID of the InteractionTemplateInterface this template implements | ""
 template-messages             = [ ...template-message ] | []
-template-cadence              = Cadence content of the template
+template-cadence              = template-cadence-content
 template-dependencies         = [ ...template-dependency ] | []
 template-parameters            = [ ...template-parameter ] | []
 template-output            = [ ...template-output ] | {}
