@@ -1110,7 +1110,21 @@ sha3_256(MESSAGE)
           ]
         },
         "cadence": {
-          "type": "string"
+          "body": "string",
+          "pins": [
+            {
+              "network": string,
+              "pin": string
+            },
+            "required": [
+              "network",
+              "pin"
+            ]
+          ],
+          "required": [
+            "body",
+            "pins"
+          ]
         },
         "dependencies": {
           "type": "array",
