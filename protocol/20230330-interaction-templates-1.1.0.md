@@ -786,7 +786,11 @@ await fcl.query({
 })
 ```
 
-Since a URL can remain static, while the Interaction Template it corresponds to dynamic and able to change, this allows developers to always request the most up to date implementation of an interaction - enabling a mechanic for contract developers to modify their contracts and interactions while helping to prevent any downstream breaking changes.
+Since a URL can remain static, while the Interaction Template it corresponds to dynamic and able to change, this allows developers to always request the most up to date implementation of an interaction - enabling a mechanic for contract developers to modify their contracts and interactions while helping to prevent any downstream breaking changes. [flixkit-go](https://github.com/onflow/flixkit-go) has support for creating JavaScript files using Interaction templates. Flow-cli integrates flowkit-go.
+
+### Golang Integrations
+
+Go is a popular language in the Flow ecosystem. [flixkit-go](https://github.com/onflow/flixkit-go) has support for executing, generating and creating JavaScript binding files. Flow-cli integrates flixkit-go so that users can `execute`, `generate` and `package` (create JavaScript that calls the interactive template's cadence.) 
 
 ### Wallet Integration
 
