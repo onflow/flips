@@ -1,12 +1,12 @@
-# Interaction Templates (Latest)
+---
+status: Approved
+flip: 219
+authors: Jeffrey Doyle (jeffrey.doyle@dapperlabs.com), Bjarte Karlsen (bjarte@find.xyz), Tom Haile (tom.haile@dapperlabs.com), Brian Pistone (dev@boiseitguru.com), Akos Erdos (wfalcon0x808@gmail.com)
+sponsor: Jeffrey Doyle (jeffrey.doyle@dapperlabs.com)
+updated:  2023-03-30
+---
 
-| Status        | Proposed                                                       |
-| :------------ | :------------------------------------------------------------- |
-| **FLIP #**    | 219                                                            |
-| **Forum**     | https://forum.onflow.org/t/flip-934-interaction-templates/3080 |
-| **Author(s)** | Jeffrey Doyle (jeffrey.doyle@dapperlabs.com), Bjarte Karlsen (bjarte@find.xyz), Tom Haile (tom.haile@dapperlabs.com), Brian Pistone (dev@boiseitguru.com), Akos Erdos (wfalcon0x808@gmail.com) |
-| **Sponsor**   | Jeffrey Doyle (jeffrey.doyle@dapperlabs.com)                   |
-| **Updated**   | 2023-03-30                                                     |
+# Interaction Templates (Latest)
 
 > This FLIP presents the latest version (v1.1.0) of the InteractionTemplate and InteractionTemplateInterface data structures.
 > To read more on the prior version (v1.0.0) of InteractionTemplate and InteractionTemplateInterface, see: https://github.com/onflow/flips/blob/main/flips/20220503-interaction-templates.md
