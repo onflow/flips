@@ -17,66 +17,83 @@ the `base` and `self` variables in attachments.
 ## Motivation
 
 Currently, attachments present a major foot-gun with respect to their interaction with entitlements.
+In particular, it is possible to authorize an attachment to some entitlement, and then use that to obtain access
+to the attachment's base value. While this is safe in and of itself, if a value with attachments is transferred 
+to another user, the attachments on that value are transferred as well and may contain attachments with entitlements
+that the user is not expecting.  
 Consider the following example, in which an attachment is used to backdoor a resource:
 
 ```cadence
 // standard code
 access(all) entitlement Withdraw
 access(all) entitlement Deposit
+
 access(all) resource Vault {
+
   access(all) var balance: UFix64
+
   init(balance: UFix64) {
     self.balance = balance
   }
+
   access(Withdraw) fun withdraw(amount: UFix64): @Vault {
     self.balance = self.balance - amount
     return <-create Vault(balance: amount)
   }
+
   access(Deposit) fun deposit(from: @Vault) {
     self.balance = self.balance + from.balance
-    from.balance = 0.0;
+    from.balance = 0.0
     destroy from
   }
+
 }
 
 // Victim code starts - designed without thinking about attachments
 access(all) resource Company {
-    access(self) var vault: @Vault;
-    init(incorporationEquity: @Vault){
+
+    access(self) var vault: @Vault
+
+    init(incorporationEquity: @Vault) {
+
         pre {
             incorporationEquity.balance >= 100.0
         }
+
         self.vault <- incorporationEquity
     }
+
     access(all) fun getDepositOnlyReference(): auth(Deposit) &Vault {
         return &self.vault as auth(Deposit) &Vault
-    }
-    destroy() {
-        destroy self.vault
     }
 }
 // Victim code ends
 
-
 access(all) attachment Backdoor for Vault {
+
   require entitlement Withdraw
+
   access(all) fun sneakyWithdraw(amount: UFix64): @Vault {
     return <- base.withdraw(amount: amount)
   }
+
 }
 
-
 access(all) fun main(): UFix64 {
+
    let backdooredVault <- attach Backdoor() to (<- create Vault(balance: 100.0)) with (Withdraw)
    let c <- create Company(incorporationEquity: <- backdooredVault)
    var ref = c.getDepositOnlyReference()
+   
    // The following would fail because we only have a Deposit entitlement
    // var x <- ref.withdraw(amount: ref.balance)
    // Luckily we have backdoored the underlying vault so we can do this:
    var x <- ref[Backdoor]!.sneakyWithdraw(amount: ref.balance)
    var amountOfFundsStolen = x.balance
+
    destroy x
    destroy c
+
    return amountOfFundsStolen
 } 
 ```
@@ -94,7 +111,8 @@ This would enable contract authors to write their contracts in a more natural, i
 
 ## Design Proposal
 
-This proposes two main changes to how attachments and entitlements interact:
+This proposes two main changes to how attachments and entitlements interact. The first changes how access is determined for attachment functions, while 
+the second changes how authorization is decided for attachments on access from references.
 
 1) Removing the `require entitlement` syntax from `attachment` declarations, along with the ability to declare `attachment`s with mapped access. Instead, 
 all attachments will be declared with `access(all)` access on their declaration, and the entitlements of the `self` and `base` references in each function will be
@@ -123,10 +141,12 @@ determined by the entitlements used in the access of that function. So, for exam
     This brings us to the second proposed change:
 
 2) Attachment access always propagates entitlements from its base as if through the `Identity` map. Equivalently, `v[A]` always produces a reference to `A` that is entitled to the same entitlements as `v`. This means that in the above example, the definition of `sneakyWithdraw` is safe because a `Withdraw`-entitled reference to 
-`Backdoor` can only be obtained from a `Withdraw`-entitled reference to `Vault`. 
+`Backdoor` can only be obtained from a `Withdraw`-entitled reference to `Vault`. Effectively, this means that the owner of an value with attachments has the sole 
+ability to decide the entitlements with which those attachments can be used, since they are the only one who can create references to that value. Since references
+are invalidated when resources are transferred, resource owners do not "inherit" attachment entitlements upon receiving a value from another user. 
 
-    Note that this necessarily implies that attachments can only support the same entitlements that exist on the `base` value. I.e. an attachment defined for some
-    `R` that only has entitlements `X` and `Y` will itself only support `X` and `Y`. 
+Note that this necessarily implies that attachments can only support the same entitlements that exist on the `base` value. I.e. an attachment defined for some
+`R` that only has entitlements `X` and `Y` will itself only support `X` and `Y`. 
 
 ### Drawbacks
 
