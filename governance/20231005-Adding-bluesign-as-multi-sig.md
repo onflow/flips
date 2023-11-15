@@ -50,7 +50,13 @@ This proposal does not introduce new dependencies to the Flow blockchain. It is 
 
 ### Engineering Impact
 
-There is no direct engineering impact associated with this proposal. The addition of @bluesign as a signer involves administrative and governance considerations.
+There is no direct engineering impact associated with this proposal. The addition of @bluesign as a signer involves administrative and governance considerations. The key details are below - 
+
+projects/flow-352513/locations/us-east1/keyRings/flow/cryptoKeys/hc/cryptoKeyVersions/1
+
+Public Key         475aac6dc9e0a045323f8e24f0aa8ebbec9dfedc34a5cc47bbb206f8d639f03812231731a9608edab6582056ab0a3281350666330daca384c7dff777cc6823be
+Signature Algorithm     ECDSA_P256
+Hash Algorithm         SHA2_256
 
 ### Best Practices
 
