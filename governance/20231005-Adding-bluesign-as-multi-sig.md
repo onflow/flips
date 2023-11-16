@@ -1,5 +1,5 @@
 ---
-Status: Draft 
+Status: Released 
 Flip: 208
 Authors: Kshitij Chaudhary (kshitij.chaudhary@dapperlabs.com)
 Sponsor: Kshitij Chaudhary (kshitij.chaudhary@dapperlabs.com)
