@@ -76,3 +76,10 @@ The user impact of this proposal is negligible and is primarily related to gover
 - Do community members support the inclusion of @bluesign as a signer, and if so, are there any specific expectations from his role?
 
 Your feedback and input on this proposal are highly valued, and we look forward to discussions and consensus-building regarding the addition of @bluesign as a multi-sig signer.
+
+> This FLIP has now been implemented as part of the following service account and staking account transactions, respectively,
+>
+> https://flowscan.org/transaction/d565222c819d18a8951624ce65a9b8875879c864bcf27cadb6767ea5a1d669e9
+>
+> https://flowscan.org/transaction/a9aaf36be4d873a31dbd7e671f13709e6b76e9991bdd5344bb54b6ae592b59b1
+> >
