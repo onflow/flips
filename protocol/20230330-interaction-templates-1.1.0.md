@@ -320,7 +320,7 @@ Here is an example `InteractionTemplate` for a "Transfer FLOW" transaction:
             ]
           }
         ],
-        balance: "FungibleToken" // The token this parameter acts upon.
+        balance: "FlowToken" // The token this parameter acts upon.
       },
       {
         label: "to",
