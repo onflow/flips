@@ -887,7 +887,23 @@ template-output-content         = [
 template-output-label         = Label for an output
 template-output               = [ sha3_256(template-output-label), [ ...template-output-content ]]
 
+
+template-cadence-body-resolved   =  The cadence body for the transaction/script with imports resolved for the given network
+cadence-pins-network.                     =  The network name for this pin ("mainnet" | "testnet" | "emulator")
+cadence-pins-pin                               =  sha3_256(template-cadence-body-resolved )
+
 template-cadence-networks     = [
+  sha3_256(cadence-pins-network), 
+  cadence-pins-pin,
+]
+
+template-cadence-body          = The body of the cadence transaction or script with string imports
+
+template-cadence-content      =  [
+  sha3_256(template-cadence-body ),
+  [...template-cadence-networks]
+]
+
   sha3_256(cadence-pins-network), 
   sha3_256(cadence-pins-pin)
 ]
