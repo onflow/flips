@@ -3,7 +3,7 @@ status: Approved
 flip: 219
 authors: Jeffrey Doyle (jeffrey.doyle@dapperlabs.com), Bjarte Karlsen (bjarte@find.xyz), Tom Haile (tom.haile@dapperlabs.com), Brian Pistone (dev@boiseitguru.com), Akos Erdos (wfalcon0x808@gmail.com)
 sponsor: Jeffrey Doyle (jeffrey.doyle@dapperlabs.com)
-updated:  2023-03-30
+updated:  2023-11-21
 ---
 
 # Interaction Templates (Latest)
