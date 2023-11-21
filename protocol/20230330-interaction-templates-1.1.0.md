@@ -382,7 +382,7 @@ Here is an example `InteractionTemplate` for a "Transfer FLOW" transaction:
         i18n: [ // Internationalised (BCP-47) set of human readable messages about the interaction
           {
             tag: "en-US",
-            translation: "Get FLOW Balane"
+            translation: "Get FLOW Balance"
           },
           {
             tag: "fr-FR",
