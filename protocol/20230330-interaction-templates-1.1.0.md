@@ -217,16 +217,16 @@ Here is an example `InteractionTemplate` for a "Transfer FLOW" transaction:
             }
         }
         `,
-        pins: [
-        {
-          network: "mainnet",
-          pin: "186e262ce6fe06b5075ec6569a0e5482a79c471881182612d8e4a665c2977f3e"
-        },
-        {
-          network: "testnet",
-          pin: "f93977d7a297f559e97259cb2a95fed0f87cfeec46c5257a26adc26a260d6c4c"
-        }
-      ]
+        network_pins: [
+          {
+            network: "mainnet",
+            pin_self: "186e262ce6fe06b5075ec6569a0e5482a79c471881182612d8e4a665c2977f3e"
+          },
+          {
+            network: "testnet",
+            pin_self: "f93977d7a297f559e97259cb2a95fed0f87cfeec46c5257a26adc26a260d6c4c"
+          }
+        ]
     },   
     dependencies: [
       {
