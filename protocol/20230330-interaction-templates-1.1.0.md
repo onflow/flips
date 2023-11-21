@@ -503,15 +503,15 @@ Here is an example `InteractionTemplate` for a "Transfer FLOW" transaction:
             i18n: [ // Internationalised (BCP-47) set of human readable messages about the parameter
               {
                 tag: "en-US",
-                translation: "To", // Messages might consume parameters.
+                translation: "Account",
               },
               {
                 tag: "fr-FR",
-                translation:  "Pour"
+                translation:  "Compte"
               },
               {
                 tag: "zh-CN",
-                translation: "到"
+                translation: "帐户"
               }
             ]
           },
@@ -520,15 +520,15 @@ Here is an example `InteractionTemplate` for a "Transfer FLOW" transaction:
             i18n: [ // Internationalised (BCP-47) set of human readable messages about the parameter
               {
                 tag: "en-US",
-                translation: "Amount of FLOW token to transfer", // Messages might consume parameters.
+                translation: "Account to get the FLOW balance of", // Messages might consume parameters.
               },
               {
                 tag: "fr-FR",
-                translation:  "Le compte vers lequel transférer les jetons FLOW"
+                translation:  "Compte pour obtenir le solde FLOW de"
               },
               {
                 tag: "zh-CN",
-                translation: "将 FLOW 代币转移到的帐户"
+                translation: "获取FLOW余额的账户"
               }
             ]
           }
