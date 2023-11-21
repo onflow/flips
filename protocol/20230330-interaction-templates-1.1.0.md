@@ -320,7 +320,16 @@ Here is an example `InteractionTemplate` for a "Transfer FLOW" transaction:
             ]
           }
         ],
-        balance: "FlowToken" // The token this parameter acts upon.
+        balance: [
+          {
+            network: "mainnet",
+            pin: "A.0xABC123DEF456.FlowToken" // The token this parameter acts upon.
+          }
+          {
+            network: "testnet",
+            pin: "A.0xXYZ678DEF123.FlowToken" // The token this parameter acts upon.
+          }
+        ]
       },
       {
         label: "to",
