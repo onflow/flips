@@ -614,25 +614,52 @@ pub fun main(address: Address): UFix64 {
 For each dependency of the interaction (each contract that is imported in the cadence of the interaction), there must be network keyed (mainnet || testnet) dependency information. The information for each network should contain the address of the account where the contract is deployed, the fully qualified identifier for the contract, dependency tree pin and block height the pin was preformed at. The dependency tree pin is performed by the following pseudocode:
 
 ```javascript
-let contract_imported_in_interaction_cadence = ...
-let import_hash = ""
+// Example contracts map
+//
+// const contracts = {
+//     contract1: {
+//        Body: '...',
+//        Imports: [contract2], // Imports are in declarative order, as specified in the transaction/script/contract
+//        Pin: '', // Pin is initially empty, and will be processed below
+//        SelfPin: '' // SelfPin is initially empty, and will be processed below
+//    },
+//    contract2: {
+//        Body: '...',
+//        Imports: [...],
+//        Pin: '',
+//        SelfPin: '' 
+//    },
+//    // ... more contracts ...
+// };
 
-function processContract(contract) {
-  let contract_code = getContract(contract)
-  let contract_hash = hash(contract_code) // SHA3-256 hash represented as hex string
-  let contract_imports = getContractImports(contract_code)
+function generateDependentPinDepthFirst(contractKey, contracts) {
+    const contract = contracts[contractKey];
 
-  import_hash = import_hash + contract_hash
+    if (contract.Pin !== '') {
+        return contract.Pin;
+    }
 
-  for (let contract_import of contract_imports) {
-    processContract(contract_import)
-  }
+    contract.SelfPin = shaHex(contract.Body);
+
+    const pins = [contract.SelfPin];
+    for (const imp of contract.Imports) {
+        const dep = generateDependentPinDepthFirst(imp.ContractKey(), contracts);
+        pins.push(dep);
+    }
+
+    contract.Pin = shaHex(pins.join(''));
+
+    contracts[contractKey] = contract;
+
+    return contract.Pin; // Returned to assist with the recursive algorithm
 }
 
-processContract(contract_imported_in_interaction_cadence)
+let contracts = generateContractsObjectForEachContractInCadenceCode(cadence) // Generates the example contracts object illustrated above given a cadence transaction or script.
 
-let pin = hash(import_hash) // SHA3-256 hash represented as hex string
-
+// Compute pins for each contract
+for (const contractKey in contracts) {
+    generateDependentPinDepthFirst(contractKey, contracts);
+}
 ```
 
 #### `data.parameters`
