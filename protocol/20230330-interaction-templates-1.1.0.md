@@ -812,7 +812,7 @@ A deterministic serialization algorithm is required to be applied prior to hashi
 
 By serializing each data structure into a specific format, then [RLP encoding](https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp/) that format, then hashing that encoding, we can generate identifiers for each data structure.
 
-### `InteractionTemplate` f_version 2.0.0
+### `InteractionTemplate` f_version 1.1.0
 
 ```text
 template-message-key-content   = UTF-8 string content of the message
