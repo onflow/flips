@@ -1,13 +1,15 @@
----
-status: implemented
-flip: 934
-forum: https://forum.onflow.org/t/flip-934-interaction-templates/3080
-authors: Jeffrey Doyle (jeffrey.doyle@dapperlabs.com)
-sponsor: Jeffrey Doyle (jeffrey.doyle@dapperlabs.com)
-updated: 2022-05-03
----
+# Interaction Templates (Deprecated)
 
-# FLIP 934: Interaction Templates
+| Status          | Deprecated                                                     |
+| :-------------- | :------------------------------------------------------------- |
+| **Replaced By** | [FLIP-219](https://github.com/onflow/flips/blob/main/application/20230330-interaction-templates-1.1.0.md)                                                       |
+| **FLIP #**      | [934](https://github.com/onflow/flow/pull/934)                 |
+| **Forum**       | https://forum.onflow.org/t/flip-934-interaction-templates/3080 |
+| **Author(s)**   | Jeffrey Doyle (jeffrey.doyle@dapperlabs.com)                   |
+| **Sponsor**     | Jeffrey Doyle (jeffrey.doyle@dapperlabs.com)                   |
+| **Updated**     | 2023-03-31                                                     |
+
+> ⚠️ This FLIP has been deprecated and replaced by FLIP-219 (see: https://github.com/onflow/flips/blob/main/application/20230330-interaction-templates-1.1.0.md). Please reference the latest version.
 
 ## Abstract
 
