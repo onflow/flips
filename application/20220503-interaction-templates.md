@@ -2,7 +2,7 @@
 
 | Status          | Deprecated                                                     |
 | :-------------- | :------------------------------------------------------------- |
-| **Replaced By** | --                                                             |
+| **Replaced By** | [FLIP-219](https://github.com/onflow/flips/blob/main/application/20230330-interaction-templates-1.1.0.md)                                                       |
 | **FLIP #**      | [934](https://github.com/onflow/flow/pull/934)                 |
 | **Forum**       | https://forum.onflow.org/t/flip-934-interaction-templates/3080 |
 | **Author(s)**   | Jeffrey Doyle (jeffrey.doyle@dapperlabs.com)                   |
