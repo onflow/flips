@@ -9,7 +9,7 @@
 | **Sponsor**     | Jeffrey Doyle (jeffrey.doyle@dapperlabs.com)                   |
 | **Updated**     | 2023-03-31                                                     |
 
-> ⚠️ This FLIP has been deprecated and replaced by (TODO: include FLIP number and link). Please reference the latest version.
+> ⚠️ This FLIP has been deprecated and replaced by FLIP-219 (see: https://github.com/onflow/flips/blob/main/application/20230330-interaction-templates-1.1.0.md). Please reference the latest version.
 
 ## Abstract
 
