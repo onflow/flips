@@ -53,6 +53,7 @@ Formalizing a specification for FCL will improve developer and user experience, 
   - [ Specification](#-specification)
     - [ Definitions](#-definitions)
     - [ Data Types](#-data-types)
+    - [ HTTP Headers](#-http-headers)
     - [ Data Structures](#-data-structures)
       - [ FCL Objects](#-fcl-objects)
         - [ `Service`](#-service)
@@ -76,6 +77,9 @@ Formalizing a specification for FCL will improve developer and user experience, 
         - [ IFRAME/RPC (Front Channel)](#-iframerpc-front-channel)
         - [ POP/RPC | TAB/RPC (Front Channel)](#-poprpc--tabrpc-front-channel)
         - [ HTTP/POST (Back Channel)](#-httppost-back-channel)
+          - [Local Views](#local-views)
+          - [VIEW/MOBILE\_BROWSER](#viewmobile_browser)
+          - [VIEW/DEEPLINK](#viewdeeplink)
         - [ EXT/RPC (Front Channel)](#-extrpc-front-channel)
       - [ Service Method Plugins](#-service-method-plugins)
       - [ Service Types](#-service-types)
@@ -135,6 +139,16 @@ This document is written with the perspective that _you_ who are reading this ri
 FCL Primitive data types are based on the types supported by the [JSON Schema Specification Wright Draft 00](https://tools.ietf.org/html/draft-wright-json-schema-00#section-4.2).
 Note that `integer` as a type is also supported and is defined as a JSON number without a fraction or exponent part.
 
+### <a id="httpheaders"></a> HTTP Headers
+
+FCL clients will send the following HTTP headers with all requests:
+
+- `Fcl-Platform: <platform>` (Where `<platform>` is the platform the FCL client library is running on. Currently, `web` and `mobile` are the only supported values.)
+- `Fcl-Client-Name: <client-name>` (Where `<client-name>` is the name of the FCL client library. For example, `fcl-js` or `fcl-swift`. This is for diagnostic purposes only, it should be preferred to use the `Fcl-Platform` header to behave differently based on the platform.)
+- `Fcl-Client-Version: <client-version>` (Where `<client-version>` is the version of the FCL client library. For example, `0.0.1` or `1.0.0`. It is not recommended to use these version numbers to determine compatibility, as they are not guaranteed to follow any particular scheme. Instead, use the `f_vsn` field of the FCL objects to determine compatibility.)
+
+Older versions of FCL clients may not send these headers, so it is recommended to not rely on them being present.
+
 ### <a id="datastructures"></a> Data Structures
 
 In the following description, if a field is not explicitly **REQUIRED** or described with a MUST or SHALL, it can be considered OPTIONAL.
@@ -143,7 +157,7 @@ In this section we define the schema of objects used in the protocol. While they
 
 For the schema definition language we choose TypeScript, so that the schema closely resembles the actual type definitions one would use when making an FCL implementation.
 
-**Note that currently there are no official type definitions available for FCL. If you are using TypeScript, you will have to create your own type definitions (possibly based on the schema definitions presented in this document).**
+**Note that currently the official type definitions available for FCL are not fully implemented. If you are using TypeScript, you will have to create your own type definitions for some structures (possibly based on the schema definitions presented in this document).**
 
 #### <a id="fclobjects"></a> FCL Objects
 
@@ -283,7 +297,7 @@ Each response back to FCL must be "wrapped" in a `PollingResponse`. The `status`
 
 In summary, zero or more `PENDING` responses should be followed by a non-pending response. It is entirely acceptable for your service to immediately return an `APPROVED` Polling Response, skipping a `PENDING` state.
 
-See also [PollingResponse](https://github.com/onflow/flow-js-sdk/blob/master/packages/fcl/src/current-user/normalize/polling-response.js).
+See also [PollingResponse](https://github.com/onflow/fcl-js/blob/master/packages/fcl/src/normalizers/service/polling-response.js).
 
 Here are some examples of valid `PollingResponse` objects:
 
@@ -466,7 +480,7 @@ interface CompositeSignature extends ObjectBase {
 }
 ```
 
-See also [CompositeSignature](https://github.com/onflow/flow-js-sdk/blob/master/packages/fcl/src/current-user/normalize/composite-signature.js).
+See also [CompositeSignature](https://github.com/onflow/fcl-js/tree/master/packages/fcl/src/normalizers/service/composite-signature.js).
 
 ##### <a id="presignable"></a> `PreSignable`
 
@@ -548,12 +562,12 @@ https://github.com/onflow/fcl-js/blob/master/packages/fcl/src/normalizers/servic
 ##### `frame`
 
 TODO
-[frame](https://github.com/onflow/flow-js-sdk/blob/master/packages/fcl/src/current-user/normalize/frame.js)
+[frame](https://github.com/onflow/fcl-js/tree/master/packages/fcl/src/normalizers/service/frame.js)
 
 ##### `local-view`
 
 TODO
-[local-view](https://github.com/onflow/flow-js-sdk/blob/master/packages/fcl/src/current-user/normalize/local-view.js)
+[local-view](https://github.com/onflow/fcl-js/tree/master/packages/fcl/src/normalizers/service/local-view.js)
 
 [FCL Normalizers](https://github.com/onflow/fcl-js/tree/master/packages/fcl/src/normalizers/service)
 
@@ -571,11 +585,12 @@ Currently these are the only two cases that can be a data service.)
 
 Other services can be a little more complex. For example, they might require a back and forth communication between FCL and the Service in question.
 
-Ultimately we want to do this back and forth via a secure back-channel (https requests to servers), **but in some situations that isn't a viable option, so there is also a front-channel option**.
+It is **strongly recommended** to build your wallet using backchannel services. This is because backchannel services are more secure and have broader compatibility among different platforms.
+
 
 Where possible, you should aim to provide a back-channel support for services, and only fall back to a front-channel if absolutely necessary.
 
-Back-channel communications use `method: "HTTP/POST"`, while front-channel communications use `method: "IFRAME/RPC"`, `method: "POP/RPC"`, `method: "TAB/RPC` and `method: "EXT/RPC"`.
+Back-channel communications use `method: "HTTP/POST"`, while front-channel communications use `method: "IFRAME/RPC"`, `method: "POP/RPC"`, `method: "TAB/RPC`, and `method: "EXT/RPC"`.
 
 | Service Method | Front | Back |
 | -------------- | ----- | ---- |
@@ -586,6 +601,8 @@ Back-channel communications use `method: "HTTP/POST"`, while front-channel commu
 | EXT/RPC        | ✅    | ⛔   |
 
 It's important to note that regardless of the method of communication, the data that is sent back and forth between the parties involved is the same.
+
+**NOTE** Mobile platforms do not support front-channel services.  If you do not use back-channel services (`HTTP/POST`), your wallet will not be compatible with mobile platforms.
 
 ##### <a id="iframerpc"></a> IFRAME/RPC (Front Channel)
 
@@ -642,10 +659,37 @@ When the polling response is `PENDING` it requires an `updates` field that inclu
 FCL will use that `BackChannelRpc` to request a new `PollingResponse` which itself can be `APPROVED`, `DECLINED` or `PENDING`.
 If it is `APPROVED` FCL will return, otherwise if it is `DECLINED` FCL will error. However, if it is `PENDING`, it will use the `BackChannelRpc` supplied in the new `PollingResponse` updates field. It will repeat this cycle until it is either `APPROVED` or `DECLINED`.
 
-There is an additional optional feature that `HTTP/POST` enables in the first `PollingResponse` that is returned.
-This optional feature is the ability for FCL to render an iframe, popup or new tab, and it can be triggered by supplying a service `type: "VIEW/IFRAME"`, `type: "VIEW/POP"` or `type: "VIEW/TAB"` and the `endpoint` that the wallet wishes to render in the `local` field of the `PollingResponse`. This is a great way for a wallet provider to switch to a webpage if displaying a UI is necessary for the service it is performing.
-
 ![HTTP/POST Diagram](https://raw.githubusercontent.com/onflow/flow-js-sdk/master/packages/fcl/assets/service-method-diagrams/http-post.png)
+
+###### <a id="localviews"></a>Local Views
+
+During `HTTP/POST` polling responses, backchannel services additionally have the ability to render a local "view". This offers the wallet provider the ability to facilitate user interaction with the service.
+
+Currently views may render an iframe, popup, new tab, mobile browser, or deep link to another app. It can be triggered by supplying a service `type: "VIEW/IFRAME"`, `type: "VIEW/POP"`, `type: "VIEW/TAB"`, `type: "VIEW/MOBILE_BROWSER"`, or `type: VIEW/DEEPLINK` and the `endpoint` that the wallet wishes to render in the `local` field of the `PollingResponse`. This is a great way for a wallet provider to switch to a webpage (or another app) if displaying a UI is necessary for the service it is executing.
+
+The following table outlines compatibility of the different view types with the different platforms:
+
+| Service Method      | Web | Mobile |
+| ------------------- | --- | ------ |
+| VIEW/IFRAME         | ✅  | ⛔     |
+| VIEW/POP            | ✅  | ⛔     |
+| VIEW/TAB            | ✅  | ⛔     |
+| VIEW/MOBILE_BROWSER | ⛔  | ✅     |
+| VIEW/DEEPLINK       | ⛔  | ✅     |
+
+Due to the differing compatibility, backchannel services are expected to only display views based on the platform they are running on. This can be determined by the `Fcl-Platform` header sent with the request (see [HTTP Headers](#httpheaders)).
+
+###### VIEW/MOBILE_BROWSER
+
+`VIEW/MOBILE_BROWSER` is the mobile counterpart to `VIEW/IFRAME`, `VIEW/POP`, and `VIEW/TAB` in the web. It will display a secure browser window on the user's mobile device (i.e. Android Custom Tabs or iOS SFAuthenticationSession).
+
+However, its implementation is nuanced by limitations of mobile platforms. Views for web clients are managed by the parent FCL client, but on mobile platforms, the FCL client is unable to control the mobile browser window. This means that wallet providers bear the responsibility of interally dismissing the mobile browser when the user has completed their interaction using Javascript APIs. All `ViEW/MOBILE_BROWSER` endpoints are appended with a `fcl_redirect_uri` query parameter, which the wallet should use to return to the dApp.
+
+###### VIEW/DEEPLINK
+
+`VIEW/DEEPLINK` is a view responsible for redirecting to another application on the user's device via a universal link. The wallet's universal link should be provided as the `endpoint` parameter for the view. Only a private-use URI scheme is supported (i.e. universal links on IOS) for security reasons (see https://datatracker.ietf.org/doc/html/rfc8252).
+
+Like `VIEW/MOBILE_BROWSER`, this view is responsible for dismissing itself when the user has completed their interaction with the application.A redirect URL is passed as a query parameter by the client, `fcl_redirect_uri`, which the wallet should use to return to the dApp.
 
 ##### <a id="extrpc"></a> EXT/RPC (Front Channel)
 
@@ -734,6 +778,9 @@ config({
 ```
 
 If the method specified is `IFRAME/RPC`, `POP/RPC` or `TAB/RPC`, then the URL specified as `discovery.wallet` will be rendered as a webpage. If the configured method is `EXT/RPC`, `discovery.wallet` should be set to the extension's `authn` `endpoint`. Otherwise, if the method specified is `HTTP/POST`, then the authentication process will happen over HTTP requests. (While authentication can be accomplished using any of those service methods, this example will use the `IFRAME/RPC` service method.)
+
+For `DEEPLINK/RPC` method it's required to specify `discovery.authn.endpoint` as an API endpoint, that should return an array of Authn Service with method
+These services could be consumed by `useServiceDiscovery` react hook.
 
 Once the Authentication webpage is rendered, the extension popup is enabled, or the API is ready, you then need to tell FCL that it is ready. You will do this by sending a message to FCL, and FCL will send back a message with some additional information that you can use about the application requesting authentication on behalf of the user.
 
