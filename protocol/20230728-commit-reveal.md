@@ -1,5 +1,5 @@
 ---
-status: approved
+status: Released
 flip: 123
 authors: Tarak Ben Youssef (tarak.benyoussef@dapperlabs.com)
 sponsor: 
