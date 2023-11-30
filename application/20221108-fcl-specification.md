@@ -10,7 +10,7 @@ updated: 2023-05-31
 
 ## Objective
 
-This FLIP proposes a v1.0 specification for FCL Wallet Providers and dApps to trustlessly interact for the purposes of authentication and producing signatures on Flow. It aims to provide a comprehensive description of the communication protocol and the required features and functionality expected to perform these functions.
+This FLIP proposes a v1.1 specification for FCL Wallet Providers and dApps to trustlessly interact for the purposes of authentication and producing signatures on Flow. It aims to provide a comprehensive description of the communication protocol and the required features and functionality expected to perform these functions.
 
 The goal of this FLIP is to solidify existing implementation patterns and data definitions in a generalized way. Additionally it should open discussion to potential improvements for future versions of the spec in order to evolve the Flow dApp and wallet ecosystem.
 
@@ -37,7 +37,7 @@ Formalizing a specification for FCL will improve developer and user experience, 
 
 ## Design Proposal
 
-### Flow Client Library (FCL) Specification v1.0
+### Flow Client Library (FCL) Specification v1.1
 
 #### Table of Contents
 
@@ -46,7 +46,7 @@ Formalizing a specification for FCL will improve developer and user experience, 
   - [Motivation](#motivation)
   - [User Benefit](#user-benefit)
   - [Design Proposal](#design-proposal)
-    - [Flow Client Library (FCL) Specification v1.0](#flow-client-library-fcl-specification-v10)
+    - [Flow Client Library (FCL) Specification v1.1](#flow-client-library-fcl-specification-v11)
       - [Table of Contents](#table-of-contents)
   - [ Abstract](#-abstract)
   - [ Background / Overview](#-background--overview)
