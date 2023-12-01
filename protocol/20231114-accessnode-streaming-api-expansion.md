@@ -182,101 +182,89 @@ for {
 
 ### SendAndSubscribeTransactionStatuses
 
-Streaming of a transaction and status changes
+This endpoint enables users to send a transaction and immediately subscribe to its status changes. The status is streamed back until the block containing the transaction becomes sealed. Each response for the transaction status should include the `ID`, `Status` and `Error` fields.
 
-This would be great. Something like a SendAndSubscribe endpoint where you submit a tx, and the status is streamed back until the block the tx was included in is sealed.
-
-- **TransactionMsg** (transaction that will be submited to stream status)
+- **TransactionMsg** (transaction submitted to stream status)
 
 Usage example:
 
 ```go
 txMsg, err := transactionToMessage(tx)
 if err != nil {
-	log.Fatalf("error converting transaction to message: %v", err)
+    log.Fatalf("error converting transaction to message: %v", err)
 }
 
 req := &executiondata.SendTransactionRequest{
-	Transaction: txMsg,
+    Transaction: txMsg,
 }
 
 stream, err := client.SendAndSubscribeTransactionStatuses(ctx, req)
 if err != nil {
-	log.Fatalf("error subscribing to transaction statuses : %v", err)
-
+    log.Fatalf("error subscribing to transaction statuses: %v", err)
 }
 
 for {
-	resp, err := stream.Recv()
-	if err == io.EOF {
-		break
-	}
+    resp, err := stream.Recv()
+    if err == io.EOF {
+        break
+    }
 
-	if err != nil {
-		log.Fatalf("error receiving transaction status: %v", err)
-	}
+    if err != nil {
+        log.Fatalf("error receiving transaction status: %v", err)
+    }
 
-	txResult := resp.GetTransactionResult()
+    txResult := resp.GetTransactionResult()
 
-	log.Printf("received transaction status with tx ID: %x, status: %s, and error: %v",
-		resp.GetTransactionID(),
-		txResult.Status.String(),
+    log.Printf("received transaction status with tx ID: %x, status: %s, and error: %v",
+        resp.GetTransactionID(),
+        txResult.Status.String(),
         txResult.Error,
-	)
+    )
 }
 ```
 
 ### SubscribeAccountStatuses - ?
 
-Streaming of an account state changes
+This endpoint allows users to subscribe to the streaming of account status changes. Each response for the account status should include the `?` fields.
 
-This should give possibility to subscribe to account and track statuses changed (Created, Updated)
-
-- **Address** (address of account to stream status changes)
+- **Address** (address of the account to stream status changes)
 
 Usage example:
 
 ```go
 req := &executiondata.SubscribeAccountStatusesRequest{
-	Address: "123456789abcdef0",
+    Address: "123456789abcdef0",
 }
 
 stream, err := client.SubscribeAccountStatuses(ctx, req)
 if err != nil {
-	log.Fatalf("error subscribing to account statuses : %v", err)
-
+    log.Fatalf("error subscribing to account statuses: %v", err)
 }
 
 for {
-	resp, err := stream.Recv()
-	if err == io.EOF {
-		break
-	}
+    resp, err := stream.Recv()
+    if err == io.EOF {
+        break
+    }
 
-	if err != nil {
-		log.Fatalf("error receiving account status: %v", err)
-	}
+    if err != nil {
+        log.Fatalf("error receiving account status: %v", err)
+    }
 
-	// ????? 
+    // Insert appropriate handling for received account status
 }
+
 ```
 
 ### SubscribeResourcesMovement - ?
 
-Streaming of resource movement by type
+Streaming of resource movement by type - Research required
 
 https://github.com/onflow/flow-go-sdk/blob/master/examples/storage_usage/main.go
 
 ### SubscribeResourcesChanges - ?
 
-Streaming of resource changes
+Streaming of resource changes - Research required
 
-these would be awesome. I think there’s some R&D(Research and Development) work needed before it’s possible but definitely valuable. Especially the account state changes as bluesign noted.
+https://github.com/onflow/flow-go-sdk/blob/master/examples/storage_usage/main.go
 
-### SubscribeTransactionResults - ?
-
-Streaming of transaction results starting from the provided block ID or height, and /or collection ID and/or transaction ID. The result should consist of an array of TransactionResult.
-
-This sounds like effectively a streaming version of GetTransactionResultsByBlockID.
-
-I can see some value in searching for transaction ID, where the behavior could be to return the result when the tx is executed/sealed. We’d have to explore this a bit more. I think there may be some open questions for this (e.g. what block is passed in to start? when does it stop searching? what happens if the tx is never finalized?). Much of that would be simplified in an endpoint like the next one.
