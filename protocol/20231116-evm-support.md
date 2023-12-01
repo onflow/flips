@@ -102,7 +102,7 @@ import EVM from <ServiceAddress>
 
 One of the design goals of this work is to ensure that existing EVM ecosystem tooling and products which builders use can integrate effortlessly. To achieve this, the EVM smart contract accepts RLP-encoded transactions for execution. Any transaction can be wrapped and submitted by any user through Flow transactions. As mentioned earlier, the resource usage during EVM interaction is translated into Flow transaction fees, which must be paid by the account that wrapped the original transaction.
 
-To facilitate the wrapping operation and refunding, the run interface also allows a coinbase address to be passed. This coinbase address is an EVM address that would receive the gas usage * gas price (set in transaction). Basically, the transaction wrapper behaves similarly to a miner, receives the gas usage fees on an EVM address and pays for the transaction fees. 
+To facilitate the wrapping operation and refunding, the run interface also allows a `coinbase` address to be passed. The use of the `coinbase` address in this context indicates the EVM address which will receive the gas usage * gas price (set in transaction). Essentially, the transaction wrapper behaves similarly to a miner, receives the gas usage fees on an EVM address and pays for the transaction fees. 
 
 Any failure during the execution would revert the whole Flow transaction. 
 
@@ -117,13 +117,13 @@ import EVM from <ServiceAddress>
   }
 ```
 
-For example, a user might use meta-mask to sign a transaction for FLOW EVM and broadcast it to services that check the gas fee on the transaction and wrap the transaction to be executed. 
+For example, a user might use Metamask to sign a transaction for Flow EVM and broadcast it to services that check the gas fee on the transaction and wrap the transaction to be executed. 
 
 Note that account nonce would protect against double execution of a transaction, similar to how other non-virtual blockchains prevent the minor from including a transaction multiple times. 
 
 #### Bridged accounts
 
-Another major goal for this work is seamless composability across environments. For this goal, we have introduced a new type of address to the EVM environment (besides EOA and Smart Contract accounts). This new address type is similar to EOA’s except instead of being tied to a public/private key it would be controlled by Cadence resources. Any bridged account has a corresponding BridgedAccount resource and any Flow account or Cadence smart contract that holds this resource could interact with the EVM environment on behalf of the address that is stored in the resource. 
+Another major goal for this work is seamless composability across environments. For this goal, we have introduced a new type of address a bridged account, to the EVM environment (besides EOA and Smart Contract accounts). This new address type is similar to EOA’s except instead of being tied to a public/private key it would be controlled by Cadence resources. Unlike EOAs which are created using the key presented by the wallet there is no corresponding EVM key present in a BridgedAccount. Any bridged account is interacted with through BridgedAccount resource and any Flow account or Cadence smart contract that holds this resource could interact with the EVM environment on behalf of the address that is stored in the resource. 
 
 ```
 access(all)contract EVM {
@@ -165,7 +165,7 @@ access(all)contract EVM {
 }
 ```
 
-Bridge account addresses are allocated by the FVM and stored inside the resource. Calls through the bridged accounts form a new type of transaction for the EVM that doesn’t require signatures and doesn’t need nonce checking. Bridged accounts could deploy smart contracts or make calls to the ones that are already deployed on Flow EVM. 
+Bridged account addresses are allocated by the FVM and stored inside the resource. Calls through bridged accounts form a new type of transaction for the EVM that doesn’t require signatures and doesn’t need nonce checking. Bridged accounts could deploy smart contracts or make calls to the ones that are already deployed on Flow EVM. 
 
 Bridged accounts also facilitate the withdrawal of Flow tokens back from the EVM balance environment into the Cadence environment through `withdraw`.
 
