@@ -167,7 +167,7 @@ access(all)contract EVM {
 
 Bridge account addresses are allocated by the FVM and stored inside the resource. Calls through the bridged accounts form a new type of transaction for the EVM that doesn’t require signatures and doesn’t need nonce checking. Bridged accounts could deploy smart contracts or make calls to the ones that are already deployed on Flow EVM. 
 
-Also, these bridged accounts facilitate the withdrawal of Flow tokens back from the EVM balance environment into the Cadence environment through `withdraw`.
+Bridged accounts also facilitate the withdrawal of Flow tokens back from the EVM balance environment into the Cadence environment through `withdraw`.
 
 **What about other fungible and non-tokens?**
 
@@ -177,7 +177,7 @@ The main reason we call these account bridged accounts is their design makes it 
 
 EVM state is not accessible by Cadence outside of the defined interfaces above, and Cadence state is also protected against raw access from the EVM. 
 
-At the start, the EVM state is empty (empty root hash), and all the state is stored under a FLOW account that is not controlled by anyone (network-owned). Any interaction with this environment emits a transactionExecuted event (direct calls for bridged accounts use `255` as transaction type).  
+At the start, the EVM state is empty (empty root hash), and all the state is stored under a Flow account that is not controlled by anyone (network-owned). Any interaction with this environment emits a transactionExecuted event (direct calls for bridged accounts use `255` as transaction type).  
 
 So anyone following these events could reconstruct the whole EVM state by re-executing these transactions.
 
@@ -200,11 +200,7 @@ So anyone following these events could reconstruct the whole EVM state by re-exe
 
 ### Dependencies
 
-* Dependencies: does this proposal add any new dependencies to Flow?
-* Dependent projects: are there other areas of Flow or things that use Flow 
-(Access API, Wallets, SDKs, etc.) that this affects? 
-How have you identified these dependencies and are you sure they are complete? 
-If there are dependencies, how are you managing those changes?
+The project introduces no new dependencies from the Ethereum codebase since those required are already included in flow-go
 
 ### Engineering Impact
 
@@ -212,11 +208,6 @@ If there are dependencies, how are you managing those changes?
 * Who will maintain this code? Is this code in its own buildable unit? 
 Can this code be tested in its own? 
 Is visibility suitably restricted to only a small API surface for others to use?
-
-### Best Practices
-
-* Does this proposal change best practices for some aspect of using/developing Flow? 
-How will these changes be communicated/enforced?
 
 ### Tutorials and Examples
 
@@ -248,18 +239,6 @@ Some things to consider related to the tutorial:
 
 What related issues do you consider out of scope for this proposal, 
 but could be addressed independently in the future?
-
-## Prior Art
-
-Does the proposed idea/feature exist in other systems and 
-what experience has their community had?
-
-This section is intended to encourage you as an author to think about the 
-lessons learned from other projects and provide readers of the proposal 
-with a fuller picture.
-
-It's fine if there is no prior art; your ideas are interesting regardless of 
-whether or not they are based on existing work.
 
 ## Questions and Discussion
 
