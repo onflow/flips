@@ -15,7 +15,7 @@ updated: 2023-11-16
 
 ## Motivation
 
-This work would makes it easier for EVM-centeric Dapps and Platforms to adopt Flow.
+This work would makes it easier for EVM-centric Dapps and Platforms to adopt Flow.
 Please see [this forum discussion](https://forum.flow.com/t/evm-on-flow-beyond-solidity/5260) for motivations.
 
 ## Design Proposal
@@ -66,7 +66,7 @@ access(all) contract EVM {
 
 A FLOW is equivalent of 10^18 atto-FLOW. Because EVM environments uses different way of storage of value for the native token than FLOW protocol (FLOW protocol uses a fixed point representation), to remove any room for mistakes, EVM environment has structure called `Balance` that could be used.
 
-Note that no new Flow token is minted and every balance on EVM addresses has to be deposited by bridging FLOW tokens into addresses using `deposit` method.
+Note that no new FLOW token is minted and every balance on EVM addresses has to be deposited by bridging FLOW tokens into addresses using `deposit` method.
 
 ```
 access(all)contract EVM {
@@ -85,7 +85,7 @@ access(all)contract EVM {
 }
 ```
 
-Every account on FLOW evm could be queried by constructing an EVM structure.  Here is an example: 
+Every account on Flow EVM could be queried by constructing an EVM structure.  Here is an example: 
 
 ```
 // Example of balance query
@@ -100,7 +100,7 @@ import EVM from <ServiceAddress>
 
 #### EVM-style transaction wrapping
 
-One of the design goals of this work is to enable interaction with this environment for tools that are only EVM-compatible. To achieve this, the EVM smart contract accepts RLP-encoded transactions for execution. Any transaction can be wrapped and submitted by any user through Flow transactions. As mentioned earlier, the resource usage during EVM interaction is translated into Flow transaction fees, which must be paid by the account that wrapped the original transaction.
+One of the design goals of this work is to ensure that existing EVM ecosystem tooling and products which builders use can integrate effortlessly. To achieve this, the EVM smart contract accepts RLP-encoded transactions for execution. Any transaction can be wrapped and submitted by any user through Flow transactions. As mentioned earlier, the resource usage during EVM interaction is translated into Flow transaction fees, which must be paid by the account that wrapped the original transaction.
 
 To facilitate the wrapping operation and refunding, the run interface also allows a coinbase address to be passed. This coinbase address is an EVM address that would receive the gas usage * gas price (set in transaction). Basically, the transaction wrapper behaves similarly to a miner, receives the gas usage fees on an EVM address and pays for the transaction fees. 
 
