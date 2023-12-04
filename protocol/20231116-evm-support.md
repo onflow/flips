@@ -1,12 +1,12 @@
 ---
 status: draft 
-flip: NNN (set to the issue number)
+flip: 223 (set to the issue number)
 authors: Ramtin Seraj (ramtin.seraj@flowfoundation.org), Bastian Müller (bastian@dapperlabs.com)
 sponsor: Dieter Shirley (dete@dapperlabs.com)
 updated: 2023-12-04
 ---
 
-# FLIP NNN: EVM integration interface
+# FLIP 223: EVM integration interface
 
 ## Objective
 
