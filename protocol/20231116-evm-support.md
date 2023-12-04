@@ -1,9 +1,9 @@
 ---
 status: draft 
 flip: NNN (set to the issue number)
-authors: Ramtin Seraj (ramtin.seraj@flowfoundation.org), ...
-sponsor: To be added
-updated: 2023-11-16 
+authors: Ramtin Seraj (ramtin.seraj@flowfoundation.org), Bastian Müller (bastian@dapperlabs.com)
+sponsor: Dieter Shirley (dete@dapperlabs.com)
+updated: 2023-12-04
 ---
 
 # FLIP NNN: EVM integration interface
@@ -22,17 +22,22 @@ Please see [this forum discussion](https://forum.flow.com/t/evm-on-flow-beyond-s
 
 #### EVM as a standard smart contract
 
-An easy way to understand the approach proposed in this Flip is to consider Flow EVM as a virtual blockchain deployed to the Flow blockchain at a specific address (e.g., a service account). It behaves as if a complete EVM runtime has been implemented in Cadence. However, we leverage the extensibility property of the Cadence runtime and utilize the same EVM Go implementation that Ethereum uses. The Cadence runtime is designed to be extensible with standard Cadence smart contracts implemented in native languages, as long as the resource is meter-able, resource-bounded, and deterministic.
+An easy way to understand the approach proposed in this Flip is to consider Flow EVM as a virtual blockchain deployed to the Flow blockchain at a specific address (e.g., a service account). It behaves as if a complete EVM runtime has been implemented in Cadence. However, we leverage the extensibility property of the Cadence runtime and utilize the reference Geth implementation used by many Ethereum nodes. The Cadence runtime is designed to be extensible with standard Cadence smart contracts implemented in native languages, as long as the resource consumption is meter-able and bounded, and operations are deterministic.
 
-Every Flow transaction has access to this environment similar to the way it has access to other standard contracts like RLP encoding etc.
+In other words, EVM on Flow is a smart contract that emulates EVM (dedicated chain-ID); signed transactions goes in and a chain of blocks come out. Similar to other built-in standard contracts (e.g. RLP encoding), this EVM environment can be imported inside any Flow transaction or script. 
 
 ```
 import EVM from <ServiceAddress>
 ```
 
-Every interaction with this smart contract that changes the state results in the formation of a new block (specific chain IDs), which is then stored on-chain. It also emits several FLOW event types (`evm.BlockExecuted`, `evm.TransactionExecuted`) that can be consumed to track the chain progress. For more details, refer to the documentation [here](https://github.com/onflow/flow-go/blob/master/fvm/evm/types/events.go).
+Within the flow transaction, if EVM interaction is successful 
 
-Since we use Flow transactions to interact with the Flow EVM environment, there is no need for complex block formation logic, such as handling uncle chains and reorgs. These transactions are executed and verified on Flow just like all other transactions and smart contracts. They are also protected from malicious MEV behaviours using the same mechanism that safeguards all other Flow transactions.
+- it makes changes to the on-chain data
+- forms a new block if successful,
+- emits several FLOW event types (see [here](https://github.com/onflow/flow-go/blob/master/fvm/evm/types/events.go) ) that can be consumed to track the chain progress.
+And if unsuccessful, it reverts the transaction.
+
+As EVM interactions are encapsulated within Flow transactions, they leverage the security measures provided by Flow. These transactions undergo the same process of collection, execution, and verification as other Flow transactions, without any EVM intervention. Consequently, there is no requirement for intricate block formation logic (such as handling forks and reorganizations), mempools, or additional safeguards against malicious MEV (Miner Extractable Value) behaviours.
 
 On EVM environment, resource consumptions are metered as `gas usage`, when interacting with EVM environment, the total gas usage is translated back into computation usage and would be paid as part of FLOW transaction fees (weigh-adjusted conversion). 
 
@@ -171,7 +176,7 @@ Bridged accounts also facilitate the withdrawal of Flow tokens back from the EVM
 
 **What about other fungible and non-tokens?**
 
-The main reason we call these account bridged accounts is their design makes it easy to build bridges. A Cadence smart contract can control a bridged account which means it could facilitate transactional operation across two environments. For example, this smart contract can accept a Fungible on the cadence side and remit the equivalence on the EVM side to a target address in a single Flow transaction. More about this would come in follow-up Flips. 
+The term "bridged accounts" is used because their design facilitates the building of bridges. A Cadence smart contract can control a bridged account, enabling transactional operations between two environments. For instance, this smart contract can receive a Fungible on the Cadence side and send the equivalent on the EVM side to a specified address, all in a single Flow transaction. More details on this will be provided in subsequent updates.
 
 #### Safety and Reproducibility of the EVM state
 
@@ -181,67 +186,12 @@ At the start, the EVM state is empty (empty root hash), and all the state is sto
 
 So anyone following these events could reconstruct the whole EVM state by re-executing these transactions.
 
-### Drawbacks
-
-[WIP]
-
-### Alternatives Considered
-
-[WIP]
-
-### Performance Implications
-
-[WIP]
-
-* Do you expect any (speed / memory)? How will you confirm?
-* There should be microbenchmarks. Are there?
-* There should be end-to-end tests and benchmarks. If there are not 
-(since this is still a design), how will you track that these will be created?
-
 ### Dependencies
 
 The project introduces no new dependencies from the Ethereum codebase since those required are already included in flow-go
 
-### Engineering Impact
-
-* Do you expect changes to binary size / build time / test times?
-* Who will maintain this code? Is this code in its own buildable unit? 
-Can this code be tested in its own? 
-Is visibility suitably restricted to only a small API surface for others to use?
-
 ### Tutorials and Examples
 
-* If design changes existing API or creates new ones, the design owner should create 
-end-to-end examples (ideally, a tutorial) which reflects how new feature will be used. 
-Some things to consider related to the tutorial:
-    - It should show the usage of the new feature in an end to end example 
-    (i.e. from the browser to the execution node). 
-    Many new features have unexpected effects in parts far away from the place of 
-    change that can be found by running through an end-to-end example.
-    - This should be written as if it is documentation of the new feature, 
-    i.e., consumable by a user, not a Flow contributor. 
-    - The code does not need to work (since the feature is not implemented yet) 
-    but the expectation is that the code does work before the feature can be merged. 
+A proof of concept implementation of this proposal is available [here](https://github.com/onflow/flow-emulator/releases/tag/v0.57.4-evm-poc). 
 
-### Compatibility
-
-* Does the design conform to the backwards & forwards compatibility [requirements](../docs/compatibility.md)?
-* How will this proposal interact with other parts of the Flow Ecosystem?
-    - How will it work with FCL?
-    - How will it work with the Emulator?
-    - How will it work with existing Flow SDKs?
-
-### User Impact
-
-* What are the user-facing changes? How will this feature be rolled out?
-
-## Related Issues
-
-What related issues do you consider out of scope for this proposal, 
-but could be addressed independently in the future?
-
-## Questions and Discussion
-
-State where you would want the community discussion to take place (choosing between the PR itself, or forum post)
-Seed with open questions you require feedback on from the FLIP process. 
 What parts of the design still need to be defined?
