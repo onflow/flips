@@ -858,8 +858,8 @@ template-message-key           = Key for a template message (eg: "title", "descr
 template-message               = [ sha3_256(template-message-key), [ ...template-message-translation ] ]
 
 template-dependency-contract-pin-block-height = Network block height the pin was generated against.
-template-dependency-contract-pin              = Pin of contract
-template-dependency-contract-fq-addr          = Fully qualified contract identifier
+template-dependency-contract-pin              = Pin of contract and it's dependency tree
+template-dependency-contract-pin-self         = Pin of the contract itself
 template-dependency-network-address           = Address of an account
 template-dependency-network                   = "mainnet" | "testnet" | "emulator" | Custom Network Tag
 template-dependency-contract-network          = [
@@ -867,8 +867,8 @@ template-dependency-contract-network          = [
     [
         sha3_256(template-dependency-network-address),
         sha3_256(template-dependency-contract-name),
-        sha3_256(template-dependency-contract-fq-address),
         sha3_256(template-dependency-contract-pin),
+	sha3_256(template-dependency-contract-pin-self),
         sha3_256(template-dependency-contract-pin-block-height)
     ]
 ]
@@ -956,8 +956,8 @@ template-interface            = ID of the InteractionTemplateInterface this temp
 template-messages             = [ ...template-message ] | []
 template-cadence              = template-cadence-content
 template-dependencies         = [ ...template-dependency ] | []
-template-parameters            = [ ...template-parameter ] | []
-template-output            = [ ...template-output ] | {}
+template-parameters           = [ ...template-parameter ] | []
+template-output               = [ ...template-output ] | {}
 
 
 template-encoded              = RLP([
