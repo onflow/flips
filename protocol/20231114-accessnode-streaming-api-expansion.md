@@ -257,11 +257,81 @@ for {
 
 ### SubscribeResourcesMovement - ?
 
+This endpoint allows users to subscribe to the streaming of account resource movement. Each response for the account resource movement should include the `?` fields.
+
+- **Address** (address of the account to stream resources movement)
+- **Type** (type of the resources in the account storage to stream)
+
+Usage example:
+
+```go
+req := &executiondata.SubscribeResourcesMovementRequest{
+    Address: "123456789abcdef0",
+    Type: "",
+}
+
+stream, err := client.SubscribeResourcesMovement(ctx, req)
+if err != nil {
+    log.Fatalf("error subscribing to account resource movement: %v", err)
+}
+
+for {
+    resp, err := stream.Recv()
+    if err == io.EOF {
+        break
+    }
+
+    if err != nil {
+        log.Fatalf("error receiving account resource movement: %v", err)
+    }
+
+    // Insert appropriate handling for received account status
+}
+
+```
+
 Streaming of resource movement by type - Research required
 
-https://github.com/onflow/flow-go-sdk/blob/master/examples/storage_usage/main.go
+- https://github.com/onflow/flow-go-sdk/blob/master/examples/storage_usage/main.go
+- https://developers.flow.com/tools/flow-js-testing/api#storage-inspection
+- https://github.com/onflow/flow-js-testing/blob/e2d4f1a3c8fe8549a01785566090d8c8adcb6903/src/storage.js#L257
+- https://github.com/onflow/flow-go/blob/master/fvm/environment/accounts_status.go
+- https://developers.flow.com/build/basics/events#core-events
+- https://forum.flow.com/t/suggestion-default-events/2170
+
 
 ### SubscribeResourcesChanges - ?
+
+This endpoint allows users to subscribe to the streaming of account resource changes. Each response for the account resource changes should include the `?` fields.
+
+- **Address** (address of the account to stream status changes)
+
+Usage example:
+
+```go
+req := &executiondata.SubscribeResourcesChangesRequest{
+    Address: "123456789abcdef0",
+}
+
+stream, err := client.SubscribeResourcesChanges(ctx, req)
+if err != nil {
+    log.Fatalf("error subscribing to account resources statuses: %v", err)
+}
+
+for {
+    resp, err := stream.Recv()
+    if err == io.EOF {
+        break
+    }
+
+    if err != nil {
+        log.Fatalf("error receiving account resources status: %v", err)
+    }
+
+    // Insert appropriate handling for received account status
+}
+
+```
 
 Streaming of resource changes - Research required
 
@@ -276,7 +346,6 @@ Regarding the REST aspect, it's crucial to emphasize the importance of evaluatin
 ### Nodes and Clients
 
 The anticipated performance gains and drawbacks should correspond to those outlined in [FLIP73 -> Nodes](https://github.com/onflow/flips/blob/main/protocol/20230309-accessnode-event-streaming-api.md#nodes) and [FLIP73 -> Clients](https://github.com/onflow/flips/blob/main/protocol/20230309-accessnode-event-streaming-api.md#clients). However, these outcomes will correlate with a broader range of available endpoints and their respective usage.
-
 
 ### Dependencies
 
