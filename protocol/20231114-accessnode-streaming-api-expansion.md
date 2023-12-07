@@ -26,9 +26,9 @@ The Access Node Subscription API would introduce the following new streaming end
 - SubscribeBlocksHeaders
 - SubscribeBlocksLightweight
 - SendAndSubscribeTransactionStatuses
-- SubscribeAccountStatuses - ?
-- SubscribeResourcesMovement - ?
-- SubscribeResourcesChanges - ?
+- SubscribeAccountStatuses
+- SubscribeResourcesMovement
+- SubscribeResourcesChanges
 
 Additionally, it proposes an improved version of the REST WebSocket Subscription with a single connection.
 
@@ -222,9 +222,11 @@ for {
 }
 ```
 
-### SubscribeAccountStatuses - ?
+### SubscribeAccountStatuses
 
-This endpoint allows users to subscribe to the streaming of account status changes. Each response for the account status should include the `?` fields.
+> ! Disscussion and resarch required
+
+This endpoint allows users to subscribe to the streaming of account status changes. Each response for the account status should include the `[Insert appropriate account status field(s) after disscussion]` fields.
 
 - **Address** (address of the account to stream status changes)
 
@@ -250,14 +252,22 @@ for {
         log.Fatalf("error receiving account status: %v", err)
     }
 
-    // Insert appropriate handling for received account status
+    // Insert appropriate handling for received account status after disscussion
 }
 
 ```
 
-### SubscribeResourcesMovement - ?
+#### Questions for Discussion
 
-This endpoint allows users to subscribe to the streaming of account resource movement. Each response for the account resource movement should include the `?` fields.
+1. Should this endpoint return statuses similar to the standard [built-in account event types](https://developers.flow.com/build/basics/events#core-events)?
+2. Is it advisable for this endpoint to provide extra data along with the statuses?
+3. Would it be beneficial for this endpoint to include an additional parameter to specify the status type to track or a filter to remove unnecessary statuses?
+
+### SubscribeResourcesMovement
+
+> ! Disscussion and resarch required
+
+This endpoint allows users to subscribe to the streaming of account resource movement. Each response for the account resource movement should include the `[Insert appropriate resource movement field(s) after disscussion]` fields.
 
 - **Address** (address of the account to stream resources movement)
 - **Type** (type of the resources in the account storage to stream)
@@ -285,24 +295,17 @@ for {
         log.Fatalf("error receiving account resource movement: %v", err)
     }
 
-    // Insert appropriate handling for received account status
+    // Insert appropriate handling for received resource movement status after disscussion
 }
 
 ```
 
-Streaming of resource movement by type - Research required
 
-- https://github.com/onflow/flow-go-sdk/blob/master/examples/storage_usage/main.go
-- https://developers.flow.com/tools/flow-js-testing/api#storage-inspection
-- https://github.com/onflow/flow-js-testing/blob/e2d4f1a3c8fe8549a01785566090d8c8adcb6903/src/storage.js#L257
-- https://github.com/onflow/flow-go/blob/master/fvm/environment/accounts_status.go
-- https://developers.flow.com/build/basics/events#core-events
-- https://forum.flow.com/t/suggestion-default-events/2170
+### SubscribeResourcesChanges
 
+> ! Disscussion and resarch required
 
-### SubscribeResourcesChanges - ?
-
-This endpoint allows users to subscribe to the streaming of account resource changes. Each response for the account resource changes should include the `?` fields.
+This endpoint allows users to subscribe to the streaming of account resource changes. Each response for the account resource changes should include the `[Insert appropriate resource changed field(s) after disscussion]` fields.
 
 - **Address** (address of the account to stream status changes)
 
@@ -315,7 +318,7 @@ req := &executiondata.SubscribeResourcesChangesRequest{
 
 stream, err := client.SubscribeResourcesChanges(ctx, req)
 if err != nil {
-    log.Fatalf("error subscribing to account resources statuses: %v", err)
+    log.Fatalf("error subscribing to account resources changes: %v", err)
 }
 
 for {
@@ -325,17 +328,20 @@ for {
     }
 
     if err != nil {
-        log.Fatalf("error receiving account resources status: %v", err)
+        log.Fatalf("error receiving resources changes: %v", err)
     }
 
-    // Insert appropriate handling for received account status
+    // Insert appropriate handling for resources changes
 }
 
 ```
 
-Streaming of resource changes - Research required
+#### Questions for Discussion
 
-https://github.com/onflow/flow-go-sdk/blob/master/examples/storage_usage/main.go
+1. Which resource changes in storage should be tracked by this endpoint: all data in storage or solely contract allocated data?
+2. Should [the FVM environment Account](https://github.com/onflow/flow-go/blob/456c1318b00b9131ecfe8d95a0813e458ebe7fb1/fvm/environment/accounts.go#L23) be used to monitor resource statuses (both movements and changes) by polling data periodically, or should alternative notification mechanisms be implemented to signify storage data changes?
+3. Would FVM only be accessible on execution nodes?
+4. What should the `Type` argument be responsible for in the `SubscribeResourcesMovement` endpoint?
 
 ### Performance Implications
 
