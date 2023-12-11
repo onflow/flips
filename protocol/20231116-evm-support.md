@@ -1,6 +1,6 @@
 ---
 status: draft 
-flip: 223 (set to the issue number)
+flip: 223
 authors: Ramtin Seraj (ramtin.seraj@flowfoundation.org), Bastian Müller (bastian@dapperlabs.com)
 sponsor: Dieter Shirley (dete@dapperlabs.com)
 updated: 2023-12-04
@@ -11,11 +11,11 @@ updated: 2023-12-04
 ## Objective
 
 - Defining a Cadence interface for the EVM integrated into the FVM. 
-- Facilitates seamless interaction between Cadence and EVM enviornments. 
+- Facilitates seamless interaction between Cadence and EVM environments. 
 
 ## Motivation
 
-This work would makes it easier for EVM-centric Dapps and Platforms to adopt Flow.
+This work would make it easier for EVM-centric Dapps and Platforms to adopt Flow.
 Please see [this forum discussion](https://forum.flow.com/t/evm-on-flow-beyond-solidity/5260) for motivations.
 
 ## Design Proposal
@@ -30,16 +30,16 @@ In other words, EVM on Flow is a smart contract that emulates EVM (dedicated cha
 import EVM from <ServiceAddress>
 ```
 
-Within the flow transaction, if EVM interaction is successful 
+Within the Flow transaction, if EVM interaction is successful 
 
 - it makes changes to the on-chain data
 - forms a new block if successful,
-- emits several FLOW event types (see [here](https://github.com/onflow/flow-go/blob/master/fvm/evm/types/events.go) ) that can be consumed to track the chain progress.
+- emits several Flow event types (see [here](https://github.com/onflow/flow-go/blob/master/fvm/evm/types/events.go)) that can be consumed to track the chain progress.
 And if unsuccessful, it reverts the transaction.
 
 As EVM interactions are encapsulated within Flow transactions, they leverage the security measures provided by Flow. These transactions undergo the same process of collection, execution, and verification as other Flow transactions, without any EVM intervention. Consequently, there is no requirement for intricate block formation logic (such as handling forks and reorganizations), mempools, or additional safeguards against malicious MEV (Miner Extractable Value) behaviours.
 
-On EVM environment, resource consumptions are metered as `gas usage`, when interacting with EVM environment, the total gas usage is translated back into computation usage and would be paid as part of FLOW transaction fees (weigh-adjusted conversion). 
+In the EVM environment, resource consumption is metered as "gas usage". When interacting with the EVM environment, the total gas usage is translated back into Flow computation usage and is be paid as part of FLOW transaction fees (weigh-adjusted conversion).
 
 #### EVM Addresses
 
@@ -61,7 +61,7 @@ access(all) contract EVM {
         init(bytes: [UInt8; 20])
 
         /// Returns the balance of this address
-        access(all) fun balance(): @Balance
+        access(all) fun balance(): Balance
 
         /// Deposits the given vault into the EVM account with the given address
         access(all) fun deposit(from: @FlowToken.Vault)
@@ -96,11 +96,11 @@ Every account on Flow EVM could be queried by constructing an EVM structure.  He
 // Example of balance query
 import EVM from <ServiceAddress>
 
-  access(all)
-  fun main(bytes: [UInt8; 20]) {
-      let addr = EVM.EVMAddress(bytes: bytes)
-      let bal = addr.balance()
-  }
+access(all)
+fun main(bytes: [UInt8; 20]) {
+    let addr = EVM.EVMAddress(bytes: bytes)
+    let bal = addr.balance()
+}
 ```
 
 #### EVM-style transaction wrapping
@@ -115,11 +115,11 @@ Any failure during the execution would revert the whole Flow transaction.
 // Example of tx wrapping
 import EVM from <ServiceAddress>
 
-  access(all)
-  fun main(rlpEncodedTransaction: [UInt8], coinbaseBytes: [UInt8; 20]) {
-      let coinbase = EVM.EVMAddress(bytes: coinbaseBytes)
-      EVM.run(tx: rlpEncodedTransaction, coinbase: coinbase)
-  }
+access(all)
+fun main(rlpEncodedTransaction: [UInt8], coinbaseBytes: [UInt8; 20]) {
+    let coinbase = EVM.EVMAddress(bytes: coinbaseBytes)
+    EVM.run(tx: rlpEncodedTransaction, coinbase: coinbase)
+}
 ```
 
 For example, a user might use Metamask to sign a transaction for Flow EVM and broadcast it to services that check the gas fee on the transaction and wrap the transaction to be executed. 
@@ -162,11 +162,7 @@ access(all)contract EVM {
 
     /// Creates a new bridged account
     access(all)
-    fun createBridgedAccount(): @BridgedAccount {
-        return <-create BridgedAccount(
-            addressBytes: InternalEVM.createBridgedAccount()
-        )
-    }
+    fun createBridgedAccount(): @BridgedAccount
 }
 ```
 
