@@ -23,7 +23,9 @@ Support for EVM on Flow enables developers to leverage the network effects and t
 
 #### EVM as a standard smart contract
 
-To better understand the approach proposed in this Flip, consider Flow EVM as a virtual blockchain deployed to the Flow blockchain at a specific address (e.g., a service account). EVM on Flow functions as a smart contract that emulates the EVM with its own dedicated chain-ID. Signed transactions are inputted, and a chain of blocks is produced as output. Similar to other built-in standard contracts (e.g., RLP encoding), this EVM environment can be imported into any Flow transaction or script.
+To better understand the approach proposed in this Flip, consider EVM on Flow as a virtual blockchain deployed to the Flow blockchain at a specific address (e.g., a service account). EVM on Flow functions as a smart contract that emulates the EVM with its own dedicated chain-ID. Signed transactions are inputted, and a chain of blocks is produced as output. Similar to other built-in standard contracts (e.g., RLP encoding), this EVM environment can be imported into any Flow transaction or script.
+
+This is made possible using selective integration of the core EVM runtime without the supporting software stack in which it currently exists on Ethereum. For equivalence we also provide an EVM compatible JSON-RPC API implementation to facilitate EVM on Flow interactions from existing EVM clients.```
 
 ```
 import EVM from <ServiceAddress>
