@@ -167,7 +167,7 @@ access(all)contract EVM {
 }
 ```
 
-Bridged account addresses are allocated by the FVM and stored inside the resource. Calls through bridged accounts form a new type of transaction for the EVM that doesn’t require signatures and doesn’t need nonce checking. Bridged accounts could deploy smart contracts or make calls to the ones that are already deployed on Flow EVM. 
+Bridged account addresses are unique and allocated by the FVM and stored inside the resource. Calls through bridged accounts form a new type of transaction for the EVM that doesn’t require signatures and doesn’t need nonce checking. Bridged accounts could deploy smart contracts or make calls to the ones that are already deployed on Flow EVM. 
 
 Bridged accounts also facilitate the withdrawal of Flow tokens back from the EVM balance environment into the Cadence environment through `withdraw`.
 
