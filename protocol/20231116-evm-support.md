@@ -38,7 +38,7 @@ Within the Flow transaction, if EVM interaction is successful
 - emits several Flow event types (see [here](https://github.com/onflow/flow-go/blob/master/fvm/evm/types/events.go)) that can be consumed to track the chain progress.
 And if unsuccessful, it reverts the transaction.
 
-As EVM interactions are encapsulated within Flow transactions, they leverage the security measures provided by Flow. These transactions undergo the same process of collection, execution, and verification as other Flow transactions, without any EVM intervention. Consequently, there is no requirement for intricate block formation logic (such as handling forks and reorganizations), mempools, or additional safeguards against malicious MEV (Miner Extractable Value) behaviours.
+As EVM interactions are encapsulated within Flow transactions, they leverage the security measures provided by Flow. These transactions undergo the same process of collection, execution, and verification as other Flow transactions, without any EVM intervention. Consequently, there is no requirement for intricate block formation logic (such as handling forks and reorganizations), mempools, or additional safeguards against malicious MEV (Miner Extractable Value) behaviours. More information about Flow's consensus model is available [here](https://flow.com/core-protocol).
 
 In the EVM environment, resource consumption is metered as "gas usage". When interacting with the EVM environment, the total gas usage is translated back into Flow computation usage and is be paid as part of FLOW transaction fees (weigh-adjusted conversion).
 
