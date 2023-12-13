@@ -15,16 +15,15 @@ updated: 2023-12-04
 
 ## Motivation
 
-This work would make it easier for EVM-centric Dapps and Platforms to adopt Flow.
-Please see [this forum discussion](https://forum.flow.com/t/evm-on-flow-beyond-solidity/5260) for motivations.
+Following the discussion [here](https://forum.flow.com/t/evm-on-flow-beyond-solidity/5260), this proposal outlines a path to achieve full EVM equivalence on Flow, enabling developers to deploy any Ethereum decentralized application (dApp) on Flow without making any code changes. This allows developers to fully leverage the native functionality of Flow. Trusted tools and protocols such as Uniswap, Opensea, Metamask, Chainlink Oracle, Layerzero, AAVE, Curve, Remix, and Hardhat will be readily compatible with Flow. Additionally, developers will still have the ability to write Cadence smart contracts to extend and enhance the functionality of Solidity smart contracts, ensuring full composability.
+
+Support for EVM on Flow enables developers to leverage the network effects and tooling available in Solidity and EVM, while also benefiting from Flow's user-friendly features and mainstream focus for onboarding and user experience. Additionally, developers can take advantage of Cadence's unique capabilities.
 
 ## Design Proposal
 
 #### EVM as a standard smart contract
 
-An easy way to understand the approach proposed in this Flip is to consider Flow EVM as a virtual blockchain deployed to the Flow blockchain at a specific address (e.g., a service account). It behaves as if a complete EVM runtime has been implemented in Cadence. However, we leverage the extensibility property of the Cadence runtime and utilize the reference Geth implementation used by many Ethereum nodes. The Cadence runtime is designed to be extensible with standard Cadence smart contracts implemented in native languages, as long as the resource consumption is meter-able and bounded, and operations are deterministic.
-
-In other words, EVM on Flow is a smart contract that emulates EVM (dedicated chain-ID); signed transactions goes in and a chain of blocks come out. Similar to other built-in standard contracts (e.g. RLP encoding), this EVM environment can be imported inside any Flow transaction or script. 
+To better understand the approach proposed in this Flip, consider Flow EVM as a virtual blockchain deployed to the Flow blockchain at a specific address (e.g., a service account). EVM on Flow functions as a smart contract that emulates the EVM with its own dedicated chain-ID. Signed transactions are inputted, and a chain of blocks is produced as output. Similar to other built-in standard contracts (e.g., RLP encoding), this EVM environment can be imported into any Flow transaction or script.
 
 ```
 import EVM from <ServiceAddress>
