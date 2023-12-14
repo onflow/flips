@@ -222,6 +222,10 @@ for {
 }
 ```
 
+#### Questions for Discussion
+
+1. Should we drop subscribtion when transaction and block that contains it become sealed?
+
 ### SubscribeAccountStatuses
 
 > ! Disscussion and resarch required
