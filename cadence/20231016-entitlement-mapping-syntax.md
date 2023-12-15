@@ -1,12 +1,12 @@
 ---
-status: approved 
+status: implemented 
 flip: 210
 authors: Daniel Sainati (daniel.sainati@dapperlabs.com)
 sponsor: Daniel Sainati (daniel.sainati@dapperlabs.com)
 updated: 2023-10-16
 ---
 
-# FLIP NNN: Improve Entitlement Mapping Syntax
+# FLIP 210: Improve Entitlement Mapping Syntax
 
 ## Objective
 
