@@ -3,7 +3,7 @@ status: draft
 flip: NNN (set to the issue number)
 authors: Andrii Slisarchuk (andriyslisarchuk@gmail.com)
 sponsor: AN Expert (core-contributor@example.org) 
-updated: 2023-11-14 
+updated: 2023-12-15
 ---
 
 # [FLIP DRAFT] Access Streaming API Expansion
