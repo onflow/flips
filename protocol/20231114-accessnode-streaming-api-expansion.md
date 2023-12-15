@@ -27,8 +27,6 @@ The Access Node Subscription API would introduce the following new streaming end
 - SubscribeBlocksLightweight
 - SendAndSubscribeTransactionStatuses
 - SubscribeAccountStatuses
-- SubscribeResourcesMovement
-- SubscribeResourcesChanges
 
 Additionally, it proposes an improved version of the REST WebSocket Subscription with a single connection.
 
@@ -60,7 +58,7 @@ This endpoint enables users to subscribe to the streaming of blocks, commencing 
 Usage example:
 
 ```go
-req := &executiondata.SubscribeBlocksRequest{
+req := &access.SubscribeBlocksRequest{
     // If no start block height or ID is provided, the latest block is used
     StartBlockHeight: 1234,
     // or StartBlockID: startBlockID[:],
@@ -103,7 +101,7 @@ This endpoint enables users to subscribe to the streaming of block headers, comm
 Usage example:
 
 ```go
-req := &executiondata.SubscribeBlocksRequest{
+req := &access.SubscribeBlocksRequest{
     // If no start block height or Id is provided, the latest block is used
     StartBlockHeight: 1234,
     // or StartBlockId: startBlockID[:],
@@ -147,7 +145,7 @@ This endpoint enables users to subscribe to the streaming of lightweight block i
 Usage example:
 
 ```go
-req := &executiondata.SubscribeBlocksLightweightRequest{
+req := &access.SubscribeBlocksLightweightRequest{
     // If no start block height or Id is provided, the latest block is used
     StartBlockHeight: 1234,
     // or StartBlockId: startBlockID[:],
@@ -193,7 +191,7 @@ if err != nil {
     log.Fatalf("error converting transaction to message: %v", err)
 }
 
-req := &executiondata.SendTransactionRequest{
+req := &access.SendTransactionRequest{
     Transaction: txMsg,
 }
 
@@ -222,23 +220,21 @@ for {
 }
 ```
 
-#### Questions for Discussion
-
-1. Should we drop subscribtion when transaction and block that contains it become sealed?
-
 ### SubscribeAccountStatuses
 
-> ! Disscussion and resarch required
-
-This endpoint allows users to subscribe to the streaming of account status changes. Each response for the account status should include the `[Insert appropriate account status field(s) after disscussion]` fields.
+This endpoint enables users to subscribe to the streaming of account status changes. Each response for the account status should include the `Address` and the `Status` fields ([built-in account event types](https://developers.flow.com/build/basics/events#core-events)). In the future, this endpoint could potentially incorporate additional fields to provide supplementary data essential for tracking alongside the status.
 
 - **Address** (address of the account to stream status changes)
+- **Filter** (array of statuses matching the client’s filter. Any statuses that match at least one of the conditions are returned.)
 
 Usage example:
 
 ```go
 req := &executiondata.SubscribeAccountStatusesRequest{
     Address: "123456789abcdef0",
+    Filter: []string{
+        "flow.AccountContractUpdated",
+    }
 }
 
 stream, err := client.SubscribeAccountStatuses(ctx, req)
@@ -256,96 +252,17 @@ for {
         log.Fatalf("error receiving account status: %v", err)
     }
 
-    // Insert appropriate handling for received account status after disscussion
+    log.Printf("received account status with address: %s and status: %s",
+        resp.Address.String(),
+        resp.Status.String(),
+    )
 }
 
 ```
 
-#### Questions for Discussion
+### Future Subscriptions
 
-1. Should this endpoint return statuses similar to the standard [built-in account event types](https://developers.flow.com/build/basics/events#core-events)?
-2. Is it advisable for this endpoint to provide extra data along with the statuses?
-3. Would it be beneficial for this endpoint to include an additional parameter to specify the status type to track or a filter to remove unnecessary statuses?
-
-### SubscribeResourcesMovement
-
-> ! Disscussion and resarch required
-
-This endpoint allows users to subscribe to the streaming of account resource movement. Each response for the account resource movement should include the `[Insert appropriate resource movement field(s) after disscussion]` fields.
-
-- **Address** (address of the account to stream resources movement)
-- **Type** (type of the resources in the account storage to stream)
-
-Usage example:
-
-```go
-req := &executiondata.SubscribeResourcesMovementRequest{
-    Address: "123456789abcdef0",
-    Type: "",
-}
-
-stream, err := client.SubscribeResourcesMovement(ctx, req)
-if err != nil {
-    log.Fatalf("error subscribing to account resource movement: %v", err)
-}
-
-for {
-    resp, err := stream.Recv()
-    if err == io.EOF {
-        break
-    }
-
-    if err != nil {
-        log.Fatalf("error receiving account resource movement: %v", err)
-    }
-
-    // Insert appropriate handling for received resource movement status after disscussion
-}
-
-```
-
-
-### SubscribeResourcesChanges
-
-> ! Disscussion and resarch required
-
-This endpoint allows users to subscribe to the streaming of account resource changes. Each response for the account resource changes should include the `[Insert appropriate resource changed field(s) after disscussion]` fields.
-
-- **Address** (address of the account to stream status changes)
-
-Usage example:
-
-```go
-req := &executiondata.SubscribeResourcesChangesRequest{
-    Address: "123456789abcdef0",
-}
-
-stream, err := client.SubscribeResourcesChanges(ctx, req)
-if err != nil {
-    log.Fatalf("error subscribing to account resources changes: %v", err)
-}
-
-for {
-    resp, err := stream.Recv()
-    if err == io.EOF {
-        break
-    }
-
-    if err != nil {
-        log.Fatalf("error receiving resources changes: %v", err)
-    }
-
-    // Insert appropriate handling for resources changes
-}
-
-```
-
-#### Questions for Discussion
-
-1. Which resource changes in storage should be tracked by this endpoint: all data in storage or solely contract allocated data?
-2. Should [the FVM environment Account](https://github.com/onflow/flow-go/blob/456c1318b00b9131ecfe8d95a0813e458ebe7fb1/fvm/environment/accounts.go#L23) be used to monitor resource statuses (both movements and changes) by polling data periodically, or should alternative notification mechanisms be implemented to signify storage data changes?
-3. Would FVM only be accessible on execution nodes?
-4. What should the `Type` argument be responsible for in the `SubscribeResourcesMovement` endpoint?
+The `SubscribeResourcesMovement` would enable users to subscribe to the streaming of account resource movement, while `SubscribeResourcesChanges` would allow users to subscribe to the streaming of account resource changes. As these functionalities necessitate additional research and discussions, they will be described and developed in the future.
 
 ### Performance Implications
 
