@@ -199,34 +199,34 @@ var id: String = nftViewRef.id
 Similar to resources, the returned reference has no entitlements assigned to them.
 i.e: they are **non-**`auth` references.
 
-### Drawbacks
+## Drawbacks
 
 None
 
-### Alternatives Considered
+## Alternatives Considered
 
 None
 
-### Performance Implications
+## Performance Implications
 
 There is no direct performance impact by this change.
 
 However, since accessing a nested objects through a reference would now be returning reference,
 it will avoid the copying of nested objects, which may increase the performance for certain use-cases.
 
-### Dependencies
+## Dependencies
 
 None
 
-### Engineering Impact
+## Engineering Impact
 
 This change has medium complexity in the implementation.
 
-### Compatibility
+## Compatibility
 
 This is a backward incompatible change.
 
-### User Impact
+## User Impact
 
 Many deployed contracts might be affected by this change.
 
