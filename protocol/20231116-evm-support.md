@@ -151,12 +151,14 @@ access(all)contract EVM {
         fun withdraw(balance: Balance): @FlowToken.Vault
 
         /// Deploys a contract to the EVM environment.
-        /// Returns the address of the newly deployed contract
+        /// Returns the address of the newly deployed contract.
+        /// The value (balance) is taken from the EVM account.
         access(all)
         fun deploy(code: [UInt8], gasLimit: UInt64, value: Balance): EVMAddress 
 
         /// Calls a function with the given data.
-        /// The execution is limited by the given amount of gas
+        /// The execution is limited by the given amount of gas.
+        /// The value (balance) is taken from the EVM account.
         access(all)
         fun call(to: EVMAddress, data: [UInt8], gasLimit: UInt64, value: Balance): [UInt8] 
     }
