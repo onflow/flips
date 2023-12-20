@@ -23,7 +23,7 @@ The enhanced version seeks to provide a simpler and more efficient REST WebSocke
 The Access Node Subscription API would introduce the following new streaming endpoints:
 
 - SubscribeBlocks
-- SubscribeBlocksHeaders
+- SubscribeBlockHeaders
 - SubscribeBlocksLightweight
 - SendAndSubscribeTransactionStatuses
 - SubscribeAccountStatuses
@@ -149,7 +149,7 @@ req := &access.SubscribeBlocksLightweightRequest{
     // If no start block height or Id is provided, the latest block is used
     StartBlockHeight: 1234,
     // or StartBlockId: startBlockID[:],
-    BlockStatus: BlockStatus.BlockStatusFinalized // Use BlockStatusSealed to receive only finalized or only sealed blocks information
+    BlockStatus: BlockStatus.BlockStatusFinalized // Returns only finalized blocks. Use BlockStatusSealed to receive only sealed blocks
 }
 
 stream, err := client.SubscribeBlocksLightweight(ctx, req)
