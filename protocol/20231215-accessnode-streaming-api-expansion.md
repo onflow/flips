@@ -226,6 +226,8 @@ for {
 
 This endpoint enables users to subscribe to the streaming of account status changes. Each response for the account status should include the `Address` and the `Status` fields ([built-in account event types](https://developers.flow.com/build/basics/events#core-events)). In the future, this endpoint could potentially incorporate additional fields to provide supplementary data essential for tracking alongside the status.
 
+- **BlockHeight** (Block height of the acount status being streamed)
+- **BlockId** (Block ID of the acount status being streamed)
 - **Address** (address of the account to stream status changes)
 - **Filter** (array of statuses matching the client’s filter. Any statuses that match at least one of the conditions are returned.)
 
@@ -233,6 +235,9 @@ Usage example:
 
 ```go
 req := &executiondata.SubscribeAccountStatusesRequest{
+    // If no start block height or ID is provided, the latest block is used
+    StartBlockHeight: 1234,
+    // or StartBlockID: startBlockID[:],
     Address: "123456789abcdef0",
     Filter: []string{
         "flow.AccountContractUpdated",
