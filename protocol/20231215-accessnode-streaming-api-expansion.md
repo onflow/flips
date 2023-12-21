@@ -24,7 +24,7 @@ The Access Node Subscription API would introduce the following new streaming end
 
 - SubscribeBlocks
 - SubscribeBlockHeaders
-- SubscribeBlocksLightweight
+- SubscribeBlockDigests
 - SendAndSubscribeTransactionStatuses
 - SubscribeAccountStatuses
 
@@ -134,7 +134,7 @@ for {
 }
 ```
 
-### SubscribeBlocksLightweight
+### SubscribeBlockDigests
 
 This endpoint enables users to subscribe to the streaming of lightweight block information, commencing from a provided block ID or height. Additionally, users are required to specify the desired status of the streamed blocks to receive. The response for each block should include only the block's `ID`, `Height` and `Timestamp`. This is the lightest version among all block subscriptions.
 
@@ -145,14 +145,14 @@ This endpoint enables users to subscribe to the streaming of lightweight block i
 Usage example:
 
 ```go
-req := &access.SubscribeBlocksLightweightRequest{
+req := &access.SubscribeBlockDigestsRequest{
     // If no start block height or Id is provided, the latest block is used
     StartBlockHeight: 1234,
     // or StartBlockId: startBlockID[:],
     BlockStatus: BlockStatus.BlockStatusFinalized // Returns only finalized blocks. Use BlockStatusSealed to receive only sealed blocks
 }
 
-stream, err := client.SubscribeBlocksLightweight(ctx, req)
+stream, err := client.SubscribeBlockDigests(ctx, req)
 if err != nil {
 	log.Fatalf("error subscribing to lightweight blocks : %v", err)
 
