@@ -54,6 +54,7 @@ This endpoint enables users to subscribe to the streaming of blocks, commencing 
 - **BlockHeight** (Block height of the streamed block)
 - **BlockId** (Block ID of the streamed block)
 - **BlockStatus** (`BlockStatusSealed` or `BlockStatusFinalized`)
+- **FullBlockResponse** (Boolean value determining the response: 'full' if `true`, 'light' otherwise)
 
 Usage example:
 
@@ -63,6 +64,7 @@ req := &access.SubscribeBlocksRequest{
     StartBlockHeight: 1234,
     // or StartBlockID: startBlockID[:],
     BlockStatus: BlockStatus.BlockStatusFinalized, // Use BlockStatusSealed to receive only finalized or only sealed blocks
+    FullBlockResponse: false, // Return 'light' version of block in response
 }
 
 stream, err := client.SubscribeBlocks(ctx, req)
