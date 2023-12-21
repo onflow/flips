@@ -45,7 +45,7 @@ The proposed enhancement involves the following aspects:
 
 - The `WSHandler` will initiate a connection only for the initial subscription and retain it for subsequent subscriptions.
 - An unsubscribe mechanism will be introduced. With multiple subscriptions on a single connection, simply closing this connection to halt updates becomes insufficient. Therefore, a dedicated endpoint for unsubscribing from undesired updates is necessary.
-- Each subscription response will now include a message type. For instance, the `SubscribeEvents` endpoint will result in a message with `type: "Events"`, while `SubscribeBlocksHeaders` will yield `type: "BlockHeader"` in messages, and so forth. This is essential to distinguish between various subscription results that will be delivered through a single connection.
+- Each subscription response will now include a message type. For instance, the `SubscribeEvents` endpoint will result in a message with `type: "Events"`, while `SubscribeBlockHeaders` will yield `type: "BlockHeader"` in messages, and so forth. This is essential to distinguish between various subscription results that will be delivered through a single connection.
 
 ### SubscribeBlocks
 
@@ -90,7 +90,7 @@ for {
 }
 ```
 
-### SubscribeBlocksHeaders
+### SubscribeBlockHeaders
 
 This endpoint enables users to subscribe to the streaming of block headers, commencing from a provided block ID or height. Additionally, users are required to specify the desired status of the streamed blocks to receive. The response for each block header should include the block's `Header`. This is a lighter version of `SubscribeBlocks` as it does not include the heavier `Payload` field.
 
@@ -108,7 +108,7 @@ req := &access.SubscribeBlocksRequest{
     BlockStatus: BlockStatus.BlockStatusFinalized // Use BlockStatusSealed to receive only finalized or only sealed blocks headers
 }
 
-stream, err := client.SubscribeBlocksHeaders(ctx, req)
+stream, err := client.SubscribeBlockHeaders(ctx, req)
 if err != nil {
 	log.Fatalf("error subscribing to blocks headers: %v", err)
 
