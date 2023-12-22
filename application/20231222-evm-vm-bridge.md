@@ -6,7 +6,7 @@ sponsor: Jerome Pimmel (jerome.pimmel@dapperlabs.com)
 updated: 2023-12-22
 ---
 
-# FLIP 233: Flow VM Bridge: a contract protocol enabling arbitrary token bridging between Flow and EVM on Flow VMs
+# FLIP 233: Flow VM Bridge. A contract protocol enabling arbitrary token bridging between Flow and EVM on Flow VMs
 
 ## Objective
 
