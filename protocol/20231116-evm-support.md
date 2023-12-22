@@ -171,6 +171,8 @@ access(all)contract EVM {
 
 COA addresses are unique and allocated by the FVM and stored inside the resource. Calls through COAs form a new type of transaction for the EVM that doesn't require signatures and doesn't need nonce checking. COAs could deploy smart contracts or make calls to the ones that are already deployed on Flow EVM. 
 
+![Illustration of](20231116-evm-support/flow-evm-account-model.png)
+
 COAs also facilitate the withdrawal of Flow tokens back from the EVM balance environment into the Cadence environment through `withdraw`.
 
 **What about other fungible and non-tokens?**
