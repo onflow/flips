@@ -31,9 +31,12 @@ platform.
 ## User Benefit
 
 An efficient, easy to use bridge which modifies state across VMs simultaneously in a single transaction reduces 
-complexity for builders and improves end-user experience. The availability of a secure and proven platform capability 
-for cross-VM bridging is more secure than leaving developers to implement project specific token bridges. It also 
-significantly reduces the effort required of developers who can instead focus on core application logic. 
+complexity for builders and improves end-user experience for the essential economic activity of moving tokens across VMs. 
+The abstraction afforded to users by the bridge means that multiple EVM transaction steps can be bundled together using 
+Cadence to securely realize bridging as a single transaction. The availability of a secure and proven platform 
+capability for cross-VM bridging is more secure than leaving developers to implement project specific token bridges. It 
+also significantly reduces the effort required of developers wishing to build applications which compose token bridging 
+between VMs.
 
 ## Bridge Specification
 
