@@ -170,7 +170,7 @@ type is similar to EOA’s except instead of being tied to a public/private key 
 resources. Unlike EOAs which are created using the key presented by the wallet there is no corresponding EVM key 
 present in a CadenceOwnedAccount. Any COA is interacted with through CadenceOwnedAccount Resource and any Flow 
 account or Cadence smart contract that holds this resource could interact with the EVM environment on behalf of the 
-address that is stored in the resource. 
+address that is stored in the resource.
 
 ```
 access(all)contract EVM {
@@ -212,7 +212,10 @@ access(all)contract EVM {
 
 COA addresses are unique and allocated by the FVM and stored inside the resource. Calls through COAs form a new type of 
 transaction for the EVM that doesn't require signatures and doesn't need nonce checking. 
-COAs can deploy smart contracts or make calls to already deployed contracts on Flow EVM. 
+COAs can deploy smart contracts or make calls to already deployed contracts on Flow EVM.
+
+![Illustration of EVM integration design proposed to realize EVM on Flow](20231116-evm-support/flow-evm-account-model.png)
+
 
 COAs also facilitate the withdrawal of Flow tokens back from the EVM balance environment into the Cadence 
 environment through `withdraw`.
