@@ -34,15 +34,15 @@ An efficient, easy to use bridge which modifies state across VMs simultaneously 
 complexity for builders and improves end-user experience for the essential economic activity of moving tokens across VMs. 
 The abstraction afforded to users by the bridge means that multiple EVM transaction steps can be bundled together using 
 Cadence to securely realize bridging as a single transaction. The availability of a secure and proven platform 
-capability for cross-VM bridging is more secure than leaving developers to implement project specific token bridges. It 
-also significantly reduces the effort required of developers wishing to build applications which compose token bridging 
-between VMs.
+capability for cross-VM bridging can ensure a consistent, higher security bar than leaving developers to implement 
+project specific token bridges. It also significantly reduces the effort required of developers wishing to build 
+applications which need to bridge tokens between VMs for an optimal user experience.
 
 ## Bridge Specification
 
 Specification outline of the Flow VM bridge for bi-directional flow of FT and NFTs between VM states. While the spec 
 references NFTs the VM bridge will treat both FTs and NFTs alike, with the caveat that NFTs have more complexity due to 
-metadata which needs to be made work for both VMs.
+metadata which needs to be made to work for both VMs.
 
 ### Cadence to EVM
 Breakdown of the flow for a user bridging a token across VMs from Cadence to EVM. 
