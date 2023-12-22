@@ -117,6 +117,8 @@ Sequential breakdown of the flow for a user bridging a token from EVM to Flow. T
 
 #### Interfaces
 
+#### NFT Metadata
+
 ### Considerations
 
 ### Drawbacks
