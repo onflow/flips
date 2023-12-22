@@ -37,6 +37,10 @@ significantly reduces the effort required of developers who can instead focus on
 
 ## Bridge Specification
 
+Specification outline of the Flow VM bridge for bi-directional flow of FT and NFTs between VM states. While the spec 
+references NFTs the VM bridge will treat both FTs and NFTs alike, with the caveat that NFTs have more complexity due to 
+metadata which needs to be made work for both VMs.
+
 ### Cadence to EVM
 Breakdown of the flow for a user bridging a token across VMs from Cadence to EVM. 
 
