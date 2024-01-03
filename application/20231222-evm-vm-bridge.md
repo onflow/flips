@@ -114,6 +114,7 @@ Sequential breakdown of the flow for a user bridging a token from EVM to Flow. T
 ### Context
 
 
+
 ### Overview
 
 ### Implementation Details
@@ -126,10 +127,23 @@ Sequential breakdown of the flow for a user bridging a token from EVM to Flow. T
 
 ### Drawbacks
 
+- All contracts deployed by the bridge have the same minimized functionality, restricted to their respective ecosystem standards
+- Centralized storage of all bridged assets and their definitions presents a single, high-value target for potential hacks.
+  - This vector is minimized by the fact that the bridge exists solely at the protocol and contract levels. Taking protocol security for granted, contract logic and key management are the primary considerations for compromise. This bridge benefits from the contained state space afforded by virtualizing the EVM environment in that offchain systems are not required for its function between VMs.
+
 ### Considered Alternatives
+
+Motivated by the aforementioned drawback of centralized storage, previous iterations involved a network of distributed accounts around a primary bridge account and contract. This primary contract served as the entrypoint for bridging between VMs, deploying templated locking & asset-defining auxiliary contracts to distinct, contract-generated accounts. The primary contract would conditionally deploy these auxiliary contracts on a per-asset basis as needed, maintaining a registry for where each asset is locked/defined and routing bridge requests to their appropriate contracts.
+
+This design optimized for distributed asset storage and contract-mediated access. However, it also introduced additional complexity and secondarily obscurity for what should be a highly transparent system. Additionally, since multisig access is planned for the bridge and auxiliary accounts, centralization is ultimately no further improved by this design, at least while custody is maintained on these accounts.
 
 ### Performance Implications
 
+#### Migrations & Storage Usage
+
+Previous network migrations have been complicated by single accounts using large amounts of storage. With a centralized storage design, it's likely that (over time) the bridge account will consume a large amount of storage and that, given the need to store bridge Flow-native assets indefinitely, that storage will likely only ever increase. Even if this assumption is not true, it's to our benefit to consider and plan as if it is if account storage usage is a network-wide issue.
+
+With that said, saving state to a single account shouldn't be problematic until storage usage reaches >10GB of data which should give the team some time to figure out how to handle this edge case during migrations before the problem is encountered.
 
 ### Best Practices
 
@@ -137,6 +151,14 @@ Sequential breakdown of the flow for a user bridging a token from EVM to Flow. T
 
 ### Compatibility
 
+This bridge design will support bridging fungible and non-fungible token assets between VMs, and doesn't account for cases where the instances where types overlap - i.e. semi-fungible tokens or multi-token contracts. Of course, this bridge also dovetails with the ongoing virtualized EVM work, so is dependent on the existence of that environment.
+
 ## Prior Art
 
+While the work is happening someone concurrently, there may be some cross-pollination between the [Axelar Interchain Token Service](https://github.com/AnChainAI/anchain-axelar-dapper-flowbridge) and this project.
+
 ## Questions & Discussion Topics
+
+- What does the interplay between risk vectors, tokenomics, and UX requirements imply for the fee amounts charged for bridging between VMs
+  - Do we charge on a per instance or per locked storage unit basis?
+- How will we handle either bridging or serving metadata for bridged Flow-native NFTs given the difference in metadata standards between Cadence & EVM?
