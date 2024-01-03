@@ -1,12 +1,12 @@
 ---
 status: draft 
-flip: [234](https://github.com/onflow/flips/pull/234)
+flip: [235](https://github.com/onflow/flips/pull/235)
 authors: Ardit Marku (markoupetr@gmail.com) 
 sponsor: Jerome Pimmel (jerome.pimmel@dapperlabs.com) 
 updated: 2024-01-03 
 ---
 
-# FLIP 234: Flow EVM Gateway. An implementation of the Ethereum JSON-RPC API specification
+# FLIP 235: Flow EVM Gateway. An implementation of the Ethereum JSON-RPC API specification
 
 ## Objective
 
