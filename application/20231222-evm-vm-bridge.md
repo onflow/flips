@@ -173,7 +173,7 @@ access(all) contract FlowEVMBridge {
 
     /* --- Public NFT Handling --- */
 
-    /// Public entrypoint to bridge NFTs from Flow to EVM
+    /// Public entrypoint to bridge NFTs from Flow to EVM - cross-account bridging supported
     ///
     /// @param token: The NFT to be bridged
     /// @param to: The NFT recipient in FlowEVM
@@ -184,12 +184,7 @@ access(all) contract FlowEVMBridge {
             tollFee.balance == self.tollAmount: "Insufficient fee paid"
             asset.isInstance(of: Type<&{FungibleToken.Vault}>) == false: "Mixed asset types are not yet supported"
         }
-        self.borrowVault().deposit(from: <-tollFee)
-
-        if self.isFlowNative(asset: &token as &AnyResource) {
-            self.bridgeFlowNativeNFTToEVM(token: <-token, to: to)
-        }
-        self.bridgeEVMNativeNFTToEVM(asset: <-token, to: to)
+        // Handle based on whether Flow- or EVM-native & passthrough to internal method
     }
 
     /// Public entrypoint to bridge NFTs from EVM to Flow
@@ -217,10 +212,10 @@ access(all) contract FlowEVMBridge {
 
     /* --- Public FT Handling --- */
 
-    /// Public entrypoint to bridge NFTs from Flow to EVM
+    /// Public entrypoint to bridge NFTs from Flow to EVM - cross-account bridging supported
     ///
-    /// @param token: The NFT to be bridged
-    /// @param to: The NFT recipient in FlowEVM
+    /// @param vault: The FungibleToken Vault to be bridged
+    /// @param to: The recipient of tokens in FlowEVM
     /// @param tollFee: The fee paid for bridging
     ///
     access(all) fun bridgeTokensToEVM(vault: @{FungibleToken.Vault}, to: EVM.EVMAddress, tollFee: @FlowToken.Vault) {
@@ -228,6 +223,7 @@ access(all) contract FlowEVMBridge {
             tollFee.balance == self.tollAmount: "Insufficient fee paid"
             asset.isInstance(of: Type<&{NonFungibleToken.NFT}>) == false: "Mixed asset types are not yet supported"
         }
+        // Handle based on whether Flow- or EVM-native & passthrough to internal method
     }
 
     /// Public entrypoint to bridge fungible tokens from EVM to Flow
@@ -268,19 +264,28 @@ access(all) contract FlowEVMBridge {
     access(self) fun hasSufficientBalance(amount: UFix64, owner: EVM.EVMAddress, evmContractAddress: EVM.EVMAddress): Bool
 
     /// Handles bridging Flow-native NFTs to EVM - locks NFT in designated Flow locker contract & burns in EVM
+    /// Within scope, locker contract is deployed if needed
     access(self) fun bridgeFlowNativeNFTToEVM(token: @{NonFungibleToken.NFT}, to: EVM.EVMAddress)
     /// Handles bridging EVM-native NFTs to EVM - burns NFT in defining Flow contract & transfers in EVM
+    /// Within scope, defining contract is deployed if needed
     access(self) fun bridgeEVMNativeNFTToEVM(token: @{NonFungibleToken.NFT}, to: EVM.EVMAddress)
 
     /// Handles bridging Flow-native assets to EVM - locks Vault in designated Flow locker contract & burns in EVM
+    /// Within scope, locker contract is deployed if needed
     access(self) fun bridgeFlowNativeTokensToEVM(vault: @{FungibleToken.Vault}, to: EVM.EVMAddress)
     /// Handles bridging EVM-native assets to EVM - burns Vault in defining Flow contract & transfers in EVM
+    /// Within scope, defining contract is deployed if needed
     access(self) fun bridgeEVMNativeTokensToEVM(vault: @{FungibleToken.Vault}, to: EVM.EVMAddress)
     
     /// Helper for deploying templated Locker contract supporting Flow-native asset bridging to EVM
-    access(self) fun deployLockerContract(identifier: String)
+    /// Deploys either NFT or FT locker depending on the asset type
+    access(self) fun deployLockerContract(asset: &AnyResource)
     /// Helper for deploying templated defining contract supporting EVM-native asset bridging to Flow
+    /// Deploys either NFT or FT contract depending on the provided type
     access(self) fun deployDefiningContract(type: Type)
+
+    /// Deposits fees to the bridge account's FlowToken Vault - helps fund asset storage
+    access(self) fun depositTollFee(_ tollFee: @FlowToken.Vault)
 }
 ```
 
