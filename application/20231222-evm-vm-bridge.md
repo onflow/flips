@@ -167,9 +167,12 @@ Sequential breakdown of the flow for a user bridging a token from EVM to Flow. T
 ```cadence
 access(all) contract FlowEVMBridge {
 
-    access(all) event BridgeContractDeployed(type: Type, amount: UFix64, from: EVM.EVMAddress, to: EVM.EVMAddress)
-    access(all) event BridgedToEVM(type: Type, amount: UFix64, from: EVM.EVMAddress, to: EVM.EVMAddress)
-    access(all) event BridgedToFlow(type: Type, amount: UFix64, from: EVM.EVMAddress, to: EVM.EVMAddress)
+    /// Denotes a contract was deployed to the bridge account, could be either FlowEVMBridgeLocker or FlowEVMBridgedAsset
+    access(all) event BridgeContractDeployed(type: Type, name: String, evmContractAddress: EVM.EVMAddress)
+    /// Asset bridged from Flow to EVM - satisfies both FT & NFT (always amount == 1.0)
+    access(all) event BridgedToEVM(type: Type, amount: UFix64, from: EVM.EVMAddress, to: EVM.EVMAddress, evmContractAddress: EVM.EVMAddress, flowNative: Bool)
+    /// Asset bridged from EVM to Flow - satisfies both FT & NFT (always amount == 1.0)
+    access(all) event BridgedToFlow(type: Type, amount: UFix64, from: EVM.EVMAddress, to: EVM.EVMAddress, evmContractAddress: EVM.EVMAddress, flowNative: Bool)
 
     /* --- Public NFT Handling --- */
 
@@ -295,7 +298,9 @@ access(all) contract FlowEVMBridge {
 <summary>CrossVM contract interface</summary>
 
 ```cadence
+/// Contract interface denoting a cross-VM implementation, exposing methods to query EVM-associated addresses
 access(all) contract interface CrossVM {
+    /// Retrieves the corresponding EVM contract address, assuming a 1:1 relationship between VM implementations
     access(all) fun getEVMContractAddress(): EVM.EVMAddress
 }
 ```
@@ -305,11 +310,14 @@ access(all) contract interface CrossVM {
 <summary>CrossVMAsset interfaces</summary>
 
 ```cadence
+/// Contract defining cross-VM asset interfaces
 access(all) contract CrossVMAsset {
+    /// Enables a bridging entrypoint on an implementing Vault
     access(all) resource interface BridgeableVault {
         access(all) fun bridgeToEVM(amount: UFix64, to: EVM.EVMAddress)
     }
 
+    /// Enables a bridging entrypoint on an implementing Collection
     access(all) resource interface BridgeableCollection {
         access(all) fun bridgeToEVM(id: UInt64, to: EVM.EVMAddress)
     }
