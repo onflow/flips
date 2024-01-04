@@ -51,22 +51,22 @@ The proposed enhancement involves the following aspects:
 
 This endpoint enables users to subscribe to the streaming of blocks, commencing from a provided block ID or height. Additionally, users are required to specify the desired status of the streamed blocks to receive. Each block's response should include the full or light `Block` depends on `FullBlockResponse` argument.
 
-Arguments:
+**Arguments:**
 
-- **BlockHeight** (Block height of the streamed block)
-- **BlockId** (Block ID of the streamed block)
-- **BlockStatus** (`BlockStatusSealed` or `BlockStatusFinalized`)
+- **StartBlockHeight** (Block height of the streamed block)
+- **StartBlockId** (Block ID of the streamed block)
+- **BlockStatus** (`BlockStatusSealed` or `BlockStatusFinalized`. )
 - **FullBlockResponse** (Boolean value determining the response: 'full' if `true`, 'light' otherwise)
 
-Responce:
+Either one of the two arguments, `StartBlockHeight` or `StartBlockId`, should be set but not both. If none of these arguments is set, the last sealed block will be considered as the starting block.
 
-```go
-SubscribeBlocksResponce {
-    Block: entities.Block {}
-}
-```
+The `BlockStatus` cannot be set as `BlockStatusUnknown`.
 
-Usage example:
+**Expected response:**
+
+- **Block** (The new sealed or finalized `Block` that, has `entities.Block` type)
+
+**Usage example:**
 
 ```go
 req := &access.SubscribeBlocksRequest{
@@ -94,10 +94,10 @@ for {
 
     block := resp.GetBlock()
 
-    log.Printf("received block with ID: %x, Height: %d, and Payload Hash: %x",
+    log.Printf("received block with ID: %x, Height: %d, and number of CollectionGuarantees: %d",
         block.ID(),
-        block.Header.Height,
-        block.Payload.Hash(),
+        block.BlockHeader.Height,
+        len(block.CollectionGuarantees),
     )
 }
 ```
@@ -106,21 +106,21 @@ for {
 
 This endpoint enables users to subscribe to the streaming of block headers, commencing from a provided block ID or height. Additionally, users are required to specify the desired status of the streamed blocks to receive. The response for each block header should include the block's `BlockHeader`. This is a lighter version of `SubscribeBlocks` as it will never include the heavy `BlockPayload`.
 
-Arguments:
+**Arguments:**
 
-- **BlockHeight** (Block height of the streamed block)
-- **BlockId** (Block ID of the streamed block)
+- **StartBlockHeight** (Block height of the streamed block)
+- **StartBlockId** (Block ID of the streamed block)
 - **BlockStatus** (`BlockStatusSealed` or `BlockStatusFinalized`)
 
-Responce:
+Either one of the two arguments, `StartBlockHeight` or `StartBlockId`, should be set but not both. If none of these arguments is set, the last sealed block will be considered as the starting block.
 
-```go
-SubscribeBlocksHeaderResponce {
-    BlockHeader: entities.BlockHeader {...}
-}
-```
+The `BlockStatus` cannot be set as `BlockStatusUnknown`.
 
-Usage example:
+**Expected response:**
+
+- **BlockHeader** (The header of new sealed or finalized `Block` that has `entities.BlockHeader` type)
+
+**Usage example:**
 
 ```go
 req := &access.SubscribeBlocksRequest{
@@ -160,23 +160,23 @@ for {
 
 This endpoint enables users to subscribe to the streaming of lightweight block information, commencing from a provided block ID or height. Additionally, users are required to specify the desired status of the streamed blocks to receive. The response for each block should include only the block's `ID`, `Height` and `Timestamp`. This is the lightest version among all block subscriptions.
 
-Arguments:
+**Arguments:**
 
-- **BlockHeight** (Block height of the streamed block)
-- **BlockId** (Block ID of the streamed block)
+- **StartBlockHeight** (Block height of the streamed block)
+- **StartBlockId** (Block ID of the streamed block)
 - **BlockStatus** (`BlockStatusSealed` or `BlockStatusFinalized`)
 
-Responce:
+**Expected response:**
 
-```go
-SubscribeBlockDigestsResponce {
-    BlockId: ...
-    BlockHeight: ...
-    BlockTimestamp: ...
-}
-```
+- **BlockId** (The ID of the new sealed or finalized block)
+- **BlockHeight** (The height of the new sealed or finalized block)
+- **BlockTimestamp** (The timestamp of the new sealed or finalized block)
 
-Usage example:
+Either one of the two arguments, `StartBlockHeight` or `StartBlockId`, should be set but not both. If none of these arguments is set, the last sealed block will be considered as the starting block.
+
+The `BlockStatus` cannot be set as `BlockStatusUnknown`.
+
+**Usage example:**
 
 ```go
 req := &access.SubscribeBlockDigestsRequest{
@@ -212,23 +212,19 @@ for {
 
 ### SendAndSubscribeTransactionStatuses
 
-This endpoint enables users to send a transaction and immediately subscribe to its status changes. The status is streamed back until the block containing the transaction becomes sealed. Each response for the transaction status should include the `ID`, `Status` and `Error` fields.
+This endpoint enables users to send a transaction and immediately subscribe to its status changes. The status is streamed back until the block containing the transaction becomes sealed. Each response for the transaction status should include the `ID`, `Status` and `SequenceNumber` fields.
 
-Arguments:
+**Arguments:**
 
 - **TransactionMsg** (transaction submitted to stream status)
 
-Responce:
+**Expected response:**
 
-```go
-SendAndSubscribeTransactionResponce {
-    ID: ...
-    Status: ...
-    SequenceNumber: ...
-}
-```
+- **ID** (The ID of the tracked transaction)
+- **Status** (The status of the tracked transaction)
+- **SequenceNumber** (The SequenceNumber of the tracked transaction)
 
-Usage example:
+**Usage example:**
 
 ```go
 txMsg, err := transactionToMessage(tx)
@@ -269,21 +265,21 @@ for {
 
 This endpoint enables users to subscribe to the streaming of account status changes. Each response for the account status should include the `Address` and the `Status` fields ([built-in account event types](https://developers.flow.com/build/basics/events#core-events)). In the future, this endpoint could potentially incorporate additional fields to provide supplementary data essential for tracking alongside the status.
 
-Arguments:
+**Arguments:**
 
-- **BlockHeight** (Block height of the acount status being streamed)
-- **BlockId** (Block ID of the acount status being streamed)
+- **StartBlockHeight** (Block height of the acount status being streamed)
+- **StartBlockId** (Block ID of the acount status being streamed)
 - **Address** (address of the account to stream status changes)
-- **Filter** (array of statuses matching the client’s filter. Any statuses that match at least one of the conditions are returned.)
+- **Filter** (array of statuses matching the client’s filter)
 
-Responce:
+Either one of the two arguments, `StartBlockHeight` or `StartBlockId`, should be set but not both. If none of these arguments is set, the last sealed block will be considered as the starting block.
 
-```go
-SubscribeAccountStatusesResponce {
-    Address: ...
-    Status: ...
-}
-```
+If the `Filter` is empty, all account statuses will be returned. If filters are set, only statuses that precisely match one of these filter conditions will be returned.
+
+**Expected response:**
+
+- **Address** (The adress of the tracked account)
+- **Status** (The status of the tracked account)
 
 Usage example:
 
