@@ -117,9 +117,201 @@ Sequential breakdown of the flow for a user bridging a token from EVM to Flow. T
 
 ### Overview
 
+
+
 ### Implementation Details
 
+### Contract Roles & Concerns
+
+#### Flow
+
+- **Bridge**
+  - Unified entry point for bridging assets between VMs
+  - Unified query point for NFT Locker contracts & to assess Flow x EVM contract associations
+  - Owning (via contract COA) all deployed contracts on EVM side
+  - Owning (via contract COA) all EVM-native assets on EVM side when bridged to Flow - equivalent to locking
+  - Initializing NFT & FT Locker contracts when Flow-native assets first bridged to EVM
+  - Initializing BridgedFT & BridgedNFT contracts defining EVM-native assets when first bridged to Flow
+- **FT/NFT Locker**
+  - Lock Flow-native tokens bridging to EVM
+  - Unlock Flow-native tokens bridging from EVM
+  - Serve query requests about locked tokens
+  - Point to the corresponding EVM contract
+- **Bridged FT/NFT**
+  - Define EVM-native tokens bridged from EVM to Flow
+  - Point to the corresponding EVM-native contract
+  - Serve as secondary bridging interface, enabling easy bridging back to EVM
+      - Result of implementing combination of `CrossVM` contract interface along with `BridgeableVault` or `BridgeableCollection` resource interfaces
+      - e.g. `collection.bridgeToEVM(id: UInt64, to: EVMAddress)`
+      - e.g. `vault.bridgeToEVM(amount: UFIx64, to: EVMAddress)`
+
+#### EVM
+
+> :information_source: Self-defined locking functionality is not required as “locked” assets will simply be transferred to the FlowEVMBridge.COA.EVMAddress
+
+- **FlowBridgeFactory**
+  - Deploys new instances of FlowBridgedFT/NFT
+  - Maintains knowledge of all deployed contract addresses & their Flow token identifier correspondence
+  - Aids visibility of bridge contract into the EVM environment with assistive methods
+
+- **FlowBridgedFT/NFT**
+  - Define Flow-native tokens bridged from Flow to EVM
+  - Point to the corresponding Flow-native contract
+
 #### Interfaces
+
+
+<details>
+<summary>FlowEVMBridge</summary>
+
+```cadence
+access(all) contract FlowEVMBridge {
+
+    access(all) event BridgeContractDeployed(type: Type, amount: UFix64, from: EVM.EVMAddress, to: EVM.EVMAddress)
+    access(all) event BridgedToEVM(type: Type, amount: UFix64, from: EVM.EVMAddress, to: EVM.EVMAddress)
+    access(all) event BridgedToFlow(type: Type, amount: UFix64, from: EVM.EVMAddress, to: EVM.EVMAddress)
+
+    /* --- Public NFT Handling --- */
+
+    /// Public entrypoint to bridge NFTs from Flow to EVM
+    ///
+    /// @param token: The NFT to be bridged
+    /// @param to: The NFT recipient in FlowEVM
+    /// @param tollFee: The fee paid for bridging
+    ///
+    access(all) fun bridgeNFTToEVM(token: @{NonFungibleToken.NFT}, to: EVM.EVMAddress, tollFee: @FlowToken.Vault) {
+        pre {
+            tollFee.balance == self.tollAmount: "Insufficient fee paid"
+            asset.isInstance(of: Type<&{FungibleToken.Vault}>) == false: "Mixed asset types are not yet supported"
+        }
+        self.borrowVault().deposit(from: <-tollFee)
+
+        if self.isFlowNative(asset: &token as &AnyResource) {
+            self.bridgeFlowNativeNFTToEVM(token: <-token, to: to)
+        }
+        self.bridgeEVMNativeNFTToEVM(asset: <-token, to: to)
+    }
+
+    /// Public entrypoint to bridge NFTs from EVM to Flow
+    ///
+    /// @param caller: The caller executing the bridge - must be passed to check EVM state pre- & post-call in scope
+    /// @param calldata: Caller-provided approve() call, enabling contract COA to operate on NFT in EVM contract
+    /// @param id: The NFT ID to bridged
+    /// @param evmContractAddress: Address of the EVM address defining the NFT being bridged - also call target
+    /// @param tollFee: The fee paid for bridging
+    ///
+    access(all) fun bridgeNFTFromEVM(
+        caller: auth(Callable) &BridgedAccount,
+        calldata: [UInt8],
+        id: UInt64,
+        evmContractAddress: EVM.EVMAddress,
+        tollFee: @FlowToken.Vault
+    ): @{NonFungibleToken.NFT} {
+        pre {
+            tollFee.balance == self.tollAmount: "Insufficient fee paid"
+            self.isEVMNFT(evmContractAddress: evmContractAddress): "Unsupported asset type"
+            self.isOwnerOrApproved(ofNFT: id, owner: caller.address(), evmContractAddress: evmContractAddress):
+                "Caller is not the owner of or approved for requested NFT"
+        }
+    }
+
+    /* --- Public FT Handling --- */
+
+    /// Public entrypoint to bridge NFTs from Flow to EVM
+    ///
+    /// @param token: The NFT to be bridged
+    /// @param to: The NFT recipient in FlowEVM
+    /// @param tollFee: The fee paid for bridging
+    ///
+    access(all) fun bridgeTokensToEVM(vault: @{FungibleToken.Vault}, to: EVM.EVMAddress, tollFee: @FlowToken.Vault) {
+        pre {
+            tollFee.balance == self.tollAmount: "Insufficient fee paid"
+            asset.isInstance(of: Type<&{NonFungibleToken.NFT}>) == false: "Mixed asset types are not yet supported"
+        }
+    }
+
+    /// Public entrypoint to bridge fungible tokens from EVM to Flow
+    ///
+    /// @param caller: The caller executing the bridge - must be passed to check EVM state pre- & post-call in scope
+    /// @param calldata: Caller-provided approve() call, enabling contract COA to operate on tokens in EVM contract
+    /// @param amount: The amount of tokens to bridge
+    /// @param evmContractAddress: Address of the EVM address defining the tokens being bridged, also call target
+    /// @param tollFee: The fee paid for bridging
+    ///
+    access(all) fun bridgeTokensFromEVM(
+        caller: auth(Callable) &BridgedAccount,
+        calldata: [UInt8],
+        amount: UFix64,
+        evmContractAddress: EVM.EVMAddress,
+        tollFee: @FlowToken.Vault
+    ): @{FungibleToken.Vault} {
+        pre {
+            tollFee.balance == self.tollAmount: "Insufficient fee paid"
+            self.isEVMToken(evmContractAddress: evmContractAddress): "Unsupported asset type"
+            self.hasSufficientBalance(amount: amount, owner: caller, evmContractAddress: evmContractAddress):
+                "Caller does not have sufficient funds to bridge requested amount"
+        }
+    }
+
+    /* --- Internal Helpers --- */
+
+    /// Identifies if an asset is Flow- or EVM-native, defined by whether a bridge contract defines it or not
+    access(self) fun isFlowNative(asset: &AnyResource): Bool
+    /// Identifies if an asset is ERC721 && not ERC20
+    access(self) fun isEVMNFT(evmContractAddress: EVM.EVMAddress): Bool
+    /// Identifies if an asset is ERC20 and not ERC721
+    access(self) fun isEVMToken(evmContractAddress: EVM.EVMAddress): Bool
+
+    /// Determines if the owner is in fact the owner of the NFT at the ERC721 contract address
+    access(self) fun isOwnerOrApproved(ofNFT: UInt64, owner: EVM.EVMAddress, evmContractAddress: EVM.EVMAddress): Bool
+    /// Determines if the owner has sufficient funds to bridge the given amount at the ERC20 contract address
+    access(self) fun hasSufficientBalance(amount: UFix64, owner: EVM.EVMAddress, evmContractAddress: EVM.EVMAddress): Bool
+
+    /// Handles bridging Flow-native NFTs to EVM - locks NFT in designated Flow locker contract & burns in EVM
+    access(self) fun bridgeFlowNativeNFTToEVM(token: @{NonFungibleToken.NFT}, to: EVM.EVMAddress)
+    /// Handles bridging EVM-native NFTs to EVM - burns NFT in defining Flow contract & transfers in EVM
+    access(self) fun bridgeEVMNativeNFTToEVM(token: @{NonFungibleToken.NFT}, to: EVM.EVMAddress)
+
+    /// Handles bridging Flow-native assets to EVM - locks Vault in designated Flow locker contract & burns in EVM
+    access(self) fun bridgeFlowNativeTokensToEVM(vault: @{FungibleToken.Vault}, to: EVM.EVMAddress)
+    /// Handles bridging EVM-native assets to EVM - burns Vault in defining Flow contract & transfers in EVM
+    access(self) fun bridgeEVMNativeTokensToEVM(vault: @{FungibleToken.Vault}, to: EVM.EVMAddress)
+    
+    /// Helper for deploying templated Locker contract supporting Flow-native asset bridging to EVM
+    access(self) fun deployLockerContract(identifier: String)
+    /// Helper for deploying templated defining contract supporting EVM-native asset bridging to Flow
+    access(self) fun deployDefiningContract(type: Type)
+}
+```
+
+</details>
+
+<details>
+<summary>CrossVM contract interface</summary>
+
+```cadence
+access(all) contract interface CrossVM {
+    access(all) fun getEVMContractAddress(): EVM.EVMAddress
+}
+```
+</details>
+
+<details>
+<summary>CrossVMAsset interfaces</summary>
+
+```cadence
+access(all) contract CrossVMAsset {
+    access(all) resource interface BridgeableVault {
+        access(all) fun bridgeToEVM(amount: UFix64, to: EVM.EVMAddress)
+    }
+
+    access(all) resource interface BridgeableCollection {
+        access(all) fun bridgeToEVM(id: UInt64, to: EVM.EVMAddress)
+    }
+}
+```
+</details>
+
 
 #### NFT Metadata
 
@@ -162,3 +354,4 @@ While the work is happening someone concurrently, there may be some cross-pollin
 - What does the interplay between risk vectors, tokenomics, and UX requirements imply for the fee amounts charged for bridging between VMs
   - Do we charge on a per instance or per locked storage unit basis?
 - How will we handle either bridging or serving metadata for bridged Flow-native NFTs given the difference in metadata standards between Cadence & EVM?
+- Is there an upper bound to how many contracts a single account can host?
