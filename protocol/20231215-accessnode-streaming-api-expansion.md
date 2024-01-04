@@ -49,12 +49,22 @@ The proposed enhancement involves the following aspects:
 
 ### SubscribeBlocks
 
-This endpoint enables users to subscribe to the streaming of blocks, commencing from a provided block ID or height. Additionally, users are required to specify the desired status of the streamed blocks to receive. Each block's response should include the `Block` containing `Header` and `Payload`.
+This endpoint enables users to subscribe to the streaming of blocks, commencing from a provided block ID or height. Additionally, users are required to specify the desired status of the streamed blocks to receive. Each block's response should include the full or light `Block` depends on `FullBlockResponse` argument.
+
+Arguments:
 
 - **BlockHeight** (Block height of the streamed block)
 - **BlockId** (Block ID of the streamed block)
 - **BlockStatus** (`BlockStatusSealed` or `BlockStatusFinalized`)
 - **FullBlockResponse** (Boolean value determining the response: 'full' if `true`, 'light' otherwise)
+
+Responce:
+
+```go
+SubscribeBlocksResponce {
+    Block: entities.Block {}
+}
+```
 
 Usage example:
 
@@ -94,11 +104,21 @@ for {
 
 ### SubscribeBlockHeaders
 
-This endpoint enables users to subscribe to the streaming of block headers, commencing from a provided block ID or height. Additionally, users are required to specify the desired status of the streamed blocks to receive. The response for each block header should include the block's `Header`. This is a lighter version of `SubscribeBlocks` as it does not include the heavier `Payload` field.
+This endpoint enables users to subscribe to the streaming of block headers, commencing from a provided block ID or height. Additionally, users are required to specify the desired status of the streamed blocks to receive. The response for each block header should include the block's `BlockHeader`. This is a lighter version of `SubscribeBlocks` as it will never include the heavy `BlockPayload`.
+
+Arguments:
 
 - **BlockHeight** (Block height of the streamed block)
 - **BlockId** (Block ID of the streamed block)
 - **BlockStatus** (`BlockStatusSealed` or `BlockStatusFinalized`)
+
+Responce:
+
+```go
+SubscribeBlocksHeaderResponce {
+    BlockHeader: entities.BlockHeader {...}
+}
+```
 
 Usage example:
 
@@ -140,9 +160,21 @@ for {
 
 This endpoint enables users to subscribe to the streaming of lightweight block information, commencing from a provided block ID or height. Additionally, users are required to specify the desired status of the streamed blocks to receive. The response for each block should include only the block's `ID`, `Height` and `Timestamp`. This is the lightest version among all block subscriptions.
 
+Arguments:
+
 - **BlockHeight** (Block height of the streamed block)
 - **BlockId** (Block ID of the streamed block)
 - **BlockStatus** (`BlockStatusSealed` or `BlockStatusFinalized`)
+
+Responce:
+
+```go
+SubscribeBlockDigestsResponce {
+    BlockId: ...
+    BlockHeight: ...
+    BlockTimestamp: ...
+}
+```
 
 Usage example:
 
@@ -173,7 +205,6 @@ for {
 	log.Printf("received lightweight block with ID: %x, Height: %d, parent block ID: %x and Timestamp: %s",
 		resp.GetBlockId(),
 		resp.GetBlockHeight(),
-        resp.GetParentBlockId(),
         resp.GetBlockTimestamp().String(),
 	)
 }
@@ -183,7 +214,19 @@ for {
 
 This endpoint enables users to send a transaction and immediately subscribe to its status changes. The status is streamed back until the block containing the transaction becomes sealed. Each response for the transaction status should include the `ID`, `Status` and `Error` fields.
 
+Arguments:
+
 - **TransactionMsg** (transaction submitted to stream status)
+
+Responce:
+
+```go
+SendAndSubscribeTransactionResponce {
+    ID: ...
+    Status: ...
+    SequenceNumber: ...
+}
+```
 
 Usage example:
 
@@ -215,9 +258,9 @@ for {
     txResult := resp.GetTransactionResult()
 
     log.Printf("received transaction status with tx ID: %x, status: %s, and error: %v",
-        resp.GetTransactionID(),
-        txResult.Status.String(),
-        txResult.Error,
+        resp.ID,
+        resp.Status.String(),
+        resp.SequenceNumber
     )
 }
 ```
@@ -226,10 +269,21 @@ for {
 
 This endpoint enables users to subscribe to the streaming of account status changes. Each response for the account status should include the `Address` and the `Status` fields ([built-in account event types](https://developers.flow.com/build/basics/events#core-events)). In the future, this endpoint could potentially incorporate additional fields to provide supplementary data essential for tracking alongside the status.
 
+Arguments:
+
 - **BlockHeight** (Block height of the acount status being streamed)
 - **BlockId** (Block ID of the acount status being streamed)
 - **Address** (address of the account to stream status changes)
 - **Filter** (array of statuses matching the client’s filter. Any statuses that match at least one of the conditions are returned.)
+
+Responce:
+
+```go
+SubscribeAccountStatusesResponce {
+    Address: ...
+    Status: ...
+}
+```
 
 Usage example:
 
@@ -269,7 +323,7 @@ for {
 
 ### Future Subscriptions
 
-The `SubscribeResourcesMovement` would enable users to subscribe to the streaming of account resource movement, while `SubscribeResourcesChanges` would allow users to subscribe to the streaming of account resource changes. As these functionalities necessitate additional research and discussions, they will be described and developed in the future.
+The `SubscribeResourcesChanges` would allow users to subscribe to the streaming of account resource movement and account resource changes. As these functionalities necessitate additional research and discussions, they will be described and developed in the future.
 
 ### Performance Implications
 
