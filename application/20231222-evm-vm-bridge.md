@@ -112,12 +112,35 @@ Sequential breakdown of the flow for a user bridging a token from EVM to Flow. T
 ## Design Proposal
 
 ### Context
-
-
+<!-- TODO -->
 
 ### Overview
 
+The central bridge contract will act as a request router & corresponding contract registrar, additionally configuring contracts on either side of the VM to facilitate bridge requests as they arrive. Deployed contracts are “owned” by the bridge, but owner interactions are mediated by contract logic on either end in addition to multi-sig patterns consistent with other core network infrastructure accounts.
 
+On the EVM side, a central contract factory will instantiate Solidity ERC20 & ERC721 contracts as directed by calls from the central Cadence contract’s Cadence Owned Account. This factory will also implement a number of helper methods to give the bridge account visibility into the EVM environment. These methods might include things like retrieving an asset type, determining if EVM contracts are bridge-owned, validating asset ownership, etc. so the COA has a central trusted source of truth for critical state assertions.
+
+Below are diagrams depicting the call flows for both Flow and EVM-native NFTs.
+
+#### Flow-Native: Flow -> EVM
+<!-- TODO: Update image & Move text to markdown -->
+![Flow-native Flow to EVM](20231222-evm-vm-bridge-resources/flow_native_to_evm.png)
+
+#### Flow-Native: EVM -> Flow
+<!-- TODO: Update image & Move text to markdown -->
+![Flow-native EVM to Flow](20231222-evm-vm-bridge-resources/flow_native_to_flow.png)
+
+#### EVM-Native: EVM -> Flow
+<!-- TODO: Update image & Move text to markdown -->
+![Flow-native Flow to EVM](20231222-evm-vm-bridge-resources/evm_native_to_flow.png)
+
+#### EVM-Native: Flow -> EVM
+<!-- TODO: Update image & Move text to markdown -->
+![Flow-native Flow to EVM](20231222-evm-vm-bridge-resources/evm_native_to_evm.png)
+
+#### In Aggregate
+![FlowEVM VM Bridge Design Overview](20231222-evm-vm-bridge-resources/overview.png)
+*The bridge contract can be thought of here as a router for requests to bridge to and from Flow. It determines if the requested asset is Flow or EVM native and whether it’s an FT or NFT. If needed, it performs contract initialization on either side of the VM. From there, it routes requests to the appropriate contract which fulfills the asset bridge request.*
 
 ### Implementation Details
 
@@ -160,9 +183,8 @@ Sequential breakdown of the flow for a user bridging a token from EVM to Flow. T
 
 #### Interfaces
 
-
 <details>
-<summary>FlowEVMBridge</summary>
+<summary>FlowEVMBridge.cdc.cdc</summary>
 
 ```cadence
 access(all) contract FlowEVMBridge {
@@ -295,11 +317,55 @@ access(all) contract FlowEVMBridge {
 </details>
 
 <details>
-<summary>CrossVM contract interface</summary>
+<summary>IFlowEVMBridgeLocker.cdc</summary>
+
+```cadence
+// TODO - Defines a Locker contract - implemented so the contract can be borrowed by the main bridge contract w/o statically declaring the contract due to dynamic deployments
+access(all) contract interface IFlowEVMBridgeLocker {
+
+}
+```
+</details>
+
+<details>
+<summary>IFlowEVMBridgedAsset.cdc</summary>
+
+```cadence
+// TODO - Base interface for bridged asset defining contracts
+access(all) contract interface IFlowEVMBridgedAsset {
+    
+}
+```
+</details>
+
+<details>
+<summary>FlowEVMBridgedNFT.cdc</summary>
+
+```cadence
+// TODO - Template for bridged EVM-native NFTs
+access(all) contract FlowEVMBridgedNFT : IFlowEVMBridgedAsset {
+
+}
+```
+</details>
+
+<details>
+<summary>FlowEVMBridgedFT.cdc</summary>
+
+```cadence
+// TODO - Template for bridged EVM-native NFTs
+access(all) contract FlowEVMBridgedFT : IFlowEVMBridgedAsset {
+    
+}
+```
+</details>
+
+<details>
+<summary>ICrossVM.cdc</summary>
 
 ```cadence
 /// Contract interface denoting a cross-VM implementation, exposing methods to query EVM-associated addresses
-access(all) contract interface CrossVM {
+access(all) contract interface ICrossVM {
     /// Retrieves the corresponding EVM contract address, assuming a 1:1 relationship between VM implementations
     access(all) fun getEVMContractAddress(): EVM.EVMAddress
 }
@@ -307,7 +373,7 @@ access(all) contract interface CrossVM {
 </details>
 
 <details>
-<summary>CrossVMAsset interfaces</summary>
+<summary>CrossVMAsset.cdc</summary>
 
 ```cadence
 /// Contract defining cross-VM asset interfaces
@@ -325,6 +391,37 @@ access(all) contract CrossVMAsset {
 ```
 </details>
 
+<details>
+<summary>FlowEVMBridgeFactory.sol</summary>
+
+```solidity
+// TODO - Factory & EVM inspector
+```
+</details>
+
+<details>
+<summary>IFlowBridgedAsset.sol</summary>
+
+```solidity
+// TODO - Identifies corresponding Flow contract address
+```
+</details>
+
+<details>
+<summary>IFlowBridgedNFT.sol</summary>
+
+```solidity
+// TODO - Template for bridged Flow-native NFTs
+```
+</details>
+
+<details>
+<summary>IFlowBridgedFT.sol</summary>
+
+```solidity
+// TODO - Template for bridged EVM-native FTs
+```
+</details>
 
 #### NFT Metadata
 
