@@ -189,6 +189,8 @@ Below are diagrams depicting the call flows for both Flow and EVM-native NFTs.
 ```cadence
 access(all) contract FlowEVMBridge {
 
+    /// Amount of $FLOW paid to bridge
+    access(all) var fee: UFix64
     /// The COA which orchestrates bridge operations in EVM
     access(self) let coa: @EVM.BridgedAccount
 
@@ -271,6 +273,14 @@ access(all) contract FlowEVMBridge {
                 "Caller does not have sufficient funds to bridge requested amount"
         }
     }
+
+    /* --- Public Getters --- */
+
+    /// Returns the bridge contract's COA EVMAddress
+    access(all) fun getBridgeCOAEVMAddress(): EVM.EVMAddress
+    /// Retrieves the EVM address of the contract related to the bridge contract-defined asset
+    /// Useful for bridging flow-native assets back from EVM
+    access(all) fun getAssetEVMContractAddress(type: Type): EVM.EVMAddress?
 
     /* --- Internal Helpers --- */
 
@@ -497,6 +507,115 @@ With that said, saving state to a single account shouldn't be problematic until 
 ### Best Practices
 
 ### Examples
+
+At the current design stage, no working examples exist. However, examples will be a fast-follow as work on a proof of concept continues. With that said, below are example transactions demonstrating the bridging of an NFT to and then from EVM using the interface defined above.
+
+#### Bridge Flow-Native NFT to EVM
+
+```cadence
+import "FungibleToken"
+import "FlowToken"
+import "NonFungibleToken"
+import "ExampleNFT"
+
+import "EVM"
+import "FlowEVMBridge"
+import "FlowEVMBridgeUtils"
+
+transaction(id: UInt64) {
+    
+    let nft: &{NonFungibleToken.NFT}
+    let nftType: Type
+    let evmRecipient: &EVM.EVMAddress
+    let evmContractAddress: EVM.EVMAddress
+    let tollFee: @FlowToken.Vault
+    
+    prepare(signer: auth(BorrowValue) &Account) {
+        // Withdraw the requested NFT
+        let collection = signer.storage.borrow<auth(NonFungibleToken.Withdrawable) &{NonFungibleToken.Collection}>(
+                from: ExampleNFT.CollectionStoragePath
+            )!
+        self.nft <- collection.withdraw(withdrawID: id)
+        // Save the type for our post-assertion
+        self.nftType = nft.getType()
+        // Get the signer's COA EVMAddress as recipient
+        self.evmRecipient = signer.storage.borrow<&EVM.BridgedAccount>(from: /storage/evm)!.address()
+        // Pay the bridge toll
+        self.tollFee <- signer.storage.borrow<auth(FungibleToken.Withdrawable) &FlowToken.Vault>(
+                from: /storage/flowTokenVault
+            )!.withdraw(amount: FlowEVMBridge.fee)
+    }
+
+    execute {
+        // Execute the bridge
+        FlowEVMBridge.bridgeNFTToEVM(token: <-self.nft, to: evmRecipient.address(), tollFee: <-self.tollFee)
+    }
+
+    // Post-assert bridge completed successfully on EVM side
+    post {
+        FlowEVMBridgeUtils.isOwnerOrApproved(
+            ofNFT: id,
+            owner: evmRecipient.address(),
+            evmContractAddress: FlowEVMBridge.getAssetEVMContractAddress(forType: nftType)
+        ): "Problem bridging to signer's COA!"
+    }
+}
+```
+
+#### Bridge Flow-Native NFT Back to Flow
+
+```cadence
+import "FungibleToken"
+import "FlowToken"
+import "NonFungibleToken"
+import "ExampleNFT"
+
+import "EVM"
+import "FlowEVMBridge"
+import "FlowEVMBridgeUtils"
+
+transaction(id: UInt64) {
+    
+    let collection: &{NonFungibleToken.Collection}
+    let coa: auth(Callable) &BridgedAccount
+    let tollFee: @FlowToken.Vault
+    
+    prepare(signer: auth(BorrowValue) &Account) {
+        // Withdraw the requested NFT
+        self.collection = signer.storage.borrow<auth(NonFungibleToken.Withdrawable) &{NonFungibleToken.Collection}>(
+                from: ExampleNFT.CollectionStoragePath
+            )!
+        // Pay the bridge toll
+        self.tollFee <- signer.storage.borrow<auth(FungibleToken.Withdrawable) &FlowToken.Vault>(
+                from: /storage/flowTokenVault
+            )!.withdraw(amount: FlowEVMBridge.fee)
+    }
+
+    execute {
+        // Get the bridge-deployed EVM contract address
+        let evmContractAddress = FlowEVMBridge.getAssetEVMContractAddress(type: Type<@ExampleNFT.NFT>())
+            ?? panic("No bridge-deployed EVM contract found for ExampleNFT")
+        // Encode the approve call
+        let calldata = EVM.encodeABIWithSignature(
+            "approve(address,uint256)",
+            [evmContractAddress, UInt256(id)]
+        )
+        // Execute the bridge
+        FlowEVMBridge.bridgeNFTFromEVM(
+            caller: self.coa,
+            calldata: calldata,
+            id: id,
+            evmContractAddress: evmContractAddress,
+            tollFee: <-self.tollFee
+        )
+    }
+
+    // Post-assert bridge completed successfully on EVM side
+    post {
+        self.collection.borrowNFT(id) != nil: "NFT was not bridged back to signer's collection"
+    }
+}
+```
 
 ### Compatibility
 
