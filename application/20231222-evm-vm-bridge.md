@@ -510,7 +510,9 @@ With that said, saving state to a single account shouldn't be problematic until 
 
 At the current design stage, no working examples exist. However, examples will be a fast-follow as work on a proof of concept continues. With that said, below are example transactions demonstrating the bridging of an NFT to and then from EVM using the interface defined above.
 
-#### Bridge Flow-Native NFT to EVM
+<details>
+
+<summary>Bridge Flow-Native NFT to EVM</summary>
 
 ```cadence
 import "FungibleToken"
@@ -561,8 +563,11 @@ transaction(id: UInt64) {
     }
 }
 ```
+</details>
 
-#### Bridge Flow-Native NFT Back to Flow
+<details>
+
+<summary>Bridge Flow-Native NFT Back to Flow</summary>
 
 ```cadence
 import "FungibleToken"
@@ -581,7 +586,7 @@ transaction(id: UInt64) {
     let tollFee: @FlowToken.Vault
     
     prepare(signer: auth(BorrowValue) &Account) {
-        // Withdraw the requested NFT
+        // Borrow the NFT Collection
         self.collection = signer.storage.borrow<auth(NonFungibleToken.Withdrawable) &{NonFungibleToken.Collection}>(
                 from: ExampleNFT.CollectionStoragePath
             )!
@@ -600,14 +605,15 @@ transaction(id: UInt64) {
             "approve(address,uint256)",
             [evmContractAddress, UInt256(id)]
         )
-        // Execute the bridge
-        FlowEVMBridge.bridgeNFTFromEVM(
+        // Execute the bridge & deposit
+        let bridgedNFT <- FlowEVMBridge.bridgeNFTFromEVM(
             caller: self.coa,
             calldata: calldata,
             id: id,
             evmContractAddress: evmContractAddress,
             tollFee: <-self.tollFee
         )
+        self.collection.deposit(token: <-bridgedNFT)
     }
 
     // Post-assert bridge completed successfully on EVM side
@@ -616,6 +622,7 @@ transaction(id: UInt64) {
     }
 }
 ```
+</details>
 
 ### Compatibility
 
