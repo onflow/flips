@@ -113,6 +113,20 @@ To facilitate the wrapping operation and refunding, the run interface also allow
 Any failure during the execution would revert the whole Flow transaction.
 
 ```cadence
+access(all)
+contract EVM {
+
+    /// Runs an a RLP-encoded EVM transaction, deducts the gas fees,
+    /// and deposits the gas fees into the provided coinbase address.
+    ///
+    /// Returns true if the transaction was successful,
+    /// and returns false otherwise
+    access(all)
+    fun run(tx: [UInt8], coinbase: EVMAddress): Bool
+}
+```
+
+```cadence
 // Example of tx wrapping
 import EVM from <ServiceAddress>
 
