@@ -50,22 +50,27 @@ Every EVM address has a balance of native tokens (e.g. ETH on Ethereum), a nonce
 In this design, we use the FLOW token for this native token. The balance of an EVM address is stored as a smaller denomination of FLOW called `Atto-FLOW`, it works similarly to the way Wei is used to store ETH values on Ethereum.
 
 ```cadence
-access(all) contract EVM {
+access(all)
+contract EVM {
 
     /// EVMAddress is an EVM-compatible address
-    access(all) struct EVMAddress {
+    access(all)
+    struct EVMAddress {
 
         /// Bytes of the address
-        access(all) let bytes: [UInt8; 20]
+        access(all)
+        let bytes: [UInt8; 20]
 
         /// Constructs a new EVM address from the given byte representation
         init(bytes: [UInt8; 20])
 
         /// Returns the balance of this address
-        access(all) fun balance(): Balance
+        access(all)
+        fun balance(): Balance
 
         /// Deposits the given vault into the EVM account with the given address
-        access(all) fun deposit(from: @FlowToken.Vault)
+        access(all)
+        fun deposit(from: @FlowToken.Vault)
     }
 }
 ```
@@ -75,18 +80,22 @@ A FLOW is equivalent of 10^18 atto-FLOW. Because EVM environments uses different
 Note that no new FLOW token is minted and every balance on EVM addresses has to be deposited by bridging FLOW tokens into addresses using `deposit` method.
 
 ```cadence
-access(all)contract EVM {
+access(all)
+contract EVM {
 
-    access(all) struct Balance {
+    access(all)
+    struct Balance {
         /// The balance in FLOW
-        access(all) let flow: UFix64
+        access(all)
+        let flow: UFix64
 
         /// Constructs a new balance, given the balance in FLOW
         init(flow: UFix64)
 
         /// Returns the balance in terms of atto-FLOW.
         /// Atto-FLOW is the smallest denomination of FLOW inside EVM
-        access(all) fun toAttoFlow(): UInt64
+        access(all)
+        fun toAttoFlow(): UInt64
     }
 }
 ```
@@ -146,38 +155,53 @@ Note that account nonce would protect against double execution of a transaction,
 Another major goal for this work is seamless composability across environments. For this goal, we have introduced a new type of address a Cadence Owned Account (COA), to the EVM environment (besides EOA and Smart Contract accounts). This new address type is similar to EOAs except instead of being tied to a public/private key it would be controlled by Cadence resources. Unlike EOAs which are created using the key presented by the wallet there is no corresponding EVM key present in a CadenceOwnedAccount. Any COA is interacted with through CadenceOwnedAccount resource and any Flow account or Cadence smart contract that holds this resource could interact with the EVM environment on behalf of the address that is stored in the resource.
 
 ```cadence
-access(all)contract EVM {
+access(all)
+contract EVM {
 
-    access(all) resource CadenceOwnedAccount {
+    access(all)
+    resource CadenceOwnedAccount {
 
         access(self)
         let addressBytes: [UInt8; 20]
 
-        /// constructs a new Cadence owned account for the address
+        /// Constructs a new Cadence Owned Account for the address
         init(addressBytes: [UInt8; 20])
 
-        /// The EVM address of the Cadence owned account
+        /// The EVM address of the Cadence Owned Account
         access(all)
         fun address(): EVMAddress
 
-        /// Withdraws the balance from the Cadence owned account's balance
+        /// Withdraws the balance from the Cadence Owned Account's balance
         access(all)
         fun withdraw(balance: Balance): @FlowToken.Vault
+
+        /// Get balance of the Cadence Owned Account
+        access(all)
+        fun balance(): Balance
 
         /// Deploys a contract to the EVM environment.
         /// Returns the address of the newly deployed contract.
         /// The value (balance) is taken from the EVM account.
         access(all)
-        fun deploy(code: [UInt8], gasLimit: UInt64, value: Balance): EVMAddress
+        fun deploy(
+            code: [UInt8],
+            gasLimit: UInt64,
+            value: Balance
+        ): EVMAddress
 
         /// Calls a function with the given data.
         /// The execution is limited by the given amount of gas.
         /// The value (balance) is taken from the EVM account.
         access(all)
-        fun call(to: EVMAddress, data: [UInt8], gasLimit: UInt64, value: Balance): [UInt8]
+        fun call(
+            to: EVMAddress,
+            data: [UInt8],
+            gasLimit: UInt64,
+            value: Balance
+        ): [UInt8]
     }
 
-    /// Creates a new Cadence owned account
+    /// Creates a new Cadence Owned Account
     access(all)
     fun createCadenceOwnedAccount(): @CadenceOwnedAccount
 }
@@ -185,7 +209,7 @@ access(all)contract EVM {
 
 COA addresses are unique and allocated by the FVM and stored inside the resource. Calls through COAs form a new type of transaction for the EVM that doesn't require signatures and doesn't need nonce checking. COAs could deploy smart contracts or make calls to the ones that are already deployed on Flow EVM.
 
-![Illustration of](20231116-evm-support/flow-evm-account-model.png)
+![Illustration of EVM account model](20231116-evm-support/flow-evm-account-model.png)
 
 COAs also facilitate the withdrawal of Flow tokens back from the EVM balance environment into the Cadence environment through `withdraw`.
 
