@@ -139,14 +139,16 @@ contract EVM {
 // Example of tx wrapping
 import EVM from <ServiceAddress>
 
-access(all)
-fun main(rlpEncodedTransaction: [UInt8], coinbaseBytes: [UInt8; 20]) {
-    let coinbase = EVM.EVMAddress(bytes: coinbaseBytes)
-    EVM.run(tx: rlpEncodedTransaction, coinbase: coinbase)
+transaction(rlpEncodedTransaction: [UInt8], coinbaseBytes: [UInt8; 20]) {
+
+    prepare(signer: AuthAccount) {
+        let coinbase = EVM.EVMAddress(bytes: coinbaseBytes)
+        EVM.run(tx: rlpEncodedTransaction, coinbase: coinbase)
+    }
 }
 ```
 
-For example, a user might use Metamask to sign a transaction for Flow EVM and broadcast it to services that check the gas fee on the transaction and wrap the transaction to be executed.
+For example, a user might use MetaMask to sign a transaction for Flow EVM and broadcast it to services that check the gas fee on the transaction and wrap the transaction to be executed.
 
 Note that account nonce would protect against double execution of a transaction, similar to how other non-virtual blockchains prevent the minor from including a transaction multiple times.
 
