@@ -117,7 +117,24 @@ down into their respective forks to help with understanding.
 ## Design Proposal
 
 ### Context
-<!-- TODO -->
+
+It's helpful to understand that the entrypoint to FlowEVM is mediated by the [`CadenceOwnedAccount`
+(COA)](https://github.com/onflow/flips/pull/225). This Cadence resource provides access to FlowEVM, enabling encoded
+calls into EVM originating from the calling COA's EVM address. In short, it's a resource that also functions as an EVM
+account whose access is controlled by resource ownership instead of an offchain signature.
+
+Since COAs are the only cross-VM objects universally available from Cadence and the identity-based access of Solidity
+enables any address to receive assets, callers bridging *to* FlowEVM may bridge to any EVM address. In the opposite
+direction, only COAs may initiate bridging *from* EVM since there is not yet a mechanism to initiate Cadence state
+change from the EVM environment.
+
+Hopefully, this context clarifies that bridging in either direction - Flow -> EVM & EVM -> Flow - is at all times
+initiated via call to the bridge Cadence contracts.
+
+It's also interesting to note that any project could build an asset-specific bridge between VMs using the same
+primitives and toolsets leveraged for the design below. However, the intention for this bridge is to provide public
+infrastructure to seamlessly and permissionlessly move assets between VMs without requiring the support of the asset
+developers.
 
 ### Overview
 
@@ -127,28 +144,28 @@ bridge, but owner interactions are mediated by contract logic on either end in a
 with other core network infrastructure accounts.
 
 On the EVM side, a central contract factory will instantiate Solidity ERC20 & ERC721 contracts as directed by calls from
-the central Cadence contract’s Cadence Owned Account. This factory will also implement a number of helper methods to
-give the bridge account visibility into the EVM environment. These methods might include things like retrieving an asset
-type, determining if EVM contracts are bridge-owned, validating asset ownership, etc. so the COA has a central trusted
-source of truth for critical state assertions.
+the central Cadence contract’s COA. This factory will also implement a number of helper methods to give the bridge
+account visibility into the EVM environment. These methods might include things like retrieving an asset type,
+determining if EVM contracts are bridge-owned, validating asset ownership, etc. so the COA has a central trusted source
+of truth for critical state assertions.
 
-Below are diagrams depicting the call flows for both Flow and EVM-native NFTs.
+Below are diagrams depicting the call flows for both Flow and EVM-native NFTs according to the proposed design.
 
 #### Flow-Native: Flow -> EVM
 
 *Lock in Cadence & Mint in EVM*
 
-1. Determine if asset is FT or NFT
-    - Check if resource is an instance of FT.Vault or NFT.NFT (excluding overlapping instances, at least for POC)
-2. Determine if asset is Flow or EVM-native
-    - Check if resource is defined in bridge-hosted NFT or NFT contract - if so, EVM-native, else Flow-native
-3. Determine if BridgeNFTLocker contract has been initialized for this NFT type - if not, initialize setup
-    1. Call into EVM, telling BridgedNFTFactory to deploy a new FlowBridgedNFT contract, passing identifying info about the NFT & noting new EVM contract address
-    2. Derive a contract name from the NFT identifier, & deploy template-generated Cadence contract to bridge account, passing EVM contract Address
-4. Borrow a reference to the newly deployed BridgeNFTLocker contract & passthrough bridge request
-    1. Lock the NFT in the Locker resource
-    2. Call to FlowBridgedNFT.sol to mint to caller
-5. Locker contract calls corresponding EVM FlowBridgedNFT contract to mint NFT to the provided EVMAddress // Simplified with .sol interface + delegateCall in Factory.sol?
+1. Determine if asset is Flow or EVM-native
+    - Check if resource is defined in bridge-hosted NFT contract - if so, EVM-native, else Flow-native
+1. Determine if BridgeNFTLocker contract has been initialized for this NFT type - if not, initialize setup
+    1. Call into EVM, telling FlowBridgeFactory to deploy a new FlowBridgedNFT (ERC721) contract, passing identifying
+       info about the NFT and it's source contract. Note the new EVM contract address
+    1. Derive a contract name from the NFT identifier, & deploy template-generated Cadence contract to the bridge
+       account, passing the newly deployed EVM contract address
+1. Borrow a reference to the newly deployed BridgeNFTLocker contract & passthrough bridge request
+    1. Lock the NFT in the contract's Locker resource
+    1. Call to FlowBridgedNFT.sol to mint to mint an NFT to the defined recipient
+1. Locker contract calls corresponding EVM FlowBridgedNFT contract to mint NFT to the provided EVMAddress
 
 ![Flow-native Flow to EVM](20231222-evm-vm-bridge-resources/flow_native_to_evm.png)
 
@@ -156,18 +173,17 @@ Below are diagrams depicting the call flows for both Flow and EVM-native NFTs.
 
 *Unlock in Cadence & Burn in EVM*
 
-1. Determine if asset is FT or NFT
-    - Call into Coordinator to determine if EVM address target is ERC20 or ERC721 instance or invalid
-2. Determine if asset is Flow or EVM-native
-    - Call into Factory contract to determine if target of EVM call is IFlowCrossVMContract.sol instance && is contained in bridgedNFTContracts
-3. Determine if an NFT Locker has been initialized (it will be by construction)
-4. Borrow the BridgeNFTLocker.cdc contract, deriving name from from the type identifier returned from FlowBridgedNFT.sol
-4. Validate the caller is the current owner (or getApproved(tokenID)) of the EVM NFT to be bridged
-5. Execute the caller-provided approve() calldata
-7. Validate the bridge contract COA is approved to manipulate the NFT in FlowBridgedNFT.sol as result of executed call
-8. Bridge contract COA calls to FlowBridgedNFT.sol to burn the NFT // Simplified with a .sol interface + delegateCall in Factory.sol?
-6. Bridge contract withdraws NFT from NFTLocker and returns to caller
-
+1. Determine if asset is Flow or EVM-native
+    - Call into Factory contract to determine if target of EVM call is FlowBridgedNFT.sol instance && was deployed by
+      FlowBridgeFactory.sol
+1. Get the Flow NFT type identifier from FlowBridgedNFT.sol
+1. Determine if an NFT Locker has been initialized (it will be by construction)
+1. Borrow the BridgeNFTLocker.cdc contract, deriving name from from the type identifier returned from FlowBridgedNFT.sol
+1. Validate the caller is the current owner (or is approved) of the EVM NFT to be bridged
+1. Execute the caller-provided approve() calldata
+1. Validate the bridge contract COA is approved to manipulate the NFT in FlowBridgedNFT.sol as a result of the executed call
+1. Bridge contract COA calls to FlowBridgedNFT.sol to burn the NFT
+1. Bridge contract withdraws NFT from the locker contract and returns to caller
 
 ![Flow-native EVM to Flow](20231222-evm-vm-bridge-resources/flow_native_to_flow.png)
 
@@ -175,19 +191,19 @@ Below are diagrams depicting the call flows for both Flow and EVM-native NFTs.
 
 *Mint in Flow & Transfer in EVM*
 
-1. Determine if asset is FT or NFT
-    - Call into Factory to determine if EVM address target is ERC20 or ERC721 instance or invalid
-2. Determine if asset is Flow or EVM-native
-    - Call into Factory contract, checking if target of EVM call is IFlowCrossVMContract.sol instance && is contained in bridgedNFTContracts
-3. Determine if BridgedNFT contract has been deployed - if not initialize
-    - Derive a contract name from the EVM NFT contract address + name & deploy template-generated Cadence contract to bridge account, passing EVM source contract address
-4. Borrow newly deployed BridgedNFT contract & passthrough
-5. BridgedNFT validates the caller is currently owner (or getApproved(tokenID)) of EVM NFT
-6. BridgedNFT executes EVM approve call provided by the caller, approving bridge COA to act on NFT
-6. BridgedNFT executes NFT transfer from bridge COA, completing the transfer to the bridge account in EVM
-7. BridgedNFT validates its contract COA is now the owner
-8. BridgedNFT subsequently mints an NFT from itself & returns
-9. Caller then creates & Collection from NFT & configures, finally depositing to their account
+1. Determine if asset is Flow or EVM-native
+    - Call into Factory contract, checking if the target of EVM call is FlowBridgedNFT.sol instance && was deployed by
+      FlowBridgeFactory.sol
+1. Determine if BridgedNFT contract has been deployed - if not initialize
+    - Derive a contract name from the EVM NFT contract address + name & deploy template-generated Cadence contract to
+      bridge account, passing EVM source contract address
+1. Borrow newly deployed BridgedNFT contract & passthrough
+1. BridgedNFT validates the caller is currently owner (or is approved) of the EVM NFT to be bridged
+1. BridgedNFT executes EVM approve call provided by the caller, approving bridge COA to act on the EVM NFT
+1. BridgedNFT executes NFT transfer from bridge COA, completing the transfer to the bridge account in EVM
+1. BridgedNFT validates its contract COA is now the owner of the NFT
+1. BridgedNFT subsequently mints an NFT from itself & returns
+1. Caller then creates & Collection from NFT & configures, finally depositing to their account
 
 ![Flow-native Flow to EVM](20231222-evm-vm-bridge-resources/evm_native_to_flow.png)
 
@@ -195,23 +211,23 @@ Below are diagrams depicting the call flows for both Flow and EVM-native NFTs.
 
 *Burn in Flow & Transfer in EVM*
 
-1. Determine if asset is FT or NFT
-    - Check if resource is an instance of FT.Vault or NFT.NFT (excluding overlapping instances, at least for POC)
-2. Determine if asset is Flow or EVM-native
-    - Check if resource is defined in bridge-hosted NFT or NFT contract - if so, EVM-native, else Flow-native
-3. Determine if BridgedNFT contract has been deployed (it will be by construction)
-4. Borrow the BridgedNFT contract from the NFT type identifier & passthrough bridge request
-5. BridgedNFT burns the NFT
-6. BridgedNFT calls to EVM contract, transferring NFT to defined recipient
-7. BridgedNFT confirms recipient is owner of the NFT post-transfer
+1. Determine if asset is Flow or EVM-native
+    - Check if resource is defined in bridge-hosted NFT contract - if so, EVM-native, else Flow-native
+1. Determine if BridgedNFT contract has been deployed (it will be by construction)
+1. Borrow the BridgedNFT contract from the NFT type identifier & passthrough bridge request
+1. BridgedNFT burns the NFT
+1. BridgedNFT calls to EVM contract, transferring NFT to defined recipient
+1. BridgedNFT confirms recipient is owner of the NFT post-transfer
 
 ![Flow-native Flow to EVM](20231222-evm-vm-bridge-resources/evm_native_to_evm.png)
 
 #### In Aggregate
-![FlowEVM VM Bridge Design Overview](20231222-evm-vm-bridge-resources/overview.png) *The bridge contract can be thought
-of here as a router for requests to bridge to and from Flow. It determines if the requested asset is Flow or EVM native
-and whether it’s an FT or NFT. If needed, it performs contract initialization on either side of the VM. From there, it
-routes requests to the appropriate contract which fulfills the asset bridge request.*
+
+![FlowEVM VM Bridge Design Overview](20231222-evm-vm-bridge-resources/overview.png)
+*The bridge contract can be thought of here as a router for requests to bridge to and from Flow. It then handles the
+request dependent on whether the asset is an NFT or FT and if it's Flow- or EVM-native. If needed, it performs contract
+initialization on either side of the VM. From there, it routes requests to the appropriate contract which fulfills the
+asset bridge request.*
 
 ### Implementation Details
 
@@ -224,21 +240,21 @@ routes requests to the appropriate contract which fulfills the asset bridge requ
   - Unified query point for NFT Locker contracts & to assess Flow x EVM contract associations
   - Owning (via contract COA) all deployed contracts on EVM side
   - Owning (via contract COA) all EVM-native assets on EVM side when bridged to Flow - equivalent to locking
-  - Initializing NFT & FT Locker contracts when Flow-native assets first bridged to EVM
+  - Initializing NFT & FT Locker contracts when Flow-native assets are first bridged to EVM
   - Initializing BridgedFT & BridgedNFT contracts defining EVM-native assets when first bridged to Flow
 - **FT/NFT Locker**
   - Lock Flow-native tokens bridging to EVM
   - Unlock Flow-native tokens bridging from EVM
   - Serve query requests about locked tokens
-  - Point to the corresponding EVM contract
+  - Point to the corresponding EVM-defining contract
 - **Bridged FT/NFT**
   - Define EVM-native tokens bridged from EVM to Flow
   - Point to the corresponding EVM-native contract
   - Serve as secondary bridging interface, enabling easy bridging back to EVM
-      - Result of implementing combination of `CrossVM` contract interface along with `BridgeableVault` or
-        `BridgeableCollection` resource interfaces
-      - e.g. `collection.bridgeToEVM(id: UInt64, to: EVMAddress)`
-      - e.g. `vault.bridgeToEVM(amount: UFIx64, to: EVMAddress)`
+      - Result of implementing combination of `CrossVM` contract interface along with `EVMBridgeableVault` or
+        `EVMBridgeableCollection` resource interfaces
+      - e.g. `collection.bridgeToEVM(id: UInt64, to: EVMAddress, tollFee: @FlowToken.Vault)`
+      - e.g. `vault.bridgeToEVM(amount: UFIx64, to: EVMAddress, tollFee: @FlowToken.Vault)`
 
 #### EVM
 
@@ -255,6 +271,9 @@ routes requests to the appropriate contract which fulfills the asset bridge requ
   - Point to the corresponding Flow-native contract
 
 #### Interfaces
+
+> :information_source: Solidity contracts will largely be boilerplate based on common standards. Interfaces are soon
+> to follow
 
 <details>
 <summary>FlowEVMBridge.cdc.cdc</summary>
@@ -510,12 +529,12 @@ access(all) contract interface ICrossVM {
 access(all) contract CrossVMAsset {
     /// Enables a bridging entrypoint to EVM on an implementing Vault
     access(all) resource interface EVMBridgeableVault {
-        access(all) fun bridgeToEVM(amount: UFix64, to: EVM.EVMAddress)
+        access(all) fun bridgeToEVM(amount: UFix64, to: EVM.EVMAddress, tollFee: @FlowToken.Vault)
     }
 
     /// Enables a bridging entrypoint to EVM on an implementing Collection
     access(all) resource interface EVMBridgeableCollection {
-        access(all) fun bridgeToEVM(id: UInt64, to: EVM.EVMAddress)
+        access(all) fun bridgeToEVM(id: UInt64, to: EVM.EVMAddress, tollFee: @FlowToken.Vault)
     }
 }
 ```
@@ -525,12 +544,12 @@ access(all) contract CrossVMAsset {
 <summary>FlowEVMBridgeFactory.sol</summary>
 
 ```solidity
-// TODO - Factory & EVM inspector
+// TODO - Contract factory & EVM inspector
 ```
 </details>
 
 <details>
-<summary>FlowBridgedAsset.sol</summary>
+<summary>IFlowBridgedAsset.sol</summary>
 
 ```solidity
 // TODO - Identifies corresponding Flow contract address
@@ -546,16 +565,54 @@ access(all) contract CrossVMAsset {
 </details>
 
 <details>
-<summary>IFlowBridgedFT.sol</summary>
+<summary>FlowBridgedFT.sol</summary>
 
 ```solidity
 // TODO - Template for bridged EVM-native FTs
 ```
 </details>
 
+### Considerations
+
 #### NFT Metadata
 
-### Considerations
+Platform expectations between EVM & Flow NFT metadata storage differ. Whereas Flow projects generally prioritize onchain
+metadata (with the exception of image data), EVM projects typically store NFT metadata in offchain systems - typically
+in json blobs found in IPFS.
+
+As the bridge is public infrastructure, there is a need to generalize the breadth of migrated metadata. Minimizing
+metadata on has two primary implications, distinct for either side of origin.
+
+- Looking solely at the Solidity contract, bridged Flow-native NFTs would have very little identifying information per
+  the ERC721 standard - ID & perhaps an image pointer.
+- Looking solely at the Cadence contract, bridged EVM-native NFTs would have very little available onchain metadata - ID
+  & perhaps an IPFS URI.
+
+For typical bridge infrastructure connecting separate zones of sovereignty, metadata migration can be handled by their
+offchain system components. However, the requirement to atomically move assets between VMs prevents the inclusion of
+such offchain systems as they would break atomicity and introduce the need for undesirable trust assumptions. For
+example, upon bridging an NFT from Flow to EVM, an offchain listener would need to recognize a request to post metadata
+to IPFS, post the metadata, and commit that URI to the defining EVM contract for the relevant NFT. We must trust that a/
+the request is served, b/ metadata committed to IPFS, c/ commitment to the EVM contract succeeds and d/ that URI is
+correct and contains correct metadata. Then there is the issue of IPFS storage funding.
+
+Alternatively, if Flow projects want their metadata to be served well across VMs may take it on themselves to add
+offchain IPFS metadata. This would allow the ecosystem to both maintain onchain metadata advantages as well as reach
+parity with EVM platform expectations. We may then want to consider a Cadence metadata view specifically for IPFS-stored
+metadata to support this use case.
+
+Yet another alternative, it may be helpful to expose an API matching that of IPFS so that bridge-stored NFTs metadata
+could be served to IPFS clients as they would request URI material from any other provider.
+
+This problem and potential solutions are presented as a point of discussion and are not necessarily in scope for the
+contract design of the bridge.
+
+#### NFT IDs
+
+NFT ID values are some of the most critical token metadata, indentifying each token as unique. While Flow NFTs define
+IDs as `UInt64`, ERC721 IDs are `uint256`. It remains an open question as to how this reduction from `UInt256` to
+`UInt64` would affect the uniqueness of NFTs bridged from EVM to Flow and how the bridge should handle such conversions
+while safeguarding ownership guarantees upon bridging back.
 
 ### Drawbacks
 
@@ -740,12 +797,3 @@ Token Service](https://github.com/AnChainAI/anchain-axelar-dapper-flowbridge) an
   potential overflow & collisions when moving between EVM -> Flow?
 - Are there additional metadata mechanisms we should consider in the contract designs that would help platforms better
   represent bridged assets?
-___
-
-<!-- TODO: Wipe -->
-## Thoughtpad
-
-- What schema to use for derived contract names?
-  - Flow-native -> Lockers
-  - EVM-native -> Bridged Asset
-  - 
