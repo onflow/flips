@@ -189,12 +189,11 @@ Below are diagrams depicting the call flows for both Flow and EVM-native NFTs.
 ```cadence
 access(all) contract FlowEVMBridge {
 
+    /// The COA which orchestrates bridge operations in EVM
+    access(self) let coa: @EVM.BridgedAccount
+
     /// Denotes a contract was deployed to the bridge account, could be either FlowEVMBridgeLocker or FlowEVMBridgedAsset
     access(all) event BridgeContractDeployed(type: Type, name: String, evmContractAddress: EVM.EVMAddress)
-    /// Asset bridged from Flow to EVM - satisfies both FT & NFT (always amount == 1.0)
-    access(all) event BridgedToEVM(type: Type, amount: UFix64, from: EVM.EVMAddress, to: EVM.EVMAddress, evmContractAddress: EVM.EVMAddress, flowNative: Bool)
-    /// Asset bridged from EVM to Flow - satisfies both FT & NFT (always amount == 1.0)
-    access(all) event BridgedToFlow(type: Type, amount: UFix64, from: EVM.EVMAddress, to: EVM.EVMAddress, evmContractAddress: EVM.EVMAddress, flowNative: Bool)
 
     /* --- Public NFT Handling --- */
 
@@ -278,10 +277,10 @@ access(all) contract FlowEVMBridge {
     // Flow-native NFTs - lock & unlock
 
     /// Handles bridging Flow-native NFTs to EVM - locks NFT in designated Flow locker contract & mints in EVM
-    /// Within scope, locker contract is deployed if needed
+    /// Within scope, locker contract is deployed if needed & passing on call to said contract
     access(self) fun bridgeFlowNativeNFTToEVM(token: @{NonFungibleToken.NFT}, to: EVM.EVMAddress, tollFee: @FlowToken.Vault)
     /// Handles bridging Flow-native NFTs from EVM - unlocks NFT from designated Flow locker contract & burns in EVM
-    /// Within scope, locker contract is deployed if needed
+    /// Within scope, locker contract is deployed if needed & passing on call to said contract
     access(self) fun bridgeFlowNativeNFTFromEVM(
         caller: auth(Callable) &BridgedAccount,
         calldata: [UInt8],
@@ -293,10 +292,10 @@ access(all) contract FlowEVMBridge {
     // EVM-native NFTs - mint & burn
 
     /// Handles bridging EVM-native NFTs to EVM - burns NFT in defining Flow contract & transfers in EVM
-    /// Within scope, defining contract is deployed if needed
+    /// Within scope, defining contract is deployed if needed & passing on call to said contract
     access(self) fun bridgeEVMNativeNFTToEVM(token: @{NonFungibleToken.NFT}, to: EVM.EVMAddress, tollFee: @FlowToken.Vault)
     /// Handles bridging EVM-native NFTs to EVM - mints NFT in defining Flow contract & transfers in EVM
-    /// Within scope, defining contract is deployed if needed
+    /// Within scope, defining contract is deployed if needed & passing on call to said contract
     access(self) fun bridgeEVMNativeNFTFromEVM(
         caller: auth(Callable) &BridgedAccount,
         calldata: [UInt8],
@@ -341,6 +340,9 @@ access(all) contract FlowEVMBridge {
     /// Helper for deploying templated defining contract supporting EVM-native asset bridging to Flow
     /// Deploys either NFT or FT contract depending on the provided type
     access(self) fun deployDefiningContract(type: Type)
+
+    /// Enables other bridge contracts to orchestrate bridge operations from contract-owned COA
+    access(account) fun borrowCOA(): &EVM.BridgedAccount
 }
 ```
 
@@ -355,7 +357,10 @@ access(all) contract FlowEVMBridgeUtils {
 
     /// Commonly used Solidity function selectors to call into EVM from bridge contracts to support call encoding
     /// e.g. ownerOf(uint256)(address), getApproved(uint256)(address), mint(address, uint256), etc.
-    access(self) let functionSelectors: {String: String}
+    access(self) let functionSelectors: {String: [UInt8]}
+
+    /// Returns the requested function selector
+    access(all) fun getFunctionSelector(signature: String): [UInt8]?
 
     /// Identifies if an asset is Flow- or EVM-native, defined by whether a bridge contract defines it or not
     access(all) fun isFlowNative(asset: &AnyResource): Bool
@@ -371,118 +376,31 @@ access(all) contract FlowEVMBridgeUtils {
     /// Determines if the owner has sufficient funds to bridge the given amount at the ERC20 contract address
     access(all) fun hasSufficientBalance(amount: UFix64, owner: EVM.EVMAddress, evmContractAddress: EVM.EVMAddress): Bool
 
-    /// Returns the requested function selector
-    access(all) fun getFunctionSelector(selectorName: String): String?
+    /// Derives the Cadence contract name for a given Type
+    access(all) fun deriveLockerContractName(fromType: Type): String?
+    /// Derives the Cadence contract name for a given EVM asset
+    access(all) fun deriveBridgedAssetContractName(fromEVMContract: EVM.EVMAddress): String?
     
     /// Deposits fees to the bridge account's FlowToken Vault - helps fund asset storage
     access(account) fun depositTollFee(_ tollFee: @FlowToken.Vault)
-    /// Upserts the given function selector
-    access(account) fun addFunctionSelector(selectorName: String, selector: String)
+    /// Upserts the function selector of the given signature
+    access(account) fun upsertFunctionSelector(signature: String)
 }
 ```
 </details>
 
-<details>
-<summary>IFlowEVMBridgeNFTLocker.cdc</summary>
-
-```cadence
-/// Defines an NFT Locker interface used to lock bridge Flow-native NFTs. Included so the contract can be borrowed by
-/// the main bridge contract without statically declaring the contract due to dynamic deployments
-/// An implementation of this contract will be templated to be named dynamically based on the locked NFT Type
-access(all) contract interface IFlowEVMBridgeNFTLocker {
-
-    /// Type of NFT locked in the contract
-    access(all) let lockedNFTType: Type
-    /// Pointer to the defining Flow-native contract
-    access(all) let flowNFTContractAddress: Address
-    /// Pointer to the Factory deployed Solidity contract address defining the bridged asset
-    access(all) let evmNFTContractAddress: EVM.EVMAddress
-
-    access(self) let locker: @{Locker, NonFungibleToken.Collection}
-
-    /* Secondary entrypoints */
-
-    access(all) fun bridgeToEVM(token: @{NonFungibleToken.INFT}, tollFee: @FlowToken.Vault)
-    access(all) fun bridgeFromEVM(
-        caller: auth(Callable) &BridgedAccount,
-        calldata: [UInt8],
-        id: UInt64,
-        evmContractAddress: EVM.EVMAddress
-        tollFee: @FlowToken.Vault
-    )
-
-    /* Getters */
-
-    access(all) fun getLockedNFTCount(): UInt64
-    access(all) fun borrowLockedNFT(id: UInt64): &{NonFungibleToken.INFT}
-
-    /* Locker interface */
-
-    access(all) resource interface Locker {
-        access(all) fun getLockedNFTCount(): UInt64
-    }
-}
-```
 </details>
 
 <details>
-<summary>IFlowEVMBridgeFTLocker.cdc</summary>
+<summary>FlowEVMBridgeTemplates.cdc</summary>
 
 ```cadence
-/// Defines an FT Locker interface used to lock bridge Flow-native tokens. Included so the contract can be borrowed
-/// by the main bridge contract without statically declaring the contract due to dynamic deployments
-/// An implementation of this contract will be templated to be named dynamically based on the locked FT Type
-access(all) contract interface IFlowEVMBridgeFTLocker {
-
-    access(all) let lockedFTType: Type
-    access(all) let flowFTContractAddress: Address
-    access(all) let evmFTContractAddress: EVM.EVMAddress
-
-    access(self) let locker: @{FungibleToken.Vault}
-
-    access(all) fun bridgeToEVM(vault: @{FungibleToken.Vault}, tollFee: @FlowToken.Vault)
-    access(all) fun bridgeFromEVM(
-        caller: auth(Callable) &BridgedAccount,
-        calldata: [UInt8],
-        amount: UInt64,
-        evmContractAddress: EVM.EVMAddress
-        tollFee: @FlowToken.Vault
-    )
-
-    access(all) fun getLockedBalance(): UFix64
-}
-```
-</details>
-
-<details>
-<summary>IFlowEVMBridgedAsset.cdc</summary>
-
-```cadence
-// Base interface for bridged asset defining contracts
-access(all) contract interface IFlowEVMBridgedAsset {
-    
-}
-```
-</details>
-
-<details>
-<summary>FlowEVMBridgedNFT.cdc</summary>
-
-```cadence
-// TODO - Template for bridged EVM-native NFTs
-access(all) contract interface FlowEVMBridgedNFT : IFlowEVMBridgedAsset {
-    // V2 Standard NonFungibleToken contract
-}
-```
-</details>
-
-<details>
-<summary>FlowEVMBridgedFT.cdc</summary>
-
-```cadence
-/// Template for bridged EVM-native NFTs
-access(all) contract FlowEVMBridgedFT : IFlowEVMBridgedAsset {
-    // V2 Standard FungibleToken contract
+/// Helper contract serving templates
+access(all) contract FlowEVMBridgeTemplates {
+    /// Serves Locker contract code for a given type, deriving the contract name from the type identifier
+    access(all) fun getLockerContractCode(forType: Type): [UInt8]?
+    /// Serves bridged asset contract code for a given type, deriving the contract name from the EVM contract info
+    access(all) fun getBridgedAssetContractCode(forEVMContract: EVM.EVMAddress): [UInt8]?
 }
 ```
 </details>
@@ -495,6 +413,8 @@ access(all) contract FlowEVMBridgedFT : IFlowEVMBridgedAsset {
 access(all) contract interface ICrossVM {
     /// Retrieves the corresponding EVM contract address, assuming a 1:1 relationship between VM implementations
     access(all) fun getEVMContractAddress(): EVM.EVMAddress
+    /// Retrieves the owner of the EVM contract address
+    access(all) fun getEVMContractOwner(): EVM.EVMAddress
 }
 ```
 </details>
@@ -505,13 +425,13 @@ access(all) contract interface ICrossVM {
 ```cadence
 /// Contract defining cross-VM asset interfaces
 access(all) contract CrossVMAsset {
-    /// Enables a bridging entrypoint on an implementing Vault
-    access(all) resource interface BridgeableVault {
+    /// Enables a bridging entrypoint to EVM on an implementing Vault
+    access(all) resource interface EVMBridgeableVault {
         access(all) fun bridgeToEVM(amount: UFix64, to: EVM.EVMAddress)
     }
 
-    /// Enables a bridging entrypoint on an implementing Collection
-    access(all) resource interface BridgeableCollection {
+    /// Enables a bridging entrypoint to EVM on an implementing Collection
+    access(all) resource interface EVMBridgeableCollection {
         access(all) fun bridgeToEVM(id: UInt64, to: EVM.EVMAddress)
     }
 }
@@ -593,3 +513,13 @@ While the work is happening someone concurrently, there may be some cross-pollin
 - How will we handle either bridging or serving metadata for bridged Flow-native NFTs given the difference in metadata standards between Cadence & EVM?
 - Is there an upper bound to how many contracts a single account can host?
 - What if any issues with the NFT ID type differences - `UInt64` in Cadence & `uint256` in Solidity - present for potential overflow & collisions when moving between EVM -> Flow?
+- Are there additional metadata mechanisms we should consider in the contract designs that would help platforms better represent bridged assets?
+___
+
+<!-- TODO: Wipe -->
+## Thoughtpad
+
+- What schema to use for derived contract names?
+  - Flow-native -> Lockers
+  - EVM-native -> Bridged Asset
+  - 
