@@ -135,19 +135,76 @@ source of truth for critical state assertions.
 Below are diagrams depicting the call flows for both Flow and EVM-native NFTs.
 
 #### Flow-Native: Flow -> EVM
-<!-- TODO: Update image & Move text to markdown -->
+
+*Lock in Cadence & Mint in EVM*
+
+1. Determine if asset is FT or NFT
+    - Check if resource is an instance of FT.Vault or NFT.NFT (excluding overlapping instances, at least for POC)
+2. Determine if asset is Flow or EVM-native
+    - Check if resource is defined in bridge-hosted NFT or NFT contract - if so, EVM-native, else Flow-native
+3. Determine if BridgeNFTLocker contract has been initialized for this NFT type - if not, initialize setup
+    1. Call into EVM, telling BridgedNFTFactory to deploy a new FlowBridgedNFT contract, passing identifying info about the NFT & noting new EVM contract address
+    2. Derive a contract name from the NFT identifier, & deploy template-generated Cadence contract to bridge account, passing EVM contract Address
+4. Borrow a reference to the newly deployed BridgeNFTLocker contract & passthrough bridge request
+    1. Lock the NFT in the Locker resource
+    2. Call to FlowBridgedNFT.sol to mint to caller
+5. Locker contract calls corresponding EVM FlowBridgedNFT contract to mint NFT to the provided EVMAddress // Simplified with .sol interface + delegateCall in Factory.sol?
+
 ![Flow-native Flow to EVM](20231222-evm-vm-bridge-resources/flow_native_to_evm.png)
 
 #### Flow-Native: EVM -> Flow
-<!-- TODO: Update image & Move text to markdown -->
+
+*Unlock in Cadence & Burn in EVM*
+
+1. Determine if asset is FT or NFT
+    - Call into Coordinator to determine if EVM address target is ERC20 or ERC721 instance or invalid
+2. Determine if asset is Flow or EVM-native
+    - Call into Factory contract to determine if target of EVM call is IFlowCrossVMContract.sol instance && is contained in bridgedNFTContracts
+3. Determine if an NFT Locker has been initialized (it will be by construction)
+4. Borrow the BridgeNFTLocker.cdc contract, deriving name from from the type identifier returned from FlowBridgedNFT.sol
+4. Validate the caller is the current owner (or getApproved(tokenID)) of the EVM NFT to be bridged
+5. Execute the caller-provided approve() calldata
+7. Validate the bridge contract COA is approved to manipulate the NFT in FlowBridgedNFT.sol as result of executed call
+8. Bridge contract COA calls to FlowBridgedNFT.sol to burn the NFT // Simplified with a .sol interface + delegateCall in Factory.sol?
+6. Bridge contract withdraws NFT from NFTLocker and returns to caller
+
+
 ![Flow-native EVM to Flow](20231222-evm-vm-bridge-resources/flow_native_to_flow.png)
 
 #### EVM-Native: EVM -> Flow
-<!-- TODO: Update image & Move text to markdown -->
+
+*Mint in Flow & Transfer in EVM*
+
+1. Determine if asset is FT or NFT
+    - Call into Factory to determine if EVM address target is ERC20 or ERC721 instance or invalid
+2. Determine if asset is Flow or EVM-native
+    - Call into Factory contract, checking if target of EVM call is IFlowCrossVMContract.sol instance && is contained in bridgedNFTContracts
+3. Determine if BridgedNFT contract has been deployed - if not initialize
+    - Derive a contract name from the EVM NFT contract address + name & deploy template-generated Cadence contract to bridge account, passing EVM source contract address
+4. Borrow newly deployed BridgedNFT contract & passthrough
+5. BridgedNFT validates the caller is currently owner (or getApproved(tokenID)) of EVM NFT
+6. BridgedNFT executes EVM approve call provided by the caller, approving bridge COA to act on NFT
+6. BridgedNFT executes NFT transfer from bridge COA, completing the transfer to the bridge account in EVM
+7. BridgedNFT validates its contract COA is now the owner
+8. BridgedNFT subsequently mints an NFT from itself & returns
+9. Caller then creates & Collection from NFT & configures, finally depositing to their account
+
 ![Flow-native Flow to EVM](20231222-evm-vm-bridge-resources/evm_native_to_flow.png)
 
 #### EVM-Native: Flow -> EVM
-<!-- TODO: Update image & Move text to markdown -->
+
+*Burn in Flow & Transfer in EVM*
+
+1. Determine if asset is FT or NFT
+    - Check if resource is an instance of FT.Vault or NFT.NFT (excluding overlapping instances, at least for POC)
+2. Determine if asset is Flow or EVM-native
+    - Check if resource is defined in bridge-hosted NFT or NFT contract - if so, EVM-native, else Flow-native
+3. Determine if BridgedNFT contract has been deployed (it will be by construction)
+4. Borrow the BridgedNFT contract from the NFT type identifier & passthrough bridge request
+5. BridgedNFT burns the NFT
+6. BridgedNFT calls to EVM contract, transferring NFT to defined recipient
+7. BridgedNFT confirms recipient is owner of the NFT post-transfer
+
 ![Flow-native Flow to EVM](20231222-evm-vm-bridge-resources/evm_native_to_evm.png)
 
 #### In Aggregate
