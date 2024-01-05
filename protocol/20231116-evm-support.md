@@ -1,5 +1,5 @@
 ---
-status: draft 
+status: draft
 flip: 223
 authors: Ramtin Seraj (ramtin.seraj@flowfoundation.org), Bastian Müller (bastian@dapperlabs.com)
 sponsor: Dieter Shirley (dete@dapperlabs.com)
@@ -10,8 +10,8 @@ updated: 2023-12-04
 
 ## Objective
 
-- Defining a Cadence interface for the EVM integrated into the FVM. 
-- Facilitates seamless interaction between Cadence and EVM environments. 
+- Defining a Cadence interface for the EVM integrated into the FVM.
+- Facilitates seamless interaction between Cadence and EVM environments.
 
 ## Motivation
 
@@ -25,13 +25,13 @@ Support for EVM on Flow enables developers to leverage the network effects and t
 
 To better understand the approach proposed in this Flip, consider EVM on Flow as a virtual blockchain deployed to the Flow blockchain at a specific address (e.g., a service account). EVM on Flow functions as a smart contract that emulates the EVM with its own dedicated chain-ID. Signed transactions are inputted, and a chain of blocks is produced as output. Similar to other built-in standard contracts (e.g., RLP encoding), this EVM environment can be imported into any Flow transaction or script.
 
-This is made possible using selective integration of the core EVM runtime without the supporting software stack in which it currently exists on Ethereum. For equivalence we also provide an EVM compatible JSON-RPC API implementation to facilitate EVM on Flow interactions from existing EVM clients.```
+This is made possible using selective integration of the core EVM runtime without the supporting software stack in which it currently exists on Ethereum. For equivalence we also provide an EVM compatible JSON-RPC API implementation to facilitate EVM on Flow interactions from existing EVM clients.
 
-```
+```cadence
 import EVM from <ServiceAddress>
 ```
 
-Within the Flow transaction, if EVM interaction is successful 
+Within the Flow transaction, if EVM interaction is successful
 
 - it makes changes to the on-chain data
 - forms a new block if successful,
@@ -46,10 +46,10 @@ In the EVM environment, resource consumption is metered as "gas usage". When int
 
 In the EVM world, there is no concept of accounts or a minimum balance requirement. Any sequence of bytes with a length of 20 is considered a valid address.
 
-Every EVM address has a balance of native tokens (e.g. ETH on Ethereum), a nonce (for deduplication) and a root hash of the state (if smart contract). 
-In this design, we use the FLOW token for this native token. The balance of an EVM address is stored as a smaller denomination of FLOW called `Atto-FLOW`, it works similarly to the way Wei is used to store ETH values on Ethereum.  
+Every EVM address has a balance of native tokens (e.g. ETH on Ethereum), a nonce (for deduplication) and a root hash of the state (if smart contract).
+In this design, we use the FLOW token for this native token. The balance of an EVM address is stored as a smaller denomination of FLOW called `Atto-FLOW`, it works similarly to the way Wei is used to store ETH values on Ethereum.
 
-```
+```cadence
 access(all) contract EVM {
 
     /// EVMAddress is an EVM-compatible address
@@ -74,7 +74,7 @@ A FLOW is equivalent of 10^18 atto-FLOW. Because EVM environments uses different
 
 Note that no new FLOW token is minted and every balance on EVM addresses has to be deposited by bridging FLOW tokens into addresses using `deposit` method.
 
-```
+```cadence
 access(all)contract EVM {
 
     access(all) struct Balance {
@@ -82,7 +82,7 @@ access(all)contract EVM {
         access(all) let flow: UFix64
 
         /// Constructs a new balance, given the balance in FLOW
-        init(flow: UFix64) 
+        init(flow: UFix64)
 
         /// Returns the balance in terms of atto-FLOW.
         /// Atto-FLOW is the smallest denomination of FLOW inside EVM
@@ -91,9 +91,9 @@ access(all)contract EVM {
 }
 ```
 
-Every account on Flow EVM could be queried by constructing an EVM structure.  Here is an example: 
+Every account on Flow EVM could be queried by constructing an EVM structure.  Here is an example:
 
-```
+```cadence
 // Example of balance query
 import EVM from <ServiceAddress>
 
@@ -108,11 +108,11 @@ fun main(bytes: [UInt8; 20]) {
 
 One of the design goals of this work is to ensure that existing EVM ecosystem tooling and products which builders use can integrate effortlessly. To achieve this, the EVM smart contract accepts RLP-encoded transactions for execution. Any transaction can be wrapped and submitted by any user through Flow transactions. As mentioned earlier, the resource usage during EVM interaction is translated into Flow transaction fees, which must be paid by the account that wrapped the original transaction.
 
-To facilitate the wrapping operation and refunding, the run interface also allows a `coinbase` address to be passed. The use of the `coinbase` address in this context indicates the EVM address which will receive the gas usage * gas price (set in transaction). Essentially, the transaction wrapper behaves similarly to a miner, receives the gas usage fees on an EVM address and pays for the transaction fees. 
+To facilitate the wrapping operation and refunding, the run interface also allows a `coinbase` address to be passed. The use of the `coinbase` address in this context indicates the EVM address which will receive the gas usage * gas price (set in transaction). Essentially, the transaction wrapper behaves similarly to a miner, receives the gas usage fees on an EVM address and pays for the transaction fees.
 
-Any failure during the execution would revert the whole Flow transaction. 
+Any failure during the execution would revert the whole Flow transaction.
 
-```
+```cadence
 // Example of tx wrapping
 import EVM from <ServiceAddress>
 
@@ -123,15 +123,15 @@ fun main(rlpEncodedTransaction: [UInt8], coinbaseBytes: [UInt8; 20]) {
 }
 ```
 
-For example, a user might use Metamask to sign a transaction for Flow EVM and broadcast it to services that check the gas fee on the transaction and wrap the transaction to be executed. 
+For example, a user might use Metamask to sign a transaction for Flow EVM and broadcast it to services that check the gas fee on the transaction and wrap the transaction to be executed.
 
-Note that account nonce would protect against double execution of a transaction, similar to how other non-virtual blockchains prevent the minor from including a transaction multiple times. 
+Note that account nonce would protect against double execution of a transaction, similar to how other non-virtual blockchains prevent the minor from including a transaction multiple times.
 
 #### Cadence Owned Accounts
 
-Another major goal for this work is seamless composability across environments. For this goal, we have introduced a new type of address a Cadence Owned Account (COA), to the EVM environment (besides EOA and Smart Contract accounts). This new address type is similar to EOAs except instead of being tied to a public/private key it would be controlled by Cadence resources. Unlike EOAs which are created using the key presented by the wallet there is no corresponding EVM key present in a CadenceOwnedAccount. Any COA is interacted with through CadenceOwnedAccount resource and any Flow account or Cadence smart contract that holds this resource could interact with the EVM environment on behalf of the address that is stored in the resource. 
+Another major goal for this work is seamless composability across environments. For this goal, we have introduced a new type of address a Cadence Owned Account (COA), to the EVM environment (besides EOA and Smart Contract accounts). This new address type is similar to EOAs except instead of being tied to a public/private key it would be controlled by Cadence resources. Unlike EOAs which are created using the key presented by the wallet there is no corresponding EVM key present in a CadenceOwnedAccount. Any COA is interacted with through CadenceOwnedAccount resource and any Flow account or Cadence smart contract that holds this resource could interact with the EVM environment on behalf of the address that is stored in the resource.
 
-```
+```cadence
 access(all)contract EVM {
 
     access(all) resource CadenceOwnedAccount {
@@ -140,11 +140,11 @@ access(all)contract EVM {
         let addressBytes: [UInt8; 20]
 
         /// constructs a new Cadence owned account for the address
-        init(addressBytes: [UInt8; 20]) 
+        init(addressBytes: [UInt8; 20])
 
         /// The EVM address of the Cadence owned account
         access(all)
-        fun address(): EVMAddress 
+        fun address(): EVMAddress
 
         /// Withdraws the balance from the Cadence owned account's balance
         access(all)
@@ -154,13 +154,13 @@ access(all)contract EVM {
         /// Returns the address of the newly deployed contract.
         /// The value (balance) is taken from the EVM account.
         access(all)
-        fun deploy(code: [UInt8], gasLimit: UInt64, value: Balance): EVMAddress 
+        fun deploy(code: [UInt8], gasLimit: UInt64, value: Balance): EVMAddress
 
         /// Calls a function with the given data.
         /// The execution is limited by the given amount of gas.
         /// The value (balance) is taken from the EVM account.
         access(all)
-        fun call(to: EVMAddress, data: [UInt8], gasLimit: UInt64, value: Balance): [UInt8] 
+        fun call(to: EVMAddress, data: [UInt8], gasLimit: UInt64, value: Balance): [UInt8]
     }
 
     /// Creates a new Cadence owned account
@@ -169,7 +169,7 @@ access(all)contract EVM {
 }
 ```
 
-COA addresses are unique and allocated by the FVM and stored inside the resource. Calls through COAs form a new type of transaction for the EVM that doesn't require signatures and doesn't need nonce checking. COAs could deploy smart contracts or make calls to the ones that are already deployed on Flow EVM. 
+COA addresses are unique and allocated by the FVM and stored inside the resource. Calls through COAs form a new type of transaction for the EVM that doesn't require signatures and doesn't need nonce checking. COAs could deploy smart contracts or make calls to the ones that are already deployed on Flow EVM.
 
 ![Illustration of](20231116-evm-support/flow-evm-account-model.png)
 
@@ -181,9 +181,9 @@ The term "Cadence Owned accounts" is used because their design facilitates the b
 
 #### Safety and Reproducibility of the EVM state
 
-EVM state is not accessible by Cadence outside of the defined interfaces above, and Cadence state is also protected against raw access from the EVM. 
+EVM state is not accessible by Cadence outside of the defined interfaces above, and Cadence state is also protected against raw access from the EVM.
 
-At the start, the EVM state is empty (empty root hash), and all the state is stored under a Flow account that is not controlled by anyone (network-owned). Any interaction with this environment emits a transactionExecuted event (direct calls for COAs use `255` as transaction type).  
+At the start, the EVM state is empty (empty root hash), and all the state is stored under a Flow account that is not controlled by anyone (network-owned). Any interaction with this environment emits a transactionExecuted event (direct calls for COAs use `255` as transaction type).
 
 So anyone following these events could reconstruct the whole EVM state by re-executing these transactions.
 
@@ -193,6 +193,6 @@ The project introduces no new dependencies from the Ethereum codebase since thos
 
 ### Tutorials and Examples
 
-A proof of concept implementation of this proposal is available [here](https://github.com/onflow/flow-emulator/releases/tag/v0.57.4-evm-poc). 
+A proof of concept implementation of this proposal is available [here](https://github.com/onflow/flow-emulator/releases/tag/v0.57.4-evm-poc).
 
 ### What parts of the design still need to be defined?
