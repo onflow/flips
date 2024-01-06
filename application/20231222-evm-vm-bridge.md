@@ -9,7 +9,7 @@ updated: 2023-12-22
 
 # FLIP 233: Flow VM Bridge
 
-> A contract protocol enabling arbitrary token bridging between Flow and EVM on Flow VMs
+> A contract protocol enabling arbitrary token bridging atomically between Flow and FlowEVM
 
 <details>
 
@@ -45,10 +45,10 @@ Non-Fungible tokens (NFT) from Cadence into FlowEVM into the corresponding ERC-2
 opposite direction, it supports bridging of arbitrary FlowEVM ERC-20 and ERC-721 tokens into the corresponding
 Cadence FT or NFT token types.
 
-To facilitate users bridging tokens between VMs the protocol internalizes capabilities to deploy new token contracts in
+To facilitate users bridging tokens between VMs, the protocol internalizes capabilities to deploy new token contracts in
 either VM state as needed. It serves as a request router & corresponding contract registrar to guarantee the
 synchronization integrity of assets being bridged across VM states. It additionally automates account and contract calls
-to enforce source VM asset lock or burn and target VM token mint or unlock. `CadenceOwnedAccounts` (COAs) introduced
+to enforce source VM asset burn or lock and target VM token mint or unlock. `CadenceOwnedAccounts` (COAs) introduced
 in the [EVM support FLIP proposal](https://github.com/onflow/flips/pull/225) enable the Flow VM Bridge to operate across
 both state spaces within the same, atomic transaction resulting in instantaneous asset exchange. 
 
@@ -73,7 +73,7 @@ applications which need to bridge tokens between VMs for an optimal user experie
 ## Bridge Specification
 
 Specification outline of the Flow VM bridge for bi-directional flow of FT and NFTs between VM states. While the spec
-references NFTs the VM bridge will treat both FTs and NFTs alike, with the caveat that NFTs have more complexity due to
+references NFTs, the VM bridge will treat both FTs and NFTs alike, with the caveat that NFTs have more complexity due to
 metadata which needs to be made to work for both VMs.
 
 ### Cadence to EVM
@@ -82,7 +82,6 @@ Breakdown of the flow for a user bridging a token across VMs from Cadence to EVM
 
 #### VM bridge contract functionality
 
-* Configure bridge to escrow or define token on Flow side
 * Configure EVM-defining contract if needed
 * Maintain Flow <-> EVM contract relationships
 * Provide utility methods for information lookup about contracts for either state space
@@ -106,7 +105,7 @@ down into their respective forks to help with understanding.
 
 #### VM bridge contract functionality
 
-* Initialize Cadence NFT collections
+* Initialize Cadence NFT contract
 * Maintain Flow <-> EVM contract relationships
 * Provide utility methods for information lookup about contracts for either state space
 
@@ -114,8 +113,7 @@ down into their respective forks to help with understanding.
 
 #### Cadence transaction: COA A bridges an EVM NFT back to Cadence
 
-* COA A calls bridge to request bridging of EVM NFT back into Cadence providing requested NFT type, id, and verification
-  of COA ownership
+* COA A calls bridge to request bridging of EVM NFT back into Cadence
 * Bridge contract calls into EVM to confirm COA A is the owner of the requested NFT. If so, process continues; otherwise
   reverts
 * Bridge contract calls into EVM contract to burn EVM NFT
@@ -124,8 +122,7 @@ down into their respective forks to help with understanding.
 
 #### Cadence transaction: COA B bought COA A's EVM NFT on FlowEVM, and then wants to bridge it back to Cadence
 
-* COA B calls bridge contract to request bridging of EVM NFT back into Cadence providing requested NFT type, id, and
-  verification of COA ownership
+* COA B calls bridge contract to request bridging of EVM NFT back into Cadence
 * Bridge contract calls into EVM to confirm COA B is the owner of the requested NFT. If so, process continues; otherwise
   reverts
 * Bridge contract calls into EVM contract to burn EVM NFT
@@ -164,7 +161,7 @@ direction, only COAs may initiate bridging *from* EVM since there is not yet a m
 change from the EVM environment.
 
 Hopefully, this context clarifies that bridging in either direction - Flow -> EVM & EVM -> Flow - is at all times
-initiated via call to the bridge Cadence contracts.
+initiated via call to the bridge's Cadence contracts.
 
 It's also interesting to note that any project could build an asset-specific bridge between VMs using the same
 primitives and toolsets leveraged for the design below. However, the intention for this bridge is to provide public
@@ -184,7 +181,7 @@ account visibility into the EVM environment. These methods might include things 
 determining if EVM contracts are bridge-owned, validating asset ownership, etc. so the COA has a central trusted source
 of truth for critical state assertions.
 
-Below are diagrams depicting the call flows for both Flow and EVM-native NFTs according to the proposed design.
+Diagrams depicting the call flows for both Flow- and EVM-native NFTs bridging according to the proposed design are included later in this FLIP. Immediately below is a birds-eye view of the contract suite across VMs.
 
 ## In Aggregate
 
@@ -239,7 +236,7 @@ asset bridge request.*
 
 The task of bridging FTs & NFTs between VMs can be split into four distinct cases, each with their own unique path. An
 asset can either be Flow- or EVM-native, and it can either be bridged from Flow to EVM or EVM to Flow. The following
-sections outline the path for each case.
+sections outline an NFT bridge path for each case.
 
 #### Flow-Native: Flow -> EVM
 
@@ -625,14 +622,14 @@ metadata (with the exception of image data), EVM projects typically store NFT me
 in json blobs found in IPFS.
 
 As the bridge is public infrastructure, there is a need to generalize the breadth of migrated metadata. Minimizing
-metadata on has two primary implications, distinct for either side of origin.
+metadata would mean:
 
 - Looking solely at the Solidity contract, bridged Flow-native NFTs would have very little identifying information per
   the ERC721 standard - ID & perhaps an image pointer.
 - Looking solely at the Cadence contract, bridged EVM-native NFTs would have very little available onchain metadata - ID
   & perhaps an IPFS URI.
 
-For typical bridge infrastructure connecting separate zones of sovereignty, metadata migration can be handled by their
+For typical bridge infrastructure connecting separate zones of sovereignty, metadata migration could be handled by their
 offchain system components. However, the requirement to atomically move assets between VMs prevents the inclusion of
 such offchain systems as they would break atomicity and introduce the need for undesirable trust assumptions. For
 example, upon bridging an NFT from Flow to EVM, an offchain listener would need to recognize a request to post metadata
@@ -645,11 +642,15 @@ offchain IPFS metadata. This would allow the ecosystem to both maintain onchain 
 parity with EVM platform expectations. We may then want to consider a Cadence metadata view specifically for IPFS-stored
 metadata to support this use case.
 
-Yet another alternative, it may be helpful to expose an API matching that of IPFS so that bridge-stored NFTs metadata
-could be served to IPFS clients as they would request URI material from any other provider.
+Yet another alternative, it may be possible to expose an API matching that of IPFS services so that bridge-stored NFTs
+metadata could be served to IPFS clients as they would request URI material from any other provider.
+
+Lastly, there is also the option of creating an API similar to OpenSea's metadata API, which would allow for querying of
+bridged NFT metadata from a centralized source. This would be a centralized solution, but would allow for a secondary
+source of truth platforms could leverage to serve metadata to their users.
 
 This problem and potential solutions are presented as a point of discussion and are not necessarily in scope for the
-contract design of the bridge.
+contract bridge's contract design.
 
 #### NFT IDs
 
@@ -677,6 +678,10 @@ between VMs, deploying templated locking & asset-defining auxiliary contracts to
 The primary contract would conditionally deploy these auxiliary contracts on a per-asset basis as needed, maintaining a
 registry for where each asset is locked/defined and routing bridge requests to their appropriate contracts.
 
+The current approach was largely adapted from this design, but with auxiliary (locking & defining) contracts deployed to
+the central bridge contract. Due to Cadence's contract namespace, it was also decided to dynamically name these
+contracts using contract names derived from the relevant asset type. 
+
 This design optimized for distributed asset storage and contract-mediated access. However, it also introduced additional
 complexity and secondarily obscurity for what should be a highly transparent system. Additionally, since multisig access
 is planned for the bridge and auxiliary accounts, centralization is ultimately no further improved by this design, at
@@ -688,12 +693,13 @@ least while custody is maintained on these accounts.
 
 Previous network migrations have been complicated by single accounts using large amounts of storage. With a centralized
 storage design, it's likely that (over time) the bridge account will consume a large amount of storage and that, given
-the need to store bridge Flow-native assets indefinitely, that storage will likely only ever increase. Even if this
+the need to store bridged Flow-native assets indefinitely, that storage will likely only ever increase. Even if this
 assumption is not true, it's to our benefit to consider and plan as if it is if account storage usage is a network-wide
 issue.
 
-With that said, saving state to a single account shouldn't be problematic until storage usage reaches >10GB of data
-which should give the team some time to figure out how to handle this edge case during migrations before the problem is
+Informed by initial conversations, saving state to a single account shouldn't be problematic until storage usage reaches
+\>10GB of data which should give the team some time to figure out how to handle this edge case during migrations before
+the problem is
 encountered.
 
 ### Examples
@@ -819,13 +825,15 @@ transaction(id: UInt64) {
 ### Compatibility
 
 This bridge design will support bridging fungible and non-fungible token assets between VMs, and doesn't account for
-cases where the instances where types overlap - i.e. semi-fungible tokens or multi-token contracts. Of course, this
-bridge also dovetails with the ongoing virtualized EVM work, so is dependent on the existence of that environment.
+cases where the type instances overlap - i.e. semi-fungible tokens or multi-token contracts.
+
+Of course, this bridge also dovetails with the ongoing virtualized EVM work, so is dependent on the existence of that
+environment.
 
 ## Prior Art
 
-While the work is happening someone concurrently, there may be some cross-pollination between the [Axelar Interchain
-Token Service](https://github.com/AnChainAI/anchain-axelar-dapper-flowbridge) and this project.
+While the work is happening concurrently, there may be some cross-pollination between this project and the [Axelar
+Interchain Token Service](https://github.com/AnChainAI/anchain-axelar-dapper-flowbridge).
 
 ## Questions & Discussion Topics
 
