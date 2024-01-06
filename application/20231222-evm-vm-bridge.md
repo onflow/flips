@@ -1,13 +1,13 @@
 ---
 status: draft
-flip: 233
+flip: 237
 title: Flow EVM VM Bridge
 authors: Giovanni Sanchez (giovanni.sanchez@dapperlabs.com)
 sponsor: Jerome Pimmel (jerome.pimmel@dapperlabs.com)
 updated: 2023-12-22
 ---
 
-# FLIP 233: Flow VM Bridge
+# FLIP 237: Flow VM Bridge
 
 > A contract protocol enabling arbitrary token bridging atomically between Flow and FlowEVM
 
