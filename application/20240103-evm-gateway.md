@@ -1,120 +1,260 @@
 ---
-status: draft 
+status: proposed
 flip: [235](https://github.com/onflow/flips/pull/235)
-authors: Ardit Marku (markoupetr@gmail.com) 
-sponsor: Jerome Pimmel (jerome.pimmel@dapperlabs.com) 
-updated: 2024-01-03 
+authors: Ardit Marku (markoupetr@gmail.com)
+sponsor: Jerome Pimmel (jerome.pimmel@dapperlabs.com)
+updated: 2024-01-03
 ---
 
-# FLIP 235: Flow EVM Gateway. An implementation of the Ethereum JSON-RPC API specification
+# FLIP 235: Flow EVM Gateway
+
+> An implementation of the Ethereum JSON-RPC specification
 
 ## Objective
 
-What are we doing and why? What problem will this solve? What are the goals and
-non-goals? This is your executive summary; keep it short, elaborate below.
+This proposal outlines the design and implementation of the [Ethereum JSON-RPC specification](https://ethereum.github.io/execution-apis/api-documentation/) into a standalone
+service, which aims to provide a gateway to FlowEVM for developers and the
+various existing tools.
 
 ## Motivation
 
-Why is this a valuable problem to solve? What background information is needed
-to show how this design addresses the problem?
-
-Which users are affected by the problem? Why is it a problem? What data supports
-this? What related work exists?
+The [JSON-RPC API](https://ethereum.org/en/developers/docs/apis/json-rpc/) specifies a
+uniform set of methods that software applications, such as MetaMask or an Ethereum client,
+can use to interact with the Ethereum blockchain, either by reading blockchain data or
+sending transactions to the network. To achieve EVM compatibility, it is crucial to
+provide a JSON-RPC API, which among other things, facilitates the onboarding of developers
+that are already familiar with it and enables interoperability with the existing tools
+built on top of the JSON-RPC API.
 
 ## User Benefit
 
-How will users (or other contributors) benefit from this work? What would be the
-headline in the release notes or blog post?
+Users will be able to make use of MetaMask for connecting to the FlowEVM network,
+by providing the network name, JSON-RPC URL, chain ID, currency etc.
+Developers will be able to easily retrieve all sorts of information from FlowEVM,
+such as block/transaction/account data, as well as define filters and subscribe
+to changes regarding the previous entities. This will allow developers to focus
+on building new tools and products, without having to write custom indexers from
+scratch.
 
 ## Design Proposal
 
-This is the meat of the document where you explain your proposal. If you have
-multiple alternatives, be sure to use sub-sections for better separation of the
-idea, and list pros/cons to each approach. If there are alternatives that you
-have eliminated, you should also list those here, and explain why you believe
-your chosen approach is superior.
+### Context
 
-Make sure you’ve thought through and addressed the following sections. If a 
-section is not relevant to your specific proposal, please explain why, e.g. 
-your FLIP addresses a convention or process, not an API.
+JSON-RPC is a stateless, light-weight remote procedure call (RPC) protocol.
+It defines several data structures and the rules around their processing.
+It is transport agnostic in that the concepts can be used within the same
+process, over sockets, over HTTP, or in many various message passing
+environments. It uses JSON (RFC 4627) as the data format.
 
-### Drawbacks
+### Existing RPC Server implementations
 
-Why should this *not* be done? What negative impact does it have? 
+The Geth client offers a re-usable [RPC Server](https://github.com/ethereum/go-ethereum/blob/master/rpc/server.go) implementation, which we will be using in the implementation
+of the Flow EVM Gateway as well.
 
-### Alternatives Considered
+```go
+type BlockChainAPI struct {
+	config *Config
+	Store  *storage.Store
+}
 
-* Make sure to discuss the relative merits of alternatives to your proposal.
+func NewBlockChainAPI(config *Config, store *storage.Store) *BlockChainAPI {
+	return &BlockChainAPI{
+		config: config,
+		Store:  store,
+	}
+}
 
-### Performance Implications
+// eth_chainId
+// Returns the chain ID used for signing replay-protected transactions.
+func (api *BlockChainAPI) ChainId() *hexutil.Big {
+	return (*hexutil.Big)(api.config.ChainID)
+}
 
-* Do you expect any (speed / memory)? How will you confirm?
-* There should be microbenchmarks. Are there?
-* There should be end-to-end tests and benchmarks. If there are not 
-(since this is still a design), how will you track that these will be created?
+// eth_blockNumber
+// BlockNumber returns the block number of the chain head.
+func (api *BlockChainAPI) BlockNumber() hexutil.Uint64 {
+	latestBlockHeight, err := api.Store.LatestBlockHeight(context.Background())
+	if err != nil {
+		// TODO(m-Peter) We should add a logger to BlockChainAPI
+		panic(fmt.Errorf("failed to fetch the latest block number: %v", err))
+	}
+	return hexutil.Uint64(latestBlockHeight)
+}
+
+// Create RPC server and handler.
+srv := rpc.NewServer()
+
+apis := []rpc.API{
+	{
+		Namespace: "eth",
+		Service:   NewBlockChainAPI(config, store),
+	},
+}
+
+// Register all the APIs exposed by the services
+for _, api := range apis {
+	if err := srv.RegisterName(api.Namespace, api.Service); err != nil {
+		return err
+	}
+}
+```
+
+The above code snippet instantiates a new RPC server and registers a
+service object under the `eth` namespace.
+
+The server can now accept HTTP requests with the following body:
+
+```json
+{"jsonrpc":"2.0","id":1,"method":"eth_chainId","params": []}
+```
+
+and respond with the following result:
+
+```json
+{"jsonrpc":"2.0","id":1,"result":"0x29a"}
+```
+
+Under the hood, the RPC server reads the value of the `"method"` key.
+In this case `"eth_chainId"`, the part before the `_` is the namespace
+(`eth`) and the part after the `_` is the method which should be called
+on the registered service object (`ChainId`).
+
+Some sample HTTP calls to the Flow EVM Gateway's JSON-RPC server, can
+be seen below:
+
+[Flow EVM Gateway JSON-RPC over HTTP](./2024-01-03-evm-gateway-resources/flow-evm-gateway-curl-http.png)
+
+### Supported transport protocols
+
+There are three transport protocols available in Geth: IPC, HTTP and WebSockets.
+
+For the gateway, we are interested in supporting only JSON-RPC over HTTP and
+JSON-RPC over WebSockets. The RPC methods with event subscription are available
+only for WebSocket connections.
+
+Again, the Geth client has an implementation of an [httpServer](https://github.com/ethereum/go-ethereum/blob/master/node/rpcstack.go) which is basically a proxy that routes `HTTP` &
+`WebSocket` requests to a dedicated `rpc.Server` instance for each of the two
+transport mediums. This allows for more fine-grained control over which namespaces
+& RPC methods are available on which transport, and allows for better scaling.
+
+Unfortunately, none of the relevant types in the `go-ethereum` package are exported,
+so we cannot pull them directly from the `go-ethereum` package. But even if they
+were exported, it comes with quite a lot of extras, such as `CORS` / `JWT` / `GZIP`
+compression which might be overkill for what we currently need. For the time being,
+we have extracted a minified version of it [here](https://github.com/onflow/flow-evm-gateway/blob/aaf3ba3f2ab78321fa377ecf5165a2f7dbc44865/api/server.go).
+
+### Indexing FlowEVM events
+
+Quoting some content from [EVM support](https://github.com/onflow/flips/pull/225) FLIP:
+
+> To better understand the approach proposed in this Flip, consider EVM on Flow as a virtual blockchain deployed to the Flow blockchain at a specific address (e.g., a service account). EVM on Flow functions as a smart contract that emulates the EVM with its own dedicated chain-ID. Signed transactions are inputted, and a chain of blocks is produced as output. Similar to other built-in standard contracts (e.g., RLP encoding), this EVM environment can be imported into any Flow transaction or script.
+This is made possible using selective integration of the core EVM runtime without the supporting software stack in which it currently exists on Ethereum. For equivalence we also provide an EVM compatible JSON-RPC API implementation to facilitate EVM on Flow interactions from existing EVM clients.
+
+Since the gateway is not the only entrypoint for interacting with FlowEVM, we need
+to track every event emitted from the `EVM` smart contract, consume it and build an
+index which reflects the latest state of the chain.
+
+For the indexing, we will be using the Event Streaming API offered from the
+`flow-go-sdk`. A sample code snippet can be seen below:
+
+```go
+flowClient, err := grpc.NewBaseClient(
+	grpc.EmulatorHost,
+	goGrpc.WithTransportCredentials(insecure.NewCredentials()),
+)
+if err != nil {
+	logger.Error().Msgf("could not create flow client: %v", err)
+}
+
+data, errChan, initErr := flowClient.SubscribeEventsByBlockHeight(
+	ctx,
+	latestBlockHeader.Height,
+	flow.EventFilter{
+		EventTypes: []string{
+			"flow.evm.BlockExecuted",
+			"flow.evm.TransactionExecuted",
+		},
+	},
+	grpc.WithHeartbeatInterval(1),
+)
+
+// track the most recently seen block height. we will use this when reconnecting.
+// the first response should be for latestBlockHeader.Height
+lastHeight := latestBlockHeader.Height - 1
+for {
+	select {
+	case <-ctx.Done():
+		return
+
+	case response, ok := <-data:
+		if !ok {
+			if ctx.Err() != nil {
+				return // graceful shutdown
+			}
+			logger.Error().Msg("subscription closed - reconnecting")
+			connect(lastHeight+1, 10)
+			continue
+		}
+
+		if response.Height != lastHeight+1 {
+			logger.Error().Msgf("missed events response for block %d", lastHeight+1)
+			connect(lastHeight, 10)
+			continue
+		}
+
+		logger.Info().Msgf("block %d %s:", response.Height, response.BlockID)
+		if len(response.Events) > 0 {
+			store.StoreBlockHeight(ctx, response.Height)
+		}
+		for _, event := range response.Events {
+			logger.Info().Msgf("  %s", event.Value)
+		}
+
+		lastHeight = response.Height
+
+	case err, ok := <-errChan:
+		...
+	}
+}
+```
+
+The main events from the `EVM` smart contract are two:
+- `flow.evm.BlockExecuted`,
+- `flow.evm.TransactionExecuted`
+
+To see the indexer & the events' payloads in action:
+
+[Flow EVM Events](./2024-01-03-evm-gateway-resources/flow-evm-events.png)
 
 ### Dependencies
 
-* Dependencies: does this proposal add any new dependencies to Flow?
-* Dependent projects: are there other areas of Flow or things that use Flow 
-(Access API, Wallets, SDKs, etc.) that this affects? 
-How have you identified these dependencies and are you sure they are complete? 
-If there are dependencies, how are you managing those changes?
-
-### Engineering Impact
-
-* Do you expect changes to binary size / build time / test times?
-* Who will maintain this code? Is this code in its own buildable unit? 
-Can this code be tested in its own? 
-Is visibility suitably restricted to only a small API surface for others to use?
-
-### Best Practices
-
-* Does this proposal change best practices for some aspect of using/developing Flow? 
-How will these changes be communicated/enforced?
+The Flow EVM Gateway is a standalone service, hosted in its own repository, so
+it does not add any dependencies to existing Flow core repositories. It is
+build with the help of some Flow core repositories, such as `flow-go-sdk` and
+`flow-go`, so it depends on their public APIs.
+Later on, it would be useful to expose the Flow EVM Gateway from the Emulator
+as well.
 
 ### Tutorials and Examples
 
-* If design changes existing API or creates new ones, the design owner should create 
-end-to-end examples (ideally, a tutorial) which reflects how new feature will be used. 
-Some things to consider related to the tutorial:
-    - It should show the usage of the new feature in an end to end example 
-    (i.e. from the browser to the execution node). 
-    Many new features have unexpected effects in parts far away from the place of 
-    change that can be found by running through an end-to-end example.
-    - This should be written as if it is documentation of the new feature, 
-    i.e., consumable by a user, not a Flow contributor. 
-    - The code does not need to work (since the feature is not implemented yet) 
-    but the expectation is that the code does work before the feature can be merged. 
-
-### Compatibility
-
-* Does the design conform to the backwards & forwards compatibility [requirements](../docs/compatibility.md)?
-* How will this proposal interact with other parts of the Flow Ecosystem?
-    - How will it work with FCL?
-    - How will it work with the Emulator?
-    - How will it work with existing Flow SDKs?
+A reference implementation addressing parts of this proposal can be found in
+this [PR](https://github.com/onflow/flow-evm-gateway/pull/11#issue-2006802251).
 
 ### User Impact
 
-* What are the user-facing changes? How will this feature be rolled out?
+The Flow EVM Gateway is a standalone service that complements the FlowEVM
+functionality. It should be released at the same time as FlowEVM, in order
+to allow for better beta testing.
 
 ## Related Issues
 
-What related issues do you consider out of scope for this proposal, 
-but could be addressed independently in the future?
+Dockerizing the gateway would be nice, in order to allow developers to easily
+start using it for development and testing.
 
 ## Prior Art
 
-Does the proposed idea/feature exist in other systems and 
-what experience has their community had?
-
-This section is intended to encourage you as an author to think about the 
-lessons learned from other projects and provide readers of the proposal 
-with a fuller picture.
-
-It's fine if there is no prior art; your ideas are interesting regardless of 
-whether or not they are based on existing work.
+As explained above, the [Geth](https://github.com/ethereum/go-ethereum) client
+was the main source of inspiration for the work on the JSON-RPC server.
 
 ## Questions and Discussion
 
