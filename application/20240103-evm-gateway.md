@@ -48,7 +48,7 @@ environments. It uses JSON (RFC 4627) as the data format.
 
 ### Existing RPC Server implementations
 
-The Geth client offers a re-usable [RPC Server](https://github.com/ethereum/go-ethereum/blob/master/rpc/server.go) implementation, which we will be using in the implementation
+The Geth client offers a generic [RPC Server](https://github.com/ethereum/go-ethereum/blob/master/rpc/server.go) implementation, which will be used in the implementation
 of the Flow EVM Gateway as well.
 
 ```go
@@ -75,13 +75,12 @@ func (api *BlockChainAPI) ChainId() *hexutil.Big {
 func (api *BlockChainAPI) BlockNumber() hexutil.Uint64 {
 	latestBlockHeight, err := api.Store.LatestBlockHeight(context.Background())
 	if err != nil {
-		// TODO(m-Peter) We should add a logger to BlockChainAPI
 		panic(fmt.Errorf("failed to fetch the latest block number: %v", err))
 	}
 	return hexutil.Uint64(latestBlockHeight)
 }
 
-// Create RPC server and handler.
+// Create an RPC server.
 srv := rpc.NewServer()
 
 apis := []rpc.API{
@@ -100,7 +99,7 @@ for _, api := range apis {
 ```
 
 The above code snippet instantiates a new RPC server and registers a
-service object under the `eth` namespace.
+service object (`*BlockChainAPI`) under the `eth` namespace.
 
 The server can now accept HTTP requests with the following body:
 
@@ -108,7 +107,7 @@ The server can now accept HTTP requests with the following body:
 {"jsonrpc":"2.0","id":1,"method":"eth_chainId","params": []}
 ```
 
-and respond with the following result:
+and respond with an appropriate result, such as:
 
 ```json
 {"jsonrpc":"2.0","id":1,"result":"0x29a"}
@@ -122,7 +121,7 @@ on the registered service object (`ChainId`).
 Some sample HTTP calls to the Flow EVM Gateway's JSON-RPC server, can
 be seen below:
 
-[Flow EVM Gateway JSON-RPC over HTTP](./2024-01-03-evm-gateway-resources/flow-evm-gateway-curl-http.png)
+![Flow EVM Gateway JSON-RPC over HTTP](./2024-01-03-evm-gateway-resources/flow-evm-gateway-curl-http.png)
 
 ### Supported transport protocols
 
@@ -224,7 +223,7 @@ The main events from the `EVM` smart contract are two:
 
 To see the indexer & the events' payloads in action:
 
-[Flow EVM Events](./2024-01-03-evm-gateway-resources/flow-evm-events.png)
+![Flow EVM Events](./2024-01-03-evm-gateway-resources/flow-evm-events.png)
 
 ### Dependencies
 
