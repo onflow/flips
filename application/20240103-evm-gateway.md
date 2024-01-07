@@ -240,8 +240,8 @@ committing any changes to the storage.
 data, errChan, initErr := flowClient.SubscribeEventsByBlockHeight(
 	...,
 	grpc.WithHeartbeatInterval(1),
-    // this will yield an events response for each block,
-    // even if it has no events matching the filter criteria.
+	// this will yield an events response for each block,
+	// even if it has no events matching the filter criteria.
 )
 
 // track the most recently seen block height. we will use this when reconnecting.
@@ -256,11 +256,11 @@ for {
 			connect(lastHeight, 10)
 			continue
 		}
-        // make sure that the response is for the expected block height,
-        // before committing any changes to the storage.
+		// make sure that the response is for the expected block height,
+		// before committing any changes to the storage.
 		...
 
-        // mark the block height of the events response as processed.
+		// mark the block height of the events response as processed.
 		lastHeight = response.Height
 	}
 }
