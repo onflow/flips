@@ -8,7 +8,7 @@ updated: 2024-01-03
 
 # FLIP 235: Flow EVM Gateway
 
-> An implementation of the Ethereum JSON-RPC specification
+An implementation of the Ethereum JSON-RPC specification.
 
 ## Objective
 
@@ -225,14 +225,61 @@ To see the indexer & the events' payloads in action:
 
 ![Flow EVM Events](./2024-01-03-evm-gateway-resources/flow-evm-events.png)
 
+### Storage Integrity
+
+While consuming events, it is very critical to make sure that they are processed
+in a sequential manner, and no events response is missed for a single block.
+If this were to happen, the storage index could end up corrupted, and we would
+return incorrect data for things such as account balances, nonces etc.
+
+In the code snippet below, we specify a heartbeat interval of `1` and check
+that each received events response is for the expected block height, before
+committing any changes to the storage.
+
+```go
+data, errChan, initErr := flowClient.SubscribeEventsByBlockHeight(
+	...,
+	grpc.WithHeartbeatInterval(1),
+    // this will yield an events response for each block,
+    // even if it has no events matching the filter criteria.
+)
+
+// track the most recently seen block height. we will use this when reconnecting.
+// the first response should be for latestBlockHeader.Height
+lastHeight := latestBlockHeader.Height - 1
+for {
+	select {
+	case response, ok := <-data:
+		...
+		if response.Height != lastHeight+1 {
+			logger.Error().Msgf("missed events response for block %d", lastHeight+1)
+			connect(lastHeight, 10)
+			continue
+		}
+        // make sure that the response is for the expected block height,
+        // before committing any changes to the storage.
+		...
+
+        // mark the block height of the events response as processed.
+		lastHeight = response.Height
+	}
+}
+```
+
+### Performance Implications
+
+We should have some end-to-end tests, perhaps with the usage of the Flow Emulator.
+As well as some benchmarks, to assess the service degradation with regards to the
+increase of the storage, the incoming requests and possibly the emitted events.
+
 ### Dependencies
 
 The Flow EVM Gateway is a standalone service, hosted in its own repository, so
-it does not add any dependencies to existing Flow core repositories. It is
-build with the help of some Flow core repositories, such as `flow-go-sdk` and
+it does not add any dependencies to existing core repositories. It is
+build around some of Flow's core repositories, such as `flow-go-sdk` and
 `flow-go`, so it depends on their public APIs.
 Later on, it would be useful to expose the Flow EVM Gateway from the Emulator
-as well.
+as well, as we have done with the gRPC & REST Access API.
 
 ### Tutorials and Examples
 
@@ -242,11 +289,13 @@ this [PR](https://github.com/onflow/flow-evm-gateway/pull/11#issue-2006802251).
 ### User Impact
 
 The Flow EVM Gateway is a standalone service that complements the FlowEVM
-functionality. It should be released at the same time as FlowEVM, in order
-to allow for better beta testing.
+functionality. It should be released at around the same time as FlowEVM,
+in order to allow for better beta testing.
 
 ## Related Issues
 
+As with any service, we need to think about logging, alerting, monitoring,
+storage capacity and throughput.
 Dockerizing the gateway would be nice, in order to allow developers to easily
 start using it for development and testing.
 
@@ -257,6 +306,6 @@ was the main source of inspiration for the work on the JSON-RPC server.
 
 ## Questions and Discussion
 
-State where you would want the community discussion to take place (choosing between the PR itself, or forum post)
-Seed with open questions you require feedback on from the FLIP process. 
-What parts of the design still need to be defined?
+- Do we expect to have one official EVM Gateway run by the Flow team and
+  individual developers/team can also run their own? As is the case with
+  Access Nodes, for example.
