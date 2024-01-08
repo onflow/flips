@@ -858,7 +858,7 @@ template-message-key           = Key for a template message (eg: "title", "descr
 template-message               = [ sha3_256(template-message-key), [ ...template-message-translation ] ]
 
 template-dependency-contract-pin-block-height = Network block height the pin was generated against.
-template-dependency-contract-pin              = Pin of contract and it's dependency tree
+template-dependency-contract-pin              = Pin of contract and its dependency tree
 template-dependency-contract-pin-self         = Pin of the contract itself
 template-dependency-network-address           = Address of an account
 template-dependency-network                   = "mainnet" | "testnet" | "emulator" | Custom Network Tag
