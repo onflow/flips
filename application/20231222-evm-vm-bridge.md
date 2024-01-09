@@ -165,7 +165,7 @@ initiated via call to the bridge's Cadence contracts.
 It's also interesting to note that any project could build an asset-specific bridge between VMs using the same
 primitives and toolsets leveraged for the design below. However, the intention for this bridge is to provide public
 infrastructure to seamlessly and permissionlessly move assets between VMs without requiring the support of the asset
-developers.
+developers while maintaining a high security bar for all users of the bridge.
 
 ## Overview
 
@@ -174,7 +174,7 @@ contracts on either side of the VM to facilitate bridge requests as they arrive.
 bridge, but owner interactions are mediated by contract logic on either end in addition to multi-sig patterns consistent
 with other core network infrastructure accounts.
 
-On the EVM side, a central contract factory will instantiate Solidity ERC20 & ERC721 contracts as directed by calls from
+On the EVM side, a central contract factory will deploy Solidity ERC20 & ERC721 contracts as directed by calls from
 the central Cadence contract’s COA. This factory will also implement a number of helper methods to give the bridge
 account visibility into the EVM environment. These methods might include things like retrieving an asset type,
 determining if EVM contracts are bridge-owned, validating asset ownership, etc. so the COA has a central trusted source
