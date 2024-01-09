@@ -155,8 +155,7 @@ It's helpful to understand that the entrypoint to FlowEVM is mediated by the [`C
 calls into EVM originating from the calling COA's EVM address. In short, it's a resource that also functions as an EVM
 account whose access is controlled by resource ownership instead of an offchain signature.
 
-Since COAs are the only cross-VM objects universally available from Cadence and the identity-based access of Solidity
-enables any address to receive assets, callers bridging *to* FlowEVM may bridge to any EVM address. In the opposite
+COAs are the only cross-VM objects universally available from Cadence. This type provides the means to use Solidity's identity-based approach for access and enables any address to receive assets; callers bridging *to* FlowEVM from Cadence may transfer tokens to any EVM address. In the opposite
 direction, only COAs may initiate bridging *from* EVM since there is not yet a mechanism to initiate Cadence state
 change from the EVM environment.
 
@@ -314,7 +313,7 @@ sections outline an NFT bridge path for each case.
 > to follow
 
 <details>
-<summary>FlowEVMBridge.cdc.cdc</summary>
+<summary>FlowEVMBridge.cdc</summary>
 
 ```cadence
 access(all) contract FlowEVMBridge {
@@ -654,7 +653,7 @@ contract bridge's contract design.
 
 #### NFT IDs
 
-NFT ID values are some of the most critical token metadata, indentifying each token as unique. While Flow NFTs define
+NFT ID values are some of the most critical token metadata, identifying each token as unique. While Flow NFTs define
 IDs as `UInt64`, ERC721 IDs are `uint256`. It remains an open question as to how this reduction from `UInt256` to
 `UInt64` would affect the uniqueness of NFTs bridged from EVM to Flow and how the bridge should handle such conversions
 while safeguarding ownership guarantees upon bridging back.
