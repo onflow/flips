@@ -30,7 +30,7 @@ built on top of the JSON-RPC API.
 
 Users will be able to use an EVM-compatible client to connect to the Flow EVM network,
 by providing the network name, JSON-RPC URL, chain ID, currency etc.
-Developers will be able to easily retrieve all sorts of information from FlowEVM,
+Developers will be able to easily retrieve all sorts of information from Flow EVM,
 such as block/transaction/account data, as well as define filters and subscribe
 to changes regarding the previous entities. This will allow developers to focus
 on building new tools and products, without having to write custom indexers from
