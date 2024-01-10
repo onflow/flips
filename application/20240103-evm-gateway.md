@@ -13,7 +13,7 @@ An implementation of the Ethereum JSON-RPC specification.
 ## Objective
 
 This proposal outlines the design and implementation of the [Ethereum JSON-RPC specification](https://ethereum.github.io/execution-apis/api-documentation/) into a standalone
-service, which aims to provide a gateway to FlowEVM for developers and the
+service, which aims to provide a gateway to Flow EVM for developers and the
 various existing tools.
 
 ## Motivation
