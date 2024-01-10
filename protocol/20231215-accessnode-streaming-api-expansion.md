@@ -25,27 +25,82 @@ The Access Node Subscription API would introduce the following new streaming end
 - SubscribeBlocks
 - SubscribeBlockHeaders
 - SubscribeBlockDigests
-- SendAndSubscribeTransactionStatuses
+- SendAndSubscribeTransactionStatusess
 - SubscribeAccountStatuses
 
 Additionally, it proposes an improved version of the REST WebSocket Subscription with a single connection.
 
 ### WebSocket Subscriptions with a Single Connection
 
-In the current version of REST subscription, [a new WebSocket connection is created](https://github.com/onflow/flow-go/blob/9577079fd24aad4c1fc1fc8710ef2686ead85ca4/engine/access/rest/routes/websocket_handler.go#L288) for each subscription request. However, with the potential growth in the number of endpoints available for subscription, this behavior becomes undesirable due to several reasons:
+In the existing REST subscription implementation, a new WebSocket connection is established for each subscription request, as seen [here](https://github.com/onflow/flow-go/blob/9577079fd24aad4c1fc1fc8710ef2686ead85ca4/engine/access/rest/routes/websocket_handler.go#L288). However, as the number of available endpoints for subscription grows, this approach becomes less favorable due to several reasons:
 
-- It results in a system for connection handling on the client side that is difficult to maintain.
-- It causes unnecessary network load, impacting the overall performance of the application.
-- Eventually, it will hit the connection limit, posing constraints.
-- It complicates future expansion efforts.
+- It leads to complex client-side connection handling that is hard to maintain.
+- It causes unnecessary network load, adversely affecting overall application performance.
+- Eventually, it could reach connection limits, imposing constraints.
+- It complicates future scalability efforts.
 
-To address this, an improvement in WebSocket behavior is proposed by implementing a single connection for each subscription. This improvement is commonly referred to as the "WebSocket Components Subscription Pattern", and an example of its React implementation can be found [here](https://blog.stackademic.com/websockets-and-react-wscontext-and-components-subscription-pattern-4e580fc67bb5).
+To address this, a proposed improvement involves modifying WebSocket behavior by implementing a single connection for each subscription. This adjustment requires a shift in the core concept of REST WebSocket connections for the Access node. While the current concept of `WSHandler` should be retained for backward compatibility, a new concept needs to run in parallel.
 
-The proposed enhancement involves the following aspects:
+The proposed new concept draws inspiration from the ["Web Application Messaging Protocol"(WAMP)](https://wamp-proto.org/), considering a modification to the Access node's REST WebSocket connections. However, existing Go implementations of this protocol, like  ["Nexus V3"](https://github.com/gammazero/nexus/tree/v2), contain numerous unnecessary features unsuitable for this purpose.
 
-- The `WSHandler` will initiate a connection only for the initial subscription and retain it for subsequent subscriptions.
-- An unsubscribe mechanism will be introduced. With multiple subscriptions on a single connection, simply closing this connection to halt updates becomes insufficient. Therefore, a dedicated endpoint for unsubscribing from undesired updates is necessary.
-- Each subscription response will now include a message type. For instance, the `SubscribeEvents` endpoint will result in a message with `type: "Events"`, while `SubscribeBlockHeaders` will yield `type: "BlockHeader"` in messages, and so forth. This is essential to distinguish between various subscription results that will be delivered through a single connection.
+#### Client
+
+Let's explore the visual representation of the proposed communication concept before delving into further details:
+
+![WebSocket Communication](20231215-accessnode-streaming-api-expansion/websocket_communication.png)
+
+- The client establishes a single WebSocket connection with the Access Node (AN) through `ws://localhost:8080/ws` and maintains this connection until closed by the AN WebSocketHandler or the client itself.
+  ```js
+  const ws = new WebSocket('ws://localhost:8080/ws');
+  ```
+
+- Upon connection establishment, both the AN and the client can exchange messages.
+  
+- To subscribe to necessary topics, the client sends a special message through the WebSocket connection:
+  ```js
+  const subscribeMsg = {
+    action: 'subscribe',
+    topic: 'events',
+  };
+  ws.send(subscribeMsg);
+  ```
+
+  The client can subscribe to multiple topics through a single connection but should manage messages from the connection itself. The return message from the AN with updates will resemble:
+  ```js
+  ws.onmessage = (event) => {
+    const message = JSON.parse(event.data);
+    /*
+    For the above subscription, the JSON message should appear as:
+
+    {
+      topic: 'events',
+      data: [...]
+    }
+    */
+    console.log('Received publication for topic:', message.topic, 'with message:', message.data);
+  };
+  ```
+
+- To unsubscribe from topics, the client sends a special message through the WebSocket connection:
+  ```js
+  const unsubscribeMsg = {
+    action: 'unsubscribe',
+    topic: 'events',
+  };
+  ws.send(unsubscribeMsg);
+  ```
+
+- The connection can be closed by the client if no longer needed or by the AN if the client has unsubscribed from all topics.
+
+#### Access Node WebSocketHandler
+
+The WebSocketHandler acts as a broker between the client and the Access Subscription API, akin to WAMP. It retains most functionalities from its predecessor, `WSHandler`, with added features and responsibilities:
+
+- Sets up WebSocket connections for different clients at the `/ws` route and manages these connections (addition, removal, ping).
+- Manages subscriptions/unsubscriptions and maintains a mapping of topics for subscribed clients.
+- Handles updates from the AN streaming API and broadcasts messages to all subscribers interested in the respective topics.
+
+Additionally, the Access Subscription API requires modifications, as all streamed updates should now include an additional `Topic` field. This inclusion enables WebSocketHandler to differentiate messages based on topics.
 
 ### SubscribeBlocks
 
