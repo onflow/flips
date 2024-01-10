@@ -288,8 +288,8 @@ this [PR](https://github.com/onflow/flow-evm-gateway/pull/11#issue-2006802251).
 
 ### User Impact
 
-The Flow EVM Gateway is a standalone service that complements the FlowEVM
-functionality. It should be released at around the same time as FlowEVM,
+The Flow EVM Gateway is a standalone service that complements the Flow EVM
+functionality. It should be released at around the same time as Flow EVM,
 in order to allow for better beta testing.
 
 ## Related Issues
