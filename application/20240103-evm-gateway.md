@@ -28,7 +28,7 @@ built on top of the JSON-RPC API.
 
 ## User Benefit
 
-Users will be able to make use of MetaMask for connecting to the FlowEVM network,
+Users will be able to use an EVM-compatible client to connect to the Flow EVM network,
 by providing the network name, JSON-RPC URL, chain ID, currency etc.
 Developers will be able to easily retrieve all sorts of information from FlowEVM,
 such as block/transaction/account data, as well as define filters and subscribe
