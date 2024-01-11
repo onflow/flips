@@ -326,13 +326,17 @@ This endpoint enables users to subscribe to the streaming of account status chan
 - **StartBlockId** (Block ID of the acount status being streamed)
 - **Address** (address of the account to stream status changes)
 - **Filter** (array of statuses matching the client’s filter)
+- **HeartbeatInterval** (Interval in block heights at which the server should return a heartbeat message to the client)
 
 Either one of the two arguments, `StartBlockHeight` or `StartBlockId`, should be set but not both. If none of these arguments is set, the last sealed block will be considered as the starting block.
 
 If the `Filter` is empty, all account statuses will be returned. If filters are set, only statuses that precisely match one of these filter conditions will be returned.
 
+The API will send a heartbeat message periodically. This will configure a regular response message containing the `Address` and `BlockId` fields, but no `Status`. If the `HeartbeatInterval` is not set by the caller, the default heartbeat interval will be used.
+
 **Expected response:**
 
+- **BlockId** (The block ID of the block containing the statuses)
 - **Address** (The adress of the tracked account)
 - **Status** (The status of the tracked account)
 
