@@ -2,8 +2,8 @@
 status: draft
 flip: 241
 authors: Jordan Ribbink (jordan.ribbink@flowfoundation.org)
-sponsor:
-updated: 2021-01-11
+sponsor: Jeffrey Doyle (jeffrey.doyle@dapperlabs.com)
+updated: 2021-01-12
 ---
 
 # FLIP 241: FCL Mobile Support
