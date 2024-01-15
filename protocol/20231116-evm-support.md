@@ -21,8 +21,7 @@ Support for EVM on Flow enables developers to leverage the network effects and t
 ## Design Proposal
 
 
-
-#### Flow EVM
+### Flow EVM
 
 **"Flow EVM"** is a virtual EVM-based blockchain deployed to a specific address (`<EVMAddress>`) on Flow; a child account of the service account. Flow EVM has its own dedicated EVM chain-id, which varies for Testnet and Mainnet. It utilizes the latest version of the EVM byte-code interpreter. While the initial release of Flow EVM provides behaviour similar to Ethereum Mainnet after Shapella upgrade (reference implementation: Geth v1.13), as EVM software improves new versions can be deployed updated using Flow network height coordinated updates in the future. 
 
@@ -95,7 +94,7 @@ The gas used during the method calls is aggregated, adjusted and added to the to
 Please refer to the Appendix B for the full list of types and functions available in Flow EVM contract. 
 
 
-#### “Flow EVM” extended precompiles
+### “Flow EVM” extended precompiles
 
 Precompiles are smart contracts built into the EVM environment yet not implemented in Solidity (learn more about precompiles [here](https://www.evm.codes/precompiled)). Flow EVM environment extends the original set the standard precompiles with a few more precompile smart contracts. This extended set of precompile contracts are deployed at addresses prefixed `0x000000000000000000000001` leaving a huge space (`2^64`) for available for the future standard precompiles.
 
@@ -112,7 +111,7 @@ Here is the list of some of the functions available on the Cadence Arch smart co
 Cadence arch can be updated over time with more functions, some could trigger actions on the Cadence side, but there would be follow up Flips for it. 
 
 
-#### Cadence-Owned-Account (COA)
+### Cadence-Owned-Account (COA)
 
 Another native tool ensuring seamless composability across environments are Cadence Owned Accounts. *COA* is a natively supported smart contract wallet type on the Flow EVM, facilitating composability between Cadence and EVM environments; COA is a EVM smart contract wallet controlled by a Cadence resource:
 
@@ -158,7 +157,7 @@ As mentioned earlier COAs expose two interfaces for interaction, one on the Flow
 - `function isValidSignature(bytes32 _hash, bytes memory _signature) external view virtual returns (bytes4)` returns the bytes4 magic value `0x1626ba7e` when the signature is valid. This method is usually used to verify a personal sign for the smart contract wallets. (see EIP-1271 for more details). In the context of the COA smart contracts, we consider the signature as an aggregation of flow account address, key index, path to COA resource and a set of signatures (flow account). we return true if the signatures are valid, it provides enough weight for the account, and an account holds the resource at the given path. Under the hood, this method uses Cadence Arch contract for verification.
 
 
-### Appendix A - Embracing the EVM ecosystem.
+## Appendix A - Embracing the EVM ecosystem.
 
 In this Flip, we described the foundation of the Flow EVM, yet there are other works built on top of this foundation to ensure an effortless onboarding experience for the existing EVM ecosystem product and tools. 
 
@@ -178,7 +177,7 @@ You can read more about this work at [this Flip](https://github.com/onflow/flips
 Cadence Owned Accounts provide out of the box FLOW token bridging across environment, though they are powerful resources to build bridges that can bridge any fungible and non-fungible tokens between Cadence and Flow EVM. Checkout [this Flip](https://github.com/onflow/flips/pull/233) for more details. 
 
 
-### Appendix B - “Flow EVM”’s smart contract (in Cadence)
+## Appendix B - “Flow EVM”’s smart contract (in Cadence)
 
 ```cadence
 import "FlowToken"
@@ -366,7 +365,7 @@ contract EVM {
 }
 ```
 
-### Appendix C - COA’s smart contract (in Solidity)
+## Appendix C - COA’s smart contract (in Solidity)
 
 ```solidity
 // SPDX-License-Identifier: UNLICENSED
