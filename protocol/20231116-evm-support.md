@@ -10,7 +10,7 @@ updated: 2023-12-04
 
 ## Objective
 
-- To integrate the Ethereum Virtual Machine (EVM) into Cadence without compromising composability and enabling seamless interactions between Cadence and EVM environments
+Integrating the Ethereum Virtual Machine (EVM) into Cadence without compromising composability and enabling seamless interactions between Cadence and EVM environments
 
 ## Motivation
 
