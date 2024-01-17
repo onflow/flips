@@ -25,7 +25,7 @@ The Access Node Subscription API would introduce the following new streaming end
 - SubscribeBlocks
 - SubscribeBlockHeaders
 - SubscribeBlockDigests
-- SendAndSubscribeTransactionStatusess
+- SendAndSubscribeTransactionStatuses
 - SubscribeAccountStatuses
 
 Additionally, it proposes an improved version of the REST WebSocket Subscription with a single connection.
@@ -104,7 +104,7 @@ Additionally, the Access Subscription API requires modifications, as all streame
 
 ### SubscribeBlocks
 
-This endpoint enables users to subscribe to the streaming of blocks, commencing from a provided block ID or height. Additionally, users are required to specify the desired status of the streamed blocks to receive. Each block's response should include the full or light `Block` depends on `FullBlockResponse` argument.
+This endpoint enables users to subscribe to the streaming of blocks, commencing from a provided block ID or height. Additionally, users are required to specify the desired status of the streamed blocks to receive. Each block's response should include the full or light `Block` depends on `FullBlockResponse` argument. The "full" response contains all data needed to reproduce the block's hash, while the "light" response only contains the most commonly used fields.
 
 **Arguments:**
 
@@ -178,7 +178,7 @@ The `BlockStatus` cannot be set as `BlockStatusUnknown`.
 **Usage example:**
 
 ```go
-req := &access.SubscribeBlocksRequest{
+req := &access.SubscribeBlockHeadersRequest{
     // If no start block height or Id is provided, the latest block is used
     StartBlockHeight: 1234,
     // or StartBlockId: startBlockID[:],
@@ -277,7 +277,7 @@ This endpoint enables users to send a transaction and immediately subscribe to i
 
 - **ID** (The ID of the tracked transaction)
 - **Status** (The status of the tracked transaction)
-- **SequenceNumber** (The SequenceNumber of the tracked transaction)
+- **SequenceNumber** (The SequenceNumber of the response message. Used by the client to ensure they received all messages.)
 
 **Usage example:**
 
