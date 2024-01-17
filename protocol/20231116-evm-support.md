@@ -174,6 +174,7 @@ As EVM interactions are encapsulated within Flow transactions, they leverage the
 You can read more about this work in the [Flow EVM Gateway](https://github.com/onflow/flips/pull/235) improvement proposal. 
 
 **Flow VM Bridge (Cadence <> Flow EVM)** 
+
 COAs provide out of the box $FLOW token bridging between environments. They are also powerful resources which integrate native cross-VM bridging capabilities through which applications can bridge arbitrary fungible and/or non-fungible tokens between Cadence and Flow EVM. Checkout the [Flow VM Bridge ](https://github.com/onflow/flips/pull/233) improvement proposal for more details. 
 
 
