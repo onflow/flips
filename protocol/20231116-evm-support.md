@@ -36,7 +36,7 @@ However, a high degree of composability between Flow EVM and Cadence environment
 2. **“Flow EVM” extended precompiles:** a set of smart contracts available on Flow EVM that can be used by other EVM smart contracts to access and interact with the Cadence world. 
 3. **Cadence-Owned-Account (COA):** COA is a natively supported EVM smart contract wallet type that allows a Cadence resource to own and control an EVM address. This native wallet provides the primitives needed to bridge or control assets across Flow EVM and Cadence. 
 
-Let’s take a closer look at each mean.
+Let’s take a closer look at what each of these mean.
 
 ### Cadence direct calls to the Flow EVM:
 
@@ -51,7 +51,7 @@ import EVM from <ServiceAddress>
 
 The "Flow EVM" smart contract defines structures and resources, and exposes functions for querying and interacting with the EVM state.
 
-The very first type defined in this contract is EVMAddress. It is a Cadence type representing an EVM address and constructible with any sequence of 20 bytesEVM.EVMAddress(bytes: bytes). Note that in the EVM world, there is no concept of accounts or a minimum balance requirement. Any sequence of bytes with a length of 20 is considered a valid address.
+The very first type defined in this contract is EVMAddress. It is a Cadence type representing an EVM address and constructible with any sequence of 20 bytes EVM.EVMAddress(bytes: bytes). Note that in the EVM world, there is no concept of accounts or a minimum balance requirement. Any sequence of bytes with a length of 20 is considered a valid address.
 
 - These structures allows query about the EVM addresses from the Cadence side
   - `balance() Balance` returns the balance of the address, returning a balance object instead of a basic type is considered to prevent flow to atto-flow conversion mistakes
@@ -117,7 +117,7 @@ Another native tool ensuring seamless composability across environments are Cade
 
 - its an a smart contract deployed to Flow EVM, is accessible by other Flow EVM users and can accept and controls EVM assets such as ERC721s. However unlike other EVM smart contracts, they can initiate transactions (COA’s EVM address acts as `tx.origin`). This behaviour is different than other EVM environments that only EOA accounts can initiate a transaction. A new EVM transaction type (`TxType = 0xff`) is used to differentiate these transactions from other types of EVM transactions (e.g, DynamicFeeTxType (`0x02`). 
 
-- its owned and controlled by a Cadence resource, which means they don’t need an EVM transaction to be triggered (e.g. a transaction to make a call to `execute` or EIP-4337’s `validateUserOpmethod`). Instead, using the Cadence interface on the resource, direct call transactions can be trigged. Calling this method emits direct call transaction events on the Flow EVM side.
+- its owned and controlled by a Cadence resource, which means they don’t need an EVM transaction to be triggered (e.g. a transaction to make a call to `execute` or EIP-4337’s `validateUserOpmethod`). Instead, using the Cadence interface on the resource, direct call transactions can be triggered. Calling this method emits direct call transaction events on the Flow EVM side.
 
 Each COA smart contract can only be deployed through the Cadence side.
 `EVM.createCadenceOwnedAccount(): @CadenceOwnedAccount` constructs and returns a Cadence resource, allocates a unique Flow EVM address (based on the UUID of the resource and with the prefix `0x000000000000000000000002`) and deploys the smart contract wallet byte codes to the given address. 
@@ -150,31 +150,31 @@ As mentioned earlier COAs expose two interfaces for interaction, one on the Flow
 
 - `function tokensReceived(address operator, address from, address to, uint256 amount, bytes calldata data, bytes calldata operatorData) external` is provided to support safe transfers from ERC777 asset contracts. is called by the ERC777 token contract after a successful transfer or a minting operation. It doesn’t return anything.
 
-`function onERC1155Received(address _operator, address _from, uint256 _id, uint256 _value, bytes calldata _data) external returns (bytes4)` is provided to support safe transfers from ERC1155 asset contracts.  It should return 0xf23a6e61 if supporting the receiving of a single ERC1155 token type. 
+- `function onERC1155Received(address _operator, address _from, uint256 _id, uint256 _value, bytes calldata _data) external returns (bytes4)` is provided to support safe transfers from ERC1155 asset contracts.  It should return 0xf23a6e61 if supporting the receiving of a single ERC1155 token type. 
 
-`function onERC1155BatchReceived(address _operator, address _from, uint256[] calldata _ids, uint256[] calldata _values, bytes calldata _data) external returns (bytes4)` is provided to support safe transfers from ERC1155 asset contracts (batch of assets). It returns `0xbc197c81` if supporting the receiving of a batch of ERC1155 token types.
+- `function onERC1155BatchReceived(address _operator, address _from, uint256[] calldata _ids, uint256[] calldata _values, bytes calldata _data) external returns (bytes4)` is provided to support safe transfers from ERC1155 asset contracts (batch of assets). It returns `0xbc197c81` if supporting the receiving of a batch of ERC1155 token types.
 
-- `function isValidSignature(bytes32 _hash, bytes memory _signature) external view virtual returns (bytes4)` returns the bytes4 magic value `0x1626ba7e` when the signature is valid. This method is usually used to verify a personal sign for the smart contract wallets. (see EIP-1271 for more details). In the context of the COA smart contracts, we consider the signature as an aggregation of flow account address, key index, path to COA resource and a set of signatures (flow account). we return true if the signatures are valid, it provides enough weight for the account, and an account holds the resource at the given path. Under the hood, this method uses Cadence Arch contract for verification.
+- `function isValidSignature(bytes32 _hash, bytes memory _signature) external view virtual returns (bytes4)` returns the bytes4 magic value `0x1626ba7e` when the signature is valid. This method is usually used to verify a personal sign for the smart contract wallets (see EIP-1271 for more details). In the context of COA smart contracts, we consider the signature as an aggregation of Flow account address, key index, path to COA resource and a set of signatures (Flow account). we return true if the signatures are valid, it provides enough weight for the account, and an account holds the resource at the given path. Under the hood, this method uses Cadence Arch contract for verification.
 
 
 ## Appendix A - Embracing the EVM ecosystem.
 
-In this Flip, we described the foundation of the Flow EVM, yet there are other works built on top of this foundation to ensure an effortless onboarding experience for the existing EVM ecosystem product and tools. 
+In this FLIP, we described the foundation of the Flow EVM, yet there are other works built on top of this foundation to ensure an effortless onboarding experience for the existing EVM ecosystem product and tools. 
 
-**The Flow Gateway Software**
+**Flow EVM Gateway Software**
 
-A separate software package is provided by the Flow Foundation that can be run by anyone (including the Flow Foundation), that follows the Flow EVM chain, sends queries to the Flow access nodes, and provides the JSON-RPC endpoints to any 3rd party applications that want to interact directly with the Flow EVM. With the exception of account state proof endpoints, all other endpoints of the JSON-RPC is going to be provided at the release. 
+A separate software package is provided by the Flow Foundation that can be run by anyone (including the Flow Foundation), that follows the Flow EVM chain, sends queries to the Flow access nodes, and provides the JSON-RPC endpoints to any 3rd party applications that want to interact directly with the Flow EVM. With the exception of account state proof endpoints, all other endpoints of the JSON-RPC will be provided at the release. 
 
-Any 3rd party running this software can accept EVM RLP encoded transactions from users and wrap them in a Flow transaction.  While they will pay for the fees, EVM.run provides a utility parameter (`coinbase`) to collect the gas fee from the user on the Flow EVM side while running the EVM transaction. The use of the coinbase address in this context indicates the EVM address which will receive the `gas usage * gas price` (set in transaction). Essentially, the transaction wrapper behaves similarly to a miner, receives the gas usage fees on an EVM address and pays for the transaction fees. The `gas price per unit of gas` creates a marketplace for these 3rd parties to compete over transactions. 
+Any 3rd party running this software can accept EVM RLP encoded transactions from users and wrap them in a Flow transaction.  While they will pay for the fees, `EVM.run` provides a utility parameter (`coinbase`) to collect the gas fee from the user on the Flow EVM side while running the EVM transaction. The use of the `coinbase` address in this context indicates the EVM address which will receive the `gas usage * gas price` (set in transaction). Essentially, the transaction wrapper behaves similarly to a miner, receives the gas usage fees on an EVM address and pays for the transaction fees. The `gas price per unit of gas` creates a marketplace for these 3rd parties to compete over transactions. 
 
-For example, a user might use MetaMask to sign a transaction for Flow EVM and broadcast it to services that check the gas fee on the transaction and wrap the transaction to be executed. Note that account nonce would protect against double execution of a transaction, similar to how other non-virtual blockchains prevent the minor from including a transaction multiple times.
+For example, a user might use MetaMask to sign a transaction for Flow EVM and broadcast it to services that check the gas fee on the transaction and wrap the transaction to be executed. Note that account nonce would protect against double execution of a transaction, similar to how other non-virtual blockchains prevent the miner from including a transaction multiple times.
 
 As EVM interactions are encapsulated within Flow transactions, they leverage the security measures provided by Flow. These transactions undergo the same process of collection, execution, and verification as other Flow transactions, without any EVM intervention. Consequently, there is no requirement for intricate block formation logic (such as handling forks and reorganizations), mempools, or additional safeguards against malicious MEV (Miner Extractable Value) behaviours. More information about Flow's consensus model is available [here](https://flow.com/core-protocol).
 
-You can read more about this work at [this Flip](https://github.com/onflow/flips/pull/235). 
+You can read more about this work in the [Flow EVM Gateway](https://github.com/onflow/flips/pull/235) improvement proposal. 
 
-**Token Bridge (Cadence <> Flow EVM)** 
-Cadence Owned Accounts provide out of the box FLOW token bridging across environment, though they are powerful resources to build bridges that can bridge any fungible and non-fungible tokens between Cadence and Flow EVM. Checkout [this Flip](https://github.com/onflow/flips/pull/233) for more details. 
+**Flow VM Bridge (Cadence <> Flow EVM)** 
+COAs provide out of the box $FLOW token bridging between environments. They are also powerful resources which integrate native cross-VM bridging capabilities through which applications can bridge arbitrary fungible and/or non-fungible tokens between Cadence and Flow EVM. Checkout the [Flow VM Bridge ](https://github.com/onflow/flips/pull/233) improvement proposal for more details. 
 
 
 ## Appendix B - “Flow EVM”’s smart contract (in Cadence)
