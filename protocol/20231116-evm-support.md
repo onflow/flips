@@ -146,7 +146,7 @@ As mentioned earlier COAs expose two interfaces for interaction, one on the Flow
 
 - `receive() external payable` is the standard method needed to allow other EVM users to send ETH to the smart contract directly, if data is passed to this method it would revert. This method is not usually directly called and any call to smart contract it without the data is automatically rerouted to this function.
 
-- `function onERC721Received(address _operator, address _from, uint256 _tokenId, bytes calldata _data) external returns (bytes4)` is provided to support safe transfers from ERC721 asset contracts. It's called on the recipient after a transfer. Return of any value other than the magic value (`0x150b7a02`) must result in the transaction being reverted. 
+- `function onERC721Received(address _operator, address _from, uint256 _tokenId, bytes calldata _data) external returns (bytes4)` is provided to support safe transfers from ERC721 asset contracts. It's called on the recipient after a transfer. Return of any value other than the magic value (`0x150b7a02`, as defined in the [ERC-721 standard](https://eips.ethereum.org/EIPS/eip-721)) must result in the transaction being reverted. 
 
 - `function tokensReceived(address operator, address from, address to, uint256 amount, bytes calldata data, bytes calldata operatorData) external` is provided to support safe transfers from ERC777 asset contracts. is called by the ERC777 token contract after a successful transfer or a minting operation. It doesn’t return anything.
 
