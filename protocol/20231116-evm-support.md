@@ -479,16 +479,17 @@ contract COA is ERC1155TokenReceiver, ERC777TokensRecipient, ERC721TokenReceiver
     ) external pure override {}
 
     function isValidSignature(
-        bytes32 _hash, 
+        bytes32 _hash,
         bytes memory _sig
     ) external view virtual returns (bytes4){
-        (bool ok, bytes memory out) = cadenceArch.staticcall(abi.encode(_hash, _sig));
-        if (ok) {
+        (bool ok, bytes memory data) = cadenceArch.staticcall(abi.encodeWithSignature("verifyCOAOwnershipProof(bytes32, bytes)", _hash, _sig));
+        require(ok);
+        bool output = abi.decode(data, (bool));
+        if (output) {
             return 0x1626ba7e;
         }
         return 0xffffffff;
-      }
-
+    }
 }
 ```
 
