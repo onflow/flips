@@ -279,6 +279,14 @@ This endpoint enables users to send a transaction and immediately subscribe to i
 - **Status** (The status of the tracked transaction)
 - **SequenceNumber** (The SequenceNumber of the response message. Used by the client to ensure they received all messages.)
 
+Possible transaction statuses are:
+
+- `TransactionStatusPending`
+- `TransactionStatusFinalized`
+- `TransactionStatusExecuted`
+- `TransactionStatusSealed`
+- `TransactionStatusExpired`
+
 **Usage example:**
 
 ```go
@@ -318,7 +326,7 @@ for {
 
 ### SubscribeAccountStatuses
 
-This endpoint enables users to subscribe to the streaming of account status changes. Each response for the account status should include the `Address` and the `Status` fields ([built-in account event types](https://developers.flow.com/build/basics/events#core-events)). In the future, this endpoint could potentially incorporate additional fields to provide supplementary data essential for tracking alongside the status.
+This endpoint enables users to subscribe to the streaming of account status changes. Each response for the account status should include the `Address` and the `Events` fields ([built-in account event types](https://developers.flow.com/build/basics/events#core-events)). In the future, this endpoint could potentially incorporate additional fields to provide supplementary data essential for tracking alongside the status.
 
 **Arguments:**
 
@@ -332,13 +340,13 @@ Either one of the two arguments, `StartBlockHeight` or `StartBlockId`, should be
 
 If the `Filter` is empty, all account statuses will be returned. If filters are set, only statuses that precisely match one of these filter conditions will be returned.
 
-The API will send a heartbeat message periodically. This will configure a regular response message containing the `Address` and `BlockId` fields, but no `Status`. If the `HeartbeatInterval` is not set by the caller, the default heartbeat interval will be used.
+The API will send a heartbeat message periodically. This will configure a regular response message containing the `Address` and `BlockId` fields, but no `Events`. If the `HeartbeatInterval` is not set by the caller, the default heartbeat interval will be used.
 
 **Expected response:**
 
 - **BlockId** (The block ID of the block containing the statuses)
 - **Address** (The adress of the tracked account)
-- **Status** (The status of the tracked account)
+- **Events** (The array of core events of the tracked account)
 
 Usage example:
 
@@ -368,9 +376,9 @@ for {
         log.Fatalf("error receiving account status: %v", err)
     }
 
-    log.Printf("received account status with address: %s and status: %s",
+    log.Printf("received account status with address: %s and event count: %d",
         resp.Address.String(),
-        resp.Status.String(),
+        len(resp.Events),
     )
 }
 
