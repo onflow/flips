@@ -120,7 +120,7 @@ Another native tool ensuring seamless composability across environments are Cade
 - its owned and controlled by a Cadence resource, which means they don’t need an EVM transaction to be triggered (e.g. a transaction to make a call to `execute` or EIP-4337’s `validateUserOpmethod`). Instead, using the Cadence interface on the resource, direct call transactions can be triggered. Calling this method emits direct call transaction events on the Flow EVM side.
 
 Each COA smart contract can only be deployed through the Cadence side.
-`EVM.createCadenceOwnedAccount(): @CadenceOwnedAccount` constructs and returns a Cadence resource, allocates a unique Flow EVM address (based on the UUID of the resource and with the prefix `0x000000000000000000000002`) and deploys the smart contract wallet byte codes to the given address. 
+`EVM.createCadenceOwnedAccount(): @CadenceOwnedAccount` constructs and returns a Cadence resource, allocates a unique Flow EVM address (based on the UUID of the resource and with the prefix `0x000000000000000000000002`) and deploys the smart contract wallet byte codes to the given address. The address `0x0000000000000000000000020000000000000000` is reserved for COA factory, an address that deploys contracts for COA accounts. 
 
 The Cadence resource associated with the smart contract like other Cadence resources can be stored in a default storage path in a Flow account or can be owned by a Cadence smart contract. 
 
@@ -194,12 +194,12 @@ contract EVM {
         access(all)
         let bytes: [UInt8; 20]
 
-        /// Constructs a new EVM address from the given byte representation
+        /// Constructs a new EVM address from the given byte representation.
         init(bytes: [UInt8; 20]) {
             self.bytes = bytes
         }
 
-        /// Balance of the address
+        /// Returns the balance of the address.
         access(all)
         fun balance(): Balance {
             let balance = InternalEVM.balance(
@@ -208,7 +208,7 @@ contract EVM {
             return Balance(flow: balance)
         }
 
-        /// Code of the address
+        /// Returns the code of the address
         access(all)
         fun code(): [UInt8] {
             let code = InternalEVM.code(
@@ -217,7 +217,16 @@ contract EVM {
             return code
         }
 
-        /// Nonce of the address
+        /// Returns the codeHash of the address
+        access(all)
+        fun codeHash(): [UInt8] {
+            let codeHash = InternalEVM.codeHash(
+                address: self.bytes
+            )
+            return codeHash
+        }
+
+        /// Returns the nonce of the address
         access(all)
         fun nonce(): UInt64 {
             let nonce = InternalEVM.nonce(
@@ -240,16 +249,16 @@ contract EVM {
         }
 
         /// Returns the balance in terms of atto-FLOW.
-        /// Atto-FLOW is the smallest denomination of FLOW inside EVM
+        /// Atto-FLOW is the smallest denomination of FLOW inside EVM.
         access(all)
-        fun toAttoFlow(): UInt64
+        fun toAttoFlow(): Int
     }
 
     /// Runs an RLP-encoded EVM transaction, deducts the gas fees,
     /// and deposits the gas fees into the provided coinbase address.
     ///
     /// if the transaction execution fails,
-    /// it reverts the outer Flow transaction
+    /// it reverts the outer Flow transaction.
     access(all)
     fun run(tx: [UInt8], coinbase: EVMAddress) {
         InternalEVM.run(tx: tx, coinbase: coinbase.bytes)
@@ -265,13 +274,13 @@ contract EVM {
         InternalEVM.run(tx: tx, coinbase: coinbase.bytes)
     }
 
-        /// EncodeABI abi encodes given values 
+    /// EncodeABI abi encodes given values 
     access(all)
     fun encodeABI(_ values: [AnyStruct]): [UInt8] {
         return InternalEVM.encodeABI(values)
     }
 
-        /// DecodeABI decodes an ABI encoded data based on 
+    /// DecodeABI decodes an ABI encoded data based on 
     /// the given Cadence types 
     access(all)
     fun decodeABI(types: [Type], data: [UInt8]): [AnyStruct] {
@@ -309,7 +318,7 @@ contract EVM {
             return self.address().balance()
         }
 
-                /// Deposits the given vault into the account's balance
+        /// Deposits the given vault into the account's balance
         access(all)
         fun deposit(from: @FlowToken.Vault) {
             InternalEVM.deposit(
@@ -329,7 +338,7 @@ contract EVM {
         }
 
         /// Deploys a contract to the EVM environment.
-        /// Returns the address of the newly deployed contract
+        /// Returns the address of the newly deployed contract.
         access(all)
         fun deploy(
             code: [UInt8],
@@ -346,7 +355,7 @@ contract EVM {
         }
 
         /// Calls a function with the given data.
-        /// The execution is limited by the given amount of gas
+        /// The execution is limited by the given amount of gas.
         access(all)
         fun call(
             to: EVMAddress,
@@ -417,10 +426,10 @@ contract COA is ERC1155TokenReceiver, ERC777TokensRecipient, ERC721TokenReceiver
 
     address constant public cadenceArch = 0x0000000000000000000000010000000000000001;
 
-    event SafeReceived(address indexed sender, uint256 value);
+    event FlowReceived(address indexed sender, uint256 value);
 
     receive() external payable  { 
-        emit SafeReceived(msg.sender, msg.value);
+        emit FlowReceived(msg.sender, msg.value);
     }
 
     function supportsInterface(bytes4 id) external view virtual override returns (bool) {
@@ -431,7 +440,13 @@ contract COA is ERC1155TokenReceiver, ERC777TokensRecipient, ERC721TokenReceiver
             id == type(IERC165).interfaceId;
     }
 
-    function onERC1155Received(address, address, uint256, uint256, bytes calldata) external pure override returns (bytes4) {
+    function onERC1155Received(
+    	address, 
+    	address, 
+    	uint256, 
+    	uint256, 
+    	bytes calldata
+    ) external pure override returns (bytes4) {
         return 0xf23a6e61;
     }
 
