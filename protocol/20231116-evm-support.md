@@ -1,5 +1,5 @@
 ---
-status: draft
+status: proposed
 flip: 223
 authors: Ramtin Seraj (ramtin.seraj@flowfoundation.org), Bastian Müller (bastian@dapperlabs.com)
 sponsor: Dieter Shirley (dete@dapperlabs.com)
