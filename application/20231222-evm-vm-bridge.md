@@ -74,11 +74,11 @@ applications which need to bridge tokens between VMs for an optimal user experie
 
 Specification outline of the Flow VM bridge for bi-directional flow of FT and NFTs between VM states. While the spec
 references NFTs, the VM bridge will treat both FTs and NFTs alike, with the caveat that NFTs have more complexity due to
-metadata which needs to be made to work for both VMs.
+their more detailed metadata which needs to be made to work for both VMs.
 
 ### Cadence to EVM
 
-Breakdown of the flow for a user bridging a token across VMs from Cadence to EVM. 
+Breakdown of the steps required to bridge a token across VMs from Cadence to EVM. 
 
 #### VM bridge contract functionality
 
@@ -337,7 +337,7 @@ access(all) contract FlowEVMBridge {
     access(all) fun bridgeNFTToEVM(token: @{NonFungibleToken.NFT}, to: EVM.EVMAddress, tollFee: @FlowToken.Vault) {
         pre {
             tollFee.balance == self.tollAmount: "Insufficient fee paid"
-            asset.isInstance(of: Type<&{FungibleToken.Vault}>) == false: "Mixed asset types are not yet supported"
+            token.isInstance(of: Type<&{FungibleToken.Vault}>) == false: "Mixed asset types are not yet supported"
         }
     }
 
@@ -375,7 +375,7 @@ access(all) contract FlowEVMBridge {
     access(all) fun bridgeTokensToEVM(vault: @{FungibleToken.Vault}, to: EVM.EVMAddress, tollFee: @FlowToken.Vault) {
         pre {
             tollFee.balance == self.tollAmount: "Insufficient fee paid"
-            asset.isInstance(of: Type<&{NonFungibleToken.NFT}>) == false: "Mixed asset types are not yet supported"
+            vault.isInstance(of: Type<&{NonFungibleToken.NFT}>) == false: "Mixed asset types are not yet supported"
         }
         // Handle based on whether Flow- or EVM-native & passthrough to internal method
     }
