@@ -682,10 +682,152 @@ access(all) contract CrossVMAsset {
 </details>
 
 <details>
+<summary>IEVMBridgeNFTLocker.cdc</summary>
+
+```cadence
+/// Defines an NFT Locker interface used to lock bridge Flow-native NFTs. Included so the contract can be borrowed by
+/// the main bridge contract without statically declaring the contract due to dynamic deployments
+/// An implementation of this contract will be templated to be named dynamically based on the locked NFT Type
+///
+access(all) contract interface IEVMBridgeNFTLocker : ICrossVM {
+
+    /// Type of NFT locked in the contract
+    access(all) let lockedNFTType: Type
+    /// Pointer to the defining Flow-native contract
+    access(all) let flowNFTContractAddress: Address
+    /// Pointer to the Factory deployed Solidity contract address defining the bridged asset
+    access(all) let evmNFTContractAddress: EVM.EVMAddress
+    /// Resource which holds locked NFTs
+    access(contract) let locker: @{Locker, NonFungibleToken.Collection}
+
+    /// NFT bridged from Flow to EVM
+    access(all) event BridgedToEVM(type: Type, id: UInt64, to: EVM.EVMAddress, evmContractAddress: EVM.EVMAddress, flowNative: Bool)
+    /// NFT bridged from EVM to Flow
+    access(all) event BridgedFromEVM(type: Type, id: UInt64, caller: EVM.EVMAddress, evmContractAddress: EVM.EVMAddress, flowNative: Bool)
+
+    /* --- Auxiliary Bridge Entrypoints --- */
+
+    access(all) fun bridgeToEVM(token: @{NonFungibleToken.NFT}, to: EVM.EVMAddress, tollFee: @FlowToken.Vault) {
+        pre {
+            emit BridgedToEVM(
+                type: token.getType(),
+                id: token.getID(),
+                to: to,
+                evmContractAddress: self.getEVMContractAddress(),
+                flowNative: true
+            )
+        }
+    }
+
+    access(all) fun bridgeFromEVM(
+        caller: &EVM.BridgedAccount,
+        calldata: [UInt8],
+        id: UInt256,
+        evmContractAddress: EVM.EVMAddress,
+        tollFee: @FlowToken.Vault
+    ): @{NonFungibleToken.NFT} {
+        post {
+            emit BridgedFromEVM(
+                type: result.getType(),
+                id: result.getID(),
+                caller: caller.address(),
+                evmContractAddress: self.getEVMContractAddress(),
+                flowNative: true
+            )
+        }
+    }
+
+    /* --- Getters --- */
+
+    access(all) view fun getLockedNFTCount(): Int
+    access(all) view fun borrowLockedNFT(id: UInt64): &{NonFungibleToken.NFT}?
+
+    /* --- Locker interface --- */
+
+    access(all) resource interface Locker : NonFungibleToken.Collection {
+        access(all) view fun isLocked(id: UInt64): Bool
+    }
+}
+```
+</details>
+
+<details>
+<summary>IEVMBridgeFTLocker.cdc</summary>
+
+```cadence
+/// Defines an FT Locker interface used to lock bridge Flow-native tokens. Included so the contract can be borrowed
+/// by the main bridge contract without statically declaring the contract due to dynamic deployments
+/// An implementation of this contract will be templated to be named dynamically based on the locked FT Type
+access(all) contract interface IEVMBridgeFTLocker : ICrossVM {
+
+    /// Type of Vault locked in the contract
+    access(all) let lockedFTType: Type
+    /// Pointer to the defining Flow-native contract
+    access(all) let flowFTContractAddress: Address
+    /// Pointer to the Factory deployed Solidity contract address defining the bridged asset
+    access(all) let evmFTContractAddress: EVM.EVMAddress
+    /// Vault that holds bridged funds
+    access(self) let locker: @{FungibleToken.Vault}
+
+    /// FungibleTokens bridged from Flow to EVM
+    access(all) event BridgedToEVM(type: Type, amount: UFix64, from: EVM.EVMAddress, to: EVM.EVMAddress, evmContractAddress: EVM.EVMAddress, flowNative: Bool)
+    /// FungibleTokens bridged from EVM to Flow
+    access(all) event BridgedFromEVM(type: Type, amount: UFix64, from: EVM.EVMAddress, to: EVM.EVMAddress, evmContractAddress: EVM.EVMAddress, flowNative: Bool)
+
+    access(all) fun bridgeToEVM(vault: @{FungibleToken.Vault}, tollFee: @FlowToken.Vault)
+    access(all) fun bridgeFromEVM(
+        caller: auth(Callable) &BridgedAccount,
+        calldata: [UInt8],
+        amount: UInt64,
+        evmContractAddress: EVM.EVMAddress
+        tollFee: @FlowToken.Vault
+    ): @{FungibleToken.Vault}
+
+    access(all) fun getLockedBalance(): UFix64
+}
+```
+</details>
+
+<details>
 <summary>FlowEVMBridgeFactory.sol</summary>
 
 ```solidity
-// TODO - Contract factory & EVM inspector
+// Factory contract enabling ERC20 & ERC721 contract deployment and EVM inspection
+contract FlowBridgeFactory is Ownable, IERC165 {
+    mapping(string => address) public flowIdentifierToContract;
+    mapping(address => string) public contractToflowIdentifier;
+
+    constructor() Ownable(msg.sender) {}
+
+    event ERC721Deployed(
+        address contractAddress, string name, string symbol, string flowNFTAddress, string flowNFTIdentifier
+    );
+
+    // Returns the Flow type identifier associated with a given bridge-deployed EVM contract address
+    function getFlowAssetIdentifier(address contractAddr) public view returns (string memory)
+    // Returns the bridge-deployed EVM contract address associated with a given Flow type identifier
+    function getContractAddress(string memory flowNFTIdentifier) public view returns (address)
+    // Returns whether an EVM address was deployed by the bridge factory or not
+    function isFactoryDeployed(address contractAddr) public view returns (bool)
+    // Inspector method enabling ERC721 check for a given contract address
+    function isERC721(address contractAddr) public view returns (bool)
+
+    // Function enabling the bridge to deploy a new ERC721 contract
+    function deployERC721(
+        string memory name,
+        string memory symbol,
+        string memory flowNFTAddress,
+        string memory flowNFTIdentifier
+    ) public onlyOwner returns (address)
+
+    // Function enabling the bridge to deploy a new ERC20 contract
+    function deployERC721(
+        string memory name,
+        string memory symbol,
+        string memory flowNFTAddress,
+        string memory flowNFTIdentifier
+    ) public onlyOwner returns (address)
+}
 ```
 </details>
 
@@ -693,7 +835,10 @@ access(all) contract CrossVMAsset {
 <summary>IFlowBridgedAsset.sol</summary>
 
 ```solidity
-// TODO - Identifies corresponding Flow contract address
+interface IFlowBridgedAsset is IERC165 {
+    function getFlowAssetIdentifier() external view returns (string memory);
+    function getFlowContractAddressHex() external view returns (string memory);
+}
 ```
 </details>
 
@@ -701,7 +846,31 @@ access(all) contract CrossVMAsset {
 <summary>FlowBridgedNFT.sol</summary>
 
 ```solidity
-// TODO - Template for bridged Flow-native NFTs
+contract FlowBridgedERC721 is ERC721URIStorage, ERC721Burnable, Ownable, IFlowBridgedAsset {
+    string public flowNFTAddress;
+    string public flowNFTIdentifier;
+
+    constructor(
+        address owner,
+        string memory name,
+        string memory symbol,
+        string memory _flowNFTAddress,
+        string memory _flowNFTIdentifier
+    ) ERC721(name, symbol) Ownable(owner)
+
+    // Enables minting of of Flow-native NFTs
+    function safeMint(address to, uint256 tokenId, string memory uri) public onlyOwner
+    // Retrieves the URI for the given NFT
+    function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory)
+    // ERC165 conformance & pass-through
+    function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC721URIStorage) returns (bool)
+    // Returns the Flow type identifier associated with this bridge-deployed contract
+    function getFlowNFTAddress() public view returns (string memory)
+    // Returns the Flow type identifier associated with this bridge-deployed contract
+    function getFlowNFTIdentifier() public view returns (string memory)
+    // Returns whether the given ID exists or not - deprecated by OZ, so added here for bridge validation
+    function exists(uint256 tokenId) public view returns (bool)
+}
 ```
 </details>
 
