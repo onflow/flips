@@ -74,8 +74,8 @@ applications which need to bridge tokens between VMs for an optimal user experie
 
 Specification outline of the Flow VM bridge for bi-directional flow of FT and NFTs between VM states. While the spec
 references NFTs, the VM bridge will treat both FTs and NFTs alike, with the caveat that NFTs have more complexity due to
-their more detailed metadata which needs to be made to work for both VMs. With that said, we may also choose to bridge
-select metadata for FTs as well.
+their more detailed metadata which needs to be made to work for both VMs. With that said, many FTs on Flow define useful
+onchain metadata, so we may also choose to bridge select metadata for FTs as well.
 
 ### Cadence to EVM
 
@@ -344,6 +344,18 @@ access(all) contract FlowEVMBridge {
         }
     }
 
+    /// Onboards a given ERC721 to the bridge. Since we're onboarding by EVM Address, the asset must be defined in a
+    /// third-party EVM contract. Attempting to onboard a bridge-defined asset will result in an error as onboarding is
+    /// not required
+    access(all) fun onboardNFTByEVMAddress(_ address: EVM.EVMAddress, tollFee: @FlowToken.Vault) {
+        pre {
+            self.evmAddressRequiresOnboarding(address) == true: "Onboarding is not needed for this contract"
+            self.isERC721(evmContractAddress: address) && !self.isERC20(evmContractAddress: address):
+                "Target contract address is not a valid asset type"
+            tollFee.balance >= FlowEVMBridgeConfig.fee: "Insufficient fee paid"
+        }
+    }
+
     /// Public entrypoint to bridge NFTs from Flow to EVM - cross-account bridging supported
     ///
     /// @param token: The NFT to be bridged
@@ -381,6 +393,30 @@ access(all) contract FlowEVMBridge {
     }
 
     /* --- Public FT Handling --- */
+
+    /// Onboards a given type of FT Vault to the bridge. Since we're onboarding by Cadence Type, the asset must be
+    /// defined in a third-party contract. Attempting to onboard a bridge-defined asset will result in an error as
+    /// onboarding is not required
+    access(all) fun onboardTokensByType(_ type: Type, tollFee: @FlowToken.Vault) {
+        pre {
+            self.typeRequiresOnboarding(type) == true: "Onboarding is not needed for this type"
+            !type.isSubtype(of: Type<@{NonFungibleToken.NFT}>()) && type.isSubtype(of: Type<@{FungibleToken.Vault}>()):
+                "Invalid type provided"
+            tollFee.balance >= FlowEVMBridgeConfig.fee: "Insufficient fee paid"
+        }
+    }
+
+    /// Onboards a given ERC20 to the bridge. Since we're onboarding by EVM Address, the asset must be defined in a
+    /// third-party EVM contract. Attempting to onboard a bridge-defined asset will result in an error as onboarding is
+    /// not required
+    access(all) fun onboardTokensByEVMAddress(_ address: EVM.EVMAddress, tollFee: @FlowToken.Vault) {
+        pre {
+            self.evmAddressRequiresOnboarding(address) == true: "Onboarding is not needed for this contract"
+            self.isERC721(evmContractAddress: address) && !self.isERC20(evmContractAddress: address):
+                "Target contract address is not a valid asset type"
+            tollFee.balance >= FlowEVMBridgeConfig.fee: "Insufficient fee paid"
+        }
+    }
 
     /// Public entrypoint to bridge NFTs from Flow to EVM - cross-account bridging supported
     ///
@@ -424,7 +460,7 @@ access(all) contract FlowEVMBridge {
     /// Returns whether an asset needs to be onboarded to the bridge
     access(all) view fun typeRequiresOnboarding(_ type: Type): Bool?
     /// Returns whether an EVM-native asset needs to be onboarded to the bridge
-    access(all) view fun evmAddressRequiresOnboarding(address: EVM.EVMAddress) {}
+    access(all) view fun evmAddressRequiresOnboarding(_ address: EVM.EVMAddress) {}
     /// Returns the bridge contract's COA EVMAddress
     access(all) fun getBridgeCOAEVMAddress(): EVM.EVMAddress
     /// Retrieves the EVM address of the contract related to the bridge contract-defined asset
