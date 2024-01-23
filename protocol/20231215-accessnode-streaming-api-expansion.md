@@ -267,7 +267,7 @@ for {
 
 ### SendAndSubscribeTransactionStatuses
 
-This endpoint enables users to send a transaction and immediately subscribe to its status changes. The status is streamed back until the block containing the transaction becomes sealed. Each response for the transaction status should include the `ID`, `Status` and `SequenceNumber` fields.
+This endpoint enables users to send a transaction and immediately subscribe to its status changes. The status is streamed back until the block containing the transaction becomes sealed. Each response for the transaction status should include the `ID`, `Status` and `MessageIndex` fields.
 
 **Arguments:**
 
@@ -276,8 +276,8 @@ This endpoint enables users to send a transaction and immediately subscribe to i
 **Expected response:**
 
 - **ID** (The ID of the tracked transaction)
-- **Status** (The status of the tracked transaction)
-- **SequenceNumber** (The SequenceNumber of the response message. Used by the client to ensure they received all messages.)
+- **Status** (The status of the tracked transaction, see possible statuses below)
+- **MessageIndex** (The MessageIndex of the response message. Used by the client to ensure they received all messages.)
 
 Possible transaction statuses are:
 
@@ -316,10 +316,10 @@ for {
 
     txResult := resp.GetTransactionResult()
 
-    log.Printf("received transaction status with tx ID: %x, status: %s, and error: %v",
+    log.Printf("received transaction status with tx ID: %x, status: %s, and message index: %d",
         resp.ID,
         resp.Status.String(),
-        resp.SequenceNumber
+        resp.MessageIndex
     )
 }
 ```
@@ -347,6 +347,7 @@ The API will send a heartbeat message periodically. This will configure a regula
 - **BlockId** (The block ID of the block containing the statuses)
 - **Address** (The adress of the tracked account)
 - **Events** (The array of core events of the tracked account)
+- **MessageIndex** (The MessageIndex of the response message. Used by the client to ensure they received all messages.)
 
 Usage example:
 
@@ -376,9 +377,10 @@ for {
         log.Fatalf("error receiving account status: %v", err)
     }
 
-    log.Printf("received account status with address: %s and event count: %d",
+    log.Printf("received account status with address: %s, event count: %d and message index: %d",
         resp.Address.String(),
         len(resp.Events),
+        resp.MessageIndex,
     )
 }
 
