@@ -922,6 +922,8 @@ contract FlowBridgedERC721 is ERC721URIStorage, ERC721Burnable, Ownable, IFlowBr
 
 #### NFT Metadata
 
+##### Problem
+
 Platform expectations between EVM & Flow NFT metadata storage differ. Whereas Flow projects generally prioritize onchain
 metadata (with the exception of image data), EVM projects typically store NFT metadata in offchain systems - typically
 in json blobs found in IPFS.
@@ -942,20 +944,36 @@ to IPFS, post the metadata, and commit that URI to the defining EVM contract for
 the request is served, b/ metadata committed to IPFS, c/ commitment to the EVM contract succeeds and d/ that URI is
 correct and contains correct metadata. Then there is the issue of IPFS storage funding.
 
-Alternatively, if Flow projects want their metadata to be served well across VMs may take it on themselves to add
+##### Potential Solutions
+
+Alternatively, if Flow projects want their metadata to be served well across VMs, they may take it on themselves to add
 offchain IPFS metadata. This would allow the ecosystem to both maintain onchain metadata advantages as well as reach
 parity with EVM platform expectations. We may then want to consider a Cadence metadata view specifically for IPFS-stored
 metadata to support this use case.
 
-Yet another alternative, it may be possible to expose an API matching that of IPFS services so that bridge-stored NFTs
-metadata could be served to IPFS clients as they would request URI material from any other provider.
+Yet another alternative, it may be possible to expose an API matching that of IPFS gateways so that bridge-stored NFTs
+metadata could be served to IPFS clients as they would request URI material from any other provider. Imagine some IPFS
+HTTP gateway say `https://ipfs.flow.com/ipfs/CID` where CID is some content-based addressing of the NFT. Requests to the
+gateway could be served by access/observer or other data-availability node which, upon receiving a request, would derive
+the information about where to locate the NFT from the CID, query for the NFT metadata and serialize it into a JSON blob
+conforming to ERC721 metadata standards before returning the blob. On bridging a Flow-native NFT to Flow EVM, the IPFS
+URI would be derived and committed to the minted NFT in the EVM side.
 
-Lastly, there is also the option of creating an API similar to OpenSea's metadata API, which would allow for querying of
-bridged NFT metadata from a centralized source. This would be a centralized solution, but would allow for a secondary
-source of truth platforms could leverage to serve metadata to their users.
+This construction would mean that NFT metadata never has to leave the Cadence runtime environment, but can be served on
+request as if it was being retrieved from any other IPFS gateway. Of course, the engineering effort is then displaced to
+Cadence serialization APIs, the mechanism to construct a CID from the provided NFT content, and an IPFS-like API bolted
+on to some DA client-serving node.
+
+Lastly, and likely more appropriately, there is also the option of creating an API similar to OpenSea's metadata API,
+which would allow for querying of bridged NFT metadata from a centralized source. This service could in theory be run by
+anyone - Flow Foundation or otherwise. While an offchain API would be a centralized solution, it would enable a
+secondary source of truth platforms could leverage to serve metadata to their users and is in keeping with expectations
+in the EVM ecosystem.
 
 This problem and potential solutions are presented as a point of discussion and are not necessarily in scope for the
-contract bridge's contract design.
+bridge's contract design. In the meantime, generalized scripts will be made available so that metadata can be retrieved
+from locked NFTs using information solely available on ERC721 contracts defining bridged Flow-native NFTs (see
+[@onflow/flow-evm-bridge#7](https://github.com/onflow/flow-evm-bridge/issues/7)).
 
 #### NFT IDs
 
