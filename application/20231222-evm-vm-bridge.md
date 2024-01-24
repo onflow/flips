@@ -239,22 +239,46 @@ The task of bridging FTs & NFTs between VMs can be split into four distinct case
 asset can either be Flow- or EVM-native, and it can either be bridged from Flow to EVM or EVM to Flow. The following
 sections outline an NFT bridge path for each case.
 
+> :information_source: A note about bridge "onboarding" - assets moving from one VM to another must at minimum have
+> contracts defining them in their target VM. These contracts must be deployed in a transaction preceding the movement
+> of the asset as deployed contracts are not available in the Cadence's state space until the deploying transaction has
+> finalized. Thus, onboarding cannot be done on the fly and must be a discrete step of the bridging process.
+
+#### Flow-Native NFT Onboarding
+
+1. Assert the asset is either an NFT or FT & has not yet been onboarded
+2. Determine if the given type is an instance of FT Vault or NFT
+3. Given a Cadence type, we assume the asset is Flow-native. We may also check for self-rolled cross-VM implementations
+   and route the request to the self-rolled bridge
+    - Bridging self-rolled cross-VM NFTs could lead to multiple definitions across VMs for what should be a single
+      representation in each environment
+4. Assuming the type is solely Flow-native...
+    1. Deploy the ERC721 defining the NFT type in EVM, providing identifying information about the NFT type as defined
+       in Flow
+    2. Derive the Locker Cadence contract name
+    3. Deploy the Locker to the bridge account from Cadence template, providing identifying information about the NFT
+       type as defined in Flow & the deployed ERC721 address
+
+![Flow-native NFT Onboarding](20231222-evm-vm-bridge-resources/flow_native_onboarding.png)
+
 #### Flow-Native: Flow -> EVM
 
 *Lock in Cadence & Mint in EVM*
 
-1. Asses if onboarding is required for the type
-1. Determine if asset is Flow or EVM-native
-    - Check if resource is defined in bridge-hosted NFT contract - if so, EVM-native, else Flow-native
-1. Determine if BridgeNFTLocker contract has been initialized for this NFT type - if not, initialize setup
-    1. Call into EVM, telling FlowBridgeFactory to deploy a new FlowBridgedNFT (ERC721) contract, passing identifying
-       info about the NFT and it's source contract. Note the new EVM contract address
-    1. Derive a contract name from the NFT identifier, & deploy template-generated Cadence Locker contract to the bridge
-       account, passing the newly deployed EVM contract address
-1. Borrow a reference to the newly deployed BridgeNFTLocker contract & passthrough bridge request
-    1. Lock the NFT in the contract's Locker resource
-    1. Call to FlowBridgedNFT.sol to mint to mint an NFT to the defined recipient
-1. Locker contract calls corresponding EVM FlowBridgedNFT contract to mint NFT to the provided EVMAddress via the
+1. Assert the asset is either an NFT or FT & has been onboarded
+2. Determine if asset is FT or NFT
+    - Check if resource is an instance of FT.Vault or NFT.NFT (excluding overlapping instances, at least for POC)
+3. Determine if asset is Flow or EVM-native
+    - Check if resource is defined in bridge-hosted NFT or NFT contract - if so, EVM-native, else Flow-native
+4. Borrow the relevant BridgeNFTLocker contract for this NFT type configured at onboarding
+    1. Call into EVM, telling BridgedNFTFactory to deploy a new FlowBridgedNFT contract, passing identifying info about
+       the NFT & noting new EVM contract address
+    2. Derive a contract name from the NFT identifier, & deploy template-generated Cadence contract to bridge account,
+       passing EVM contract Address
+5. Borrow a reference to the newly deployed BridgeNFTLocker contract & passthrough bridge request
+    1. Lock the NFT in the Locker resource
+    2. Call to FlowBridgedNFT.sol to mint to caller
+6. Locker contract calls corresponding EVM FlowBridgedNFT contract to mint NFT to the provided EVMAddress via the
    bridge's shared COA
 
 ![Flow-native Flow to EVM](20231222-evm-vm-bridge-resources/flow_native_to_evm.png)
@@ -263,37 +287,54 @@ sections outline an NFT bridge path for each case.
 
 *Unlock in Cadence & Burn in EVM*
 
-1. Determine if asset is Flow or EVM-native
-    - Call into Factory contract to determine if target of EVM call is FlowBridgedNFT.sol instance && was deployed by
-      FlowBridgeFactory.sol
-1. Get the Flow NFT type identifier from FlowBridgedNFT.sol
-1. Determine if an NFT Locker has been initialized (it will be by construction)
-1. Borrow the BridgeNFTLocker.cdc contract, deriving name from from the type identifier returned from FlowBridgedNFT.sol
-1. Validate the caller is the current owner (or is approved) of the EVM NFT to be bridged
-1. Execute the caller-provided approve() calldata
-1. Validate the bridge contract COA is approved to manipulate the NFT in FlowBridgedNFT.sol as a result of the executed call
-1. Bridge contract COA calls to FlowBridgedNFT.sol to burn the NFT
-1. Bridge contract withdraws NFT from the locker contract and returns to caller
+1. Assert the asset is either an NFT or FT & has been onboarded  (it will be by construction)
+2. Determine if asset is FT or NFT
+    - Call into Coordinator to determine if EVM address target is ERC20 or ERC721 instance or invalid
+3. Determine if asset is Flow or EVM-native
+    - Call into Factory contract to determine if target of EVM call is IFlowCrossVMContract.sol instance && is contained in bridgedNFTContracts
+4. Determine if an NFT Locker has been initialized (it will be by construction)
+5. Borrow the BridgeNFTLocker.cdc contract, deriving name from from the type identifier returned from FlowBridgedNFT.sol
+6. Validate the caller is the current owner (or getApproved(tokenID)) of the EVM NFT to be bridged
+7. Execute the caller-provided approve() calldata
+8. Validate the bridge contract COA is approved to manipulate the NFT in FlowBridgedNFT.sol as result of executed call
+9. Bridge contract COA calls to FlowBridgedNFT.sol to burn the NFT
+10. Bridge contract withdraws NFT from NFTLocker and returns to caller
+
 
 ![Flow-native EVM to Flow](20231222-evm-vm-bridge-resources/flow_native_to_flow.png)
+
+#### EVM-Native NFT Onboarding
+
+1. Assert the asset is either an NFT or FT & has not yet been onboarded
+2. Determine if the given type is an instance of ERC721 or ERC20
+3. The bridge determines if the address represents a Flow- or EVM-native contract by checking if it is bridge-deployed
+    - We may also check for self-rolled cross-VM implementations and route the request to the self-rolled bridge as
+      bridging these could lead to multiple definitions across VMs
+4. Assuming the asset is solely EVM-native
+    1. Gather identifying information about the ERC721 such as name & symbol
+    2. Deploy a defining NFT contract to the bridge account from Cadence template, providing identifying information
+       about the ERC721
+
+![Flow-native NFT Onboarding](20231222-evm-vm-bridge-resources/evm_native_onboarding.png)
 
 #### EVM-Native: EVM -> Flow
 
 *Mint in Flow & Transfer in EVM*
 
-1. Determine if asset is Flow or EVM-native
-    - Call into Factory contract, checking if the target of EVM call is FlowBridgedNFT.sol instance && was deployed by
-      FlowBridgeFactory.sol
-1. Determine if BridgedNFT contract has been deployed - if not initialize
-    - Derive a contract name from the EVM NFT contract address + name & deploy template-generated Cadence contract to
-      bridge account, passing EVM source contract address
-1. Borrow newly deployed BridgedNFT contract & passthrough
-1. BridgedNFT validates the caller is currently owner (or is approved) of the EVM NFT to be bridged
-1. BridgedNFT executes EVM approve call provided by the caller, approving bridge COA to act on the EVM NFT
-1. BridgedNFT executes NFT transfer from bridge COA, completing the transfer to the bridge account in EVM
-1. BridgedNFT validates its contract COA is now the owner of the NFT
-1. BridgedNFT subsequently mints an NFT from itself & returns
-1. Caller then creates & Collection from NFT & configures, finally depositing to their account
+1. Assert the asset is either an NFT or FT & has been onboarded
+2. Determine if asset is FT or NFT
+    - Call into Factory to determine if EVM address target is ERC20 or ERC721 instance or invalid
+3. Determine if asset is Flow or EVM-native
+    - Call into Factory contract, checking if target of EVM call is IFlowCrossVMContract.sol instance && is contained in bridgedNFTContracts
+4. Borrow the relevant BridgedNFT contract
+    - Derive a contract name from the EVM NFT contract address + name
+5. Borrow newly deployed BridgedNFT contract & passthrough
+6. BridgedNFT validates the caller is currently owner (or getApproved(tokenID)) of EVM NFT
+7. BridgedNFT executes EVM approve call provided by the caller, approving bridge COA to act on NFT
+8. BridgedNFT executes NFT transfer from bridge COA, completing the transfer to the bridge account in EVM
+9. BridgedNFT validates its contract COA is now the owner
+10. BridgedNFT subsequently mints an NFT from itself & returns
+11. Caller then creates & Collection from NFT & configures, finally depositing to their account
 
 ![Flow-native Flow to EVM](20231222-evm-vm-bridge-resources/evm_native_to_flow.png)
 
@@ -301,13 +342,16 @@ sections outline an NFT bridge path for each case.
 
 *Burn in Flow & Transfer in EVM*
 
-1. Determine if asset is Flow or EVM-native
-    - Check if resource is defined in bridge-hosted NFT contract - if so, EVM-native, else Flow-native
-1. Determine if BridgedNFT contract has been deployed (it will be by construction)
-1. Borrow the BridgedNFT contract from the NFT type identifier & passthrough bridge request
-1. BridgedNFT burns the NFT
-1. BridgedNFT calls to EVM contract, transferring NFT to defined recipient
-1. BridgedNFT confirms recipient is owner of the NFT post-transfer
+1. Assert the asset is either an NFT or FT & has been onboarded  (it will be by construction)
+2. Determine if asset is FT or NFT
+    - Check if resource is an instance of FT.Vault or NFT.NFT (excluding overlapping instances, at least for POC)
+3. Determine if asset is Flow or EVM-native
+    - Check if resource is defined in bridge-hosted NFT or NFT contract - if so, EVM-native, else Flow-native
+4. Borrow the relevant BridgedNFT contract
+5. Borrow the BridgedNFT contract from the NFT type identifier & passthrough bridge request
+6. BridgedNFT burns the NFT
+7. BridgedNFT calls to EVM contract, transferring NFT to defined recipient
+8. BridgedNFT confirms recipient is owner of the NFT post-transfer
 
 ![Flow-native Flow to EVM](20231222-evm-vm-bridge-resources/evm_native_to_evm.png)
 
@@ -1037,50 +1081,63 @@ EVM using the interface defined above.
 
 ```cadence
 import "FungibleToken"
-import "FlowToken"
 import "NonFungibleToken"
-import "ExampleNFT"
+import "FlowToken"
 
 import "EVM"
+
 import "FlowEVMBridge"
+import "FlowEVMBridgeConfig"
 import "FlowEVMBridgeUtils"
 
-transaction(id: UInt64) {
+/// Bridges an NFT from the signer's collection in Flow to the recipient in FlowEVM
+///
+transaction(id: UInt64, collectionStoragePathIdentifier: String, recipient: String?) {
     
-    let nft: &{NonFungibleToken.NFT}
+    let nft: @{NonFungibleToken.NFT}
     let nftType: Type
-    let evmRecipient: &EVM.EVMAddress
-    let evmContractAddress: EVM.EVMAddress
+    let evmRecipient: EVM.EVMAddress
     let tollFee: @FlowToken.Vault
+    var success: Bool
     
     prepare(signer: auth(BorrowValue) &Account) {
         // Withdraw the requested NFT
         let collection = signer.storage.borrow<auth(NonFungibleToken.Withdrawable) &{NonFungibleToken.Collection}>(
-                from: ExampleNFT.CollectionStoragePath
+                from: StoragePath(identifier: collectionStoragePathIdentifier) ?? panic("Could not create storage path")
             )!
         self.nft <- collection.withdraw(withdrawID: id)
         // Save the type for our post-assertion
-        self.nftType = nft.getType()
+        self.nftType = self.nft.getType()
         // Get the signer's COA EVMAddress as recipient
-        self.evmRecipient = signer.storage.borrow<&EVM.BridgedAccount>(from: /storage/evm)!.address()
+        if recipient == nil {
+            self.evmRecipient = signer.storage.borrow<&EVM.BridgedAccount>(from: /storage/evm)!.address()
+        } else {
+            self.evmRecipient = FlowEVMBridgeUtils.getEVMAddressFromHexString(address: recipient!)
+                ?? panic("Malformed Recipient Address")
+        }
         // Pay the bridge toll
-        self.tollFee <- signer.storage.borrow<auth(FungibleToken.Withdrawable) &FlowToken.Vault>(
+        let vault = signer.storage.borrow<auth(FungibleToken.Withdrawable) &FlowToken.Vault>(
                 from: /storage/flowTokenVault
-            )!.withdraw(amount: FlowEVMBridge.fee)
+            ) ?? panic("Could not access signer's FlowToken Vault")
+        self.tollFee <- vault.withdraw(amount: FlowEVMBridgeConfig.fee) as! @FlowToken.Vault
+        self.success = false
     }
 
     execute {
         // Execute the bridge
-        FlowEVMBridge.bridgeNFTToEVM(token: <-self.nft, to: evmRecipient.address(), tollFee: <-self.tollFee)
+        FlowEVMBridge.bridgeNFTToEVM(token: <-self.nft, to: self.evmRecipient, tollFee: <-self.tollFee)
+
+        // Ensure the intended recipient is the owner of the NFT we bridged
+        self.success = FlowEVMBridgeUtils.isOwnerOrApproved(
+            ofNFT: UInt256(id),
+            owner: self.evmRecipient,
+            evmContractAddress: FlowEVMBridge.getAssetEVMContractAddress(type: self.nftType) ?? panic("No EVM Address found for NFT type")
+        )
     }
 
     // Post-assert bridge completed successfully on EVM side
     post {
-        FlowEVMBridgeUtils.isOwnerOrApproved(
-            ofNFT: id,
-            owner: evmRecipient.address(),
-            evmContractAddress: FlowEVMBridge.getAssetEVMContractAddress(forType: nftType)
-        ): "Problem bridging to signer's COA!"
+        self.success: "Problem bridging to signer's COA!"
     }
 }
 ```
@@ -1092,54 +1149,72 @@ transaction(id: UInt64) {
 
 ```cadence
 import "FungibleToken"
-import "FlowToken"
 import "NonFungibleToken"
-import "ExampleNFT"
+import "FlowToken"
 
 import "EVM"
+
 import "FlowEVMBridge"
+import "FlowEVMBridgeConfig"
 import "FlowEVMBridgeUtils"
 
-transaction(id: UInt64) {
-    
+/// This transaction bridges an NFT from FlowEVM to Flow assuming it has already been onboarded to the FlowEVMBridge
+///
+transaction(nftTypeIdentifier: String, id: UInt256, collectionStoragePathIdentifier: String) {
+
+    let evmContractAddress: EVM.EVMAddress
     let collection: &{NonFungibleToken.Collection}
-    let coa: auth(Callable) &BridgedAccount
     let tollFee: @FlowToken.Vault
+    let coa: &EVM.BridgedAccount
+    let calldata: [UInt8]
     
     prepare(signer: auth(BorrowValue) &Account) {
-        // Borrow the NFT Collection
-        self.collection = signer.storage.borrow<auth(NonFungibleToken.Withdrawable) &{NonFungibleToken.Collection}>(
-                from: ExampleNFT.CollectionStoragePath
-            )!
-        // Pay the bridge toll
-        self.tollFee <- signer.storage.borrow<auth(FungibleToken.Withdrawable) &FlowToken.Vault>(
+        // Get the ERC721 contract address for the given NFT type
+        let nftType: Type = CompositeType(nftTypeIdentifier) ?? panic("Could not construct NFT type")
+        self.evmContractAddress = FlowEVMBridge.getAssetEVMContractAddress(type: nftType)
+            ?? panic("EVM Contract address not found for given NFT type")
+
+        // Borrow a reference to the NFT collection
+        let storagePath = StoragePath(identifier: collectionStoragePathIdentifier) ?? panic("Could not create storage path")
+        self.collection = signer.storage.borrow<&{NonFungibleToken.Collection}>(from: storagePath)
+            ?? panic("Could not borrow collection from storage path")
+
+        // Get the funds to pay the bridging fee from the signer's FlowToken Vault
+        let vault = signer.storage.borrow<auth(FungibleToken.Withdrawable) &FlowToken.Vault>(
                 from: /storage/flowTokenVault
-            )!.withdraw(amount: FlowEVMBridge.fee)
+            ) ?? panic("Could not access signer's FlowToken Vault")
+        self.tollFee <- vault.withdraw(amount: FlowEVMBridgeConfig.fee) as! @FlowToken.Vault
+
+        // Borrow a reference to the signer's COA
+        // NOTE: This should also be the ERC721 owner of the requested NFT in FlowEVM
+        self.coa = signer.storage.borrow<&EVM.BridgedAccount>(from: /storage/evm)
+            ?? panic("Could not borrow COA from provided gateway address")
+        // Encode the approve calldata, approving the Bridge COA to act on the NFT
+        self.calldata = FlowEVMBridgeUtils.encodeABIWithSignature(
+                "approve(address,uint256)",
+                [FlowEVMBridge.getBridgeCOAEVMAddress(), id]
+            )
     }
 
     execute {
-        // Get the bridge-deployed EVM contract address
-        let evmContractAddress = FlowEVMBridge.getAssetEVMContractAddress(type: Type<@ExampleNFT.NFT>())
-            ?? panic("No bridge-deployed EVM contract found for ExampleNFT")
-        // Encode the approve call
-        let calldata = EVM.encodeABIWithSignature(
-            "approve(address,uint256)",
-            [evmContractAddress, UInt256(id)]
-        )
-        // Execute the bridge & deposit
-        let bridgedNFT <- FlowEVMBridge.bridgeNFTFromEVM(
+        // Execute the bridge
+        let nft: @{NonFungibleToken.NFT} <- FlowEVMBridge.bridgeNFTFromEVM(
             caller: self.coa,
-            calldata: calldata,
+            calldata: self.calldata,
             id: id,
-            evmContractAddress: evmContractAddress,
+            evmContractAddress: self.evmContractAddress,
             tollFee: <-self.tollFee
         )
-        self.collection.deposit(token: <-bridgedNFT)
+        // Deposit the bridged NFT into the signer's collection
+        self.collection.deposit(token: <-nft)
     }
 
-    // Post-assert bridge completed successfully on EVM side
+    // Post-assert bridge completed successfully by checking the NFT resides in the Collection
     post {
-        self.collection.borrowNFT(id) != nil: "NFT was not bridged back to signer's collection"
+        self.collection.borrowNFT(
+            FlowEVMBridgeUtils.uint256ToUInt64(value: id)
+        ) != nil:
+            "Problem bridging to signer's COA!"
     }
 }
 ```
