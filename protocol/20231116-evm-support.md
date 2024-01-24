@@ -131,7 +131,7 @@ As mentioned earlier COAs expose two interfaces for interaction, one on the Flow
 
 - `address(): EVMAddress` returns the address of the smart contract, and the EVM address that is returned could be used to query balance, code, nonce, etc.
 
-- `deposit(from: @FlowToken.Vault)` allows depositing FLOW tokens into the smart contract (Cadence to Flow EVM)
+- `deposit(from: @FlowToken.Vault)` allows depositing FLOW tokens into the smart contract (Cadence to Flow EVM). 
 
 - `withdraw(balance: Balance): @FlowToken.Vault` allows withdrawing balance from the Flow EVM address and bridges it back as a FlowToken Vault to be handled on the Cadence side. 
 
@@ -323,7 +323,7 @@ contract EVM {
         fun deposit(from: @FlowToken.Vault) {
             InternalEVM.deposit(
                 from: <-from,
-                to: self.bytes
+                to: self.addressBytes
             )
         }
 
