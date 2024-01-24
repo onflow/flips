@@ -2,7 +2,7 @@
 status: draft 
 flip: 244
 authors: Andrii Slisarchuk (andriyslisarchuk@gmail.com)
-sponsor: AN Expert (core-contributor@example.org) 
+sponsor: Jerome Pimmel (jerome.pimmel@flowfoundation.org), Peter Argue (peter.argue@flowfoundation.org)
 updated: 2023-12-15
 ---
 
