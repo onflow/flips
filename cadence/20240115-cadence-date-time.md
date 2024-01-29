@@ -1,12 +1,12 @@
 ---
 status: draft
-flip: 242
+flip: 245
 authors: darkdrag00n (darkdrag00n@proton.me)
 sponsor: Bastian Müller (bastian@dapperlabs.com)
-updated: 2024-01-15
+updated: 2024-01-29
 ---
 
-# FLIP 242: Date & Time
+# FLIP 245: Date & Time
 
 ## Objective
 
