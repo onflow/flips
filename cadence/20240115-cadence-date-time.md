@@ -24,7 +24,7 @@ Manipulating date and time using raw timestamps is difficult and error-prone. Pr
 
 ## Design Proposal
 
-New types `LocalDateTime` & `Duration` will be added to Cadence.
+New types `LocalDateTime` & `Duration` will be added to Cadence. Both of these data types assume that there are 3600*24 seconds in every day and there are no leap years.
 
 ### LocalDateTime
 
@@ -80,7 +80,7 @@ Constructor functions will be defined to instantiate variables of type `LocalDat
 
 - `LocalDateTime.fromTimestamp(timestamp : UFix64)`: Creates a `LocalDateTime` with value based on the passed timestamp argument.
 
-- `LocalDateTime.of(year: UInt64, month: UInt64, day: UInt64, hour: UInt64, minute: UInt64, second: UInt64)`: Creates a `LocalDateTime` with value based on the passed arguments assuming that there are 3600*24 seconds in every day.
+- `LocalDateTime.of(year: UInt64, month: Month, day: UInt8, hour: UInt8, minute: UInt8, second: UInt8)`: Creates a `LocalDateTime` with value based on the passed arguments assuming that there are 3600*24 seconds in every day.
 
 #### Public Members
 The `LocalDateTime` will provide the following public members:
@@ -94,49 +94,114 @@ The `LocalDateTime` will provide the following public members:
 7. `getDayOfWeek(): Day`: Get the day-of-week of the date-time.
 
 #### Examples
-// TODO
+Example usage of `LocalDateTime` are:
+
+```cadence
+/// Assume that the current block timestamp is 1707045210
+let currentDateTime = LocalDateTime.now()
+currentDateTime.getYear()      // 2024
+currentDateTime.getMonth()     // february
+currentDateTime.getDate()      // 04
+currentDateTime.getHour()      // 11
+currentDateTime.getMinute()    // 13
+currentDateTime.getSecond()    // 30
+currentDateTime.getDayOfWeek() // sunday
+
+let dateTimeFromTs = LocalDateTime.fromTimestamp(1415829132)
+dateTimeFromTs.getYear()      // 2014
+dateTimeFromTs.getMonth()     // november
+dateTimeFromTs.getDate()      // 12
+dateTimeFromTs.getHour()      // 21
+dateTimeFromTs.getMinute()    // 52
+dateTimeFromTs.getSecond()    // 12
+dateTimeFromTs.getDayOfWeek() // wednesday
+
+let dateTimeFromComponents = LocalDateTime.of(2019, april, 29, 19, 49, 31)
+dateTimeFromComponents.getYear()      // 2019
+dateTimeFromComponents.getMonth()     // april
+dateTimeFromComponents.getDate()      // 29
+dateTimeFromComponents.getHour()      // 19
+dateTimeFromComponents.getMinute()    // 49
+dateTimeFromComponents.getSecond()    // 31
+dateTimeFromComponents.getDayOfWeek() // monday
+```
 
 ### Duration
 A `Duration` will represent the difference between two dates or times. It will defined as follows:
 
 ```cadence
 pub struct Duration {
-    let timestamp_delta : Fix64  // Can be negative.
+    let microseconds: UInt64
+    let seconds: UInt64
+    let days: Int64
 }
 ```
+
+The three internal fields will be stored in the normalized form with the following restrictions:
+1. `0 <= microseconds < 10^6`
+2. `0 <= seconds < 3600*24`
+3. `-999999999 <= days <= 999999999`
+
+This model is taken from the time-tested Python [datetime module](https://docs.python.org/3/library/datetime.html#timedelta-objects).
 
 #### Constructor Functions
 Constructor functions will be defined to instantiate variables of type `Duration`. They are defined below.
 
 - `Duration.betweenLocalDateTime(t1 : LocalDateTime, t2 : LocalDateTime)`: Creates a `Duration` which represents the time duration between arguments `t1` and `t2`.
 
-- `Duration.of(year: UInt64, month: UInt64, day: UInt64, hour: UInt64, minute: UInt64, second: UInt64)`: Creates a `Duration` with value based on the passed arguments assuming that there are 3600*24 seconds in every day.
+- `Duration.of(years: Int64, days: Int64, hours: Int64, minutes: Int64, seconds: Int64, miliseconds: Int64, microseconds: Int64)`: Creates a `Duration` with value based on the passed arguments assuming that there are 3600*24 seconds in every day.
+
+During the normalization:
+1. 1 year is converted to 365 days
+2. 1 hour is converted to 3600 seconds
+3. 1 minute is converted to 60 seconds
+4. 1 milisecond is converted to 1000 microseconds
 
 #### Public Members
 The `Duration` will provide the following public members:
 
-- `getYear(): UInt32`: Get the year of the `Duration`.
-- `getMonth(): Month`: Get the month of the `Duration`.
-- `getDays(): UInt32`: Get the days of the `Duration`.
-- `getHour(): UInt32`: Get the hour of the `Duration`.
-- `getMinute(): UInt32`: Get the minute of the `Duration`.
-- `getSecond(): UInt32`: Get the second of the `Duration`.
+- `getDays(): Int32`: Get the days of the `Duration`.
+- `getSeconds(): UInt32`: Get the second of the `Duration`.
+- `getMicroseconds(): UInt32`: Get the microseconds of the `Duration`.
 - `addYears(years : UInt32): Duration`: Return a new `Duration` after adding the provided number of years to it.
-- `addMonths(months : UInt32): Duration`: Return a new `Duration` after adding the provided number of months to it.
 - `addDays(days : UInt32): Duration`: Return a new `Duration` after adding the provided number of days to it.
 - `addHours(hours : UInt32): Duration`: Return a new `Duration` after adding the provided number of hours to it.
 - `addMinutes(minutes : UInt32): Duration`: Return a new `Duration` after adding the provided number of minutes to it.
 - `addSeconds(seconds : UInt32): Duration`: Return a new `Duration` after adding the provided number of seconds to it.
+- `addMiliseconds(ms : UInt32): Duration`: Return a new `Duration` after adding the provided number of miliseconds to it.
+- `addMicroseconds(microsecs : UInt32): Duration`: Return a new `Duration` after adding the provided number of microseconds to it.
 - `subtractYears(years : UInt32): Duration`: Return a new `Duration` after subtracting the provided number of years from it.
-- `subtractMonths(months : UInt32): Duration`: Return a new `Duration` after subtracting the provided number of months from it.
 - `subtractDays(days : UInt32): Duration`: Return a new `Duration` after subtracting the provided number of days from it.
 - `subtractHours(hours : UInt32): Duration`: Return a new `Duration` after subtracting the provided number of hours from it.
 - `subtractMinutes(minutes : UInt32): Duration`: Return a new `Duration` after subtracting the provided number of minutes from it.
 - `subtractSeconds(seconds : UInt32): Duration`: Return a new `Duration` after subtracting the provided number of seconds from it.
+- `subtractMiliseconds(ms : UInt32): Duration`: Return a new `Duration` after subtracing the provided number of miliseconds from it.
+- `subtractMicroseconds(microsecs : UInt32): Duration`: Return a new `Duration` after subtracing the provided number of microseconds from it.
 
 #### Examples
 
-// TODO
+Example usage of `Duration` are
+
+```cadence
+let t1 = LocalDateTime.fromTimestamp(1415829132)
+/// Assume that the current block timestamp is 1707045210
+let t2 = LocalDateTime.now()
+let d = Duration.betweenLocalDateTime(t1, t2)
+d.getDays()         // 3370
+d.getSeconds()      // 48078
+d.getMicroseconds() // 0
+
+let d2 = Duration.of(0, 365, 0, 0, 0, 0, 0) // 365 days
+let d3 = Duration.of(1, 0, 0, 0, 0, 0, 0)   // 1 year
+d2.getDays() // 365
+d3.getDays() // 365
+
+// Refer to the normalization rules. Only days can be negative.
+let normalizedDuration = Duration.of(0, 0, 0, 0, 0, 0, -1) // -1 microseconds
+normalizedDuration.getDays()         // -1
+normalizedDuration.getSeconds()      // 86399
+normalizedDuration.getMicroseconds() // 999999
+```
 
 ### Drawbacks
 
