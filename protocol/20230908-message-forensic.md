@@ -77,7 +77,7 @@ weighing its pros and cons against potential alternatives.
 In this proposal, we propose a mechanism to share the GossipSub authentication data with the Flow protocol. We call this mechanism
 GossipSub Message Forensic (GMF). 
 
-At the current state of the code, the networking layer receives the [raw GossipSub envelope]([https://github.com/onflow/flow-go/blob/master/network/p2p/p2pnet/internal/readSubscription.go#L48](https://github.com/onflow/flips/pull/195)) from its underlying pubsub router, 
+At the current state of the code, the networking layer receives the [raw GossipSub envelope](https://github.com/onflow/flow-go/blob/master/network/p2p/p2pnet/internal/readSubscription.go#L48) from its underlying pubsub router, 
 validates it, and passes the incorporated Flow message to for further decoding. The Flow message is then decoded to an `interface{}` type event,
 and is delivered to the Flow protocol engines. The idea is to pass along the GossipSub envelop to the Flow protocol engines together with their `interface{}` type event.
 In this way, the Flow protocol engines can have access to the GossipSub authentication data. The rough idea is depicted in the following figure. 
