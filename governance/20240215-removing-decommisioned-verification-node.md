@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: rejected
 flip: GOV-247
 authors: Vishal Changrani
 sponsors: Vishal Changrani
@@ -16,3 +16,5 @@ The customer needs to unstake the node but is unreachable as per Coinbase.
 The proposal is to remove the node from the approved list of node IDs via a transaction submitted by the service committee.
 This will remove the node from the network in the next epoch.
 
+
+This FLIP will not be implemented. See [comment](https://forum.flow.com/t/flip-gov-247-removing-the-decommissioned-verification-node/5663/3?u=vishal)
