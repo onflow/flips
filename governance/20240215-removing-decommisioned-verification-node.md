@@ -1,5 +1,5 @@
 ---
-status: rejected
+status: implemented
 flip: GOV-247
 authors: Vishal Changrani
 sponsors: Vishal Changrani
@@ -17,3 +17,6 @@ The proposal is to remove the node from the approved list of node IDs via a tran
 This will remove the node from the network in the next epoch.
 
 ### [Forum link](https://github.com/onflow/flips/issues/247)
+
+### Implemented
+https://www.flowdiver.io/tx/ec8742675590f0154c985c4a8df96dc552ae2e08d792a55525e8d0d96d752659
