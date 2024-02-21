@@ -1,5 +1,5 @@
 ---
-status: implemented
+status: Implemented
 flip: GOV-247
 authors: Vishal Changrani
 sponsors: Vishal Changrani
