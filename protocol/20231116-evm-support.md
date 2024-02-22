@@ -175,16 +175,44 @@ You can read more about this work in the [Flow EVM Gateway](https://github.com/o
 
 **Flow VM Bridge (Cadence <> Flow EVM)** 
 
-COAs provide out of the box $FLOW token bridging between environments. They are also powerful resources which integrate native cross-VM bridging capabilities through which applications can bridge arbitrary fungible and/or non-fungible tokens between Cadence and Flow EVM. Checkout the [Flow VM Bridge ](https://github.com/onflow/flips/pull/233) improvement proposal for more details. 
+COAs provide out of the box $FLOW token bridging between environments (see `deposit(from: @FlowToken.Vault)`). They are also powerful resources which integrate native cross-VM bridging capabilities through which applications can bridge arbitrary fungible and/or non-fungible tokens between Cadence and Flow EVM. Checkout the [Flow VM Bridge ](https://github.com/onflow/flips/pull/233) improvement proposal for more details.
+
+Note that transferring $FLOW from COAs to EOAs is not dependent on the VM bridge. This can be done in a similar manner to transfers in other EVM environments via a call without data transmitting value, as showcased below:
+
+```cadence
+/// Assuming the signer has a COA in storage & an EVM $FLOW balance to cover the amount specified...
+transaction(to: EVM.EVMAddress, amount: UFix64) {
+    prepare(signer: auth(BorrowValue) &Account) {
+        let coa = signer.storage.borrow<&EVM.CadenceOwnedAccount>(from: /storage/evm)!
+        coa.call(
+            to: to,
+            data: [],
+            gasLimit: gasLimit,
+            value: EVM.Balance().setFlow(flow: amount),
+        )
+    }
+}
+```
 
 
 ## Appendix B - “Flow EVM”’s smart contract (in Cadence)
 
 ```cadence
+import Crypto
 import "FlowToken"
 
 access(all)
 contract EVM {
+
+    // Entitlements enabling finer-graned access control on a CadenceOwnedAccount
+    access(all) entitlement Validate
+    access(all) entitlement Withdraw
+    access(all) entitlement Call
+    access(all) entitlement Deploy
+    access(all) entitlement Owner
+
+    access(all)
+    event CadenceOwnedAccountCreated(addressBytes: [UInt8; 20])
 
     /// EVMAddress is an EVM-compatible address
     access(all)
@@ -199,13 +227,13 @@ contract EVM {
             self.bytes = bytes
         }
 
-        /// Returns the balance of the address.
+        /// Balance of the address
         access(all)
-        fun balance(): Balance {
+        view fun balance(): Balance {
             let balance = InternalEVM.balance(
                 address: self.bytes
             )
-            return Balance(flow: balance)
+            return Balance(attoflow: balance)
         }
 
         /// Returns the code of the address
@@ -239,19 +267,40 @@ contract EVM {
     access(all)
     struct Balance {
 
-        /// The balance in FLOW
+        /// The balance in atto-FLOW
+        /// Atto-FLOW is the smallest denomination of FLOW (1e18 FLOW)
+        /// that is used to store account balances inside EVM
+        /// similar to the way WEI is used to store ETH divisible to 18 decimal places.
         access(all)
-        let flow: UFix64
+        var attoflow: UInt
 
-        /// Constructs a new balance, given the balance in FLOW
-        init(flow: UFix64) {
-            self.flow = flow
+        /// Constructs a new balance
+        access(all)
+        init(attoflow: UInt) {
+            self.attoflow = attoflow
         }
 
-        /// Returns the balance in terms of atto-FLOW.
-        /// Atto-FLOW is the smallest denomination of FLOW inside EVM.
+        /// Sets the balance by a UFix64 (8 decimal points), the format
+        /// that is used in Cadence to store FLOW tokens.
         access(all)
-        fun toAttoFlow(): Int
+        fun setFLOW(flow: UFix64){
+            self.attoflow = InternalEVM.castToAttoFLOW(balance: flow)
+        }
+
+        /// Casts the balance to a UFix64 (rounding down)
+        /// Warning! casting a balance to a UFix64 which supports a lower level of precision
+        /// (8 decimal points in compare to 18) might result in rounding down error.
+        /// Use the toAttoFlow function if you care need more accuracy.
+        access(all)
+        view fun inFLOW(): UFix64 {
+            return InternalEVM.castToFLOW(balance: self.attoflow)
+        }
+
+        /// Returns the balance in Atto-FLOW
+        access(all)
+        view fun inAttoFLOW(): UInt {
+            return self.attoflow
+        }
     }
 
     /// Runs an RLP-encoded EVM transaction, deducts the gas fees,
@@ -260,18 +309,23 @@ contract EVM {
     /// if the transaction execution fails,
     /// it reverts the outer Flow transaction.
     access(all)
-    fun run(tx: [UInt8], coinbase: EVMAddress) {
+    fun run(tx: [UInt8], coinbase: EVMAddress): Result {
         InternalEVM.run(tx: tx, coinbase: coinbase.bytes)
     }
 
-    /// TryRun tries to run an EVM transaction similar to the  
-    /// way run works, except if it fails it returns 
-    /// an error code. Note that some failures such as going
-    /// running out of computation still reverts outer transaction.  
-    /// if successful error code zero is returnd.
+    /// mustRun runs the transaction using EVM.run yet it
+    /// rollback if the tx execution status is unknown or invalid.
+    /// Note that this method does not rollback if transaction
+    /// is executed but an vm error is reported as the outcome
+    /// of the execution (status: failed).
     access(all)
-      fun tryRun(tx: [UInt8], coinbase: EVMAddress): UInt8{
-        InternalEVM.run(tx: tx, coinbase: coinbase.bytes)
+    fun mustRun(tx: [UInt8], coinbase: EVMAddress): Result {
+        let runResult = self.run(tx: tx, coinbase: coinbase)
+        assert(
+            runResult.status == Status.failed || runResult.status == Status.successful,
+            message: "tx is not valid for execution"
+        )
+        return runResult
     }
 
     /// EncodeABI abi encodes given values 
@@ -287,6 +341,38 @@ contract EVM {
         return InternalEVM.decodeABI(types: types, data: data)
     }
 
+    access(all)
+    fun encodeABIWithSignature(
+        _ signature: String,
+        _ values: [AnyStruct]
+    ): [UInt8] {
+        let methodID = HashAlgorithm.KECCAK_256.hash(
+            signature.utf8
+        ).slice(from: 0, upTo: 4)
+        let arguments = InternalEVM.encodeABI(values)
+
+        return methodID.concat(arguments)
+    }
+
+    access(all)
+    fun decodeABIWithSignature(
+        _ signature: String,
+        types: [Type],
+        data: [UInt8]
+    ): [AnyStruct] {
+        let methodID = HashAlgorithm.KECCAK_256.hash(
+            signature.utf8
+        ).slice(from: 0, upTo: 4)
+
+        for byte in methodID {
+            if byte != data.removeFirst() {
+                panic("signature mismatch")
+            }
+        }
+
+        return InternalEVM.decodeABI(types: types, data: data)
+    }
+
     /// Creates a new Cadence Owned Account (COA)
     access(all)
     fun createCadenceOwnedAccount(): @CadenceOwnedAccount {
@@ -295,26 +381,118 @@ contract EVM {
         )
     }
 
+    /// reports the status of evm execution.
+    access(all) enum Status: UInt8 {
+        /// is (rarely) returned when status is unknown
+        /// and something has gone very wrong.
+        access(all) case unknown
+
+        /// is returned when execution of an evm transaction/call
+        /// has failed at the validation step (e.g. nonce mismatch).
+        /// An invalid transaction/call is rejected to be executed
+        /// or be included in a block.
+        access(all) case invalid
+
+        /// is returned when execution of an evm transaction/call
+        /// has been successful but the vm has reported an error as
+        /// the outcome of execution (e.g. running out of gas).
+        /// A failed tx/call is included in a block.
+        /// Note that resubmission of a failed transaction would
+        /// result in invalid status in the second attempt, given
+        /// the nonce would be come invalid.
+        access(all) case failed
+
+        /// is returned when execution of an evm transaction/call
+        /// has been successful and no error is reported by the vm.
+        access(all) case successful
+    }
+
+    /// reports the outcome of evm transaction/call execution attempt
+    access(all) struct Result {
+        /// status of the execution
+        access(all)
+        let status: Status
+
+        /// error code (error code zero means no error)
+        access(all)
+        let errorCode: UInt64
+
+        /// returns the amount of gas metered during
+        /// evm execution
+        access(all)
+        let gasUsed: UInt64
+
+        /// returns the data that is returned from
+        /// the evm for the call. For coa.deploy
+        /// calls it returns the address bytes of the
+        /// newly deployed contract.
+        access(all)
+        let data: [UInt8]
+
+        init(
+            status: Status,
+            errorCode: UInt64,
+            gasUsed: UInt64,
+            data: [UInt8]
+        ) {
+            self.status = status
+            self.errorCode = errorCode
+            self.gasUsed = gasUsed
+            self.data = data
+        }
+    }
+
     access(all)
-    resource CadenceOwnedAccount {
+    resource interface Addressable {
+        /// The EVM address
+        access(all)
+        view fun address(): EVMAddress
+    }
+
+    access(all)
+    resource CadenceOwnedAccount: Addressable {
 
         access(self)
         let addressBytes: [UInt8; 20]
 
-        init(addressBytes: [UInt8; 20]) {
+        init() {
+            // address is initially set to zero
+            // but updated through initAddress later
+            // we have to do this since we need resource id (uuid)
+            // to calculate the EVM address for this cadence owned account
+            self.addressBytes = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        }
+
+        access(contract)
+        fun initAddress(addressBytes: [UInt8; 20]) {
+           // only allow set address for the first time
+           // check address is empty
+            for item in self.addressBytes {
+                assert(item == 0, message: "address byte is not empty")
+            }
            self.addressBytes = addressBytes
         }
 
-        /// The EVM address of the account
+        /// The EVM address of the cadence owned account
         access(all)
-        fun address(): EVMAddress {
+        view fun address(): EVMAddress {
             // Always create a new EVMAddress instance
             return EVMAddress(bytes: self.addressBytes)
         }
 
+        /// The EVM address of the cadence owned account behind an entitlement, acting as proof of access.
+        /// This is helpful for cases where a caller needs to prove they own a COA, but does not want to expose
+        /// other privileged methods, such as .call
+        /// e.g. - access(all) fun claimAirdrop(coa: auth(EVM.Validate) &EVM.CadenceOwnedAccount): @{FungibleToken.Vault}?
+        ///
+        access(Validate)
+        view protectedAddress(): EVMAddress {
+            return self.address()
+        }
+
         /// Get the balance of the account
         access(all)
-        fun balance(): Balance {
+        view fun balance(): Balance {
             return self.address().balance()
         }
 
@@ -328,7 +506,7 @@ contract EVM {
         }
 
         /// Withdraws the balance from the account's balance
-        access(all)
+        access(Owner | Withdraw)
         fun withdraw(balance: Balance): @FlowToken.Vault {
             let vault <- InternalEVM.withdraw(
                 from: self.addressBytes,
@@ -339,7 +517,7 @@ contract EVM {
 
         /// Deploys a contract to the EVM environment.
         /// Returns the address of the newly deployed contract.
-        access(all)
+        access(Owner | Deploy)
         fun deploy(
             code: [UInt8],
             gasLimit: UInt64,
@@ -356,7 +534,7 @@ contract EVM {
 
         /// Calls a function with the given data.
         /// The execution is limited by the given amount of gas.
-        access(all)
+        access(Owner | Call)
         fun call(
             to: EVMAddress,
             data: [UInt8],
