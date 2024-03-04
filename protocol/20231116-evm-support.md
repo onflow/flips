@@ -70,7 +70,7 @@ fun main(bytes: [UInt8; 20]) {
 }
 ```
 
-`run` is the next crucial function in this contract which runs RLP-encoded EVM transactions. If the interaction with “Flow EVM” is successful and it changes the state, a new Flow-EVM block is formed and its data is emitted as a Cadence event. An interaction for the first release is considered a single function call but in the future updates we could batch functions and let a single Flow transaction do multiple interactions during a single Flow-EVM block. 
+`run` is the next crucial function in this contract which runs RLP-encoded EVM transactions. If the interaction with “Flow EVM” is successful and it changes the state, a new Flow-EVM block is formed and its data is emitted as a Cadence event.  Using `run` limits EVM block to a single EVM transaction, a future `batchRun` provides option for batching EVM transaction execution.
 
 ```cadence
 // Example of tx wrapping
@@ -80,14 +80,23 @@ transaction(rlpEncodedTransaction: [UInt8], coinbaseBytes: [UInt8; 20]) {
 
     prepare(signer: AuthAccount) {
         let coinbase = EVM.EVMAddress(bytes: coinbaseBytes)
-        EVM.run(tx: rlpEncodedTransaction, coinbase: coinbase)
+        let result = EVM.run(tx: rlpEncodedTransaction, coinbase: coinbase)
+        assert(
+            runResult.status == Status.successful,
+            message: "tx was not executed successfully."
+        )
     }
 }
 ```
 
-However, if an interaction fails, the behavior differs for two categories of functions. The default behavior for regular functions is that if the function fails for any reason, it reverts the entire Flow transaction or script. This ensures atomic operations across two environments. For example, if an `EVM.run` fails during a Flow transaction, the entire transaction is reverted.
+Note that calling EVM.run doesn't revert the outter flow transaction and it requires the developer to take proper action based on the result.Status. Execution of a rlp encoded transaction result in one of these cases: 
+- `Status.invalid`: The execution of an evm transaction/call has failed at the validation step (e.g. nonce mismatch). An invalid transaction/call is rejected to be executed or be included in a block (no state change).
+- `Status.failed`: The execution of an evm transaction/call has been successful but the vm has reported an error as the outcome of execution (e.g. running out of gas). A failed tx/call is included in a block.
+Note that resubmission of a failed transaction would result in invalid status in the second attempt, given the nonce would be come invalid.
 
-If the developer requires more control, an alternative version of most functions is provided with the same name but prefixed with `try`. Calling these methods **does not** revert the outer Flow transaction. Instead, it returns an error code (0 is reserved for no error) and allows the code to control the flow. One example of this is batching and executing multiple EVM transactions within a single Flow transaction.
+- `Status.successful`: The execution of an evm transaction/call has been successful and no error is reported by the vm.
+
+One might decide to use `mustRun` variation for reverting the tx in case of validation failure. 
 
 The gas used during the method calls is aggregated, adjusted and added to the total computation fees of the Flow transaction and paid by the payer. The adjustment is done by multiplying the gas usage by a multiplier set by the network and adjustable by the service account.  
 
