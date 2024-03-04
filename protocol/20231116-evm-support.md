@@ -765,3 +765,45 @@ contract COA is ERC1155TokenReceiver, ERC777TokensRecipient, ERC721TokenReceiver
 ```
 
 
+## Appendix D - Status error codes
+
+
+| Error code | Category | Description |
+|------------|----------|-------------|
+| 0          | -           | no error    |
+| 100        | validation | Generic validation error that is returned for cases that don't have an specific code. |
+| 101        | validation | Invalid balance is provided (e.g. negative value). |
+| 102        | validation | Insufficient computation is left in the flow transaction. |
+| 103        | validation | An unauthroized method has been call. |
+| 104        | validation | Withdraw balance is prone to rounding error. |
+| 201        | validation | The nonce of the transaction is lower than the expected. |
+| 202        | validation | The nonce of the transaction is higher than the expected. |
+| 203        | validation | The transaction's sender account has reached to the maximum nonce. |
+| 204        | validation | Not enough gas is available on the block to include this transaction. |
+| 205        | validation | The transaction sender doesn't have enough funds for transfer(topmost call only). |
+| 206        | validation | The contract creation transaction provides the init code bigger than init code size limit. |
+| 207        | validation | The total cost of executing a transaction is higher than the balance of the user's account. |
+| 208        | validation | An overflow is detected when calculating the gas usage. |
+| 209        | validation | The transaction is specified to use less gas than required to start the invocation. |
+| 210        | validation | The transaction is not supported in the current network configuration. |
+| 211        | validation | The tip was set to higher than the total fee cap. |
+| 212        | validation | An extremely big numbers is set for the tip field. |
+| 213        | validation | An extremely big numbers is set for the fee cap field. |
+| 214        | validation | The transaction fee cap is less than the base fee of the block. |
+| 215        | validation | The sender of a transaction is a contract. |
+| 216        | validation | The transaction fee cap is less than the blob gas fee of the block. |
+| 301        | execution | "execution ran out of gas" is returned by the VM. |
+| 302        | execution | "contract creation code storage out of gas" is returned by the VM. |
+| 303        | execution | "max call depth exceeded" is returned by the VM. |
+| 304        | execution | "insufficient balance for transfer" is returned by the VM.  |
+| 305        | execution | "contract address collision" is returned by the VM. |
+| 306        | execution | "execution reverted" is returned by the VM. |
+| 307        | execution | "max initcode size exceeded" is returned by the VM. |
+| 308        | execution | "max code size exceeded" is returned by the VM. |
+| 309        | execution | "invalid jump destination" is returned by the VM. |
+| 310        | execution | "write protection" is returned by the VM. |
+| 311        | execution | "return data out of bounds" is returned by the VM. |
+| 312        | execution | "gas uint64 overflow" is returned by the VM |
+| 313        | execution | "invalid code: must not begin with 0xef" is returned by the VM. |
+| 314        | execution | "nonce uint64 overflow" is returned by the VM. |
+| 400        | execution  | Generic execution error returned for cases that don't have an specific code |
