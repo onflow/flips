@@ -222,8 +222,8 @@ contract EVM {
         access(all)
         let bytes: [UInt8; 20]
 
-        /// Constructs a new EVM address from the given byte representation.
-        init(bytes: [UInt8; 20]) {
+        /// Constructs a new EVM address from the given byte representation
+        view init(bytes: [UInt8; 20]) {
             self.bytes = bytes
         }
 
@@ -236,31 +236,28 @@ contract EVM {
             return Balance(attoflow: balance)
         }
 
-        /// Returns the code of the address
-        access(all)
-        fun code(): [UInt8] {
-            let code = InternalEVM.code(
-                address: self.bytes
-            )
-            return code
-        }
-
-        /// Returns the codeHash of the address
-        access(all)
-        fun codeHash(): [UInt8] {
-            let codeHash = InternalEVM.codeHash(
-                address: self.bytes
-            )
-            return codeHash
-        }
-
-        /// Returns the nonce of the address
+        /// Nonce of the address
         access(all)
         fun nonce(): UInt64 {
-            let nonce = InternalEVM.nonce(
+            return InternalEVM.nonce(
                 address: self.bytes
             )
-            return nonce
+        }
+
+        /// Code of the address
+        access(all)
+        fun code(): [UInt8] {
+            return InternalEVM.code(
+                address: self.bytes
+            )
+        }
+
+        /// CodeHash of the address
+        access(all)
+        fun codeHash(): [UInt8] {
+            return InternalEVM.codeHash(
+                address: self.bytes
+            )
         }
     }
 
@@ -276,7 +273,7 @@ contract EVM {
 
         /// Constructs a new balance
         access(all)
-        init(attoflow: UInt) {
+        view init(attoflow: UInt) {
             self.attoflow = attoflow
         }
 
@@ -301,84 +298,6 @@ contract EVM {
         view fun inAttoFLOW(): UInt {
             return self.attoflow
         }
-    }
-
-    /// Runs an RLP-encoded EVM transaction, deducts the gas fees,
-    /// and deposits the gas fees into the provided coinbase address.
-    ///
-    /// if the transaction execution fails,
-    /// it reverts the outer Flow transaction.
-    access(all)
-    fun run(tx: [UInt8], coinbase: EVMAddress): Result {
-        InternalEVM.run(tx: tx, coinbase: coinbase.bytes)
-    }
-
-    /// mustRun runs the transaction using EVM.run yet it
-    /// rollback if the tx execution status is unknown or invalid.
-    /// Note that this method does not rollback if transaction
-    /// is executed but an vm error is reported as the outcome
-    /// of the execution (status: failed).
-    access(all)
-    fun mustRun(tx: [UInt8], coinbase: EVMAddress): Result {
-        let runResult = self.run(tx: tx, coinbase: coinbase)
-        assert(
-            runResult.status == Status.failed || runResult.status == Status.successful,
-            message: "tx is not valid for execution"
-        )
-        return runResult
-    }
-
-    /// EncodeABI abi encodes given values 
-    access(all)
-    fun encodeABI(_ values: [AnyStruct]): [UInt8] {
-        return InternalEVM.encodeABI(values)
-    }
-
-    /// DecodeABI decodes an ABI encoded data based on 
-    /// the given Cadence types 
-    access(all)
-    fun decodeABI(types: [Type], data: [UInt8]): [AnyStruct] {
-        return InternalEVM.decodeABI(types: types, data: data)
-    }
-
-    access(all)
-    fun encodeABIWithSignature(
-        _ signature: String,
-        _ values: [AnyStruct]
-    ): [UInt8] {
-        let methodID = HashAlgorithm.KECCAK_256.hash(
-            signature.utf8
-        ).slice(from: 0, upTo: 4)
-        let arguments = InternalEVM.encodeABI(values)
-
-        return methodID.concat(arguments)
-    }
-
-    access(all)
-    fun decodeABIWithSignature(
-        _ signature: String,
-        types: [Type],
-        data: [UInt8]
-    ): [AnyStruct] {
-        let methodID = HashAlgorithm.KECCAK_256.hash(
-            signature.utf8
-        ).slice(from: 0, upTo: 4)
-
-        for byte in methodID {
-            if byte != data.removeFirst() {
-                panic("signature mismatch")
-            }
-        }
-
-        return InternalEVM.decodeABI(types: types, data: data)
-    }
-
-    /// Creates a new Cadence Owned Account (COA)
-    access(all)
-    fun createCadenceOwnedAccount(): @CadenceOwnedAccount {
-        return <-create CadenceOwnedAccount(
-            addressBytes: InternalEVM.createCadenceOwnedAccount()
-        )
     }
 
     /// reports the status of evm execution.
@@ -453,7 +372,7 @@ contract EVM {
     resource CadenceOwnedAccount: Addressable {
 
         access(self)
-        let addressBytes: [UInt8; 20]
+        var addressBytes: [UInt8; 20]
 
         init() {
             // address is initially set to zero
@@ -480,23 +399,13 @@ contract EVM {
             return EVMAddress(bytes: self.addressBytes)
         }
 
-        /// The EVM address of the cadence owned account behind an entitlement, acting as proof of access.
-        /// This is helpful for cases where a caller needs to prove they own a COA, but does not want to expose
-        /// other privileged methods, such as .call
-        /// e.g. - access(all) fun claimAirdrop(coa: auth(EVM.Validate) &EVM.CadenceOwnedAccount): @{FungibleToken.Vault}?
-        ///
-        access(Validate)
-        view protectedAddress(): EVMAddress {
-            return self.address()
-        }
-
-        /// Get the balance of the account
+        /// Get balance of the cadence owned account
         access(all)
         view fun balance(): Balance {
             return self.address().balance()
         }
 
-        /// Deposits the given vault into the account's balance
+        /// Deposits the given vault into the cadence owned account's balance
         access(all)
         fun deposit(from: @FlowToken.Vault) {
             InternalEVM.deposit(
@@ -505,18 +414,28 @@ contract EVM {
             )
         }
 
-        /// Withdraws the balance from the account's balance
+        /// The EVM address of the cadence owned account behind an entitlement, acting as proof of access
+        access(Owner | Validate)
+        view fun protectedAddress(): EVMAddress {
+            return self.address()
+        }
+
+        /// Withdraws the balance from the cadence owned account's balance
+        /// Note that amounts smaller than 10nF (10e-8) can't be withdrawn
+        /// given that Flow Token Vaults use UFix64s to store balances.
+        /// If the given balance conversion to UFix64 results in
+        /// rounding error, this function would fail.
         access(Owner | Withdraw)
         fun withdraw(balance: Balance): @FlowToken.Vault {
             let vault <- InternalEVM.withdraw(
                 from: self.addressBytes,
-                amount: balance.flow
+                amount: balance.attoflow
             ) as! @FlowToken.Vault
             return <-vault
         }
 
         /// Deploys a contract to the EVM environment.
-        /// Returns the address of the newly deployed contract.
+        /// Returns the address of the newly deployed contract
         access(Owner | Deploy)
         fun deploy(
             code: [UInt8],
@@ -527,28 +446,202 @@ contract EVM {
                 from: self.addressBytes,
                 code: code,
                 gasLimit: gasLimit,
-                value: value.flow
+                value: value.attoflow
             )
             return EVMAddress(bytes: addressBytes)
         }
 
         /// Calls a function with the given data.
-        /// The execution is limited by the given amount of gas.
+        /// The execution is limited by the given amount of gas
         access(Owner | Call)
         fun call(
             to: EVMAddress,
             data: [UInt8],
             gasLimit: UInt64,
             value: Balance
-        ): [UInt8] {
-             return InternalEVM.call(
-                 from: self.addressBytes,
-                 to: to.bytes,
-                 data: data,
-                 gasLimit: gasLimit,
-                 value: value.flow
+        ): Result {
+            return InternalEVM.call(
+                from: self.addressBytes,
+                to: to.bytes,
+                data: data,
+                gasLimit: gasLimit,
+                value: value.attoflow
+            ) as! Result
+        }
+    }
+
+    /// Creates a new cadence owned account
+    access(all)
+    fun createCadenceOwnedAccount(): @CadenceOwnedAccount {
+        let acc <-create CadenceOwnedAccount()
+        let addr = InternalEVM.createCadenceOwnedAccount(uuid: acc.uuid)
+        acc.initAddress(addressBytes: addr)
+        emit CadenceOwnedAccountCreated(addressBytes: addr)
+        return <-acc
+    }
+
+    /// Runs an a RLP-encoded EVM transaction, deducts the gas fees,
+    /// and deposits the gas fees into the provided coinbase address.
+    access(all)
+    fun run(tx: [UInt8], coinbase: EVMAddress): Result {
+        return InternalEVM.run(
+                tx: tx,
+                coinbase: coinbase.bytes
+        ) as! Result
+    }
+
+    /// mustRun runs the transaction using EVM.run yet it
+    /// rollback if the tx execution status is unknown or invalid.
+    /// Note that this method does not rollback if transaction
+    /// is executed but an vm error is reported as the outcome
+    /// of the execution (status: failed).
+    access(all)
+    fun mustRun(tx: [UInt8], coinbase: EVMAddress): Result {
+        let runResult = self.run(tx: tx, coinbase: coinbase)
+        assert(
+            runResult.status == Status.failed || runResult.status == Status.successful,
+            message: "tx is not valid for execution"
+        )
+        return runResult
+    }
+
+    access(all)
+    fun encodeABI(_ values: [AnyStruct]): [UInt8] {
+        return InternalEVM.encodeABI(values)
+    }
+
+    access(all)
+    fun decodeABI(types: [Type], data: [UInt8]): [AnyStruct] {
+        return InternalEVM.decodeABI(types: types, data: data)
+    }
+
+    access(all)
+    fun encodeABIWithSignature(
+        _ signature: String,
+        _ values: [AnyStruct]
+    ): [UInt8] {
+        let methodID = HashAlgorithm.KECCAK_256.hash(
+            signature.utf8
+        ).slice(from: 0, upTo: 4)
+        let arguments = InternalEVM.encodeABI(values)
+
+        return methodID.concat(arguments)
+    }
+
+    access(all)
+    fun decodeABIWithSignature(
+        _ signature: String,
+        types: [Type],
+        data: [UInt8]
+    ): [AnyStruct] {
+        let methodID = HashAlgorithm.KECCAK_256.hash(
+            signature.utf8
+        ).slice(from: 0, upTo: 4)
+
+        for byte in methodID {
+            if byte != data.removeFirst() {
+                panic("signature mismatch")
+            }
+        }
+
+        return InternalEVM.decodeABI(types: types, data: data)
+    }
+
+    /// ValidationResult returns the result of COA ownership proof validation
+    access(all)
+    struct ValidationResult {
+        access(all)
+        let isValid: Bool
+
+        access(all)
+        let problem: String?
+
+        init(isValid: Bool, problem: String?) {
+            self.isValid = isValid
+            self.problem = problem
+        }
+    }
+
+    /// validateCOAOwnershipProof validates a COA ownership proof
+    access(all)
+    fun validateCOAOwnershipProof(
+        address: Address,
+        path: PublicPath,
+        signedData: [UInt8],
+        keyIndices: [UInt64],
+        signatures: [[UInt8]],
+        evmAddress: [UInt8; 20]
+    ): ValidationResult {
+
+        // make signature set first
+        // check number of signatures matches number of key indices
+        if keyIndices.length != signatures.length {
+            return ValidationResult(
+                isValid: false,
+                problem: "key indices size doesn't match the signatures"
             )
         }
+
+        var signatureSet: [Crypto.KeyListSignature] = []
+        for signatureIndex, signature in signatures{
+            signatureSet.append(Crypto.KeyListSignature(
+                keyIndex: Int(keyIndices[signatureIndex]),
+                signature: signature
+            ))
+        }
+
+        // fetch account
+        let acc = getAccount(address)
+
+        // constructing key list
+        let keyList = Crypto.KeyList()
+        for signature in signatureSet {
+            let key = acc.keys.get(keyIndex: signature.keyIndex)!
+            assert(!key.isRevoked, message: "revoked key is used")
+            keyList.add(
+              key.publicKey,
+              hashAlgorithm: key.hashAlgorithm,
+              weight: key.weight,
+           )
+        }
+
+        let isValid = keyList.verify(
+            signatureSet: signatureSet,
+            signedData: signedData,
+            domainSeparationTag: "FLOW-V0.0-user"
+        )
+
+        if !isValid{
+            return ValidationResult(
+                isValid: false,
+                problem: "the given signatures are not valid or provide enough weight"
+            )
+        }
+
+        let coaRef = acc.capabilities.borrow<&EVM.CadenceOwnedAccount>(path)
+
+        if coaRef == nil {
+             return ValidationResult(
+                 isValid: false,
+                 problem: "could not borrow bridge account's resource"
+             )
+        }
+
+        // verify evm address matching
+        var addr = coaRef!.address()
+        for index, item in coaRef!.address().bytes {
+            if item != evmAddress[index] {
+                return ValidationResult(
+                    isValid: false,
+                    problem: "evm address mismatch"
+                )
+            }
+        }
+
+        return ValidationResult(
+        	isValid: true,
+        	problem: nil
+        )
     }
 }
 ```
