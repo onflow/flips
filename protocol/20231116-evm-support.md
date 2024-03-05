@@ -268,6 +268,15 @@ contract EVM {
                 address: self.bytes
             )
         }
+
+        /// Deposits the given vault into the EVM address
+        access(all)
+        fun deposit(from: @FlowToken.Vault) {
+            InternalEVM.deposit(
+                from: <-from,
+                to: self.bytes
+            )
+        }
     }
 
     access(all)
