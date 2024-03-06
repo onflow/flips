@@ -8,6 +8,8 @@ The challenge here is that it is not possible to determine what entitlements the
 
 ## Proposed Solution
 
+NB: this solution has since been updated and iterated upon slightly to address issues that came up during its implementation. See https://cadence-lang.org/docs/cadence_migration_guide/type-annotations-guide for more details. 
+
 ### `Entitlements(T)`
 
 The first part of this solution involves the definition of an informal “function” on types, called `Entitlements`. For some type `T` that exists in pre-Stable Cadence, `Entitlements(T)` expresses the set of entitlements necessary post-Stable Cadence contract update that are necessary to call the same set of members that were previously accessible to a reference typed `&{T}`.
