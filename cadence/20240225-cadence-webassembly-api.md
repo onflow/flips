@@ -77,13 +77,6 @@ Example usage of the WASM API to load a simple `add(i32, i32) -> i32` function, 
 ```cadence
 
 access(all)
-fun wasmTest(program: [UInt8], a: Int32, b: Int32): Int32 {
-    let instance = WebAssembly.compileAndInstantiate(bytes: program).instance
-    let add = instance.getExport<fun(Int32, Int32): Int32>(name: "add")
-    return add(a, b) + add(a, b)
-}
-
-access(all)
 func main() {
     // A simple program which exports a function `add` with type `(i32, i32) -> i32`,
     // which sums the arguments and returns the result:
