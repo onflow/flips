@@ -106,7 +106,24 @@ func main() {
 
 #### Metering
 
-TODO
+Like regular Cadence programs, code executed within the WASM engine will be metered and the memory consumption will be limited.
+
+##### Computation
+
+Popular WASM engines support some form of limits on the execution of the code. They will be utilized to implement the metering.
+
+While the specifics are dependant on the exact engine used, the high level idea is the following:
+1. FVM should provide a way to remaining computation units: A new function `RemainingComputation(kind)` will be added in FVM.
+2. Computation units should be converted to its WASM engine equivalent. For example, in wasmtime, it is called `Fuel`.
+3. The user code must be executed with the computed amount of wasm engine computation units.
+
+##### Memory
+To limit the memory being consumed, some constraints will be defined on the various ways that memory is used in the wasm-engine.
+
+While the specifics are dependant on the exact engine used, the following memory usage areas can usually be limited by all popular engines:
+1. Stack size
+2. Linear memory
+3. Tables
 
 ### Drawbacks
 
@@ -129,7 +146,7 @@ None
 
 ### Engineering Impact
 
-It would require 2-3 weeks of engineering effort to implement, review & test the feature.
+It would require 3-4 weeks of engineering effort to implement, review & test the feature.
 
 ### Compatibility
 
