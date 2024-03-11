@@ -1,5 +1,5 @@
 ---
-status: draft 
+status: Implemented 
 flip: GOV-253
 authors: Coinbase Cloud (Shreif Abdallah)
 sponsors: Vishal Changrani
@@ -17,3 +17,4 @@ This will remove the node from the network in the next epoch.
 
 ### [Forum link](https://github.com/onflow/flips/issues/253)
 
+Service account transaction implementing this FLIP: https://www.flowdiver.io/tx/c247f44863c93f1b84988c79c6324191f82164133f5c1fe366e2a8214db9629c
