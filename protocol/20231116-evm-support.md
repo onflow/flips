@@ -140,9 +140,9 @@ As mentioned earlier COAs expose two interfaces for interaction, one on the Flow
 
 - `address(): EVMAddress` returns the address of the smart contract, and the EVM address that is returned could be used to query balance, code, nonce, etc.
 
-- `deposit(from: @FlowToken.Vault)` allows depositing FLOW tokens into the smart contract (Cadence to Flow EVM). 
+- `deposit(from: @FlowToken.Vault)` allows depositing FLOW tokens into the smart contract (Cadence to Flow EVM). On the EVM side, the money for the deposits are always transfering from `0x0000000000000000000000010000000000000000` (native token bridge address). The balance of that address is adjusted before transfer.  
 
-- `withdraw(balance: Balance): @FlowToken.Vault` allows withdrawing balance from the Flow EVM address and bridges it back as a FlowToken Vault to be handled on the Cadence side. 
+- `withdraw(balance: Balance): @FlowToken.Vault` allows withdrawing balance from the Flow EVM address and bridges it back as a FlowToken Vault to be handled on the Cadence side. On the EVM side, the money for the withdraw are always transfered to `0x0000000000000000000000010000000000000000` (native token bridge address) and then the balance of that address is adjusted.  
 
 - `deploy(code: [UInt8], gasLimit: UInt64, value: Balance): EVMAddress` lets the COA smart contract deploy smart contracts, and the returned address is the address of the new smart contract. The value (balance) is taken from the COA smart contract and moved to the new smart contract address (if they accept it). 
 
