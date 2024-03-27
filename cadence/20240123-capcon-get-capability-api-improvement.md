@@ -36,6 +36,14 @@ panic scenarios that are out of general-purpose platforms' control (like if an N
 Returning a capability in the `PublicAccount.capabilities.get(...)` path instead of an optional will alleviate these pain points. This capability need not correct itself if the path that was
 requested is later valid.
 
+This "invalid" capability should:
+
+1. Always return false when `check` is called
+2. Always return nil when `borrow` is called
+
+If `PublicAccount.capabilities.get(...)` is not going to return nil, its capability will need an `id` attached to it. Capability Controller IDs are stated to be a *non-zero* which 
+means the value of zero can be used to mark capabilities which will exhibit this behavior
+
 ## Alternatives Considered
 
 It was suggested that anything which is expecting a non-nil Capability could instead request their own struct which would be carried along with the Capability itself
