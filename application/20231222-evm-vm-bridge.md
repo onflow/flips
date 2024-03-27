@@ -970,9 +970,9 @@ contract FlowBridgedERC721 is ERC721URIStorage, ERC721Burnable, Ownable, IFlowBr
 
 Platform expectations between EVM & Flow NFT metadata storage differ. Whereas Flow projects generally prioritize onchain
 metadata (with the exception of image data), EVM projects typically store NFT metadata in offchain systems - typically
-in json blobs found in IPFS.
+in json blobs found in IPFS, though other patterns are also commonly used.
 
-As the bridge is public infrastructure, there is a need to generalize the breadth of migrated metadata. Minimizing
+Since the bridge is public infrastructure, there is a need to generalize the breadth of migrated metadata. Minimizing
 metadata would mean:
 
 - Looking solely at the Solidity contract, bridged Flow-native NFTs would have very little identifying information per
@@ -981,7 +981,7 @@ metadata would mean:
   & perhaps an IPFS URI.
 
 For typical bridge infrastructure connecting separate zones of sovereignty, metadata migration could be handled by their
-offchain system components. However, the requirement to atomically move assets between VMs prevents the inclusion of
+offchain system components. However, the requirement for atomic asset migration between VMs prevents the inclusion of
 such offchain systems as they would break atomicity and introduce the need for undesirable trust assumptions. For
 example, upon bridging an NFT from Flow to EVM, an offchain listener would need to recognize a request to post metadata
 to IPFS, post the metadata, and commit that URI to the defining EVM contract for the relevant NFT. We must trust that a/
@@ -989,6 +989,25 @@ the request is served, b/ metadata committed to IPFS, c/ commitment to the EVM c
 correct and contains correct metadata. Then there is the issue of IPFS storage funding.
 
 ##### Potential Solutions
+___
+ℹ️ **Update:** Since the original writing of this FLIP, another solution was proposed and implemented (currently in review
+[here](https://github.com/onflow/flow-evm-bridge/pull/20)). While ideating in conversation with
+[@austinkline](https://github.com/austinkline), he pointed out that data URLs are a common method for formatting and
+inscribing ERC721 token URIs and mentioned he had an initial implementation of serialization in Cadence. This format
+opened the door for on-the-fly serialization during the bridging flow, enabling the bridge to take a given NFT and
+serialize it according to JSON schemas most commonly recognized in EVM and commit the serialized value as a data URL for
+the token's URI.
+
+Since serialization and URI data is all onchain, this URI can be updated as the Cadence NFT's metadata
+changes as is the case for NFTs with sub-NFTs for instance. The format targeted for this initial implementation happens
+to be OpenSea's metadata standards ([reference docs](https://docs.opensea.io/docs/metadata-standards)). A Mainnet
+compatible script can be run here against any account and NFT for easy use and feedback.
+
+Also note that a metadata view serving URI values is leveraged and defaulted to in the event projects wish to define
+their bridged asset's metadata themselves. This view is currently defined as `CrossVMNFT.EVMBridgedMetadata`, but is
+also presented for considered inclusion as a standard view in `MetadataViews` in [this
+PR](https://github.com/onflow/flow-nft/pull/203)
+___
 
 Alternatively, if Flow projects want their metadata to be served well across VMs, they may take it on themselves to add
 offchain IPFS metadata. This would allow the ecosystem to both maintain onchain metadata advantages as well as reach
@@ -1020,6 +1039,12 @@ from locked NFTs using information solely available on ERC721 contracts defining
 [@onflow/flow-evm-bridge#7](https://github.com/onflow/flow-evm-bridge/issues/7)).
 
 #### NFT IDs
+___
+ℹ️ **Update:** While the id values on Cadence NFTs remains, the path forward on this problem was to introduce a simple
+NFT interface (`CrossVMNFT.EVMNFT`) containing all ERC721 relevant values including name, symbol, EVM ID, token URI and
+defining EVM contract address. Thanks again to [@austinkline](https://github.com/austinkline) for raising this idea in a
+[GitHub comment](https://github.com/onflow/flow-nft/pull/126/files#r1463811764).
+___
 
 NFT ID values are some of the most critical token metadata, identifying each token as unique. While Flow NFTs define
 IDs as `UInt64`, ERC721 IDs are `uint256`. It remains an open question as to how this reduction from `UInt256` to
