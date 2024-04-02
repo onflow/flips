@@ -144,9 +144,9 @@ As mentioned earlier COAs expose two interfaces for interaction, one on the Flow
 
 - `withdraw(balance: Balance): @FlowToken.Vault` allows withdrawing balance from the Flow EVM address and bridges it back as a FlowToken Vault to be handled on the Cadence side. On the EVM side, the money for the withdraw are always transfered to `0x0000000000000000000000010000000000000000` (native token bridge address) and then the balance of that address is adjusted.  
 
-- `deploy(code: [UInt8], gasLimit: UInt64, value: Balance): EVMAddress` lets the COA smart contract deploy smart contracts, and the returned address is the address of the new smart contract. The value (balance) is taken from the COA smart contract and moved to the new smart contract address (if they accept it). 
+- `deploy(code: [UInt8], gasLimit: UInt64, value: Balance): Result` lets the COA smart contract deploy smart contracts, and returns the result containing the newly deployed contract address as the result data. The value (balance) is taken from the COA smart contract and moved to the new smart contract address (if they accept it). 
 
-- `call(to: EVMAddress, data: [UInt8], gasLimit: UInt64, value: Balance): [UInt8]` makes a call on behalf of the COA smart contract and the result of the call (the returned value) could be processed by the cadence side. The value (balance) is taken from the COA smart contract. Calling this method emits direct call transaction events. 
+- `call(to: EVMAddress, data: [UInt8], gasLimit: UInt64, value: Balance): Result` makes a call on behalf of the COA smart contract and returns the result of the call which could be processed by the Cadence side. The value (balance) is taken from the COA smart contract. Calling this method emits direct call transaction events. 
 
 
 #### COA’s EVM smart contract interface
@@ -213,15 +213,20 @@ import "FlowToken"
 access(all)
 contract EVM {
 
-    // Entitlements enabling finer-graned access control on a CadenceOwnedAccount
-    access(all) entitlement Validate
-    access(all) entitlement Withdraw
-    access(all) entitlement Call
-    access(all) entitlement Deploy
-    access(all) entitlement Owner
-
     access(all)
     event CadenceOwnedAccountCreated(addressBytes: [UInt8; 20])
+
+    /// FLOWTokensDeposited is emitted when FLOW tokens is bridged
+    /// into the EVM environment. Note that this event is not emitted
+    /// for transfer of flow tokens between two EVM addresses.
+    access(all)
+    event FLOWTokensDeposited(addressBytes: [UInt8; 20], amount: UFix64)
+
+    /// FLOWTokensWithdrawn is emitted when FLOW tokens are bridged
+    /// out of the EVM environment. Note that this event is not emitted
+    /// for transfer of flow tokens between two EVM addresses.
+    access(all)
+    event FLOWTokensWithdrawn(addressBytes: [UInt8; 20], amount: UFix64)
 
     /// EVMAddress is an EVM-compatible address
     access(all)
@@ -232,13 +237,13 @@ contract EVM {
         let bytes: [UInt8; 20]
 
         /// Constructs a new EVM address from the given byte representation
-        view init(bytes: [UInt8; 20]) {
+        init(bytes: [UInt8; 20]) {
             self.bytes = bytes
         }
 
         /// Balance of the address
         access(all)
-        view fun balance(): Balance {
+        fun balance(): Balance {
             let balance = InternalEVM.balance(
                 address: self.bytes
             )
@@ -269,13 +274,18 @@ contract EVM {
             )
         }
 
-        /// Deposits the given vault into the EVM address
+        /// Deposits the given vault into the EVM account with the given address
         access(all)
         fun deposit(from: @FlowToken.Vault) {
+            let amount = from.balance
+            if amount == 0.0 {
+                panic("calling deposit function with an empty vault is not allowed")
+            }
             InternalEVM.deposit(
                 from: <-from,
                 to: self.bytes
             )
+            emit FLOWTokensDeposited(addressBytes: self.bytes, amount: amount)
         }
     }
 
@@ -291,7 +301,7 @@ contract EVM {
 
         /// Constructs a new balance
         access(all)
-        view init(attoflow: UInt) {
+        init(attoflow: UInt) {
             self.attoflow = attoflow
         }
 
@@ -307,14 +317,20 @@ contract EVM {
         /// (8 decimal points in compare to 18) might result in rounding down error.
         /// Use the toAttoFlow function if you care need more accuracy.
         access(all)
-        view fun inFLOW(): UFix64 {
+        fun inFLOW(): UFix64 {
             return InternalEVM.castToFLOW(balance: self.attoflow)
         }
 
         /// Returns the balance in Atto-FLOW
         access(all)
-        view fun inAttoFLOW(): UInt {
+        fun inAttoFLOW(): UInt {
             return self.attoflow
+        }
+
+        /// Returns true if the balance is zero
+        access(all)
+        fun isZero(): Bool {
+            return self.attoflow == 0
         }
     }
 
@@ -383,11 +399,11 @@ contract EVM {
     resource interface Addressable {
         /// The EVM address
         access(all)
-        view fun address(): EVMAddress
+        fun address(): EVMAddress
     }
 
     access(all)
-    resource CadenceOwnedAccount: Addressable {
+    resource CadenceOwnedAccount: Addressable  {
 
         access(self)
         var addressBytes: [UInt8; 20]
@@ -412,30 +428,21 @@ contract EVM {
 
         /// The EVM address of the cadence owned account
         access(all)
-        view fun address(): EVMAddress {
+        fun address(): EVMAddress {
             // Always create a new EVMAddress instance
             return EVMAddress(bytes: self.addressBytes)
         }
 
         /// Get balance of the cadence owned account
         access(all)
-        view fun balance(): Balance {
+        fun balance(): Balance {
             return self.address().balance()
         }
 
         /// Deposits the given vault into the cadence owned account's balance
         access(all)
         fun deposit(from: @FlowToken.Vault) {
-            InternalEVM.deposit(
-                from: <-from,
-                to: self.addressBytes
-            )
-        }
-
-        /// The EVM address of the cadence owned account behind an entitlement, acting as proof of access
-        access(Owner | Validate)
-        view fun protectedAddress(): EVMAddress {
-            return self.address()
+            self.address().deposit(from: <-from)
         }
 
         /// Withdraws the balance from the cadence owned account's balance
@@ -443,35 +450,39 @@ contract EVM {
         /// given that Flow Token Vaults use UFix64s to store balances.
         /// If the given balance conversion to UFix64 results in
         /// rounding error, this function would fail.
-        access(Owner | Withdraw)
+        access(all)
         fun withdraw(balance: Balance): @FlowToken.Vault {
+            if balance.isZero() {
+                panic("calling withdraw function with zero balance is not allowed")
+            }
             let vault <- InternalEVM.withdraw(
                 from: self.addressBytes,
                 amount: balance.attoflow
             ) as! @FlowToken.Vault
+            emit FLOWTokensWithdrawn(addressBytes: self.addressBytes, amount: balance.inFLOW())
             return <-vault
         }
 
         /// Deploys a contract to the EVM environment.
-        /// Returns the address of the newly deployed contract
-        access(Owner | Deploy)
+        /// Returns the result which contains address of
+        /// the newly deployed contract
+        access(all)
         fun deploy(
             code: [UInt8],
             gasLimit: UInt64,
             value: Balance
-        ): EVMAddress {
-            let addressBytes = InternalEVM.deploy(
+        ): Result {
+            return InternalEVM.deploy(
                 from: self.addressBytes,
                 code: code,
                 gasLimit: gasLimit,
                 value: value.attoflow
-            )
-            return EVMAddress(bytes: addressBytes)
+            ) as! Result
         }
 
         /// Calls a function with the given data.
         /// The execution is limited by the given amount of gas
-        access(Owner | Call)
+        access(all)
         fun call(
             to: EVMAddress,
             data: [UInt8],
@@ -625,8 +636,7 @@ contract EVM {
 
         let isValid = keyList.verify(
             signatureSet: signatureSet,
-            signedData: signedData,
-            domainSeparationTag: "FLOW-V0.0-user"
+            signedData: signedData
         )
 
         if !isValid{
@@ -636,7 +646,8 @@ contract EVM {
             )
         }
 
-        let coaRef = acc.capabilities.borrow<&EVM.CadenceOwnedAccount>(path)
+        let coaRef = acc.getCapability(path)
+            .borrow<&EVM.CadenceOwnedAccount{EVM.Addressable}>()
 
         if coaRef == nil {
              return ValidationResult(
@@ -657,9 +668,34 @@ contract EVM {
         }
 
         return ValidationResult(
-        	isValid: true,
-        	problem: nil
+            isValid: true,
+            problem: nil
         )
+    }
+
+    /// Block returns information about the latest executed block.
+    access(all)
+    struct EVMBlock {
+        access(all)
+        let height: UInt64
+
+        access(all)
+        let hash: String
+
+        access(all)
+        let totalSupply: Int
+
+        init(height: UInt64, hash: String, totalSupply: Int) {
+            self.height = height
+            self.hash = hash
+            self.totalSupply = totalSupply
+        }
+    }
+
+    /// Returns the latest executed block.
+    access(all)
+    fun getLatestBlock(): EVMBlock {
+        return InternalEVM.getLatestBlock() as! EVMBlock
     }
 }
 ```
