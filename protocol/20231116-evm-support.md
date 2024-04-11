@@ -383,8 +383,8 @@ contract EVM {
         let gasUsed: UInt64
 
         /// returns the data that is returned from
-        /// the evm for the call. For coa.deploy
-        /// calls it returns the address bytes of the
+        /// the evm for the call. For the coa.deploy
+        /// calls it returns the code of the
         /// newly deployed contract.
         access(all)
         let data: [UInt8]
