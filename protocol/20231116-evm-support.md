@@ -144,7 +144,7 @@ As mentioned earlier COAs expose two interfaces for interaction, one on the Flow
 
 - `withdraw(balance: Balance): @FlowToken.Vault` allows withdrawing balance from the Flow EVM address and bridges it back as a FlowToken Vault to be handled on the Cadence side. On the EVM side, the money for the withdraw are always transfered to `0x0000000000000000000000010000000000000000` (native token bridge address) and then the balance of that address is adjusted.  
 
-- `deploy(code: [UInt8], gasLimit: UInt64, value: Balance): Result` lets the COA smart contract deploy smart contracts, and returns the result containing the newly deployed contract address as the result data. The value (balance) is taken from the COA smart contract and moved to the new smart contract address (if they accept it). 
+- `deploy(code: [UInt8], gasLimit: UInt64, value: Balance): Result` lets the COA smart contract deploy smart contracts, and returns the result containing the newly deployed contract address. The value (balance) is taken from the COA smart contract and moved to the new smart contract address (if they accept it). 
 
 - `call(to: EVMAddress, data: [UInt8], gasLimit: UInt64, value: Balance): Result` makes a call on behalf of the COA smart contract and returns the result of the call which could be processed by the Cadence side. The value (balance) is taken from the COA smart contract. Calling this method emits direct call transaction events. 
 
@@ -389,16 +389,24 @@ contract EVM {
         access(all)
         let data: [UInt8]
 
+        /// returns the newly deployed contract address
+        /// if the transaction caused such a deployment
+        /// otherwise the value is empty.
+        access(all)
+        let deployedContractAddress: [UInt8; 20]
+
         init(
             status: Status,
             errorCode: UInt64,
             gasUsed: UInt64,
-            data: [UInt8]
+            data: [UInt8],
+            contractAddress: [UInt8; 20]
         ) {
             self.status = status
             self.errorCode = errorCode
             self.gasUsed = gasUsed
             self.data = data
+            self.deployedContractAddress = contractAddress
         }
     }
 
