@@ -47,9 +47,9 @@ It also proposes adding a function to `NonFungibleToken.Collection`, `forEachID(
 that allows iterating through the IDs in a collection without having
 to load all of them into memory first:
 ```cadence
-/// Returns an iterator that allows callers to iterate
-/// through the list of owned NFT IDs in a collection
-/// without having to load the entire list first
+/// Allows a given function to iterate through the list
+/// of owned NFT IDs in a collection without first
+/// having to load the entire list into memory
 access(all) fun forEachID(_ f: fun (UInt64): Bool): Void {
     self.ownedNFTs.forEachKey(f)
 }
