@@ -1,5 +1,5 @@
 ---
-status: Proposed 
+status: Implemented
 flip: 258
 authors: Joshua Hannan (joshua.hannan@flowfoundation.org)
          Cody Bouche (cody@evaluate.market)
@@ -73,13 +73,7 @@ by having standardized storage.
 
 ## Drawbacks
 
-This change could be breaking for some contracts who
-have already done their Cadence 1.0 upgrades.
-We are confident that this will be negligible, if not zero, because
-the NFT migration guide has already told developers to change their `ownedNFTs` field
-to `access(contract)`, so they would still be compatible.
-
-This also makes things a little more awkward for developers who do want to define
+This could make things a little more awkward for developers who do want to define
 a more sophisticated system for storing NFTs
 because they will still have to have the `ownedNFTs` field,
 but it doesn't prevent them at all because they can simply ignore the field requirement
@@ -123,5 +117,3 @@ but that is much larger than almost any collection on Flow will ever be.
 ### User Impact
 
 * The upgrade will go out on the networks at the same time as Cadence 1.0 (Crescendo) if approved.
-* Users who are preparing for Cadence 1.0 will need to upgrade to the latest version
-of the Cadence 1.0 CLI and/or emulator to test with the new version of the NFT Standard.
