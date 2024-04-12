@@ -1,6 +1,6 @@
 | Status        | Proposed                                            |
 :-------------- |:----------------------------------------------------|
-| **FLIP #**    | [195](https://github.com/onflow/flips/pull/195) |
+| **FLIP #**    | [259](https://github.com/onflow/flips/pull/195) |
 | **Author(s)** | Yahya Hassanzadeh (yahya@dapperlabs.com) Khalil Claybon (khalil.claybon@flowfoundation.org)           |
 | **Sponsor**   | Yahya Hassanzadeh (yahya@dapperlabs.com) Khalil Claybon (khalil.claybon@flowfoundation.org)           |
 | **Updated**   | 8 September 2023                                    |
