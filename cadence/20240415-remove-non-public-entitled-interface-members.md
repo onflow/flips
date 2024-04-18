@@ -45,10 +45,12 @@ Developers will hopefully be no longer confused and won't make assumptions that 
 
 ## Design Proposal
 
-Interface members may not use non-public or non-entitled access modifiers (`access(self)`,
+The proposal consists of two changes:
+
+1. Interface members may not use non-public or non-entitled access modifiers (`access(self)`,
 `access(contract)`, `access(account)`).
 
-If an interface member has an access modifier, a composite type that conforms to it / implements
+2. If an interface member has an access modifier, a composite type that conforms to it / implements
 the interface must use exactly the same access modifier.
 
 ### Drawbacks
