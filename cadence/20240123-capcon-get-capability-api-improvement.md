@@ -33,16 +33,18 @@ Nil is not the same as invalid, because we still have the address field which is
 Modifying the behavior for obtaining capabilities to instead give an invalid capability allows developers to make use of that address and react to something not being valid. 
 It also introduces fewer panic scenarios that are out of general-purpose platforms' control (like if an NFT Collection panics on Royalty creation because of this). 
 
+Even an invalid capability that cannot be borrowed is still valuable, as it provides the address of the account.
 ## Design Proposal
 
 The return type of the function `Account.Capabilities.get` is changed from the optional type `Capability<T>?` to the non-optional type `Capability<T>`.
-When the no capability is published under the requested path, the function returns an *invalid* capability.
+When the no capability is published under the requested path, or when the type argument to `get` is not a subtype of the runtime type of the capability published under the requested path, the function returns an *invalid* capability.
 
 This "invalid" capability should:
 
 1. Always return `false` when `check` is called.
 2. Always return `nil` when `borrow` is called.
 3. Have an ID of 0.
+4. Have a runtime type that is the same as the type requested in the type argument of `get`
 
 Capability Controller IDs are stated to be a *non-zero*, which 
 means the value of zero can be used to mark capabilities as invalid.
@@ -61,6 +63,14 @@ struct OptCap {
 This might work in cases where the method being called is entirely in control of the caller, but it will not cover cases like Royalties where they are being blindly resolved using the 
 Flow Metadata Standard. In cases like that, the caller has no way to protect itself again an optional capability that will panic when being created
 
+
+## Engineering Effort
+
+The proposed changes require little effort to implement in Cadence, but will require some changes in contracts already staged/updated to Cadence 1.0: Some optional checking code that had to be added will continue to work, while other will need to get removed/reverted.
+
+In particular:
+- Most `nil` handling code might still work, e.g. `nil` comparison, force-unwrapping
+- Optional chaining and nil-coalescing don't work on non-optional types, so need to be undone
 ## Questions and Discussion
 
 There is some [context in Discord](https://discord.com/channels/613813861610684416/621847426201944074/1194733333658218647) which led to the creation of this FLIP.
