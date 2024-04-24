@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: implemented
 flip: [243]
 authors: Ardit Marku (markoupetr@gmail.com)
 sponsor: Jerome Pimmel (jerome.pimmel@dapperlabs.com)
