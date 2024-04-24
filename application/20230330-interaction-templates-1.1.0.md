@@ -620,7 +620,7 @@ pub fun main(address: Address): UFix64 {
 
 #### `data.dependencies`
 
-For each dependency of the interaction (each contract that is imported in the cadence of the interaction), there must be network keyed (mainnet || testnet) dependency information. The information for each network should contain the address of the account where the contract is deployed, the fully qualified identifier for the contract, dependency tree pin and block height the pin was preformed at. The dependency tree pin is performed by the following pseudocode:
+For each dependency of the interaction (each contract that is imported in the cadence of the interaction), there must be network keyed (mainnet || testnet) dependency information. The information for each network should contain the address of the account where the contract is deployed, dependency pin of the contract, the pin of the contract itself (SHA3-256 hash of itself) and block height the pin was preformed at. The dependency tree pin is performed by the following pseudocode:
 
 ```javascript
 // Example contracts map
@@ -858,7 +858,7 @@ template-message-key           = Key for a template message (eg: "title", "descr
 template-message               = [ sha3_256(template-message-key), [ ...template-message-translation ] ]
 
 template-dependency-contract-pin-block-height = Network block height the pin was generated against.
-template-dependency-contract-pin              = Pin of contract and it's dependency tree
+template-dependency-contract-pin              = Pin of contract and its dependency tree
 template-dependency-contract-pin-self         = Pin of the contract itself
 template-dependency-network-address           = Address of an account
 template-dependency-network                   = "mainnet" | "testnet" | "emulator" | Custom Network Tag
