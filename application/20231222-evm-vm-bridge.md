@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: approved
 flip: 237
 title: Flow EVM VM Bridge
 authors: Giovanni Sanchez (giovanni.sanchez@dapperlabs.com)
