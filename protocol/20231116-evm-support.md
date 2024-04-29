@@ -122,7 +122,7 @@ The result type returned from any run variant contains important values:
   
   - `Status.successful`: The execution of an EVM transaction/call has been successful and no error is reported by the VM.
 
-- `errorCode: UInt64`: Specific error code that caused the failure, value of `0` means no error. Error codes are divided into validation error codes (201-300) and execution error codes (301-400).
+- `errorCode: UInt64`: Specific error code that caused the failure, value of `0` means no error. Error codes are divided into validation error codes (201-300) and execution error codes (301-400), see Appendix D.
 - `gasUsed: UInt64`: The amount of gas the transaction used for execution
 - `data: [UInt8]`: Contains any data that is returned from the EVM when using "call". When deploying a contract this will contain the deployed code.
 - `deployedContract: EVMAddress?`: This is an optional field, which is only set when a new contract was deployed, it will contain the address of the newly deployed contract, otherwise it will be nil
@@ -264,6 +264,54 @@ contract EVM {
     access(all) entitlement Call
     access(all) entitlement Deploy
     access(all) entitlement Owner
+
+    /// Block executed event is emitted when a new block is created,
+    /// which always happens when a transaction is executed.
+    access(all)
+    event BlockExecuted(
+        // height or number of the block
+        height: UInt64
+        // hash of the block
+        hash: String
+        // timestamp of the block creation
+        timestamp: UInt64
+        // total Flow supply
+        totalSupply: Int
+        // all gas used in the block by transactions included
+        totalGasUsed: UInt64
+        // parent block hash
+        parentHash: String
+        // hash of all the transaction receipts
+        receiptRoot: String
+        // all the transactions included in the block
+        transactionHashes: [String]
+    )
+
+    /// Transaction executed event is emitted everytime a transaction
+    /// is executed by the EVM (even if failed).
+    access(all)
+    event TransactionExecuted(
+        // hash of the transaction
+        hash: String,
+        // index of the transaction in a block
+        index: UInt16,
+        // type of the transaction
+        type: UInt8,
+        // RLP and hex encoded transaction payload
+        payload: String,
+        // code indicating a specific validation (201-300) or execution (301-400) error
+        errorCode: UInt16,
+        // the amount of gas transaction used
+        gasConsumed: UInt64,
+        // if transaction was a deployment contains a newly deployed contract address
+        contractAddress: String,
+        // RLP and hex encoded logs
+        logs: String,
+        // block height in which transaction was inclued
+        blockHeight: UInt64,
+        // block hash in which transaction was included
+        blockHash: String
+    )
 
     access(all)
     event CadenceOwnedAccountCreated(addressBytes: [UInt8; 20])
