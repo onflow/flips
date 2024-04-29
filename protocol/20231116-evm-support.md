@@ -70,15 +70,13 @@ fun main(bytes: [UInt8; 20]) {
 }
 ```
 
-`run` is the next crucial function in this contract which runs RLP-encoded EVM transactions. If the interaction with “Flow EVM” is successful and it changes the state, a new Flow-EVM block is formed and its data is emitted as a Cadence event.  Using `run` limits EVM block to a single EVM transaction, a future `batchRun` provides option for batching EVM transaction execution.
+`run` is the next crucial function in this contract which runs RLP-encoded EVM transactions. If the interaction with “Flow EVM” is successful and it changes the state, a new Flow-EVM block is formed and its data is emitted as a Cadence event.  Using `run` limits EVM block to a single EVM transaction, a `batchRun` provides option for batching EVM transaction execution in a single block. Using batch run you can provide an array of RLP-encoded EVM transactions as input and they will be all executed in a new block, the function will return an array of results `[EVM.Result]` which will be the same length as the array of input transactions and will match the order.
 
 ```cadence
-// Example of tx wrapping
 import EVM from <ServiceAddress>
 
 transaction(rlpEncodedTransaction: [UInt8], coinbaseBytes: [UInt8; 20]) {
-
-    prepare(signer: AuthAccount) {
+    execute {
         let coinbase = EVM.EVMAddress(bytes: coinbaseBytes)
         let result = EVM.run(tx: rlpEncodedTransaction, coinbase: coinbase)
         assert(
@@ -87,6 +85,24 @@ transaction(rlpEncodedTransaction: [UInt8], coinbaseBytes: [UInt8; 20]) {
         )
     }
 }
+```
+
+Example of batch run:
+```
+import EVM from <ServiceAddress>
+
+transaction(rlpEncodedTransactions: [[UInt8]], coinbaseBytes: [UInt8; 20]) {
+    execute {
+      let coinbase = EVM.EVMAddress(bytes: coinbaseBytes)
+      let results = EVM.batchRun(txs: txs, coinbase: coinbase)
+      
+      assert(results.length == txs.length, message: "invalid result length")
+      for res in results {
+        assert(res.status == EVM.Status.successful, message: "unexpected status")
+      }
+    }
+}
+
 ```
 
 Note that calling EVM.run doesn't revert the outter flow transaction and it requires the developer to take proper action based on the result.Status. Execution of a rlp encoded transaction result in one of these cases: 
@@ -552,6 +568,17 @@ contract EVM {
             message: "tx is not valid for execution"
         )
         return runResult
+    }
+
+    /// Runs a batch of RLP-encoded EVM transactions, deducts the gas fees,
+    /// and deposits the gas fees into the provided coinbase address.
+    /// An invalid transaction is not executed and not included in the block.
+    access(all)
+    fun batchRun(txs: [[UInt8]], coinbase: EVMAddress): [Result] {
+        return InternalEVM.batchRun(
+            txs: txs,
+            coinbase: coinbase.bytes,
+        ) as! [Result]
     }
 
     access(all)
