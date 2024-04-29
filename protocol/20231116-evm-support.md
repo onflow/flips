@@ -1,7 +1,7 @@
 ---
 status: implemented
 flip: 223
-authors: Ramtin Seraj (ramtin.seraj@flowfoundation.org), Bastian Müller (bastian.mueller@flowfoundation.org)
+authors: Ramtin Seraj (ramtin.seraj@flowfoundation.org), Bastian Müller (bastian.mueller@flowfoundation.org), Gregor Gololicic (gregor.gololicic@flowfoundation.org)
 sponsor: Dieter Shirley (dete@dapperlabs.com)
 updated: 2023-12-04
 ---
@@ -57,6 +57,7 @@ The very first type defined in this contract is EVMAddress. It is a Cadence type
   - `balance() Balance` returns the balance of the address, returning a balance object instead of a basic type is considered to prevent flow to atto-flow conversion mistakes
   - `nonce() UInt64` returns the nonce of the address
   - `code(): [UInt8]` returns the code of the address (if is a smart contract account,  it returns empty otherwise)
+  - `codeHash(): [UInt8]` returns the code hash of the address
 
 
 ```cadence
@@ -69,6 +70,8 @@ fun main(bytes: [UInt8; 20]) {
     let bal = addr.balance()
 }
 ```
+
+### Running a transaction
 
 `run` is the next crucial function in this contract which runs RLP-encoded EVM transactions. If the interaction with “Flow EVM” is successful and it changes the state, a new Flow-EVM block is formed and its data is emitted as a Cadence event.  Using `run` limits EVM block to a single EVM transaction, a `batchRun` provides option for batching EVM transaction execution in a single block. Using batch run you can provide an array of RLP-encoded EVM transactions as input and they will be all executed in a new block, the function will return an array of results `[EVM.Result]` which will be the same length as the array of input transactions and will match the order.
 
@@ -105,18 +108,42 @@ transaction(rlpEncodedTransactions: [[UInt8]], coinbaseBytes: [UInt8; 20]) {
 
 ```
 
-Note that calling EVM.run doesn't revert the outter flow transaction and it requires the developer to take proper action based on the result.Status. Execution of a rlp encoded transaction result in one of these cases: 
-- `Status.invalid`: The execution of an evm transaction/call has failed at the validation step (e.g. nonce mismatch). An invalid transaction/call is rejected to be executed or be included in a block (no state change).
-- `Status.failed`: The execution of an evm transaction/call has been successful but the vm has reported an error as the outcome of execution (e.g. running out of gas). A failed tx/call is included in a block.
-Note that resubmission of a failed transaction would result in invalid status in the second attempt, given the nonce would be come invalid.
+Note that calling `EVM.run` or `EVM.batchRun` doesn't revert the outter flow transaction and it requires the developer to take proper action based on the result.Status. 
 
-- `Status.successful`: The execution of an evm transaction/call has been successful and no error is reported by the vm.
+All transaction run variants produce the Result as the return value.
 
-One might decide to use `mustRun` variation for reverting the tx in case of validation failure. 
+#### Result
+The result type returned from any run variant contains important values:
+
+- `status: Status` 
+  - `Status.invalid`: The execution of an EVM transaction/call has failed at the validation step (e.g. nonce mismatch). An invalid transaction/call is rejected to be executed or be included in a block (no state change).
+  - `Status.failed`: The execution of an EVM transaction/call has been successful but the VM has reported an error as the outcome of execution (e.g. running out of gas). A failed tx/call is included in a block.
+  Note that resubmission of a failed transaction would result in invalid status in the second attempt, given the nonce would be come invalid.
+  
+  - `Status.successful`: The execution of an EVM transaction/call has been successful and no error is reported by the VM.
+
+- `errorCode: UInt64`: Specific error code that caused the failure, value of `0` means no error. Error codes are divided into validation error codes (201-300) and execution error codes (301-400).
+- `gasUsed: UInt64`: The amount of gas the transaction used for execution
+- `data: [UInt8]`: Contains any data that is returned from the EVM when using "call". When deploying a contract this will contain the deployed code.
+- `deployedContract: EVMAddress?`: This is an optional field, which is only set when a new contract was deployed, it will contain the address of the newly deployed contract, otherwise it will be nil
+
+
+There are multiple variants of the run method for executing a transaction each having its own unique abilites:
+- `run`: will execute a transaction, and create a new block containing that transaction only. If the transaction fails, the Flow transaction won't be reverted.
+- `mustRun`: will execute a transaction, and create a new block containing that transaction only. If the transaction fails, it will revert the Flow transaction as well.
+- `batchRun`: will execute a list of transactions and create a new block containing all the transactions. If the transaction fails, the Flow transaction won't be reverted.
+- `dryRun`: will simulate transaction execution, but won't commit any changes. This is useful for estimating gas usage or calling view methods on contracts. If run in a Cadence script it won't consume any gas. 
 
 The gas used during the method calls is aggregated, adjusted and added to the total computation fees of the Flow transaction and paid by the payer. The adjustment is done by multiplying the gas usage by a multiplier set by the network and adjustable by the service account.  
 
 Please refer to the Appendix B for the full list of types and functions available in Flow EVM contract. 
+
+#### Events
+Each newly created block or executed transaction will emit a Flow event. 
+
+Transaction Executed: each executed transaction will emit a Flow event, that will have the type ID: `A.<ServiceAddress>.EVM.TransactionExecuted` and will contain the following fields: `hash`, `index`, `type`, `payload` (RLP and hex-encoded transaction payload), `errorCode` (matches the code in the Result type), `gasConsumed`, `contractAddress` (provided in case of contract deployment), `logs`, `blockHeight`, `blockHash`.
+
+Block Executed: each newly created block will emit a Flow event, that will have the type ID: `A.<ServiceAddress>.EVM.BlockExecuted` and will contain the following fields: `height`, `hash`, `timestamp`, `totalSupply`, `totalGasUsed`, `parentHash`, `receiptRoot`, `transactionHashes` (list of all transaction hashes included in the block).
 
 
 ### “Flow EVM” extended precompiles
@@ -131,7 +158,9 @@ Here is the list of some of the functions available on the Cadence Arch smart co
 
 - `FlowBlockHeight() uint64` (signature: 0x53e87d66) returns the current flow block height, this could be used instead of flow evm block heights to trigger scheduled actions given it's more predictable when a block might be formed. 
 
-- `VerifyCOAOwnershipProof(bytes32 _hash, bytes memory _signature)(bool success)` returns true if proof is valid. An ownership proof verifies that a Flow wallet controls a COA account. This is done by checking signatures and their weights, loading the COA resource from the specified storage path and check the EVM address of the COA resource. More details available in the next section. 
+- `VerifyCOAOwnershipProof(bytes32 _hash, bytes memory _signature)(bool success)` returns true if proof is valid. An ownership proof verifies that a Flow wallet controls a COA account. This is done by checking signatures and their weights, loading the COA resource from the specified storage path and check the EVM address of the COA resource. More details available in the next section.
+
+- `getRandomSource(uint64) uint64` returns secure on-chain random source. This can be used for creation of PRGs (learn more about [secure random on Flow here](https://developers.flow.com/build/advanced-concepts/randomness)).
 
 Cadence arch can be updated over time with more functions, some could trigger actions on the Cadence side, but there would be follow up Flips for it. 
 
