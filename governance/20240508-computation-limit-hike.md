@@ -43,7 +43,7 @@ To match Ethereum’s 30M gas limit, a 5000:1 gas to compute ratio could be adop
 
 It’s important to note that for such sizable contracts however, even these compute units (3999 in the above example) may prove insufficient for cadence execution. Therefore, we should also consider revising Flow’s computation limit of 9999 to ensure seamless execution of the largest Ethereum contracts.
 
-1. **Computation Limit**
+ **Computation Limit**
 
 Directly raising the computation limit entails substantial code modifications and collaboration with ecosystem developers. Alternatively, we can indirectly increase the limit by lowering the execution effort coefficients or weights (0.0239, 0.0123, 0.0117, and 43.2994 in the “execution effort” calculation). Decreasing these weights would effectively expand a transaction’s computation limit; in other words, more and larger operations would “fit within” the 9999 compute limit.
 
