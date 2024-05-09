@@ -1,4 +1,4 @@
-# FLIP-267: Increasing Computation Limit on Flow
+# FLIP-267: Increasing the transaction computation limit
 
 | Status        | Draft                                            |
 :-------------- |:---------------------------------------------------- |
