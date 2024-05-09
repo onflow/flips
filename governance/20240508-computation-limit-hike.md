@@ -17,7 +17,7 @@ Execution Effort =
     0.0123 * GetValue +
     0.0117 * SetValue +
 		43.2994 * CreateAccount +
-	  EVMGasUsageCost * EVMGasUsage**
+	  EVMGasUsageCost * EVMGasUsage
 ```
 
 Here, `EVMGasUsage` represents the gas used by EVM, such as 21K gas for a simple send transaction. Meanwhile, `EVMGasUsageCost` denotes the ratio for converting EVM gas to Flow’s computation units, which may also be called “Gas-to-Compute ratio” or “G2C ratio.”
@@ -43,11 +43,11 @@ To match Ethereum’s 30M gas limit, a 5000:1 gas to compute ratio could be adop
 
 It’s important to note that for such sizable contracts however, even these compute units (3999 in the above example) may prove insufficient for cadence execution. Therefore, we should also consider revising Flow’s computation limit of 9999 to ensure seamless execution of the largest Ethereum contracts.
 
- **Computation Limit**
+ 2. **Increase transaction Computation Limit by 5x**
 
 Directly raising the computation limit entails substantial code modifications and collaboration with ecosystem developers. Alternatively, we can indirectly increase the limit by lowering the execution effort coefficients or weights (0.0239, 0.0123, 0.0117, and 43.2994 in the “execution effort” calculation). Decreasing these weights would effectively expand a transaction’s computation limit; in other words, more and larger operations would “fit within” the 9999 compute limit.
 
-To determine the appropriate reduction factor for the weights, a thorough understanding of Flow’s execution capabilities in handling large transactions was necessary. This involved assessing how much “computation” could currently be accommodated in a block (on Mainnet24) and how much additional time a transaction could consume before encountering complications. For instance, if transactions in a block exceed the available block time (1.25s), they might need to be split across multiple blocks — a feature not currently supported; also, single transactions can never be split further. After evaluating these factors, it became apparent that increasing the transaction time by more than 5 times may lead to execution issues. Therefore, it is proposed to reduce the computation weights by a factor of 5.
+To determine the appropriate reduction factor for the weights, a thorough understanding of Flow’s execution capabilities in handling large transactions was necessary. This involved assessing how much “computation” could currently be accommodated in a block (on Mainnet24) and how much additional time a transaction could consume; challenges might arise if blocks occasionally take longer to execute than their allotted time based on the block rate. For instance, if transactions in a block exceed the available block time (1.25s), they might need to be split across multiple blocks — a feature not currently supported; also, single transactions can never be split further. After evaluating these factors, it became apparent that increasing the transaction time by more than 5 times may lead to execution issues. Therefore, it is proposed to reduce the computation weights by a factor of 5.
 
 Note that the reduction in coefficients will be offset by a corresponding increase in the unit cost of execution on Flow (by 5x). This adjustment aims to ensure that there are no changes in the overall transaction fee paid for a transaction despite the higher computation limit and lower coefficients. See [this post](https://forum.flow.com/t/how-evm-transaction-fees-work-on-flow-previewnet/5751) to review the calculation method for transaction fees and to understand how a corresponding increase in the cost of execution units would negate any influence on the total transaction fee.
 
