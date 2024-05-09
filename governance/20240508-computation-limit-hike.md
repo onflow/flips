@@ -17,7 +17,7 @@ Execution Effort =
     0.0123 * GetValue +
     0.0117 * SetValue +
 		43.2994 * CreateAccount +
-	  **EVMGasUsageCost * EVMGasUsage**
+	  EVMGasUsageCost * EVMGasUsage**
 ```
 
 Here, `EVMGasUsage` represents the gas used by EVM, such as 21K gas for a simple send transaction. Meanwhile, `EVMGasUsageCost` denotes the ratio for converting EVM gas to Flow’s computation units, which may also be called “Gas-to-Compute ratio” or “G2C ratio.”
