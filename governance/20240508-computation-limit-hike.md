@@ -53,7 +53,7 @@ Note that the reduction in coefficients will be offset by a corresponding increa
 
 ## Proposal (Summary)
 
-1. Establish the “Gas to compute ratio” at 5000:1 by setting `EVMGasUsageCost` to `1/5000`.
+1. Establish the “Gas to compute ratio” at 5000:1 by setting `EVMGasUsageCost` to `1/5000`. In other words, 5000 EVM gas would be counted as 1 Flow computation unit.
 2. Reduce the coefficients of execution effort by a factor of 5x, effectively increasing the computation limit by the same factor. Counterbalance the reduction in coefficient values with a 5x increase in the cost of execution unit on Flow (from 4.99E-08 to 2.495E-7).
 
 ```
