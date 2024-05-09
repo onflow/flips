@@ -29,7 +29,7 @@ In this FLIP, we make two proposals -
 
 ## Problem Statement
 
-EVM launch on Flow (”Crescendo”) presents an opportunity to better align with network objectives and user needs in terms of total computation required. The current execution effort (”compute”) limit of 9999 on Flow Cadence may be inadequate for larger EVM transactions. Flow should be able to match or surpass the capabilities of Ethereum, allowing transactions of up to 30M gas to be executed seamlessly.
+EVM on Flow (”Crescendo”)  presents an interesting challenge - how to compute Flow computation units from EVM gas. The current execution effort (”compute”) limit of 9999 on Flow Cadence may be inadequate for larger EVM transactions. Flow should be able to match or surpass the capabilities of Ethereum, allowing transactions of up to 30M gas to be executed seamlessly.
 
 To attain this objective, two approaches can be employed: (1) Implementing a gas-to-compute conversion ratio (`EVMGasUsageCost`) to ensure that larger contracts (30M gas) fit within the 9999 compute limit, and (2) raising the computation limit on Flow to accommodate larger transactions requiring higher compute. A combined approach leveraging both methods would offer the most effective solution.
 
