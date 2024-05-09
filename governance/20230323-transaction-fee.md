@@ -52,7 +52,7 @@ Finally, Flow’s low transaction fee unfortunately makes FLOW use-cases less pe
 
 **Transaction fee = {inclusion fee + (execution effort * unit cost)} x surge x T**
  
-- Presently, the Flow network fundamentally supports the dynamic adjustment of transaction fees in response to network congestion. The surge factor ('S') facilitates fee modifications during congested periods, ensuring optimal network functionality. Although currently fixed at 1.0, adjustments to this value may be proposed through a FLIP in response to sustained periods of high network demand and saturation.
+- Presently, the Flow network fundamentally supports the dynamic adjustment of transaction fees in response to network congestion. The surge factor ('S') facilitates fee modifications during periods of network congestion, ensuring optimal network functionality. Although currently fixed at `1.0`, adjustments to this value can be proposed through a FLIP in response to sustained periods of high network demand and saturation.
 - Introducing a Transaction Fee Multiplier ('T') alongside the existing surge factor would additionally enhance the adaptability and responsiveness of transaction fees to economic conditions. Additionally, it would cater to future requirements for adjusting the unit cost of transactions on Flow, while also ensuring transparency, ease of understanding, and readability of the formula for our community members.
 - **The value of 'T' will be set at 100** to increase the transaction fee by 100 times compared to the current rate, thus increasing costs of each transaction by 100x as shown in the table below.
 
