@@ -1,7 +1,7 @@
 ---
 status: implemented
 flip: [243]
-authors: Ardit Marku (markoupetr@gmail.com)
+authors: Ardit Marku (markoupetr@gmail.com), Gregor Gololicic (gregor.gololicic@flowfoundation.org)
 sponsor: Jerome Pimmel (jerome.pimmel@dapperlabs.com)
 updated: 2024-01-03
 ---
