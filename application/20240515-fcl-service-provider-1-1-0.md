@@ -2,7 +2,7 @@
 status: draft 
 flip: 270
 authors: Jordan Ribbink (jordan.ribbink@flowfoundation.com)
-sponsor: Jordan Ribbink (jordan.ribbink@flowfoundation.com)
+sponsor: Greg Santos (g@flowfoundation.org)
 updated: 2023-05-15 
 ---
 
