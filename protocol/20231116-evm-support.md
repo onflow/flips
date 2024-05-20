@@ -368,7 +368,7 @@ contract EVM {
 
         /// Nonce of the address
         access(all)
-        view fun nonce(): UInt64 {
+        fun nonce(): UInt64 {
             return InternalEVM.nonce(
                 address: self.bytes
             )
@@ -376,7 +376,7 @@ contract EVM {
 
         /// Code of the address
         access(all)
-        view fun code(): [UInt8] {
+        fun code(): [UInt8] {
             return InternalEVM.code(
                 address: self.bytes
             )
@@ -384,7 +384,7 @@ contract EVM {
 
         /// CodeHash of the address
         access(all)
-        view fun codeHash(): [UInt8] {
+        fun codeHash(): [UInt8] {
             return InternalEVM.codeHash(
                 address: self.bytes
             )
