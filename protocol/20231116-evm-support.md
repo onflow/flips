@@ -368,7 +368,7 @@ contract EVM {
 
         /// Nonce of the address
         access(all)
-        fun nonce(): UInt64 {
+        view fun nonce(): UInt64 {
             return InternalEVM.nonce(
                 address: self.bytes
             )
@@ -376,7 +376,7 @@ contract EVM {
 
         /// Code of the address
         access(all)
-        fun code(): [UInt8] {
+        view fun code(): [UInt8] {
             return InternalEVM.code(
                 address: self.bytes
             )
@@ -384,7 +384,7 @@ contract EVM {
 
         /// CodeHash of the address
         access(all)
-        fun codeHash(): [UInt8] {
+        view fun codeHash(): [UInt8] {
             return InternalEVM.codeHash(
                 address: self.bytes
             )
@@ -1009,7 +1009,6 @@ contract EVM {
             ?? panic("Could not borrow reference to the EVM bridge")
     }
 }
-
 ```
 
 ## Appendix C - COA’s smart contract (in Solidity)
