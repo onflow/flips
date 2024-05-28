@@ -1,11 +1,11 @@
 # FLIP-267: Increasing the transaction computation limit
 
-| Status        | Proposed                                            |
+| Status        | Accepted                                            |
 :-------------- |:---------------------------------------------------- |
 | **FLIP #**    | 267
 | **Author(s)** | Kshitij Chaudhary (kshitij.chaudhary@flowfoundation.com)           | 
 | **Sponsor**   | Kshitij Chaudhary (kshitij.chaudhary@flowfoundation.com) |
-| **Updated**   | 2024-05-24                                           |
+| **Updated**   | 2024-05-28                                           |
 
 ## Introduction
 
