@@ -24,10 +24,9 @@ The essence of the change is that, if someone owns the composite value, they wou
 Otherwise, if someone only got a reference to the composite value, then they can access the fields also as references,
 and the entitlements would kick-in to limit what they can do with those fields.
 
-Unfortunately, one edge-case we didn't realize at the time is that, contracts only have one value per network (it's a shared state),
-and by importing a contract, one could get the full access to that contract value.
+Unfortunately, one edge-case that was not considered during the evaluation of the [external mutability improvements FLIP](https://github.com/onflow/flips/pull/89) is that contracts are singletons, and importing a contract provides owned access to that contract value.
 The imported contract value behaves like a reference, but is not represented using a reference in the language semantics. 
-Because of that, if the contract had an array/dictionary/composite -typed field defined as read-only (i.e: `access(all)`),
+Because of that, if the contract has a container-typed field (e.g., array, dictionary, composite)  defined with public access (i.e., `access(all)`),
 then anyone could modify the content of that field, such as inserting/removing elements, etc.
 
 ```cadence
@@ -48,13 +47,13 @@ access(all) fun main() {
 }
 ```
 
-This is exactly the type of foot-gun we tried to prevent using the external mutability improvements ([FLIP 89](https://github.com/onflow/flips/pull/89)).
+This is exactly the type foot-gun that was intended to get prevented by the changes proposed in the [external mutability improvements FLIP](https://github.com/onflow/flips/pull/89).
 But unfortunately, given the contract import results in a non-reference value, the suggested changes in that FLIP
-does not get apply here.
+do not apply here.
 
 ## User Benefit
 
-Prevent the foot-gun of unintended external mutations to read-only contracts fields.
+Prevent the foot-gun of unintended external mutations to read-only contract fields.
 
 ## Design Proposal
 
