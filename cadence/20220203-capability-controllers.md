@@ -2,7 +2,7 @@
 status: implemented
 flip: 798
 authors: Janez Podhostnik (janez.podhostnik@dapperlabs.com), Bastian Müller (bastian@dapperlabs.com)
-updated: 2023-05-12
+updated: 2024-06-26
 ---
 
 # FLIP 798: Capability controllers
@@ -562,26 +562,26 @@ will be accessible through the linking API function `getCapability`.
 
 Existing links and capabilities need to be migrated.
 
-All existing storage links and all storage capabilities will get grouped by *target storage path* (`/storage`),
-and a CapCon with a unique ID will be generated for each group.
+### Migration of storage links
 
-To determine the target storage path, the link's *source capability path* (`/public` or `/private`) is followed
-until a storage path is encountered.
+Each existing storage link is dereferenced to its *target storage path* (`/storage`).
+To determine the target storage path, the link's *source capability path* (`/public` or `/private`) 
+is followed until a storage (`/storage`) path is encountered.
 
-If the link is broken at the time of migration, e.g. because of a broken link,
-then the capability cannot be successfully migrated.
-In that case, the capability is assigned a unique capability ID,
-which is effectively equivalent to a CapCon having existed for the capability at some point, but it was deleted.
+For each valid link, a new Storage Capability Controller will be issued.
+If the source path is public (`/public`), the resulting capability gets published. 
 
 Note that it is not necessary for the storage path to contain any value at the time of migration.
 
-Public links (`/public`) are replaced with capabilities.
+### Migration of account links
 
-For all existing account links and account capabilities
-a separate CapCon with a unique ID will be generated.
+For each existing account link a new Accout Capability Controller will be issued.
+If the source path is public (`/public`), the resulting capability gets published. 
+
+### Migration of capabilities
 
 Capabilities do not currently have an ID.
-Existing capabilities will get assigned the ID of the associated CapCon.
+Each existing capability will get assigned the ID of the Capability Controller that was issued for the capability's target path.
 
 ## Issues not addressed in this FLIP
 
