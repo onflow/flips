@@ -37,7 +37,7 @@ updated: 2023-12-22
   - [Examples](#examples)
   - [Compatibility](#compatibility)
 - [Prior Art](#prior-art)
-- [Questions \& Discussion Topics](#questions--discussion-topics)
+- [Source Code](#source-code)
 </details>
 
 ## Objective
@@ -129,8 +129,8 @@ down into their respective forks to help with understanding.
 * COA B calls bridge contract to request bridging of EVM NFT back into Cadence
 * Bridge contract calls into EVM to confirm COA B is the owner of the requested NFT. If so, process continues; otherwise
   reverts
-* Bridge executes the protected `safeTransfer` call provided by COA A, transferring the ERC721 token to the bridge
-  for escrow
+* Bridge executes the protected `safeTransfer` call provided by COA A, transferring the ERC721 token to the bridge for
+  escrow
 * Contract unlocks corresponding Cadence NFT from VM bridge contract escrow storage
 * Returns NFT on call to bridge contract
 
@@ -138,16 +138,20 @@ down into their respective forks to help with understanding.
 
 #### Prerequisite steps to user actions
 
-* Defining corresponding Cadence contract must been deployed to the bridge. This is done via bridge contract templates where the deployed contract is "owned" by the bridge and actions on it orchestrated by contract logic.
+* Defining corresponding Cadence contract must been deployed to the bridge. This is done via bridge contract templates
+  where the deployed contract is "owned" by the bridge and actions on it orchestrated by contract logic.
 
 #### Cadence transaction: COA A wants to bridge an EVM NFT to Cadence
 
 * Ensure prerequisites 
-* Within the Cadence call to bridge, a protected `safeTransfer` call is included, transferring the ERC721 from the caller to the bridge escrow
-* Bridge checks that the named owner is the owner of the NFT on EVM side before executing approval to Bridge account COA address
+* Within the Cadence call to bridge, a protected `safeTransfer` call is included, transferring the ERC721 from the
+  caller to the bridge escrow
+* Bridge checks that the named owner is the owner of the NFT on EVM side before executing approval to Bridge account COA
+  address
 * Bridge ensures transfer was successful
 * Bridge validates its ownership of the NFT on EVM side after transfer, thus locking NFT to be bridged
-* Bridge unlocks the Cadence NFT if escrowed, otherwise mints NFT from the bridge-owned NFT contract and returns to caller
+* Bridge unlocks the Cadence NFT if escrowed, otherwise mints NFT from the bridge-owned NFT contract and returns to
+  caller
 * Collection is configured if necessary and deposited to COA A's account
 
 # Design Proposal
@@ -207,8 +211,8 @@ known association between source and target contracts to exist, and for the brid
 escrow or minting/burning.
 
 Due to how contract deployments function with relationship to state availability, this deployment and configuration must
-be completed in a distinct transaction prior to fulfilling bridge requests. **The bridge cannot fulfill a request in the same
-transaction in which it also deploys the target contract as the deployed contract will not exist in the state space
+be completed in a distinct transaction prior to fulfilling bridge requests. **The bridge cannot fulfill a request in the
+same transaction in which it also deploys the target contract as the deployed contract will not exist in the state space
 until after the transaction is complete.**
 
 This configuration process will be termed “onboarding”, and an asset for which the bridge is configured to handle will
@@ -228,16 +232,14 @@ included later in this FLIP. Beside those pictured, auxiliary contracts will exi
 interfaces, utilities, configuration, etc., but the are not pictured below as they are not critical to high-level
 bridging operations. Immediately below is a birds-eye view of the contract suite across VMs.
 
-![FlowEVM VM Bridge Design Overview](20231222-evm-vm-bridge-resources/overview.png)
-*Bridge functionality is enabled directly on the COA resource for simplicity, with call passing through the EVM contract
-to a routing resource to the central VM bridge. The central bridge contract then handles bridging requests dependent on
-whether the asset is an NFT or FT, whether the asset is Cadence- or EVM-native, and the direction of the request. Due to
-the need to special case some assets, Handlers are built in to the bridge enabling custom passthroughs based on
-non-standard business logic. For most all assets, at asset onboarding, the bridge performs contract initialization on
-either side of the VM by dynamically deploying EVM or Cadence contracts and maintaining associations between source and
-target contract definitions. Post-onboarding, the bridge routes requests to the appropriate contract to fulfills
-caller’s request. While bridging is integrated to the COA resource, the central bridge contract’s entry points are
-publicly accessible.*
+![FlowEVM VM Bridge Design Overview](20231222-evm-vm-bridge-resources/overview.png) *Bridge functionality is enabled
+directly on the COA resource for simplicity, with call passing through the EVM contract to a routing resource to the
+central VM bridge. The central bridge contract then handles bridging requests dependent on whether the asset is an NFT
+or FT, whether the asset is Cadence- or EVM-native, and the direction of the request. Due to the need to special case
+some assets, Handlers are built in to the bridge enabling custom passthroughs based on non-standard business logic. For
+most all assets, at asset onboarding, the bridge performs contract initialization on either side of the VM by
+dynamically deploying EVM or Cadence contracts and maintaining associations between source and target contract
+definitions.*
 
 ## Implementation Details
 
@@ -269,10 +271,18 @@ publicly accessible.*
 > :information_source: Note: Self-defined locking functionality is not required as “locked” assets will simply be
 > transferred to the FlowEVMBridge.COA.EVMAddress
 
+- **FlowBridgeDeploymentRegistry**
+  - Maintain a registry of all bridge-deployed EVM contracts
+- **ERC20Deployer**
+  - Deploys EVM-defining implementations of fungible tokens as ERC20 from template
+- **ERC721Deployer**
+  - Deploys EVM-defining implementations of non-fungible tokens as ERC721 from template
+
 - **FlowBridgeFactory**
-  - Deploys new instances of FlowBridgedFT/NFT
-  - Maintains knowledge of all deployed contract addresses & their Flow token identifier correspondence
-  - Aids visibility of bridge contract into the EVM environment with assistive methods
+  - Deploys new instances of FlowBridgedFT/NFT via deployers
+  - Passes through the named registry for knowledge of all bridge-deployed EVM contract addresses & their Cadence token
+    identifier correspondence
+  - Aids visibility of bridge contract into the EVM environment with assistive methods - isERC721, isERC20, etc.
 
 - **FlowBridgedFT/NFT**
   - Define Cadence-native tokens bridged from Cadence to EVM
@@ -282,8 +292,8 @@ publicly accessible.*
 ### Case Studies
 
 The task of bridging FTs & NFTs between VMs can be split into four distinct cases, each with their own unique path. An
-asset can either be Cadence- or EVM-native, and it can either be bridged from Cadence to EVM or EVM to Cadence. The following
-sections outline an NFT bridge path for each case.
+asset can either be Cadence- or EVM-native, and it can either be bridged from Cadence to EVM or EVM to Cadence. The
+following sections outline an NFT bridge path for each case.
 
 > :information_source: A note about bridge "onboarding" - assets moving from one VM to another must at minimum have
 > contracts defining them in their target VM. These contracts must be deployed in a transaction preceding the movement
@@ -292,10 +302,10 @@ sections outline an NFT bridge path for each case.
 
 #### Cadence-Native NFT Onboarding
 
-1. Pre-flight checks: Assert the type is supported, hasn't opted out, requires onboarding, and fee provider can provide onboarding fee
+1. Pre-flight checks: Assert the type is supported, hasn't opted out, requires onboarding, and fee provider can provide
+   onboarding fee
 2. Withdraw onboard fee from given fee Provider & deposit to bridge Vault
-3. Does the bridge have a custom Handler for this type?
-    a. If so, revert as a Handler implies custom configuration.
+3. Does the bridge have a custom Handler for this type? a. If so, revert as a Handler implies custom configuration.
     b. Otherwise, continue
 4. Is this an NFT or FT? - NFT, continue as NFT
 5. Deploy ERC721 from factory, passing on identifying information from the type & its defining Cadence contract
@@ -396,9 +406,6 @@ sections outline an NFT bridge path for each case.
 
 ### Interfaces
 
-> :information_source: Solidity contracts will largely be boilerplate based on common standards. Interfaces are soon
-> to follow
-
 <details>
 
 <summary>EVM.cdc</summary>
@@ -422,9 +429,7 @@ contract EVM {
         fun depositNFT(
             nft: @{NonFungibleToken.NFT},
             feeProvider: auth(FungibleToken.Withdraw) &{FungibleToken.Provider}
-        ) {
-            EVM.borrowBridgeAccessor().depositNFT(nft: <-nft, to: self.address(), feeProvider: feeProvider)
-        }
+        )
         /// Bridges the given NFT to the EVM environment, requiring a Provider from which to withdraw a fee to fulfill
         /// the bridge request
         access(Owner | Bridge)
@@ -432,24 +437,14 @@ contract EVM {
             type: Type,
             id: UInt256,
             feeProvider: auth(FungibleToken.Withdraw) &{FungibleToken.Provider}
-        ): @{NonFungibleToken.NFT} {
-            return <- EVM.borrowBridgeAccessor().withdrawNFT(
-                caller: &self as auth(Call) &CadenceOwnedAccount,
-                type: type,
-                id: id,
-                feeProvider: feeProvider
-            )
-        }
+        ): @{NonFungibleToken.NFT}
         /// Bridges the given NFT to the EVM environment, requiring a Provider from which to withdraw a fee to fulfill
         /// the bridge request
         access(all)
         fun depositTokens(
             from: @{FungibleToken.Vault},
             feeProvider: auth(FungibleToken.Withdraw) &{FungibleToken.Provider}
-        ) {
-            EVM.borrowBridgeAccessor().depositTokens(from: <-from, to: self.address(), feeProvider: feeProvider)
-        }
-
+        )
         /// Bridges the given NFT to the EVM environment, requiring a Provider from which to withdraw a fee to fulfill
         /// the bridge request
         access(Owner | Bridge)
@@ -457,14 +452,7 @@ contract EVM {
             type: Type,
             amount: UInt256,
             feeProvider: auth(FungibleToken.Withdraw) &{FungibleToken.Provider}
-        ): @{FungibleToken.Vault} {
-            return <- EVM.borrowBridgeAccessor().withdrawTokens(
-                caller: &self as auth(Call) &CadenceOwnedAccount,
-                type: type,
-                amount: amount,
-                feeProvider: feeProvider
-            )
-        }
+        ): @{FungibleToken.Vault}
     }
     /// Returns a reference to the BridgeAccessor designated for internal bridge requests
     access(self)
@@ -511,6 +499,20 @@ contract EVM {
     resource interface BridgeRouter {
         /// Returns a reference to the BridgeAccessor designated for internal bridge requests
         access(Bridge) view fun borrowBridgeAccessor(): auth(Bridge) &{BridgeAccessor}
+        /// Sets the BridgeAccessor Capability in the BridgeRouter
+        access(Bridge) fun setBridgeAccessor(_ accessor: Capability<auth(Bridge) &{BridgeAccessor}>) {
+            pre {
+                accessor.check(): "Invalid BridgeAccessor Capability provided"
+                emit BridgeAccessorUpdated(
+                    routerType: self.getType(),
+                    routerUUID: self.uuid,
+                    routerAddress: self.owner?.address ?? panic("Router must have an owner to be identified"),
+                    accessorType: accessor.borrow()!.getType(),
+                    accessorUUID: accessor.borrow()!.uuid,
+                    accessorAddress: accessor.address
+                )
+            }
+        }
     }
 }
 ```
@@ -1456,47 +1458,192 @@ access(all) contract interface BridgePermissions {
 <summary>FlowEVMBridgeFactory.sol</summary>
 
 ```solidity
-// Factory contract enabling ERC20 & ERC721 contract deployment and EVM inspection
-contract FlowBridgeFactory is Ownable, IERC165 {
-    mapping(string => address) public flowIdentifierToContract;
-    mapping(address => string) public contractToflowIdentifier;
+// Factory contract enabling contract deployment, Cadence to EVM associations, and EVM inspection
+contract FlowBridgeFactory is Ownable {
+    // Address of the deployment registry where deployed contract associations are registered. Note that this is a
+    // registry for EVM contracts deployed by the bridge factory and does not include those EVM-native contracts that
+    // have been onboarded to the bridge via Cadence contracts. The global source of truth is found in the Cadence
+    // side of the bridge, however this registry and publicly accessible methods can serve as a source of truth
+    // within EVM. Given some EVM contract, its bridge-supported Cadence type association can be found (and vice-versa)
+    // by querying this contract, thus preventing impersonation attacks.
+    address private deploymentRegistry;
+    // Mapping of deployer tags to their implementation addresses
+    mapping(string => address) private deployers;
+
+    // Emitted when a deployer is added to the factory
+     */
+    event DeployerAdded(string tag, address deployerAddress);
+    // Emitted when a deployer is updated in the factory
+     */
+    event DeployerUpdated(string tag, address oldAddress, address newAddress);
+    // Emitted when a deployer is removed from the factory
+     */
+    event DeployerRemoved(string tag, address oldAddress);
+    // Emitted when the deployment registry is updated
+     */
+    event DeploymentRegistryUpdated(address oldAddress, address newAddress);
 
     constructor() Ownable(msg.sender) {}
 
-    event ERC721Deployed(
-        address contractAddress, string name, string symbol, string flowNFTAddress, string flowNFTIdentifier
+    // Deploys a new asset contract via a registered deployer
+    function deploy(
+        string memory deployerTag,
+        string memory name,
+        string memory symbol,
+        string memory cadenceAddress,
+        string memory cadenceIdentifier,
+        string memory contractURI
+    ) public onlyOwner returns (address)
+    // Retrieves the Cadence type identifier associated with the bridge-deployed contract
+    function getCadenceIdentifier(address contractAddr) public view returns (string memory)
+    // Retrieves the address of a bridge-deployed contract by its associated Cadence type identifier
+    function getContractAddress(string memory cadenceIdentifier) public view returns (address)
+    // Checks if a contract address is associated with a registered deployment
+    function isBridgeDeployed(address contractAddr) public view returns (bool)
+    // Makes a best guess if the contract address is an ERC20 token by calling the publicly accessible ERC20
+    function isERC20(address contractAddr) public view returns (bool)
+    // Determines if a contract is an ERC721 token by checking if it implements the ERC721 interface via ERC165
+    function isERC721(address contractAddr) public view returns (bool)
+    // Determines if a contract is a valid asset by checking if it is either an ERC20 or ERC721 implementation
+    function isValidAsset(address contractAddr) public view returns (bool)
+    // Retrieves the address of the deployment registry
+    function getRegistry() public view returns (address)
+    // Retrieves the address of a deployer by its tag
+    function getDeployer(string memory tag) public view returns (address)
+    // Sets the address of the deployment registry
+    function setDeploymentRegistry(address _deploymentRegistry) public onlyOwner
+    // Adds a new deployer to the factory
+    function addDeployer(string memory tag, address deployerAddress) public onlyOwner
+    // Adds a deployer to the factory, or updates the address of an existing deployer
+    function upsertDeployer(string memory tag, address deployerAddress) public onlyOwner
+    // Removes a deployer from the factory
+    function removeDeployer(string memory tag) public onlyOwner
+    // Registers a new deployment in the deployment registry
+    function _registerDeployment(string memory cadenceIdentifier, address contractAddr) internal
+    // Asserts that the registry address is non-zero and implements the IFlowEVMDeploymentRegistry interface
+    function _requireIsValidRegistry(address registryAddr) internal view
+    // Asserts that the contract address is non-zero and implements the IFlowEVMBridgeDeployer interface
+    function _requireIsValidDeployer(address contractAddr) internal view
+    // Checks if a contract implements a specific interface
+    function _implementsInterface(address contractAddr, bytes4 interfaceId) internal view returns (bool)
+    // Asserts that the address is non-zero
+    function _requireNotZeroAddress(address addr) internal pure
+}
+```
+</details>
+
+
+<details>
+<summary>FlowBridgeDeploymentRegistry.sol</summary>
+
+```solidity
+// Store associations between bridged Flow EVM contracts and a corresponding Cadence resource type.
+contract FlowBridgeDeploymentRegistry is FlowEVMDeploymentRegistry, Ownable {
+    constructor() Ownable(msg.sender)
+
+    // The address of the registrar who can register new deployments
+    address public registrar;
+    // Association between Cadence type identifiers and deployed contract addresses
+    mapping(string => address) private cadenceIdentifierToContract;
+    // Reverse association between deployed contract addresses and Cadence type identifiers
+    mapping(address => string) private contractToCadenceIdentifier;
+
+    modifier onlyRegistrar()
+
+    // ERC165 introspection
+    function supportsInterface(bytes4 interfaceId) public view override(IERC165, ERC165) returns (bool)
+    // Set the registrar address as the entity that can register new deployments. Only the owner can call this
+    function setRegistrar(address _registrar) external onlyOwner
+    // Get the Cadence type identifier associated with a contract address
+    function getCadenceIdentifier(address contractAddr) external view returns (string memory)
+    // Get the contract address associated with a Cadence type identifier
+    function getContractAddress(string memory cadenceIdentifier) external view returns (address)
+    // Check if a contract address is a registered deployment
+    function isRegisteredDeployment(string memory cadenceIdentifier) external view returns (bool)
+    // Check if a Cadence type identifier is associated with a registered deployment
+    function isRegisteredDeployment(address contractAddr) external view returns (bool)
+    // Register a new deployment address with the given Cadence type identifier. Can only be called by the
+    function registerDeployment(string memory cadenceIdentifier, address contractAddr) external onlyRegistrar
+    // Internal function to register a new deployment address with the given Cadence type identifier
+    function _registerDeployment(string memory cadenceIdentifier, address contractAddr) internal
+}
+
+```
+</details>
+
+
+<details>
+
+<summary>FlowBridgeERC20Deployer.sol</summary>
+
+```solidity
+// Deploys FlowEVMBridgedERC20 contracts with named associations to Cadence resources types. Only the
+// delegated deployer can deploy new contracts. This contract is used by the Flow EVM bridge to deploy and define
+// bridged ERC20 tokens which are defined natively in Cadence.
+contract FlowEVMBridgedERC20Deployer is IFlowEVMBridgeDeployer, ERC165, Ownable {
+    // The address of the delegated deployer who can deploy new contracts
+    address public delegatedDeployer;
+
+    event ERC20Deployed(
+        address contractAddress, string name, string symbol, string cadenceTokenAddress, string cadenceVaultIdentifier
     );
 
-    // Returns the Flow type identifier associated with a given bridge-deployed EVM contract address
-    function getFlowAssetIdentifier(address contractAddr) public view returns (string memory)
-    // Returns the bridge-deployed EVM contract address associated with a given Flow type identifier
-    function getContractAddress(string memory flowNFTIdentifier) public view returns (address)
-    // Returns whether an EVM address was deployed by the bridge factory or not
-    function isFactoryDeployed(address contractAddr) public view returns (bool)
-    // Inspector method enabling ERC721 check for a given contract address
-    function isERC721(address contractAddr) public view returns (bool)
+    constructor() Ownable(msg.sender) {}
 
-    // Function enabling the bridge to deploy a new ERC721 contract
-    function deployERC721(
+    modifier onlyDelegatedDeployer()
+
+    // ERC165 introspection
+    function supportsInterface(bytes4 interfaceId) public view override(IERC165, ERC165) returns (bool)
+    // Deploy a new FlowEVMBridgedERC20 contract with the given name, symbol, and association to a Cadence
+    function deploy(
         string memory name,
         string memory symbol,
-        string memory flowNFTAddress,
-        string memory flowNFTIdentifier
-    ) public onlyOwner returns (address)
+        string memory cadenceAddress,
+        string memory cadenceIdentifier,
+        string memory contractURI
+    ) external onlyDelegatedDeployer returns (address)
+    // Set the delegated deployer address as the entity that can deploy new contracts. Only the owner can call this
+    function setDelegatedDeployer(address _delegatedDeployer) external onlyOwner
+}
+```
+</details>
 
-    // Function enabling the bridge to deploy a new ERC20 contract
-    function deployERC721(
+<summary>FlowBridgeERC721Deployer.sol</summary>
+
+```solidity
+// Deploys FlowEVMBridgedERC721 contracts with named associations to Cadence resources types. Only the
+// delegated deployer can deploy new contracts. This contract is used by the Flow EVM bridge to deploy and define
+// bridged ERC721 tokens which are defined natively in Cadence.
+contract FlowEVMBridgedERC721Deployer is IFlowEVMBridgeDeployer, ERC165, Ownable {
+    // The address of the delegated deployer who can deploy new contracts
+    address public delegatedDeployer;
+
+    event ERC721Deployed(
+        address contractAddress, string name, string symbol, string cadenceTokenAddress, string cadenceVaultIdentifier
+    );
+
+    constructor() Ownable(msg.sender) {}
+
+    modifier onlyDelegatedDeployer()
+
+    // ERC165 introspection
+    function supportsInterface(bytes4 interfaceId) public view override(IERC165, ERC165) returns (bool)
+    // Deploy a new FlowEVMBridgedERC721 contract with the given name, symbol, and association to a Cadence
+    function deploy(
         string memory name,
         string memory symbol,
-        string memory flowNFTAddress,
-        string memory flowNFTIdentifier
-    ) public onlyOwner returns (address)
+        string memory cadenceAddress,
+        string memory cadenceIdentifier,
+        string memory contractURI
+    ) external onlyDelegatedDeployer returns (address)
+    // Set the delegated deployer address as the entity that can deploy new contracts. Only the owner can call this
+    function setDelegatedDeployer(address _delegatedDeployer) external onlyOwner
 }
 ```
 </details>
 
 <details>
-<summary>FlowBridgedNFT.sol</summary>
+<summary>FlowEVMBridgedERC721.sol</summary>
 
 ```solidity
 contract FlowBridgedERC721 is ERC721, ERC721URIStorage, ERC721Burnable, ERC721Enumerable, Ownable {
@@ -1532,50 +1679,63 @@ contract FlowBridgedERC721 is ERC721, ERC721URIStorage, ERC721Burnable, ERC721En
 </details>
 
 <details>
-<summary>FlowBridgedFT.sol</summary>
+<summary>FlowEVMBridgedERC20.sol</summary>
 
 ```solidity
-// TODO - Template for bridged EVM-native FTs
+contract FlowEVMBridgedERC20 is ERC20, ERC20Burnable, Ownable, ERC20Permit {
+    string public flowTokenAddress;
+    string public flowTokenIdentifier;
+    string public contractMetadata;
+
+    constructor(
+        address owner,
+        string memory name,
+        string memory symbol,
+        string memory _flowTokenAddress,
+        string memory _flowTokenIdentifier,
+        string memory _contractMetadata
+    ) ERC20(name, symbol) Ownable(owner) ERC20Permit(name)
+
+    // Enables the bridge to mint new tokens
+    function mint(address to, uint256 amount) public onlyOwner
+    // Returns the Flow type identifier associated with this bridge-deployed contract
+    function getFlowTokenAddress() public view returns (string memory)
+    // Returns the Flow type identifier associated with this bridge-deployed contract
+    function getFlowTokenIdentifier() public view returns (string memory)
+    // Returns the contract's metadata URI
+    function contractURI() public view returns (string memory)
+}
 ```
 </details>
 
 <details>
 
-<summary>BridgePermissions</summary>
+<summary>BridgePermissions.sol</summary>
 
 ```solidity
-/**
- * @dev Contract for which implementation is checked by the Flow VM bridge as an opt-out mechanism
- * for non-standard asset contracts that wish to opt-out of bridging between Cadence & EVM. By
- * default, the VM bridge operates on a permissionless basis, meaning anyone can request an asset
- * be onboarded. However, some small subset of non-standard projects may wish to opt-out of this
- * and this contract provides a way to do so while also enabling future opt-in.
- *
- * Note: The Flow VM bridge checks for permissions at asset onboarding. If your asset has already
- * been onboarded, setting `permissions` to `false` will not affect movement between VMs.
- */
+// Contract for which implementation is checked by the Flow VM bridge as an opt-out mechanism
+// for non-standard asset contracts that wish to opt-out of bridging between Cadence & EVM. By
+// default, the VM bridge operates on a permissionless basis, meaning anyone can request an asset
+// be onboarded. However, some small subset of non-standard projects may wish to opt-out of this
+// and this contract provides a way to do so while also enabling future opt-in.
+//
+// Note: The Flow VM bridge checks for permissions at asset onboarding. If your asset has already
+// been onboarded, setting `permissions` to `false` will not affect movement between VMs.
+//
 abstract contract BridgePermissions is ERC165, IBridgePermissions {
     // The permissions for the contract to allow or disallow bridging of its assets.
     bool private _permissions;
 
     constructor() { _permissions = false; }
 
-    /**
-     * @dev See {IERC165-supportsInterface}.
-     */
+    // See {IERC165-supportsInterface}.
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool)
-    /**
-     * @dev Returns true if the contract allows bridging of its assets. Checked by the Flow VM
-     *     bridge at asset onboarding to enable non-standard asset contracts to opt-out of bridging
-     *     between Cadence & EVM. Implementing this contract opts out by default but can be
-     *     overridden to opt-in or used in conjunction with a switch to enable opting in.
-     */
+    // Returns true if the contract allows bridging of its assets. Checked by the Flow VM
+    // bridge at asset onboarding to enable non-standard asset contracts to opt-out of bridging
+    // between Cadence & EVM. Implementing this contract opts out by default but can be
+    // overridden to opt-in or used in conjunction with a switch to enable opting in.
     function allowsBridging() external view virtual returns (bool)
-    /**
-     * @dev Set the permissions for the contract to allow or disallow bridging of its assets.
-     *
-     * Emits a {PermissionsUpdated} event.
-     */
+    // Set the permissions for the contract to allow or disallow bridging of its assets.
     function _setPermissions(bool permissions) internal
 }
 
@@ -1596,23 +1756,22 @@ two cases are handled by the bridge.
 Since $FLOW is the native token in both VMs, moving $FLOW between Cadence and EVM is integrated directly into the COA
 resource and can be done without dependency on the VM bridge.
 
-Bridging the token between VMs can be done easily via the EVM Cadence contract interface and its constructs. Soon (if
-not already at time of reading) $FLOW will be integrated directly into the `EVMAddress` object and can be deposited
-directly to any address in EVM without the need to involve a COA resource at all. Bridging $FLOW from EVM can be done
-via any COA, resulting in a vault that can be handled like any other Cadence Vault resource.
+Bridging the token between VMs can be done easily via the EVM Cadence contract interface and its constructs. Depositing
+\$FLOW is integrated directly into the `EVMAddress` object and can be deposited directly to any address in EVM without
+the need to involve a COA resource at all. Bridging $FLOW from EVM can be done via any COA, resulting in a vault that
+can be handled like any other Cadence Vault resource.
 
 **Bridge Configuration**
 
 Given the protocol-native integration of \$FLOW, the bridge will then special case on receipt of a request to bridge
-$FLOW to/from either VM and revert. This can be done simply by filtering on the `Type` of the requested asset. To the
-need for callers to filter bridge transactions on the `Type` of the requested asset, the bridge will simply leverage the
-existing mechanisms to handle $FLOW bridging.
+\$FLOW to/from either VM and handle each direction accordingly. This can be done simply by filtering on the `Type` of
+the requested asset.
 
-On observing a request to bridge $FLOW to EVM, the bridge will simply leverage the existing `EVMAddress` interface to
-deposit the provided Vault to the named recipient. However, since bridging $FLOW from EVM is built into the COA resource
-and must be called from the owning COA - a call which is fundamentally different than that required to transfer ERC20 to
-escrow - the same passthrough functionality cannot be leveraged. Due to these factors, requests to bridge $FLOW from EVM
-will be filtered and reverted.
+On observing a request to bridge $FLOW to EVM, the bridge will simply leverage the existing `EVMAddress.deposit`
+interface to deposit the provided Vault to the named recipient. However, since bridging $FLOW from EVM is built into the
+COA resource and must be called from the owning COA - a call which is fundamentally different than that required to
+transfer ERC20 to escrow - the same passthrough functionality cannot be leveraged. Due to these factors, requests to
+bridge $FLOW from EVM will be filtered and reverted.
 
 #### Generalized Cases
 
@@ -1631,85 +1790,153 @@ mapping of Cadence Types to Handler resource implementations.
 <summary>Handler interface</summary>
 
 ```cadence
-// Entitlement related to admin-like functionality
-access(all) entitlement Admin
+/// Handler for bridging Cadence native fungible tokens to EVM. In the event a Cadence project migrates native
+/// support to EVM, this Hander can be configured to facilitate bridging the Cadence tokens to EVM. This Handler
+/// then effectively allows the bridge to treat such tokens as bridge-defined on the Cadence side and EVM-native on
+/// the EVM side minting/burning in Cadence and escrowing in EVM.
+/// In order for this to occur, neither the Cadence token nor the EVM contract can be onboarded to the bridge - in
+/// essence, neither side of the asset can be onboarded to the bridge.
+/// The Handler must be configured in the bridge via the HandlerConfigurator. Once added, the bridge will filter
+/// requests to bridge the token Vault to EVM through this Handler which cannot be enabled until a target EVM
+/// address is set. Once the corresponding EVM contract address is known, it can be set and the Handler. It's also
+/// suggested that the Handler only be enabled once sufficient liquidity has been arranged in bridge escrow on the
+/// EVM side.
+access(all) resource CadenceNativeTokenHandler : FlowEVMBridgeHandlerInterfaces.TokenHandler {
+    /// Flag determining if request handling is enabled
+    access(self) var enabled: Bool
+    /// The Cadence Type this handler fulfills requests for
+    access(self) var targetType: Type
+    /// The EVM contract address this handler fulfills requests for. This field is optional in the event the EVM
+    /// contract address is not yet known but the Cadence type must still be filtered via Handler to prevent the
+    /// type from being onboarded otherwise.
+    access(self) var targetEVMAddress: EVM.EVMAddress?
+    /// The expected minter type for minting tokens on fulfillment
+    access(self) let expectedMinterType: Type
+    /// The Minter enabling minting of Cadence tokens on fulfillment from EVM
+    access(self) var minter: @{FlowEVMBridgeHandlerInterfaces.TokenMinter}?
 
-access(all) resource interface Handler {
-	// Flag determining if request handling is enabled
-	access(self) var enabled: Bool
-	// The Cadence Type this handler fulfills requests for
-	access(self) var targetType: Type?
-	// The EVM contract address this handler fulfills requests for
-	access(self) var targetEVMAddress: EVM.EVMAddress?
+    /* --- HandlerInfo --- */
 
-	// Getters
-	//
-	access(all)	view fun isEnabled(): Bool
-	access(all) view fun targetType(): Type?
-	access(all) view fun targetEVMAddress: EVM.EVMAddress?
+    /// Returns the enabled status of the handler
+    access(all) view fun isEnabled(): Bool
+    /// Returns the type of the asset the handler is configured to handle
+    access(all) view fun getTargetType(): Type?
+    /// Returns the EVM contract address the handler is configured to handle
+    access(all) view fun getTargetEVMAddress(): EVM.EVMAddress?
+    /// Returns the expected minter type for the handler
+    access(all) view fun getExpectedMinterType(): Type?
 
-	// Handling
-	//
-	access(EVM.Bridge) fun fulfillTokensToEVM(
-		tokens: @{FungibleToken.Vault},
-		to: EVM.EVMAddress
-	) {
-		pre {
-			self.isEnabled(): "Handler is not yet enabled"
-			tokens.getType() == self.targetType(): "Invalid Vault type"
-		}
-	}
-	access(EVM.Bridge) fun fulfillTokensFromEVM(
-		owner: EVM.EVMAddress
-		type: Type,
-		amount: UFix64,
-		protectedTransferCall: fun (): EVM.Result
-	): @{FungibleTokens.Vault} {
-		pre {
-			self.isEnabled(): "Handler is not yet enabled"
-		}
-		post {
-			tokens.getType() == self.targetType(): "Invalid Vault type returned"
-		}
-	}
-	
-	// Admin access
-	//
-	access(Admin) fun setTargetType(_ type: Type) {
-		pre {
-			self.targetType != nil: "Target Type has already been set"
-		}
-	}
-	access(Admin) fun setTargetEVMAddress(_ address: EVM.EVMAddress) {
-		pre {
-			self.targetEVMAddress != nil: "Target EVM address has already been set"
-		}
-	}
-	access(Admin) fun enableBridging() {
-		pre {
-			self.targetType != nil && self.targetEVMAddress != nil:
-				"Cannot enable before setting bridge targets"
-			!self.isEnabled(): "Handler already enabled"
-		}
-		post {
-			self.enabled: "Problem enabling Handler"
-		}
-	}
+    /* --- TokenHandler --- */
+
+    /// Fulfill a request to bridge tokens from Cadence to EVM, burning the provided Vault and transferring from
+    /// EVM escrow to the named recipient. Assumes any fees are handled by the caller within the bridge contracts
+    ///
+    /// @param tokens: The Vault containing the tokens to bridge
+    /// @param to: The EVM address to transfer the tokens to
+    ///
+    access(account)
+    fun fulfillTokensToEVM(
+        tokens: @{FungibleToken.Vault},
+        to: EVM.EVMAddress
+    ) {
+        pre {
+            self.isEnabled(): "Handler is not yet enabled"
+            tokens.getType() == self.getTargetType(): "Invalid Vault type"
+        }
+    }
+    /// Fulfill a request to bridge tokens from EVM to Cadence, minting the provided amount of tokens in Cadence
+    /// and transferring from the named owner to bridge escrow in EVM.
+    ///
+    /// @param owner: The EVM address of the owner of the tokens. Should also be the caller executing the protected
+    ///              transfer call.
+    /// @param type: The type of the asset being bridged
+    /// @param amount: The amount of tokens to bridge
+    ///
+    /// @return The minted Vault containing the the requested amount of Cadence tokens
+    ///
+    access(account)
+    fun fulfillTokensFromEVM(
+        owner: EVM.EVMAddress,
+        type: Type,
+        amount: UInt256,
+        protectedTransferCall: fun (): EVM.Result
+    ): @{FungibleToken.Vault} {
+        pre {
+            self.isEnabled(): "Handler is not yet enabled"
+        }
+        post {
+            result.getType() == self.getTargetType(): "Invalid Vault type returned"
+        }
+    }
+
+    /* --- Admin --- */
+
+    /// Sets the target type for the handler
+    access(FlowEVMBridgeHandlerInterfaces.Admin)
+    fun setTargetType(_ type: Type) {
+        pre {
+            self.getTargetType() == nil: "Target Type has already been set"
+        }
+        post {
+            self.getTargetType()! == type: "Problem setting target type"
+        }
+    }
+    /// Sets the target EVM address for the handler
+    access(FlowEVMBridgeHandlerInterfaces.Admin)
+    fun setTargetEVMAddress(_ address: EVM.EVMAddress) {
+        pre {
+            self.getTargetEVMAddress() == nil: "Target EVM address has already been set"
+        }
+        post {
+            self.getTargetEVMAddress()!.bytes == address!.bytes: "Problem setting target EVM address"
+        }
+    }
+    /// Sets the target type for the handler
+    access(FlowEVMBridgeHandlerInterfaces.Admin)
+    fun setMinter(_ minter: @{FlowEVMBridgeHandlerInterfaces.TokenMinter}) {
+        pre {
+            self.getExpectedMinterType() == minter.getType(): "Minter is not of the expected type"
+            self.minter == nil: "Minter has already been set"
+        }
+    }
+    /// Enables the handler for request handling. The
+    access(FlowEVMBridgeHandlerInterfaces.Admin)
+    fun enableBridging() {
+        pre {
+            self.minter != nil: "Cannot enable handler without a minter"
+            self.getTargetType() != nil && self.getTargetEVMAddress() != nil:
+                "Cannot enable before setting bridge targets"
+            !self.isEnabled(): "Handler already enabled"
+        }
+        post {
+            self.isEnabled(): "Problem enabling Handler"
+            emit HandlerEnabled(
+                handlerType: self.getType(),
+                targetType: self.getTargetType()!,
+                targetEVMAddress: self.getTargetEVMAddress()!
+            )
+        }
+    }
+
+    /* --- Internal --- */
+
+    /// Returns an entitled reference to the encapsulated minter resource
+    access(self)
+    view fun borrowMinter(): auth(FlowEVMBridgeHandlerInterfaces.Mint) &{FlowEVMBridgeHandlerInterfaces.TokenMinter}?
 }
 ```
 </details>
 
 Any use-case specific `Handler` will then be added to the bridge's `handlers` mapping indexed on the relevant asset
-Cadence Type. In the event a Cadence type does not exist, the related EVM contract address can be added to a `filter`
-value, preventing onboarding of the EVM asset before a Cadence defining Type and Handler can be configured in the
-bridge.
+Cadence Type. Once the target EVM address is known, it can be associated with the `Handler`'s type which will prevent
+the EVM contract from being onboarded as a bridged Cadence asset.
 
 Once the `Handler` is enabled and the type -> EVM contract address association is established, the bridge will route
 requests associated with the special-cased type through the `Handler` for fulfillment.
 
-As you might imagine, this approach requires coordination from between bridge maintainers and special-cased asset
-developers and it is unlikely that many assets will require such treatment; however, it will be helpful to have the
-option to support non-standard bridge configurations available from the beginning.
+As you might imagine, this approach requires coordination between bridge maintainers and special-cased asset developers
+and it is unlikely that many assets will require such treatment; however, it will be helpful to at least a couple
+currently Cadence-native assets to have the option to support non-standard bridge configurations available.
 
 ### Considerations
 
@@ -1753,9 +1980,10 @@ to be OpenSea's metadata standards ([reference docs](https://docs.opensea.io/doc
 compatible script can be run here against any account and NFT for easy use and feedback.
 
 Also note that a metadata view serving URI values is leveraged and defaulted to in the event projects wish to define
-their bridged asset's metadata themselves. This view is currently defined as `CrossVMNFT.EVMBridgedMetadata`, but is
-also presented for considered inclusion as a standard view in `MetadataViews` in [this
-PR](https://github.com/onflow/flow-nft/pull/203)
+their bridged asset's metadata themselves. This was introduced as `EVMBridgedMetadata`, but as a standard view in
+`MetadataViews` in [this PR](https://github.com/onflow/flow-nft/pull/203). This view can be used to resolve contract-
+and token-level metadata as well as enables NFT projects to specify their collection's symbol - a value unsupported by
+other views.
 ___
 
 Alternatively, if Flow projects want their metadata to be served well across VMs, they may take it on themselves to add
@@ -1851,12 +2079,16 @@ EVM using the interface defined above.
 
 <details>
 
-<summary>Bridge Flow-Native NFT to EVM</summary>
+<summary>Bridge NFT to EVM</summary>
 
 ```cadence
 import "FungibleToken"
 import "NonFungibleToken"
+import "ViewResolver"
+import "MetadataViews"
 import "FlowToken"
+
+import "ScopedFTProviders"
 
 import "EVM"
 
@@ -1864,67 +2096,110 @@ import "FlowEVMBridge"
 import "FlowEVMBridgeConfig"
 import "FlowEVMBridgeUtils"
 
-/// Bridges an NFT from the signer's collection in Flow to the recipient in FlowEVM
+/// Bridges an NFT from the signer's collection in Cadence to the signer's COA in FlowEVM
 ///
-transaction(id: UInt64, collectionStoragePathIdentifier: String, recipient: String?) {
+/// NOTE: This transaction also onboards the NFT to the bridge if necessary which may incur additional fees
+///     than bridging an asset that has already been onboarded.
+///
+/// @param nftContractAddress: The Flow account address hosting the NFT-defining Cadence contract
+/// @param nftContractName: The name of the NFT-defining Cadence contract
+/// @param id: The Cadence NFT.id of the NFT to bridge to EVM
+///
+transaction(nftContractAddress: Address, nftContractName: String, id: UInt64) {
     
     let nft: @{NonFungibleToken.NFT}
-    let nftType: Type
-    let evmRecipient: EVM.EVMAddress
-    let tollFee: @FlowToken.Vault
-    var success: Bool
+    let coa: auth(EVM.Bridge) &EVM.CadenceOwnedAccount
+    let requiresOnboarding: Bool
+    let scopedProvider: @ScopedFTProviders.ScopedFTProvider
     
-    prepare(signer: auth(BorrowValue) &Account) {
-        // Withdraw the requested NFT
-        let collection = signer.storage.borrow<auth(NonFungibleToken.Withdrawable) &{NonFungibleToken.Collection}>(
-                from: StoragePath(identifier: collectionStoragePathIdentifier) ?? panic("Could not create storage path")
-            )!
+    prepare(signer: auth(CopyValue, BorrowValue, IssueStorageCapabilityController, PublishCapability, SaveValue) &Account) {
+        /* --- Reference the signer's CadenceOwnedAccount --- */
+        //
+        // Borrow a reference to the signer's COA
+        self.coa = signer.storage.borrow<auth(EVM.Bridge) &EVM.CadenceOwnedAccount>(from: /storage/evm)
+            ?? panic("Could not borrow COA from provided gateway address")
+        
+        /* --- Retrieve the NFT --- */
+        //
+        // Borrow a reference to the NFT collection, configuring if necessary
+        let viewResolver = getAccount(nftContractAddress).contracts.borrow<&{ViewResolver}>(name: nftContractName)
+            ?? panic("Could not borrow ViewResolver from NFT contract")
+        let collectionData = viewResolver.resolveContractView(
+                resourceType: nil,
+                viewType: Type<MetadataViews.NFTCollectionData>()
+            ) as! MetadataViews.NFTCollectionData? ?? panic("Could not resolve NFTCollectionData view")
+        let collection = signer.storage.borrow<auth(NonFungibleToken.Withdraw) &{NonFungibleToken.Collection}>(
+                from: collectionData.storagePath
+            ) ?? panic("Could not access signer's NFT Collection")
+
+        // Withdraw the requested NFT & calculate the approximate bridge fee based on NFT storage usage
+        let currentStorageUsage = signer.storage.used
         self.nft <- collection.withdraw(withdrawID: id)
-        // Save the type for our post-assertion
-        self.nftType = self.nft.getType()
-        // Get the signer's COA EVMAddress as recipient
-        if recipient == nil {
-            self.evmRecipient = signer.storage.borrow<&EVM.BridgedAccount>(from: /storage/evm)!.address()
-        } else {
-            self.evmRecipient = FlowEVMBridgeUtils.getEVMAddressFromHexString(address: recipient!)
-                ?? panic("Malformed Recipient Address")
+        let withdrawnStorageUsage = signer.storage.used
+        var approxFee = FlowEVMBridgeUtils.calculateBridgeFee(
+                bytes: currentStorageUsage - withdrawnStorageUsage
+            ) * 1.10
+        // Determine if the NFT requires onboarding - this impacts the fee required
+        self.requiresOnboarding = FlowEVMBridge.typeRequiresOnboarding(self.nft.getType())
+            ?? panic("Bridge does not support this asset type")
+        if self.requiresOnboarding {
+            approxFee = approxFee + FlowEVMBridgeConfig.onboardFee
         }
-        // Pay the bridge toll
-        let vault = signer.storage.borrow<auth(FungibleToken.Withdrawable) &FlowToken.Vault>(
-                from: /storage/flowTokenVault
-            ) ?? panic("Could not access signer's FlowToken Vault")
-        self.tollFee <- vault.withdraw(amount: FlowEVMBridgeConfig.fee) as! @FlowToken.Vault
-        self.success = false
+
+        /* --- Configure a ScopedFTProvider --- */
+        //
+        // Issue and store bridge-dedicated Provider Capability in storage if necessary
+        if signer.storage.type(at: FlowEVMBridgeConfig.providerCapabilityStoragePath) == nil {
+            let providerCap = signer.capabilities.storage.issue<auth(FungibleToken.Withdraw) &{FungibleToken.Provider}>(
+                /storage/flowTokenVault
+            )
+            signer.storage.save(providerCap, to: FlowEVMBridgeConfig.providerCapabilityStoragePath)
+        }
+        // Copy the stored Provider capability and create a ScopedFTProvider
+        let providerCapCopy = signer.storage.copy<Capability<auth(FungibleToken.Withdraw) &{FungibleToken.Provider}>>(
+                from: FlowEVMBridgeConfig.providerCapabilityStoragePath
+            ) ?? panic("Invalid Provider Capability found in storage.")
+        let providerFilter = ScopedFTProviders.AllowanceFilter(approxFee)
+        self.scopedProvider <- ScopedFTProviders.createScopedFTProvider(
+                provider: providerCapCopy,
+                filters: [ providerFilter ],
+                expiration: getCurrentBlock().timestamp + 1.0
+            )
     }
 
     execute {
+        if self.requiresOnboarding {
+            // Onboard the NFT to the bridge
+            FlowEVMBridge.onboardByType(
+                self.nft.getType(),
+                feeProvider: &self.scopedProvider as auth(FungibleToken.Withdraw) &{FungibleToken.Provider}
+            )
+        }
         // Execute the bridge
-        FlowEVMBridge.bridgeNFTToEVM(token: <-self.nft, to: self.evmRecipient, tollFee: <-self.tollFee)
-
-        // Ensure the intended recipient is the owner of the NFT we bridged
-        self.success = FlowEVMBridgeUtils.isOwnerOrApproved(
-            ofNFT: UInt256(id),
-            owner: self.evmRecipient,
-            evmContractAddress: FlowEVMBridge.getAssetEVMContractAddress(type: self.nftType) ?? panic("No EVM Address found for NFT type")
+        self.coa.depositNFT(
+            nft: <-self.nft,
+            feeProvider: &self.scopedProvider as auth(FungibleToken.Withdraw) &{FungibleToken.Provider}
         )
-    }
-
-    // Post-assert bridge completed successfully on EVM side
-    post {
-        self.success: "Problem bridging to signer's COA!"
+        // Destroy the ScopedFTProvider
+        destroy self.scopedProvider
     }
 }
+
 ```
 </details>
 
 <details>
 
-<summary>Bridge Flow-Native NFT Back to Flow</summary>
+<summary>Bridge NFT from EVM</summary>
 
 ```cadence
 import "FungibleToken"
 import "NonFungibleToken"
+import "ViewResolver"
+import "MetadataViews"
 import "FlowToken"
+
+import "ScopedFTProviders"
 
 import "EVM"
 
@@ -1932,63 +2207,87 @@ import "FlowEVMBridge"
 import "FlowEVMBridgeConfig"
 import "FlowEVMBridgeUtils"
 
-/// This transaction bridges an NFT from FlowEVM to Flow assuming it has already been onboarded to the FlowEVMBridge
+/// This transaction bridges an NFT from EVM to Cadence assuming it has already been onboarded to the FlowEVMBridge
+/// NOTE: The ERC721 must have first been onboarded to the bridge. This can be checked via the method
+///     FlowEVMBridge.evmAddressRequiresOnboarding(address: self.evmContractAddress)
 ///
-transaction(nftTypeIdentifier: String, id: UInt256, collectionStoragePathIdentifier: String) {
+/// @param nftContractAddress: The Flow account address hosting the NFT-defining Cadence contract
+/// @param nftContractName: The name of the NFT-defining Cadence contract
+/// @param id: The ERC721 id of the NFT to bridge to Cadence from EVM
+///
+transaction(nftContractAddress: Address, nftContractName: String, id: UInt256) {
 
-    let evmContractAddress: EVM.EVMAddress
+    let nftType: Type
     let collection: &{NonFungibleToken.Collection}
-    let tollFee: @FlowToken.Vault
-    let coa: &EVM.BridgedAccount
-    let calldata: [UInt8]
+    let scopedProvider: @ScopedFTProviders.ScopedFTProvider
+    let coa: auth(EVM.Bridge) &EVM.CadenceOwnedAccount
     
-    prepare(signer: auth(BorrowValue) &Account) {
-        // Get the ERC721 contract address for the given NFT type
-        let nftType: Type = CompositeType(nftTypeIdentifier) ?? panic("Could not construct NFT type")
-        self.evmContractAddress = FlowEVMBridge.getAssetEVMContractAddress(type: nftType)
-            ?? panic("EVM Contract address not found for given NFT type")
+    prepare(signer: auth(BorrowValue, CopyValue, IssueStorageCapabilityController, PublishCapability, SaveValue, UnpublishCapability) &Account) {
+        /* --- Reference the signer's CadenceOwnedAccount --- */
+        //
+        // Borrow a reference to the signer's COA
+        self.coa = signer.storage.borrow<auth(EVM.Bridge) &EVM.CadenceOwnedAccount>(from: /storage/evm)
+            ?? panic("Could not borrow COA from provided gateway address")
 
-        // Borrow a reference to the NFT collection
-        let storagePath = StoragePath(identifier: collectionStoragePathIdentifier) ?? panic("Could not create storage path")
-        self.collection = signer.storage.borrow<&{NonFungibleToken.Collection}>(from: storagePath)
+        // Get the ERC721 contract address for the given NFT type
+        self.nftType = FlowEVMBridgeUtils.buildCompositeType(
+                address: nftContractAddress,
+                contractName: nftContractName,
+                resourceName: "NFT"
+            ) ?? panic("Could not construct NFT type")
+
+        /* --- Reference the signer's NFT Collection --- */
+        //
+        // Borrow a reference to the NFT collection, configuring if necessary
+        let viewResolver = getAccount(nftContractAddress).contracts.borrow<&{ViewResolver}>(name: nftContractName)
+            ?? panic("Could not borrow ViewResolver from NFT contract")
+        let collectionData = viewResolver.resolveContractView(
+                resourceType: self.nftType,
+                viewType: Type<MetadataViews.NFTCollectionData>()
+            ) as! MetadataViews.NFTCollectionData? ?? panic("Could not resolve NFTCollectionData view")
+        if signer.storage.borrow<&{NonFungibleToken.Collection}>(from: collectionData.storagePath) == nil {
+            signer.storage.save(<-collectionData.createEmptyCollection(), to: collectionData.storagePath)
+            signer.capabilities.unpublish(collectionData.publicPath)
+            let collectionCap = signer.capabilities.storage.issue<&{NonFungibleToken.Collection}>(collectionData.storagePath)
+            signer.capabilities.publish(collectionCap, at: collectionData.publicPath)
+        }
+        self.collection = signer.storage.borrow<&{NonFungibleToken.Collection}>(from: collectionData.storagePath)
             ?? panic("Could not borrow collection from storage path")
 
-        // Get the funds to pay the bridging fee from the signer's FlowToken Vault
-        let vault = signer.storage.borrow<auth(FungibleToken.Withdrawable) &FlowToken.Vault>(
-                from: /storage/flowTokenVault
-            ) ?? panic("Could not access signer's FlowToken Vault")
-        self.tollFee <- vault.withdraw(amount: FlowEVMBridgeConfig.fee) as! @FlowToken.Vault
-
-        // Borrow a reference to the signer's COA
-        // NOTE: This should also be the ERC721 owner of the requested NFT in FlowEVM
-        self.coa = signer.storage.borrow<&EVM.BridgedAccount>(from: /storage/evm)
-            ?? panic("Could not borrow COA from provided gateway address")
-        // Encode the approve calldata, approving the Bridge COA to act on the NFT
-        self.calldata = FlowEVMBridgeUtils.encodeABIWithSignature(
-                "approve(address,uint256)",
-                [FlowEVMBridge.getBridgeCOAEVMAddress(), id]
+        /* --- Configure a ScopedFTProvider --- */
+        //
+        // Calculate the bridge fee - bridging from EVM consumes no storage, so flat fee
+        let approxFee = FlowEVMBridgeUtils.calculateBridgeFee(bytes: 0)
+        // Issue and store bridge-dedicated Provider Capability in storage if necessary
+        if signer.storage.type(at: FlowEVMBridgeConfig.providerCapabilityStoragePath) == nil {
+            let providerCap = signer.capabilities.storage.issue<auth(FungibleToken.Withdraw) &{FungibleToken.Provider}>(
+                /storage/flowTokenVault
+            )
+            signer.storage.save(providerCap, to: FlowEVMBridgeConfig.providerCapabilityStoragePath)
+        }
+        // Copy the stored Provider capability and create a ScopedFTProvider
+        let providerCapCopy = signer.storage.copy<Capability<auth(FungibleToken.Withdraw) &{FungibleToken.Provider}>>(
+                from: FlowEVMBridgeConfig.providerCapabilityStoragePath
+            ) ?? panic("Invalid Provider Capability found in storage.")
+        let providerFilter = ScopedFTProviders.AllowanceFilter(approxFee)
+        self.scopedProvider <- ScopedFTProviders.createScopedFTProvider(
+                provider: providerCapCopy,
+                filters: [ providerFilter ],
+                expiration: getCurrentBlock().timestamp + 1.0
             )
     }
 
     execute {
         // Execute the bridge
-        let nft: @{NonFungibleToken.NFT} <- FlowEVMBridge.bridgeNFTFromEVM(
-            caller: self.coa,
-            calldata: self.calldata,
+        let nft: @{NonFungibleToken.NFT} <- self.coa.withdrawNFT(
+            type: self.nftType,
             id: id,
-            evmContractAddress: self.evmContractAddress,
-            tollFee: <-self.tollFee
+            feeProvider: &self.scopedProvider as auth(FungibleToken.Withdraw) &{FungibleToken.Provider}
         )
         // Deposit the bridged NFT into the signer's collection
         self.collection.deposit(token: <-nft)
-    }
-
-    // Post-assert bridge completed successfully by checking the NFT resides in the Collection
-    post {
-        self.collection.borrowNFT(
-            FlowEVMBridgeUtils.uint256ToUInt64(value: id)
-        ) != nil:
-            "Problem bridging to signer's COA!"
+        // Destroy the ScopedFTProvider
+        destroy self.scopedProvider
     }
 }
 ```
@@ -1996,26 +2295,21 @@ transaction(nftTypeIdentifier: String, id: UInt256, collectionStoragePathIdentif
 
 ### Compatibility
 
-This bridge design will support bridging fungible and non-fungible token assets between VMs, and doesn't account for
-cases where the type instances overlap - i.e. semi-fungible tokens or multi-token contracts.
+This bridge design will support bridging fungible and non-fungible token assets between VMs, and explicitly reverts on
+mixed tokens - i.e. semi-fungible tokens or multi-token contracts.
 
-Of course, this bridge also dovetails with the ongoing virtualized EVM work, so is dependent on the existence of that
-environment.
+Also note that the existence of this VM bridge does not preclude anyone else from building another one. The design
+of this bridge and its integration with the COA resource may mean that self-rolled or project-specific bridges - while
+increasing cross-VM flexibility and customization - may create infrastructure fragmentation. If this becomes a more
+widespread issue, it may be worth considering a standardization of bridge interfaces and/or the addition of a routing
+layer to consolidate such fragmentation.
 
 ## Prior Art
 
 While the work is happening concurrently, there may be some cross-pollination between this project and the [Axelar
 Interchain Token Service](https://github.com/AnChainAI/anchain-axelar-dapper-flowbridge).
 
-## Questions & Discussion Topics
+## Source Code
 
-- What does the interplay between risk vectors, tokenomics, and UX requirements imply for the fee amounts charged for
-  bridging between VMs
-  - Do we charge on a per instance or per locked storage unit basis?
-- How will we handle either bridging or serving metadata for bridged Flow-native NFTs given the difference in metadata
-  standards between Cadence & EVM?
-- Is there an upper bound to how many contracts a single account can host?
-- What if any issues with the NFT ID type differences - `UInt64` in Cadence & `uint256` in Solidity - present for
-  potential overflow & collisions when moving between EVM -> Flow?
-- Are there additional metadata mechanisms we should consider in the contract designs that would help platforms better
-  represent bridged assets?
+The implementation against this design can be found at
+[onflow/flow-evm-bridge](https://github.com/onflow/flow-evm-bridge/tree/main)
