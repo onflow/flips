@@ -230,7 +230,7 @@ Hence, the engine can attribute a protocol-level violation to the malicious send
 2. This approach adds a computation overhead to the Flow protocol engines, as the engines must sign all the messages that are sent through the `Conduit` interface, and on the receiving side, the 
    networking layer must verify the signature of the message against the Staking Key of the sender. This overhead is not negligible, as the Flow protocol engines are the most performance critical components of the Flow blockchain. 
    Hence, we must carefully evaluate the performance overhead of this approach. Moreover, with this approach, we are extending the size of data sent over the wire by piggybacking the signature.
-   Assuming that we are using ECDSA with `secp521r1` curve and SHA-512 for hashing, the signature size is ~100 bytes (in theory). Hence, we are adding ~100 bytes to the size of data sent over the wire.
+   Assuming that we are using ECDSA with `secp256r1` curve, the signature size is 64 bytes. Hence, we are adding 64 bytes to the size of data sent over the wire.
    Nevertheless, the performance overhead and the size of data sent over the wire may be an acceptable trade-off for the security guarantees that this approach provides.
 
 ### Is the GossipSub Router Signature Still Necessary?
