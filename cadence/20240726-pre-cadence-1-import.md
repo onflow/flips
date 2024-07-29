@@ -33,7 +33,7 @@ working to the degree where at least the fields required by the standards stay r
 
 Cadence 1.0 contains many breaking changes.
 Pre-1.0 programs deployed to networks need to be updated to 1.0 to stay functional.
-However, might not get updated which renders them unusable:
+However, they might not get updated which renders them unusable:
 Both directly importing a pre-1.0 program
 and indirectly importing it by working with a value that has a type defined in a pre-1.0 program
 will very likely result in a parsing or type checking error,
