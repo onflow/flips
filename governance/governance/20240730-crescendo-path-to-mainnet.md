@@ -27,18 +27,18 @@ The main goal of this FLIP is to transition smoothly to a more stable and reliab
 - Designated team members will monitor the upgrade process, ensuring that any necessary adjustments are made promptly.
 - Actual adjustments on-chain will be made by the service committee.
 
-### Test Cases
+## Test Cases
 - Early Phase Testing: Evaluate the system’s response and developer’s adjustments when the failure rate is below 10%.
 - Mid-Phase Testing: Assess network stability and data integrity when the failure rate reaches around 50%.
 - Final Phase Testing: Confirm that all systems operate smoothly at 100% failure rate and that all necessary mitigations are effective.
 
-### Dependencies
+## Dependencies
 - This FLIP depends on the successful integration of Flow’s VRF and the readiness of the network’s existing infrastructure to support the incremental upgrades.
 
-### Security and Privacy Considerations
+## Security and Privacy Considerations
 - The upgrade process will be closely monitored for any potential security vulnerabilities that could arise from increased transaction failures.
 - Privacy will be maintained according to Flow’s standard operational protocols, ensuring that no sensitive data is compromised during the testing phases.
 
-### References
+## References
 - Issue tracking this FLIP: [284](https://github.com/onflow/flips/issues/284)
 - Forum Post (to be posted)
