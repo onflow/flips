@@ -1,11 +1,11 @@
 # FLIP-284: Crescendo Path to Mainnet
 
-| Status        | Accepted                                            |
-:-------------- |:---------------------------------------------------- |
-| **FLIP #**    | 284
-| **Author(s)** | Vishal Changrani (vishal.changrani@flowfoundation.com) | 
-| **Sponsor**   | Vishal Changrani (vishal.changrani@flowfoundation.com) |
-| **Updated**   | 2024-07-30                                             |
+| Status        | Accepted         |
+:-------------- |:-----------------|
+| **FLIP #**    | 284              |
+| **Author(s)** | Vishal Changrani | 
+| **Sponsor**   | Vishal Changrani |
+| **Updated**   | 2024-07-30       |
 
 ## Introduction
 
