@@ -41,4 +41,4 @@ The main goal of this FLIP is to transition smoothly to a more stable and reliab
 
 ## References
 - Issue tracking this FLIP: [284](https://github.com/onflow/flips/issues/284)
-- Forum Post (to be posted)
+- [Forum Post](https://forum.flow.com/t/crescendo-network-upgrade-on-flows-mainnet/6323)
