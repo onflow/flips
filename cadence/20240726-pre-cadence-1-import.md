@@ -1,8 +1,8 @@
 ---
-status: proposed
+status: implemented
 flip: 282
 authors: bastian.mueller@flowfoundation.org
-updated: 2024-07-26
+updated: 2024-08-13
 ---
 
 # FLIP 282: Import of pre-Cadence 1.0 Programs
