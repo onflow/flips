@@ -1,6 +1,6 @@
 # FLIP-284: Crescendo Path to Mainnet
 
-| Status        | Proposed         |
+| Status        | Accepted         |
 :-------------- |:-----------------|
 | **FLIP #**    | 284              |
 | **Author(s)** | Vishal Changrani | 
