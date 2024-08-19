@@ -150,8 +150,8 @@ down into their respective forks to help with understanding.
   address
 * Bridge ensures transfer was successful
 * Bridge validates its ownership of the NFT on EVM side after transfer, thus locking NFT to be bridged
-* Bridge unlocks the Cadence NFT if escrowed, otherwise mints NFT from the bridge-owned NFT contract and returns to
-  caller
+* Bridge unlocks the Cadence NFT if escrowed, otherwise mints NFT 
+from the bridge-owned NFT contract and returns it to the caller
 * Collection is configured if necessary and deposited to COA A's account
 
 # Design Proposal
