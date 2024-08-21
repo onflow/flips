@@ -78,7 +78,7 @@ All the tokens are stored in a single universal `LostAndFound` contract. This ca
 
 This FLIP introduces the `LostAndFound` contract as a dependancy for the Flow Port and Flow Wallet products.
 
-It's recommended that the Flow Foundation co-own the `LostAndFound` contract, ensuring that changes are confirmed by multiple parties.
+Flowty will continue to own the `LostAndFound` contract.
 
 ### Best Practices
 
@@ -125,3 +125,5 @@ Storage and account initialization are unique concepts of Flow.
 3. Is the contract secure enough?
 
 4. What are the performance implications of storing all tokens in a single contract?
+
+5. How can users trust contract owners that there will be no rogue updates to the contract code that could affect locked assets?
