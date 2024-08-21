@@ -36,13 +36,9 @@ When the user enters the recipient's address on Flow Port or Flow Wallet, a Cade
 
     The transaction proceeds as usual.
 
-- **Initialized but lacks storage**
+- **Not initialized** or **Initialized but lacks storage**
 
-    The amount of extra storage and required FLOW tokens will be calculated and displayed to the sender. If the user confirms the transaction, the required FLOW tokens are also sent to the receiver. In this case the `FeeEstimator` contract will be used, but the tokens can be sent directly to the receiver.
-
-- **Not initialized**
-
-    The amount of needed storage and required FLOW tokens are calculated and displayed to the sender. Upon confirmation, the tokens and required FLOW for storage will be deposited into the `LostAndFound` contract. The receiver can choose to claim the tokens and FLOW when they are online.
+    The amount of needed storage and required FLOW tokens are calculated and displayed to the sender. Upon confirmation, the tokens and required FLOW for storage will be deposited into the `LostAndFound` contract. The receiver can choose to claim the tokens when they are online.
 
 #### Receiving Tokens
 
@@ -52,11 +48,11 @@ When a user logs in to Flow Port or Flow Wallet the following will happen:
 
 2. If the user has unclaimed tokens, they will be shown in the new "inbox" section. In this screen, the user can:
 
-    - View a list of unclaimed tokens and the associated FLOW stored for each.
+    - View a list of unclaimed tokens and the associated info.
 
-    - Redeem one or multiple number of tokens. The user will be prompted to approve the transaction to claim the token(s) and FLOW.
+    - Redeem one or multiple number of tokens. The user will be prompted to approve the transaction to claim the token(s). FLOW tokens held for storage will be transferred to the sender.
 
-    - Discard one or multiple number of tokens. The user will be prompted to approve the transaction. The tokens will be destroyed and the user can claim the FLOW for storage.
+    - Discard one or multiple number of tokens. The user will be prompted to approve the transaction. The tokens will be destroyed and the sender will receive the FLOW locked for storage.
 
 ### Drawbacks
 
