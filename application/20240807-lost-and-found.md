@@ -64,7 +64,7 @@ When a user logs in to Flow Port or Flow Wallet the following will happen:
 
 #### Using child accounts
 
-Instead of a contract, the sender could create a child account for the recipient and transfer the tokens there. The recipient can later claim the account. However, the minimum storage balance cannot be claimed by the recipient as accounts cannot be destroyed on Flow, making this solution more costly for the sender and recipient.
+Instead of a contract, the sender could create a child account for the recipient and transfer the tokens there. The recipient can later claim the account. However, the minimum storage balance cannot be claimed by the recipient as accounts cannot be destroyed on Flow. Additionally, the minimium storage balance might increase in the future, thus making this solution more costly for the sender and recipient.
 
 #### Solving at Protocol Level
 
