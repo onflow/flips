@@ -24,21 +24,19 @@ Developers can avoid repeatedly using `concat` to generate strings which will si
 
 ## Design Proposal
 
-There are many possible implementations two of which are highlighted below. The main constraint is backward compatibility, existing Cadence 1.0 code cannot be affected.
+The main constraint is backward compatibility, existing Cadence 1.0 code cannot be affected. The proposed solution follows the syntax of swift as below:
 
-### Python f-string syntax
-Support the following:
-```python
-f"value is {value}"
-```
-This change is backwards compatible as it introduces a new class of strings.
-
-### Swift \\()
-Support the following:
 ```swift
-"value is \(value)"
+"Variable = \(someVar)"
 ```
+
 This change is backwards compatible because `\(` is not currently a valid escape character. 
+
+For this initial proposal there will be several limitations on `someVar`:
+- `someVar` will only be variable references with ability to be extended to expressions in the future
+- `someVar` must support the built-in function `toString()` meaning it must be either a String, Number, Address or Character.  
+
+This is still useful for the first iteration since there are easy workarounds for these limitations such as extracting expressions into local variables.
 
 ### Drawbacks
 
@@ -77,7 +75,7 @@ This is a feature addition, no impact.
 
 ## Related Issues
 
-Extension to support expressions as opposed to just identifiers. Support custom `toString()` functions as well.
+https://github.com/onflow/cadence/issues/3579
 
 ## Prior Art
 
@@ -88,6 +86,6 @@ Extension to support expressions as opposed to just identifiers. Support custom 
 
 Feel free to discuss on the PR.
 
-Questions:
-- Preferences or concerns on proposed syntax
-- It may be less work to allow expressions versus enforcing identifier only, how much extra testing would be involved?
+## Implementation
+
+A POC is available at https://github.com/onflow/cadence/pull/3585.
