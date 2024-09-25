@@ -85,7 +85,7 @@ will solve it. Specifically, the FLIP will:
 ## FLIP process
 
 ### Pre-FLIP Ideation
-1. Before submitting a new FLIP, check for prior proposals, the [Flow community forum](https://forum.onflow.org/) and ask in the [Discord server](https://discord.gg/flowblockchain). The idea may have been proposed before or may be in active discussion. Consider contributing or giving feedback to existing proposals.
+1. Before submitting a new FLIP, check for prior proposals, the [Flow community forum](https://forum.onflow.org/) and ask in the [Discord server](https://discord.gg/flow). The idea may have been proposed before or may be in active discussion. Consider contributing or giving feedback to existing proposals.
 2. If a new proposal is appropriate, propose a rough sketch of the idea in the forum [Flow community forum](https://forum.onflow.org/) and engage in discussion with the community, project contributors, and maintainers, to get early feedback.
 
 ### Authoring the FLIP
@@ -123,7 +123,7 @@ Once the FLIP is ready for review:
    At the top of the PR identify how long the comment period will be.
    This should be a minimum of two weeks from posting the PR.
 
-4. Send a message to the #developers channel on [Discord](https://discord.gg/flowblockchain) with a brief description, a link to the PR and a request for review
+4. Send a message to the #developers channel on [Discord](https://discord.gg/flow) with a brief description, a link to the PR and a request for review
 
 ### Managing Community Discussion
 
@@ -150,7 +150,7 @@ Once the FLIP is ready for review:
 
    Note that While implementation code is not necessary to start the FLIP process, its existence in full or part may help the design discussion.
 
-If in any doubt about this process, feel free to ask on [Discord](https://discord.gg/flowblockchain),
+If in any doubt about this process, feel free to ask on [Discord](https://discord.gg/flow),
 the [community forum](https://forum.onflow.org/), or file an issue in this repository
 ([`onflow/flow`](https://github.com/onflow/flow/issues)).
 
@@ -206,7 +206,7 @@ In particular this includes:
 While we encourage and celebrate every contributor, the bar for FLIP acceptance should be kept intentionally high.
 A design may be rejected or need significant revision at any one of these stages:
 
-* initial design conversations on the [Flow community forum](https://forum.onflow.org/) or [Discord server](https://discord.gg/flowblockchain)
+* initial design conversations on the [Flow community forum](https://forum.onflow.org/) or [Discord server](https://discord.gg/flow)
 * failure to recruit a sponsor
 * critical objections during the feedback phase
 * failure to achieve consensus during the design review
