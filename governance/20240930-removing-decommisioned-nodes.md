@@ -20,3 +20,5 @@ This will remove the node from the network in the next epoch.
    Even though access nodes no longer have to be added to the approved list of nodes, this node was added to the network before the launch of permissionless access nodes and therefore had to be added to the approved list back then.
 
 ### [Issue](https://github.com/onflow/flips/issues/291)
+
+### [Forum Post](fourm post: https://forum.flow.com/t/flip-gov-291-remove-two-nodes-from-the-approved-list-of-nodes/6599)
