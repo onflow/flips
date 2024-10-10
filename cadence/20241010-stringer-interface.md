@@ -10,7 +10,7 @@ updated: 2024-10-10
 
 ## Objective
 
-This flip proposes the addition of a struct interface `StructStringer` which all string-convertible structs will implement. The goal of this FLIP is to simplify the code for converting `AnyStruct` to `String` while allowing for customizability. 
+This flip proposes the addition of a struct interface `StructStringer` which all string-convertible structs will implement. One goal of this FLIP is to simplify the code for converting `AnyStruct` to `String`. Secondly, a customizable `toString` will be useful for future string formatting such as string interpolation with this interface.
 
 ## Motivation
 
@@ -41,11 +41,11 @@ access(all) fun toString(_ value: AnyStruct): String? {
     }
 }
 ```
-The same code above additionally allows for conforming `Struct`s to be converted to `String`s as well which was not previously generalizable.
+The same code above additionally allows for a conforming `Struct` to be converted to a `String` as well which was not previously generalizable. This can be useful for various string formatting functions.
 
 ## User Benefit
 
-This will significantly streamline the process of converting `AnyStruct` values to `String` which is useful for developers. It also allows for much cleaner and simpler descriptions of `Struct`s for both developers and end users.
+This will significantly streamline the process of converting `AnyStruct` values to `String` which is useful for developers. It also allows for much cleaner and simpler descriptions of a `Struct` for both developers and end users through customizability. It also allows for more powerful string formatting functions.
 
 ## Design Proposal
 
@@ -61,11 +61,11 @@ struct interface StructStringer {
 
 ### Drawbacks
 
-As with all user-defined types there are risks associated with calling someone else's `toString` function such as panic or gas usage concerns that developers need to be aware of. This means that unless it is a primitive type you will have to perform the necessary defensive checks. 
+As with all user-defined types there are risks associated with calling someone else's `toString` function such as panic or gas usage concerns that developers need to be aware of. This means that unless the value in question is a primitive type you will have to perform the necessary defensive checks. 
 
 ### Alternatives Considered
 
-An alternative is to have `AnyStruct` itself implement a `toString` function. As a native function there is no longer any risk of malicious code and it still solves the problem of unnecessarily long `AnyStruct` to `String` conversions. The downside of this approach is in limiting customizability for developers. 
+An alternative is to have `AnyStruct` itself implement a `toString` function. As a native function there is no longer any risk of malicious code and it still solves the first goal. Additionally, it still allows for more powerful string formatting. The downside of this approach is in limiting customizability for developers. 
 
 ### Performance Implications
 
