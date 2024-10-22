@@ -1,12 +1,12 @@
-# Allow new fields in deployed Resources and Structs
-
 ---
-status: proposed 
+status: proposed
 flip: TBD
-authors: Deniz Mert Edincik (deniz@edincik.com), Austin Kline (austin@flowty.io)  
+authors: Deniz Mert Edincik (deniz@edincik.com), Austin Kline (austin@flowty.io)
 sponsor: Bastian Mueller (bastian.mueller@flowfoundation.org)
 updated: 2022-08-17
 ---
+
+# FLIP: Allow adding new fields to existing types
 
 ## Objective
 This proposed change will allow existing structs and resources to add new fields to them by
@@ -14,15 +14,15 @@ using optional and default assignment embedded in the object definition itself.
 
 ## Motivation
 
-One major challenge in smart contract design in cadence is the inability to add new fields to already deployed 
-structs and resources. Not having the ability to do this means that contracts either get extended 
+One major challenge in smart contract design in cadence is the inability to add new fields to already deployed
+structs and resources. Not having the ability to do this means that contracts either get extended
 with data that exists in another contract, entirely new contracts are made that are essentially reprints of the
 original, except with the newly added fields, or some other workaround such as storing fields as dictionaries
 and building them into at runtime.
 
-Each of these workarounds come with their downsides. 
-- New contracts lead to complex migrations for applications and sunsetting existing contracts. 
-- Hosting new data in another contract leads to harder-to-follow code and added complexity. 
+Each of these workarounds come with their downsides.
+- New contracts lead to complex migrations for applications and sunsetting existing contracts.
+- Hosting new data in another contract leads to harder-to-follow code and added complexity.
 - Factory patterns increase compute since objects must be built at runtime and also lose the benefits of type-checking
     since the underlying structure is not truly typed.
 
@@ -50,13 +50,13 @@ We could now add a new field to this struct in a few ways
 ```cadence
 pub struct Message {
     pub let content: String
-    
+
     // new fields
     // an optional new field. Existing instances of Message will have timestamp set to nil when accessed
     // unless they are set at a later date
     pub let timestamp: UInt64?
     // a default initialized field, Existing instances of Message will take the default value.
-    pub let received: Bool = false 
+    pub let received: Bool = false
 }
 ```
 
@@ -72,7 +72,7 @@ This should be backwards compatible
 ### User Impact
 
 - Cadence developers will be able to modify their contract more to their needs instead of over-designing with
-the first launch of their contract(s). 
+the first launch of their contract(s).
 - If new unforeseen features or fixes require new fields, those additions can be kept in the original contract instead of being silo'd off into their own contract.
 
 ## Prior Art
