@@ -21,6 +21,10 @@ the ability to remove types from their contracts as they become outdated or othe
 The Cadence 1.0 upgrade in particular had exacerbated this need, as the changes to access control have
 rendered a number of types obsolete.
 
+However, [removing a type definition hasn't been possible/allowed](https://cadence-lang.org/docs/language/contract-updatability#invalid-changes-2)
+so far, since it can create type safety issues, by being able to re-add a different type definition with the same name later.
+So this motivated the necessity of having a way to tombstone a type definition.
+
 ## User Benefit
 
 This will allow users to remove deprecated or unnecessary type definitions from their contracts.
