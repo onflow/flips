@@ -10,7 +10,7 @@ updated: 2024-10-21
 
 ## Objective
 
-This flip proposes the addition of a struct interface `StructStringer` which all string-convertible structs will implement. One goal of this FLIP is to simplify the process for representing `AnyStruct` as a `String`. Secondly, a customizable `toString` will be useful for future string formatting such as string interpolation with this interface.
+This FLIP proposes the addition of a struct interface `StructStringer` to Cadence, which all string-convertible structs will implement. One goal of this FLIP is to simplify the process for representing `AnyStruct` as a `String`. Secondly, a customizable `toString` will be useful for future string formatting such as string interpolation with this interface.
 
 ## Motivation
 
@@ -36,12 +36,12 @@ access(all) fun toString(_ value: AnyStruct): String? {
 With the proposed addition, the code could be simplified to 
 ```cadence
 access(all) fun toString(_ value: AnyStruct): String? {
-    if let stringerValue = value as ? {StructStringer} {
+    if let stringerValue = value as? {StructStringer} {
         return stringerValue.toString()
     }
 }
 ```
-Additionally a conforming `Struct` can be converted to a `String` in the same function which was not previously possible. This can be useful for various string formatting functions.
+Additionally a conforming struct can be converted to a `String` in the same function which was not previously possible. This can be useful for various string formatting functions.
 
 ## User Benefit
 
@@ -99,6 +99,7 @@ Feature addition, no impact.
 
 Many languages have an interface for formatting types as `String` such as
 
-- [Display trait](https://doc.rust-lang.org/std/fmt/trait.Display.html) in Rust
-- `Stringer` in Go
+- [`Display` trait](https://doc.rust-lang.org/std/fmt/trait.Display.html) in Rust
+- [`Stringer` interface](https://pkg.go.dev/fmt#Stringer) in Go
+- [`CustomStringConvertible`](https://developer.apple.com/documentation/swift/customstringconvertible)  in Swift
 
