@@ -98,3 +98,32 @@ This should be backwards compatible
 ## Prior Art
 
 N/A
+
+## Open Questions
+
+- Adding fields can only be allowed if it is not possible to re-add previously removed fields.
+
+  One option could be to allow keep allowing to remove existing fields,
+  but require them to be "tomb-stoned",
+  similar to how [FLIP 275](https://github.com/onflow/flips/issues/275) proposes
+  to allow removing existing type definitions.
+
+- A previous iteration of the proposal also proposed to allow adding non-optional fields,
+  by allowing the definition of the added field to provide a *default* value.
+
+  This could be useful for types for which an optional type unnecessarily complicates the type,
+  such as for simple types like `Bool`, `String`, `Int`, etc.
+
+  For example, the field added in the example above could be written instead as:
+
+  ```cadence
+  let timestamp: UInt64 = 0
+  ```
+
+  Support for default values could be restricted to just certain types (e.g. `Bool`, `String`, numbers),
+  and default value expressions could be restricted to just literals (e.g. `true`, `""`, `0`).
+  Further, value expressions could be extended to allow access to `self`,
+  and access expressions on it could be allowed.
+
+  The default value functionality would be similar to default values of
+  [resource destruction events](https://github.com/onflow/flips/blob/main/cadence/20230811-destructor-removal.md#destruction-events).
