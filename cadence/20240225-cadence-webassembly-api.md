@@ -1,8 +1,8 @@
 ---
-status: draft
+status: proposed
 flip: 255
 authors: darkdrag00n (darkdrag00n@proton.me)
-sponsor: Bastian Müller (bastian@dapperlabs.com)
+sponsor: Bastian Müller (bastian.mueller@flowfoundation.org)
 updated: 2024-02-25
 ---
 
@@ -130,11 +130,7 @@ While the specifics are dependant on the exact engine used, the following memory
 None
 
 ### Alternatives Considered
-Initial proposal considered defining operators such as `..` or `downTo` for defining `Range`. It also proposed adding another type named `Progression` for allowing non-default values of `step`. 
-
-Due to the readability concerns associated with the inclusive vs exclusive behavior of the operators, it was considered better to have types and constructor functions with self-explanatory names to avoid ambiguity.
-
-It was also proposed that since `Progression` is essentially a `Range` with non-default value of `step`, the two types can be merged into one.
+None
 
 ### Performance Implications
 
