@@ -59,6 +59,8 @@ struct interface StructStringer {
 }
 ```
 
+The prefix `Struct` is present to make it clear this is a struct interface and in the future a resource interface can be added.
+
 ### Drawbacks
 
 As with all user-defined types there are risks associated with calling someone else's `toString` function such as panic or gas usage concerns that developers need to be aware of.
