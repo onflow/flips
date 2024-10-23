@@ -108,6 +108,13 @@ N/A
   similar to how [FLIP 275](https://github.com/onflow/flips/issues/275) proposes
   to allow removing existing type definitions.
 
+  For example, field declarations would need to be replaced by e.g. `#removedField(name)`.
+
+  However, how do we handle fields that were already previously removed,
+  but are still stored in the object?
+  We could clean up existing stored composite values and remove stored fields
+  that are not declared in the type.
+
 - A previous iteration of the proposal also proposed to allow adding non-optional fields,
   by allowing the definition of the added field to provide a *default* value.
 
