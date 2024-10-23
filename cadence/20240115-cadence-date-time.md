@@ -2,7 +2,7 @@
 status: draft
 flip: 245
 authors: darkdrag00n (darkdrag00n@proton.me)
-sponsor: Bastian Müller (bastian@dapperlabs.com)
+sponsor: Bastian Müller (bastian.mueller@flowfoundation.org)
 updated: 2024-01-29
 ---
 
