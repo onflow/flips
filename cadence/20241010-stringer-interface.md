@@ -6,7 +6,7 @@ sponsor: Supun Setunga (supun.setunga@flowfoundation.org)
 updated: 2024-10-21
 ---
 
-# FLIP 293: Stringer Interface
+# FLIP 293: StructStringer Interface
 
 ## Objective
 
