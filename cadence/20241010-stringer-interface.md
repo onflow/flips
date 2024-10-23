@@ -10,7 +10,9 @@ updated: 2024-10-21
 
 ## Objective
 
-This FLIP proposes the addition of a struct interface `StructStringer` to Cadence, which all string-convertible structs will implement. One goal of this FLIP is to simplify the process for representing `AnyStruct` as a `String`. Secondly, a customizable `toString` will be useful for future string formatting such as string interpolation with this interface.
+This FLIP proposes the addition of a struct interface `StructStringer` to Cadence, which all string-convertible structs will implement. Note that some languages distinguish between a "human-readable representation" and a "debug representation". The purpose of the `StructStringer` interface is to help with providing "human-readable representations" of `AnyStruct` and is separate from the "debug representation" which already exists.
+
+One goal of this FLIP is to simplify the process for representing `AnyStruct` as a `String`. Secondly, a customizable `toString` will be useful for future string formatting such as string interpolation with this interface. 
 
 ## Motivation
 
@@ -45,7 +47,7 @@ Additionally a conforming struct can be converted to a `String` in the same func
 
 ## User Benefit
 
-This will significantly streamline the process of converting `AnyStruct` values to `String` which is useful for developers, especially for debugging and providing user readable descriptions. It also allows for more powerful string formatting functions.
+This will significantly streamline the process of converting `AnyStruct` values to `String` which is useful for developers, in providing human readable descriptions. It also allows for more powerful string formatting functions.
 
 ## Design Proposal
 
