@@ -6,7 +6,7 @@ sponsor: Jerome Pimmel (jerome.pimmel@dapperlabs.com)
 updated: 2024-01-03
 ---
 
-# FLIP 235: Flow EVM Gateway
+# FLIP 243: Flow EVM Gateway
 
 An implementation of the Ethereum JSON-RPC specification.
 
