@@ -1,9 +1,9 @@
 ---
-status: draft 
+status: accepted 
 flip: 288
 authors: Raymond Zhang (raymond.zhang@flowfoundation.org)
 sponsor: Supun Setunga (supun.setunga@flowfoundation.org) 
-updated: 2024-09-23
+updated: 2024-10-30
 ---
 
 # FLIP 288: Simple String Interpolation
