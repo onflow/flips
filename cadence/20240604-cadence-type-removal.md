@@ -1,9 +1,9 @@
 ---
-status: proposed
+status: accepted
 flip: 275 
 authors: Daniel Sainati (daniel.sainati@flowfoundation.org)
 sponsor: Daniel Sainati (daniel.sainati@flowfoundation.org)
-updated: 2024-10-22
+updated: 2024-10-30
 ---
 
 # FLIP 275: Removal of Types in Contract Updates
