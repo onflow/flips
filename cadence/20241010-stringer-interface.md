@@ -1,9 +1,9 @@
 ---
-status: draft 
+status: approved
 flip: 293
 authors: Raymond Zhang (raymond.zhang@flowfoundation.org)
-sponsor: Supun Setunga (supun.setunga@flowfoundation.org) 
-updated: 2024-10-21
+sponsor: Supun Setunga (supun.setunga@flowfoundation.org)
+updated: 2024-10-30
 ---
 
 # FLIP 293: StructStringer Interface
@@ -12,7 +12,7 @@ updated: 2024-10-21
 
 This FLIP proposes the addition of a struct interface `StructStringer` to Cadence, which all string-convertible structs will implement. Note that some languages distinguish between a "human-readable representation" and a "debug representation". The purpose of the `StructStringer` interface is to help with providing "human-readable representations" of `AnyStruct` and is separate from the "debug representation" which already exists.
 
-One goal of this FLIP is to simplify the process for representing `AnyStruct` as a `String`. Secondly, a customizable `toString` will be useful for future string formatting such as string interpolation with this interface. 
+One goal of this FLIP is to simplify the process for representing `AnyStruct` as a `String`. Secondly, a customizable `toString` will be useful for future string formatting such as string interpolation with this interface.
 
 ## Motivation
 
@@ -35,7 +35,7 @@ access(all) fun toString(_ value: AnyStruct): String? {
     ...
 }
 ```
-With the proposed addition, the code could be simplified to 
+With the proposed addition, the code could be simplified to
 ```cadence
 access(all) fun toString(_ value: AnyStruct): String? {
     if let stringerValue = value as? {StructStringer} {
@@ -54,7 +54,7 @@ This will significantly streamline the process of converting `AnyStruct` values 
 The proposed interface is as follows
 
 ```cadence
-access(all) 
+access(all)
 struct interface StructStringer {
     access(all)
     view fun toString(): String
