@@ -6,8 +6,6 @@ sponsor: Jerome Pimmel (jerome.pimmel@flowfoundation.org), Peter Argue (peter.ar
 updated: 2023-12-15
 ---
 
-
-
 # [FLIP 229] Access Streaming API Expansion
 
 ## Objective

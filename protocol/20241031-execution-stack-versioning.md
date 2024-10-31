@@ -1,6 +1,6 @@
 ---
 status: draft 
-flip: ???
+flip: 296
 authors: Alex Hentschel (alex.hentschel@flowfoundation.org)
 sponsor: Jordan Schalm (jordan.schalm@flowfoundation.org), Yurii Oleksyshyn (yurii.oleksyshyn@flowfoundation.org)
 updated: 2024-10-31
@@ -29,7 +29,7 @@ The software version is a meaningful reference to describe what the software doe
 
 However, we also desire a compact identifier [which we will call the ‘Component Version’] of how a Flow node *should* behave. 
 
-![VersioningConcepts.png](20241031-execution-stack-versioning/VersioningConcepts.png)
+<img src='https://github.com/user-attachments/assets/b88f92ad-c230-417e-bf32-6c9c18e09d61' width='200'>
 
 **Component Version:** version identifier for a component of the flow protocol. It references one specific behaviour of a sub-system (e.g. Execution Stack or HotStuff) of Flow, as prescribed by the protocol. 
 
