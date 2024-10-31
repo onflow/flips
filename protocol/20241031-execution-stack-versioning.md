@@ -7,7 +7,7 @@ updated: 2024-10-31
 ---
 
 
-# [FLIP ???] Utilize Dynamic Protocol State for Version Beacon (coordinating upgrades of the Execution Stack) 
+# [FLIP 296] Utilize Dynamic Protocol State for Version Beacon (coordinating upgrades of the Execution Stack) 
 
 ## Objective
 ![Overview](20241031-execution-stack-versioning/Execution_Stack_Versioning_goal.png)
@@ -19,12 +19,12 @@ updated: 2024-10-31
 
 ## Terminology
 
-See blog post [[1](https://forum.flow.com/t/protocol-version-upgrade-mechanisms-discussion/5717)] for further details
+See blog post [[1](https://forum.flow.com/t/protocol-version-upgrade-mechanisms-discussion/5717)] for further details:
 
 **Software Version** - The version identifier of a binary distribution of Flow Node software.
 By convention, we use semver-ish tag in Git and Docker releases.
 
-Software has bugs. and is frequently incomplete (e.g. API returning ‘not yet implemented’).
+Software has bugs and is frequently incomplete (e.g. API returning ‘not yet implemented’).
 The software version is a meaningful reference to describe what the software does in the real world. 
 
 However, we also desire a compact identifier [which we will call the ‘Component Version’] of how a Flow node *should* behave. 
@@ -42,7 +42,9 @@ In the nutshell, for every block there is one and only one correct way of how to
 - A software version can implement multiple Component Versions.
 E.g. AN supporting script execution across HCU boundaries
     
-    ❗Don’t couple the software version to the component version!
+    ❗Don’t couple the software version to the component version! We know there will be scenarios where we want one software to implement multiple
+    Component Versions and at that point, any one-to-one coupling of Software and Component Version will necessarily break. Instead, for each software
+    version, we conceptually have a _list_ of Component Versions that this software supports (even if that list only contains a single element most of the time).
     
 
 ### Reasons we want to move away from existing Version Beacon:
