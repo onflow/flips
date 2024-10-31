@@ -64,19 +64,19 @@ Current Version Beacon:
 
 💡 In a nutshell, the Protocol State tracks information about each block, including a mechanism to transfer information from the Execution state to the Protocol State in a BFT manner. 
 
-- Flow’s Protocol State to tracks and and provides simple access to information about each blocks (such as epoch number, staking phase, staked nodes allowed to participate as of this block, nodes public keys, etc)  👉 [code](https://github.com/onflow/flow-go/blob/3496c0f02d51602994d4fe60b32fcb00aab084f4/state/protocol/protocol_state.go#L91)
-- The Protocol State now also tracks the Component Versions of the most critical consensus component (at the moment: its own version)  👉 [code](https://github.com/onflow/flow-go/blob/3496c0f02d51602994d4fe60b32fcb00aab084f4/state/protocol/protocol_state.go#L100)
+- Flow’s Protocol State to tracks and and provides simple access to information about each blocks (such as epoch number, staking phase, staked nodes allowed to participate as of this block, nodes public keys, etc) 👉[code](https://github.com/onflow/flow-go/blob/3496c0f02d51602994d4fe60b32fcb00aab084f4/state/protocol/protocol_state.go#L91).
+- The Protocol State now also tracks the Component Versions of the most critical consensus component (at the moment: its own version)  👉[code](https://github.com/onflow/flow-go/blob/3496c0f02d51602994d4fe60b32fcb00aab084f4/state/protocol/protocol_state.go#L100).
 
-☑️ The Protocol State already tracks its own Component Version. You can take a look at these places in the code
+☑️ The Protocol State already tracks its own Component Version. You can take a look at these places in the code:
  - Protocol State reports its own [version](https://github.com/onflow/flow-go/blob/3496c0f02d51602994d4fe60b32fcb00aab084f4/state/protocol/kvstore.go#L30-L43) as part of every block
  - mechanism for [scheduling version upgrades (at future view)](https://github.com/onflow/flow-go/blob/a6b157ce2770be9356e1cf35d1b0fff63f5e4a76/state/protocol/protocol_state/kvstore/upgrade_statemachine.go#L78-L142) exists
  - mechanism [enforcing that node supports and uses correct](https://github.com/onflow/flow-go/blob/a6b157ce2770be9356e1cf35d1b0fff63f5e4a76/state/protocol/protocol_state/state/protocol_state.go#L235-L248) version as specified by the protocol
 
 # Roadmap: Dynamic Protocol State for coordinating Execution Stack upgrades (including Cadence changes)
 
-Biggest change:
+Biggest change (and possibly only significant change):
 
-- Dynamic Protocol State should ingests Version Beacon Service Event and track’s the Execution Stack’s Component Version
+- Dynamic Protocol State should ingest Version Beacon Service Event and track’s the Execution Stack’s Component Version
 
 ![Illustration of Process](20241031-execution-stack-versioning/Execution_Stack_Versioning_(2).png)
 
