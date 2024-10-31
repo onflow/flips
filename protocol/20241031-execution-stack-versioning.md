@@ -70,9 +70,6 @@ Current Version Beacon:
  - mechanism for [scheduling version upgrades (at future view)](https://github.com/onflow/flow-go/blob/a6b157ce2770be9356e1cf35d1b0fff63f5e4a76/state/protocol/protocol_state/kvstore/upgrade_statemachine.go#L78-L142) exists
  - mechanism [enforcing that node supports and uses correct](https://github.com/onflow/flow-go/blob/a6b157ce2770be9356e1cf35d1b0fff63f5e4a76/state/protocol/protocol_state/state/protocol_state.go#L235-L248) version as specified by the protocol
 
-<aside>
-
-
 # Roadmap: Dynamic Protocol State for coordinating Execution Stack upgrades (including Cadence changes)
 
 Biggest change:
@@ -148,9 +145,9 @@ so ICs keep extending our existing but insufficiently general solution (existing
         or two separate Component Versions (one for Cadence and one for FVM)  
         
 - Start by including Component Version for Execution Stack into Dynamic Protocol State
-    - Breakdown of steps
-        
-        ![Execution Stack Versioning (3).png](20241031-execution-stack-versioning/Execution_Stack_Versioning_(3).png)
+  
+  Breakdown of steps:
+  ![Execution Stack Versioning (3).png](20241031-execution-stack-versioning/Execution_Stack_Versioning_(3).png)
         
 
 ## Further reading
