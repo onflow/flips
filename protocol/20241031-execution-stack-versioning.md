@@ -1,21 +1,94 @@
 ---
 status: draft 
-flip: 296
+flip: 298
 authors: Alex Hentschel (alex.hentschel@flowfoundation.org)
 sponsor: Jordan Schalm (jordan.schalm@flowfoundation.org), Yurii Oleksyshyn (yurii.oleksyshyn@flowfoundation.org)
-updated: 2024-10-31
+updated: 2024-11-01
 ---
 
 
-# [FLIP 296] Utilize Dynamic Protocol State for Version Beacon (coordinating upgrades of the Execution Stack) 
+# FLIP 296: Utilize Dynamic Protocol State for Version Beacon (coordinating upgrades of the Execution Stack) 
 
-## Objective
+## Objectives
+For a few years, we have been using a mechanism for upgrading Flow's execution stack. In April 2024, we have finished the implementation
+of the Dynamic Protocol State, which provides a significantly more robust and generally applicable framework for coordinating upgrades
+(for details, please see next section).
+
+This FLIP focuses on the following short term objective, but there is also the goal to foster our long-term development roadmap:
+* **Direct goal [focus of this flip]**: transition the existing mechanism for upgrading Flow's execution stack to using Dynamic Protocol State.
+  A more detailed scoping is necessary, but my gut feeling is that there is only a limited amount of work needed. In essence, we want to avoid
+  extending the old upgrade mechanism in a way that is incompatible with the Dynamic Protocol State and needing to be rewritten later.
+* Midterm goal: upgrades of the execution stack are by far the most frequent. By utilizing the Dynamic Protocol State for those upgrades, we
+  want to generate learnings on where the new framework should be improved.
+* Midterm goal: we are starting to use the Dynamic Protocol State for coordinating upgrades of other parts of the protocol.
+  We want to utilize the same framework as for execution stack upgrades, to reduce code and intellectual complexity that would
+  otherwise result from using significantly different approaches.    
+* Longer-term goal:  Access Nodes [ANs] can decide on whose blocks’ execution states they can run scripts for across different version of the execution stack. 
+
+
+## Motivation
+A blockchain is a distributed system without a central authority controlling the underlying IT infrastructure.
+Hence, scenarios must be considered where nodes run different software, node operators potentially don't update in time,
+and it is very difficult and time-intensive to coordinate upgrades via means outside the protocol. Hence, we desire
+that the protocol itself provides mechanisms to coordinate and enforce behaviors upgrades of honest nodes, whose operators
+are responsive on reasonable time scales.
+
+Here, we largely focus on the process by which the protocol specifies how certain component should behave, i.e. the component
+specification. Over time, the Flow protocol evolves and the specification for some components changes.
+Hence, we version component specifications for ease of referencing them.
+
 ![Overview](20241031-execution-stack-versioning/Execution_Stack_Versioning_goal.png)
 
-- Versioning the **Execution Stack** used by ENs, VNs, ANs
-    
-    Outlook: ANs can decide on whose blocks’ execution states they can run scripts for across Execution HCUs
-    
+
+### Status Quo
+At the moment, we have a mechanism for upgrading Flow's execution stack only. 
+This is by far the most frequently updated part of the node software and updates are frequently time-sensitive security fixes.
+We have a component called the Version Beacon, which specifies how the implementation _should_ behave and when that "expected behaviour"
+is supposed to change. In a nutshell, the Version Beacon for the execution stack currently specifies a block height and a "version" for the
+behaviour that should become active when nodes (that are concerned with execution, i.e. ENs, VNs, ANs) reach this height. 
+The updates themselves are triggered based on block height, and are therefore called Height-Coordinated Upgrades [HCUs]. 
+
+
+### Reasons we want to move away from the existing Version Beacon:
+
+
+Current Version Beacon:
+1. focused solely on the software stack for execution, where many aspects would need to be re-implemented if we wanted to apply the same upgrade progress to other parts of the protocol 
+
+   Better: some framework that unifies and encapsulates common functionality for broad protocol upgrades (including but not limited to the execution stack)  
+
+2. requires that nodes have (potentially long) history (have seen version beacon service event, which is not guaranteed for nodes joining at epoch boundaries)
+
+   Better: each block specifies which component version is to be used for processing it
+
+3. based on height and hence not usable for upgrading most protocol-related aspects (such as consensus, processing of information beyond transaction execution).
+
+   Better: using View instead of height for triggering behaviour changes is generally applicable and more robust (view monotonously increases over time, while height might also decrease).
+
+
+### Dynamic Protocol State already implements better mechanism
+
+💡 In a nutshell, the Protocol State tracks information about each block, including a mechanism to transfer information from the Execution state to the Protocol State in a BFT manner.
+
+- Flow’s Protocol State to tracks and provides simple access to information about each blocks (such as epoch number, staking phase, staked nodes allowed to participate as of this block, nodes public keys, etc) 👉[code](https://github.com/onflow/flow-go/blob/3496c0f02d51602994d4fe60b32fcb00aab084f4/state/protocol/protocol_state.go#L91).
+- The Protocol State now also tracks the Component Versions of the most critical consensus component (at the moment: its own version)  👉[code](https://github.com/onflow/flow-go/blob/3496c0f02d51602994d4fe60b32fcb00aab084f4/state/protocol/protocol_state.go#L100).
+
+☑️ The Protocol State already tracks its own Component Version. You can take a look at these places in the code:
+- Protocol State reports its own [version](https://github.com/onflow/flow-go/blob/3496c0f02d51602994d4fe60b32fcb00aab084f4/state/protocol/kvstore.go#L30-L43) as part of every block
+- mechanism for [scheduling version upgrades (at future view)](https://github.com/onflow/flow-go/blob/a6b157ce2770be9356e1cf35d1b0fff63f5e4a76/state/protocol/protocol_state/kvstore/upgrade_statemachine.go#L78-L142) exists
+- mechanism [enforcing that node supports and uses correct](https://github.com/onflow/flow-go/blob/a6b157ce2770be9356e1cf35d1b0fff63f5e4a76/state/protocol/protocol_state/state/protocol_state.go#L235-L248) version as specified by the protocol
+
+
+
+## User Benefit
+
+Upgrades without significant downtime are very important:
+* For large-scale adoption, a good user and developer experience, the flow platform must be reliably available.
+* However, we have the need to ship security fixes and evolve Flow, which requires software upgrades. The more frequently
+  we can deploy upgrades, the less risk there is for unforeseen problems caused by upgrades. Furthermore, frequent code deployments
+  generally reduce engineering efforts. 
+
+# Proposal
 
 ## Terminology
 
@@ -31,9 +104,12 @@ However, we also desire a compact identifier [which we will call the ‘Componen
 
 <img src='https://github.com/user-attachments/assets/b88f92ad-c230-417e-bf32-6c9c18e09d61' width='200'>
 
-**Component Version:** version identifier for a component of the flow protocol. It references one specific behaviour of a sub-system (e.g. Execution Stack or HotStuff) of Flow, as prescribed by the protocol. 
+**Component Version:** version identifier for a component of the flow protocol.
+It references one specific behaviour of a sub-system (e.g. Execution Stack or HotStuff) of Flow, as prescribed by the protocol. 
 
-In the nutshell, for every block there is one and only one correct way of how to process that block, and how to evolve the execution state. For distributed BFT systems, we need this notion of ‘correct behaviour’, which is inherently implementation agnostic. We want to explicitly express that up to a certain view $v$, we want the protocol to behave in one way and for higher views differently. 
+In the nutshell, for every block there is one and only one correct way of how to process that block, and how to evolve the execution state.
+For distributed BFT systems, we need this notion of ‘correct behaviour’, which is inherently implementation agnostic.
+We want to explicitly express that up to a certain view $v$, we want the protocol to behave in one way and for higher views differently. 
 
 ### Relationships between **Software and Component Version**
 
@@ -46,31 +122,6 @@ E.g. AN supporting script execution across HCU boundaries
     Component Versions and at that point, any one-to-one coupling of Software and Component Version will necessarily break. Instead, for each software
     version, we conceptually have a _list_ of Component Versions that this software supports (even if that list only contains a single element most of the time).
     
-
-### Reasons we want to move away from existing Version Beacon:
-
-Current Version Beacon:
-
-1. requires that nodes have (potentially long) history (have seen version beacon service event, which is not guaranteed for nodes joining at epoch boundaries)
-    
-    Better: each block specifies which component version is to be used for processing it
-    
-2. based on height and hence not usable for upgrading most consensus-related aspects (any many other protocol aspects).
-    
-    Better: using View instead of height for triggering behaviour changes is generally applicable and more robust (view monotonously increases over time, while height might also decrease).
-    
-
-## Dynamic Protocol State already implements better mechanism
-
-💡 In a nutshell, the Protocol State tracks information about each block, including a mechanism to transfer information from the Execution state to the Protocol State in a BFT manner. 
-
-- Flow’s Protocol State to tracks and and provides simple access to information about each blocks (such as epoch number, staking phase, staked nodes allowed to participate as of this block, nodes public keys, etc) 👉[code](https://github.com/onflow/flow-go/blob/3496c0f02d51602994d4fe60b32fcb00aab084f4/state/protocol/protocol_state.go#L91).
-- The Protocol State now also tracks the Component Versions of the most critical consensus component (at the moment: its own version)  👉[code](https://github.com/onflow/flow-go/blob/3496c0f02d51602994d4fe60b32fcb00aab084f4/state/protocol/protocol_state.go#L100).
-
-☑️ The Protocol State already tracks its own Component Version. You can take a look at these places in the code:
- - Protocol State reports its own [version](https://github.com/onflow/flow-go/blob/3496c0f02d51602994d4fe60b32fcb00aab084f4/state/protocol/kvstore.go#L30-L43) as part of every block
- - mechanism for [scheduling version upgrades (at future view)](https://github.com/onflow/flow-go/blob/a6b157ce2770be9356e1cf35d1b0fff63f5e4a76/state/protocol/protocol_state/kvstore/upgrade_statemachine.go#L78-L142) exists
- - mechanism [enforcing that node supports and uses correct](https://github.com/onflow/flow-go/blob/a6b157ce2770be9356e1cf35d1b0fff63f5e4a76/state/protocol/protocol_state/state/protocol_state.go#L235-L248) version as specified by the protocol
 
 # Roadmap: Dynamic Protocol State for coordinating Execution Stack upgrades (including Cadence changes)
 
