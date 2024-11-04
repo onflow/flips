@@ -81,6 +81,8 @@ will solve it. Specifically, the FLIP will:
 * be formatted according to the FLIP template
 * be submitted as a pull request
 * be subject to thorough community discussion and review prior to acceptance or rejection
+* for ease of tracking open flips that are currently in the process of discussion and refinement or implementation, we have a dedicated issue for each FLIP,
+  which is closed when the flip reaches either the `Rejected` or `Released` stage (no further updates to the FLIP)  
 
 ## FLIP process
 
@@ -102,9 +104,11 @@ Once the FLIP is ready for review:
 2. Create an [issue](https://github.com/onflow/flips/issues/new/choose) by using one of the FLIP issue templates based on the type of the FLIP - `application`, `governance`, `cadence` or `protocol`.
    The title of the issue should be the title of your FLIP, e.g., "Dynamic Inclusion fees".
 
-   Submit the issue.
+   Then submit the issue and note the issue number that gets assigned. For example, for issue https://github.com/onflow/flips/issues/166, the issue number is `166`.
 
-   Note the issue number that gets assigned. For example, for issue https://github.com/onflow/flips/issues/76, the issue number is `76`.
+   Comment:
+   The reason we are creating an issue first is to track the progress of the various flips that are currently under discussion, refinement or being implemented.
+   Hence, from looking at the open https://github.com/onflow/flips/issues you get a concise overview of all FLIPs that you can contribute to, either to helping to refine proposal or contribute to its implementation.  
 
 
 3. Create your FLIP as a pull request to this repository ([`onflow/flips`](https://github.com/onflow/flips)).
@@ -155,7 +159,7 @@ the [community forum](https://forum.onflow.org/), or file an issue in this repos
 ([`onflow/flow`](https://github.com/onflow/flow/issues)).
 
 ## Proposal states
-* **Drafted:** The FLIP is in its early stage and is being ideated. 
+* **Draft:** The FLIP is in its early stage and is being ideated. 
 * **Proposed:** The FLIP has been proposed and is awaiting review.
 * **Rejected:** The FLIP has been reviewed and rejected.
 * **Accepted:** The FLIP has been accepted and is either awaiting implementation or is actively being implemented.
