@@ -2,7 +2,7 @@
 status: draft 
 flip: 298
 authors: Alex Hentschel (alex.hentschel@flowfoundation.org)
-sponsor: Jordan Schalm (jordan.schalm@flowfoundation.org), Yurii Oleksyshyn (yurii.oleksyshyn@flowfoundation.org)
+sponsor: Jordan Schalm (jordan.schalm@flowfoundation.org), Leo Zhang (leo.zhang@flowfoundation.org), Janez Podhostnik (janez.podhostnik@flowfoundation.org)
 updated: 2024-11-01
 ---
 
@@ -15,7 +15,7 @@ of the Dynamic Protocol State, which provides a significantly more robust and ge
 (for details, please see next section).
 
 This FLIP focuses on the following short term objective, but there is also the goal to foster our long-term development roadmap:
-* **Direct goal [focus of this flip]**: transition the existing mechanism for upgrading Flow's execution stack to using Dynamic Protocol State.
+* **Direct goal [focus of this flip]: transition the existing mechanism for upgrading Flow's execution stack to using Dynamic Protocol State**.
   A more detailed scoping is necessary, but my gut feeling is that there is only a limited amount of work needed. In essence, we want to avoid
   extending the old upgrade mechanism in a way that is incompatible with the Dynamic Protocol State and needing to be rewritten later.
 * Midterm goal: upgrades of the execution stack are by far the most frequent. By utilizing the Dynamic Protocol State for those upgrades, we
@@ -40,7 +40,7 @@ Hence, we version component specifications for ease of referencing them.
 ![Overview](20241031-execution-stack-versioning/Execution_Stack_Versioning_goal.png)
 
 
-### Status Quo
+### Status Quo (as of Nove 2024)
 At the moment, we have a mechanism for upgrading Flow's execution stack only. 
 This is by far the most frequently updated part of the node software and updates are frequently time-sensitive security fixes.
 We have a component called the Version Beacon, which specifies how the implementation _should_ behave and when that "expected behaviour"
@@ -66,7 +66,7 @@ Current Version Beacon:
    Better: using View instead of height for triggering behaviour changes is generally applicable and more robust (view monotonously increases over time, while height might also decrease).
 
 
-### Dynamic Protocol State already implements better mechanism
+### Dynamic Protocol State provides a framework for more generally applicable and more robust upgrades
 
 💡 In a nutshell, the Protocol State tracks information about each block, including a mechanism to transfer information from the Execution state to the Protocol State in a BFT manner.
 
@@ -202,6 +202,20 @@ so ICs keep extending our existing but insufficiently general solution (existing
   Breakdown of steps:
   ![Execution Stack Versioning (3).png](20241031-execution-stack-versioning/Execution_Stack_Versioning_(3).png)
         
+
+## Outlook
+
+[Bastian recommended](https://github.com/onflow/flips/pull/296#discussion_r1825273426) that we specify a component version for the "Cadence Language",
+which specifies the available language features and their behaviour. This is useful when incrementally adding new features, where it is relatively trivial
+to have one binary supporting the different feature sets.
+
+In addition, [Bastian recommended](https://github.com/onflow/flips/pull/296#discussion_r1825273426) to consider Component Versions for subcomponents
+of Cadence/FVM, such as "storage format" (how are objects stored in account storage encoded?),
+"CCF format" and
+"JSON format" (how are "external" objects encoded?).
+
+
+
 
 ## Further reading
 
