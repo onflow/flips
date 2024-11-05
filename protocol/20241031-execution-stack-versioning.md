@@ -79,6 +79,12 @@ Current Version Beacon:
 - mechanism [enforcing that node supports and uses correct](https://github.com/onflow/flow-go/blob/a6b157ce2770be9356e1cf35d1b0fff63f5e4a76/state/protocol/protocol_state/state/protocol_state.go#L235-L248) version as specified by the protocol
 
 
+:exclamation: For the time being, the Dynamic Protocol State must be updated each time we want to introduce a version for a previously unversioned protocol component.
+This is reasonably straight forward and contained engineering work, but not entirely free either. Furthermore, all versioning information
+also needs to pass through a smart contract and a specialized service event (this is already the case for the Execution Node's old Version Beacon), which at the moment
+are largely strictly typed (for high-assurance purposes).
+The scope of this flip is to gain more experience with first applications before discussing details of adding new versions in large numbers.
+
 
 ## User Benefit
 
@@ -141,7 +147,7 @@ At the moment, it is not sufficiently evident that there exists a _single_ versi
 components in Flow. Therefore, we recommend that **maintainers** for a specific component **decide** what component **versioning convention** works well for their
 component's particular upgrade pattern. 
 
-In the following, we briefly review two prominent versioning convention (Semantic Versioning and Integer Versioning) and summarize how these _could_ be used
+In the following, we briefly review a few prominent versioning schemes and summarize how these _could_ be used
 for component versioning. Though, before we do so, lets look at the notion of downwards compatability, because many versioning schemes encompass some
 notion of cross-compatability, which is much more constrained for blockchains compared to traditional IT systems.
 
