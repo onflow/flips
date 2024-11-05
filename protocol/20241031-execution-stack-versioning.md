@@ -111,7 +111,10 @@ However, we also desire a compact identifier [which we will call the ‘Componen
 <img src='https://github.com/user-attachments/assets/b88f92ad-c230-417e-bf32-6c9c18e09d61' width='200'>
 
 **Component Version:** version identifier for a component of the flow protocol.
-It references one specific behaviour of a sub-system (e.g. Execution Stack or HotStuff) of Flow, as prescribed by the protocol. 
+It references one specific behaviour of a sub-system (e.g. Execution Stack or HotStuff) of Flow, as prescribed by the protocol.
+It is important that the component versioning specifies how a node _should behave_ on the protocol layer.
+We say that two specifications are equivalent, if they are describing
+the same behaviour - in other words, they are completely interoperable. Equivalent/interoperable component specifications have the same version.
 
 In the nutshell, for every block there is one and only one correct way of how to process that block, and how to evolve the execution state.
 For distributed BFT systems, we need this notion of ‘correct behaviour’, which is inherently implementation agnostic.
@@ -120,10 +123,17 @@ We want to explicitly express that up to a certain view $v$, we want the protoco
 ### Relationships between **Software and Component Version**
 
 - Conceptually, for every block, each component of Flow has one and only one component version.
- 
-- A software version can implement multiple Component Versions.
-E.g. AN supporting script execution across HCU boundaries
-    
+- A single software version can implement multiple Component Versions.
+  E.g. an Access Node supporting script execution across HCU boundaries. Another example is the addition of trigonometric functions to Cadence,
+  which we discuss in detail in the section [The subtle notion of downwards compatability in the context of blockchain](#the-subtle-notion-of-downwards-compatability-in-the-context-of-blockchain)
+
+- Similarly multiple software version can implement the _same_ Component Versions.
+  For example, consider performance optimizations: if you optimize the memory usage of a node, the node will generally behave exactly the same (just be able to run on a cheaper instance).
+  We want to be able to recommend to node operators to upgrade from software version $A$ to $B$, because when running $B$ they only need to pay for smaller instance. But the operators don't have
+  to upgrade, as the nodes with the unoptimized and optimized software are fully interoperable. Note that the Component Version specified _how_ a node should behave on the protocol level.
+  Differently performant software implementations behaving identically on the protocol layer have the same component version. 
+
+
 Important: 
 * ❗Don’t couple the software version to the component version! We know there will be scenarios where we want one software to implement multiple
   Component Versions and at that point, any one-to-one coupling of Software and Component Version will necessarily break. Instead, for each software
