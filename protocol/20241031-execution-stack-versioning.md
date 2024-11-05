@@ -131,14 +131,97 @@ Biggest change (and possibly only significant change):
 
 ![Illustration of Process](20241031-execution-stack-versioning/Execution_Stack_Versioning_(2).png)
 
+## Discussion of Possible Versioning Schemes (not exhaustive)
+
+Ultimately, we want to solidify the concept of Component Versions in the protocol to make it easier to evolve the protocol (i.e. the notion of how components _should_ behave).
+There exists a variety of possible versioning conventions that we _could_ employ, each with its own tradeoffs between expressing granularity of version changes,
+compatability between versions, and complexity.
+
+At the moment, it is not sufficiently evident that there exists a _single_ versioning convention that is _easy and intuitive_ for _all_ the different
+components in Flow. Therefore, we recommend that **maintainers** for a specific component **decide** what component **versioning convention** works well for their
+component's particular upgrade pattern. 
+
+In the following, we briefly review two prominent versioning convention (Semantic Versioning and Integer Versioning) and summarize how these _could_ be used
+for component versioning. Though, before we do so, lets look at the notion of downwards compatability, because many versioning schemes encompass some
+notion of cross-compatability, which is much more constrained for blockchains compared to traditional IT systems.
+
+### The subtle notion of downwards compatability in the context of blockchain
+
+For example, assume we add trigonometric functions ($\texttt{sin}, \texttt{cos}, \ldots$) to Cadence but don't make any other changes. So we could say
+that the new Cadence specification including trigonometric functions is downwards compatible with the prior version without trigonometric functions.
+For conventional microservice infrastructures, this is totally fine because the new specification including trigonometric functions can do everything
+the previous component specification could. All the existing interactions with the microservice continue to work and if you get lucky to be connected
+to a microservice instance that already supports the new spec, you can do additional things. But there is an implicit assumption for conventional
+microservice infrastructures that no longer holds for blockchain: _any_ answer you get from _any_ microservice instance is honest. In this scenario,
+answers from different microservice instances may differ as long as they differ as they are all honest. For blockchains, we require that _all honest
+nodes_ (equivalent of microservice) return _exactly_ the same answer, as we classify nodes as byzantine if they deviate from the majority of identical honest answers.     
+
+Let's look at the following example:
+* We have announced that trigonometric functions will be available in Cadence as of view 1000 and later.
+* Assume that somebody sends a transaction that computes $\texttt{sin}(\pi)$, which makes it into the block with view 999.
+* Some nodes have already updated to the new Cadence version, which in principle can compute $\texttt{sin}(\pi)$, while other node operators haven't upgraded yet. 
+* For a blockchain, we need _all_ honest nodes to produce the same result. As our transaction is in block 999, trigonometric functions should not be available yet
+  and all honest nodes should fail the transaction. 
+* Specifically, this means that the new Cadence version should have two different modes: one with trigonometric functions disabled and one with them enabled. 
+
+So in summary, we need to _precisely_ specify the feature set and the behaviour of each feature. The notion of "at least these features and optionally more"
+is insufficient for blockchains.   
+
 Example:
 
 ![Overview](20241031-execution-stack-versioning/Execution_Stack_Versioning_(5).png)
 
 
+### Integer Versioning Scheme
 
-## Semantic versioning
+The most basic convention is to use an integer as the version for a particular component (specification). 
+When using this convention, we only have a notion of _breaking changes_. For this discussion, it is important to keep in mind that we are
+versioning component specifications, i.e. how a particular component _should behave_. We say that two specifications are equivalent, if they are describing
+the same behaviour - in other words, they are completely interoperable. Equivalent/interoperable component specifications have the same integer version.
+However, whenever the specified behaviour _changes_ or some new functionality is added (that the prior component specification did not include) we have a new version,
+because the two specifications are not entirely interoperable anymore. In this case, the Version number is incremented. 
 
+**Applicability and Limitations**
+
+The Integer Versioning Scheme is simple and very intuitive and suits components, where we mostly _change existing behaviours_. This is predominantly the case
+for the core protocol, where for example we say that consensus votes previously worked in one way and now work differently.
+For example the **Component Version** of the Protocol State is specified by a **single integer** (👉[code](https://github.com/onflow/flow-go/blob/c1a1cc0e05f0d323ab2f83dd5d74d8ad486d451e/state/protocol/kvstore.go#L30-L43)).
+
+With the Integer Versioning Scheme we cannot express the notion of cross-compatability. Nevertheless, Integer Versioning can still be applied to our example
+of extending Cadence with trigonometric functions. For example:
+* The specification of Cadence without the trigonometric functions could be version `8`.
+* Extended with trigonometric functions, we have the specification for Cadence `9`.
+* Up to and including view 999, the protocol specifies that a block is to be executed with Cadence `8`:
+  * The old Cadence implementation would report that it can execute blocks with Cadence versions `[8]` (slice containing only one version value). 
+    The FVM would tell the old Cadence implementation to execute the given block with version `8` and since this version is supported, it proceeds.
+    Our transaction fails, because the old Cadence does not know trigonometric functions.
+  * The new Cadence implementation would report that it can execute blocks with Cadence versions `[8, 9]`. The difference is that version `8` refuses to
+    execute trigonometric functions while version `9` permits them.   
+    The FVM would tell the new Cadence implementation to execute the given block with version `8` and since this version is supported, it proceeds.
+    Our transaction fails, because the new Cadence knows that in Cadence version `8` trigonometric functions were not yet included. 
+*  For blocks wit views 1000 and higher, the protocol specifies that those blocks are to be executed with Cadence `9`:
+  * The old Cadence implementation reports that it can execute blocks with Cadence versions `[8]`. However, the FVM would request an 
+    execution with version `9`, which is not supported to Cadence errors. 
+  * The new Cadence implementation reports that it can execute blocks with Cadence versions `[8, 9]` and since the FVM requests 
+    the block's execution with a version that is supported, the block execution proceeds. 
+
+
+### Semantic Versioning Scheme
+
+A notion of compatibility is at the heart of Semantic Versioning [SemVer]. Though, as discussed before, the notion of downwards compatability must be
+carefully analyzed and correctly applied to avoid problems in the blockchain space. Let's revisit our example from before of adding trigonometric functions
+to cadence: 
+* Let's assume that the Cadence specification without trigonometric functions is denoted by version `1.8`. The spec extended by trigonometric functions is version `1.9`. 
+* We have announced that trigonometric functions will be available in Cadence as of view 1000 and later, but a transaction $T$ computing $\texttt{sin}(\pi)$
+  was already included in the block with view 999.
+* When executing block with view 999, the FVM would tell the new Cadence implementation to execute the block according to Cadence Component Spec version `1.8`, 
+  i.e. _without_ trigonometric functions. 
+* As you can see from this example, the new Cadence Version should still be able to execute $T$ with trigonometric functions _disabled_. In other words,
+  it is insufficient for an implementation of Cadence `1.9` to do everything that `1.8` can and some more - it must be able to _restrict_ its functionality
+  to `1.8`. Specifically this additional requirement to _restrict_ the functionality to a prior version goes beyond the established framework of SemVer,
+  but it critically required for Flow. 
+
+The advantage of SemVer is that consolidates the concepts of Software Version and Component Version (to some degree):
 $$
 \textnormal{Software Version :}\quad  \underbrace{\texttt{major}\,.\,\texttt{minor}\,}_{\textnormal{Component Version}}.\,\texttt{patch}
 $$
@@ -146,36 +229,104 @@ $$
 - Software with identical  $\texttt{major}.\texttt{minor}$ is cross-compatible irrespective of patch version,
   because they all implement the same specification (represented by the Component Version). Hence, the $\texttt{patch}$ version is not
   part of the Component Version, because it does not influence the conceptual behaviour. Though, it represents implementation details,
-  so it is part of the Software Versio.
+  so it is part of the Software Version.
 - In addition, we introduce compatibility requirement from semantic versioning:
     
     $\textnormal{Component Version :} \quad \texttt{major}\,.\,\texttt{minor}$
     
-    - Protocol specifications with the same  $\texttt{major}$ must be fully backwards compatible (in practise, mostly additive changes)
+    - Protocol specifications with the same  $\texttt{major}$ must be fully backwards compatible (in practise, mostly limited to additive functionality)
+- Additional requirement beyond traditional SemVer: 
 
+  A component implementation supporting $\texttt{major}.\texttt{minor}$ must be able to **restrict its feature** set to _any_ prior version $\texttt{major}.k$
+  with $k \leq \texttt{minor}$. 
 
-## Limitations
+**Applicability and Limitations**
 
-For the core protocol, changes are often not backwards compatible. Furthermore, maintaining backwards compatibility can cause
-subtle edge cases and drives implementation complexity. 
-
-Lastly, the benefits from backwards compatibility are strong in case we want to process inputs of mixed versions over a prolonged period of time.
-In contrast, the protocol abruptly switches at a specific view from one behaviour to another. 
-
+The benefits from backwards compatibility are strong in case we want to process inputs of mixed versions over a prolonged period of time.
+Though, for blockchain, the protocol typically switches abruptly at a specific view from one behaviour to another and never changes back.
+Furthermore, maintaining backwards compatibility throughout many $\texttt{minor}$ often causes subtle edge cases and drives implementation complexity. 
 
 For Flow, controlling complexity and codifying compatibility is essential.
-The **compatibility expectations, associated risks and additional complexity** of semantic versioning are not beneficial in *some* areas
-of the core protocol. For example the **Component Version** of the Protocol State is specified by a **single integer** (👉[code](https://github.com/onflow/flow-go/blob/c1a1cc0e05f0d323ab2f83dd5d74d8ad486d451e/state/protocol/kvstore.go#L30-L43)). 
+The **compatibility expectations, associated risks and additional complexity** of SemVer may not be beneficial in various areas
+of the core protocol.
+Maintainers considering SemVer for their component version should provide
+a strong answer why the Integer Versioning Scheme is disadvantageous for their particular component.    
+
+I (AlexH) do no (yet) see significant benefits of SemVer over Integer Versioning for block execution. Specifically, I don't think it makes any difference
+whether the software says that it supports Cadence Specification `[8, 9]`  (Integer Versioning) or `[1.8, 1.9]` (SemVer). The only hypothetical scenario would be,
+if we said that _any_ Cadence implementation $1.x$ would _always_ be able to restrict its feature set to any prior version $1.k$ for _any_ $k \leq x$.
+However, I consider the requirement of long-tail downwards compatability a risk in itself, due to software and intellectual complexity. So if we start to
+introduce cutoffs, e.g. saying that the new Cadence implementation only supports Component Spec Versions `[1.7, 1.8, 1.9]`, then there is little to no difference to
+just using integer versions, e.g. the new Cadence implementation specifying that it Component Versions `[7, 8, 9]`.
+
+The only tangible benefit for SemVer I can see is for the Access Node. Here, a client could say that it wants to execute a script on the block with view 999.
+Transactions at this view were not allowed to use trigonometric functions. But the client may explicitly request a newer cadence version for its script that already
+supports trigonometric functions.  Nevertheless, this is a niche scenario with limited practical relevance. It is not clear whether this scenario warrants the
+additional complexity of SemVer with the associated correctness risks (SemVer assumes downwards compatability by default, while maintaining downwards compatability 
+in the implementation is generally additional work, so the default assumption of compatability induces additional risks for the happy path of block execution - no a good tradeoff in my opinion).
+
+### Versioning Scheme based on Feature Vectors
+
+For components with frequent addition of entirely new features, we have discussion the importance of _restricting feature sets_ to match prior versions in order to maintain downwards
+compatability. At this point, it is intuitive to think about feature flags. For example, we could have a boolean flag $\texttt{Trig} \in \{\texttt{true}, \texttt{false}\}$ indicating
+whether trigonometric functions should be accepted as part of a transaction/script.
+
+The following diagram illustrated that Feature Vectors could be represented via Integer versions as well. Here we specifically utilize that the prevalent application pattern for mainnet
+is that features are progressively added and enabled.
+![Overview](20241031-execution-stack-versioning/Execution_Stack_Versioning_(6).png)
 
 
-**Component Version** guidelines
+In my [AlexH] opinion, feature flags are an implementation property. If some software exposes three feature flags, e.g. $\texttt{Trig}, \texttt{Ft}_Y, \texttt{Ft}_Z$, the
+default expectation is that they can be set in _any_ of the 8 combinations. However, the blockchain scenario is quite different: breaking changes or net additions to Cadence frequently
+require a software upgrade for the nodes, which must be announced and adopted by a large fraction of the respective nodes. This process requires days to weeks to make a
+version change in mainnet. The very prevalent scenario for mainnet will be that features are progressively added and never again disabled. Most likely, the feature flags will only be
+used in very few combinations. With a table we can explicitly represent what combinations of feature flags the current implementation supports (maybe some feature requires another).
+To me, this feels a lot more  
+If we hypothetically expressed a Component Version via a feature vector (which I am advocating to avoid for most components), we would implicitly commit to allowing _any_ combination
+of features to be enables/disabled, which is a very difficult commitment to maintain on the implementation level. 
+
+I feel bug fixes bring versioning via Feature Vectors to its limits: once we learn that we need a bug fix, we would need to add a new feature flag. By exposing the bug fix
+as a feature toggle in the Dynamic Protocol State, we are essentially providing a switch to turn the bugfix on and off repeatedly at runtime. For some features this is probably very useful.
+However, does it make sense to (figuratively) install a switch in your control board with the sole purpose to turn it on once and never off again? Keep in mind that for every
+feature flag, we still need to touch the Protocol State, which is reasonably straight forward and contained engineering work, but not entirely free either. Furthermore, all that
+information needs to go through a smart contract and a specialized service event (this is already the case for the Execution Node's old Version Beacon), which additionally 
+all would need to support the new feature flag.
+
+I think it would make the most sense in this scenario to bundle changes and roll them out together. In some cases it will be a single bug fix
+but in many cases it will be multiple changes combined, because software upgrades on mainnet still need to go through node operators on mainnet for decentralization reasons.
+Feature flags are still a great tool for the implementation to provide downwards compatability (e.g. "switch off" bugfixes for older blocks). Nevertheless, I think the fact that
+behaviour changes are frequently bundled and form a strict chronological sequence is important. 
+
+
+## Guidelines for Choosing a Component Version Convention
 
 - Use semantic versioning for areas where
   - benefit from backwards compatibility outweigh the implementation and complexity cost
   - we want to maintain backwards compatability over a longer period of time and across multiple upgrades
 - In areas where we can’t easily provide backwards compatibility (e.g. for security or BFT reasons), we should make this explicit by using a single-integer for the Component Version.
 
-## Next Steps
+:construction: section needs further extension
+
+## Comparison to other approaches in the blockchain industry
+
+
+💡Note that this approach is significantly different from Ethereum's. In Ethereum, it is common practise to hard-code the block heights / views at which features
+change directly into the implementation. For Flow, we have the Dynamic Protocol State as an interim abstraction layer: 
+* the protocol state translates view to version
+* the component implementation utilizes the version to determine what features to enable / disable
+
+Flow's approach is a _major_ advancement over Ethereum's approach in the following regard:
+* Ethereum assumes forward compatability by default. In other words, unless the implementation knows that the protocol specification will change at a certain point in the future,
+  it assumes that everything stays the same. So nodes whose software is not upgraded don't recognize themselves that they are incompatible to a future version.
+  Hence, it requires manual human action (software upgrade) for the nodes to behave correctly and in the absence of human intervention, nodes will behave incorrectly (continue with the old version).
+  Therefore, it is hard for the Ethereum protocol to evolve, because the default is to continue with the current functionality. Ethereum addressed this challenge with the "Difficulty Bomb", an
+  arguably crude an-on to the protocol with limited effectiveness. 
+* In contrast, Flow's versioning mechanism through the Dynamic Protocol State works the opposite: the protocol communicates _upfront_ to the implementation that the specified honest behaviour will
+  change at some specific point in the future. This information about upgrades is distributed upfront through the Dynamic Protocol State and therefore also accessible to old implementations
+  that have not yet upgraded. This inverts the default and facilitates protocol evolution: by default, the protocol switches to the new behaviour and nodes not supporting the new behaviour will
+  proactively stop participating (as opposed to continuing by default with the old version).  
+
+# Next Steps
 
 Challenge: missing seed for starting engineering work:
 
