@@ -124,10 +124,18 @@ We want to explicitly express that up to a certain view $v$, we want the protoco
 - A software version can implement multiple Component Versions.
 E.g. AN supporting script execution across HCU boundaries
     
-    ❗Don’t couple the software version to the component version! We know there will be scenarios where we want one software to implement multiple
-    Component Versions and at that point, any one-to-one coupling of Software and Component Version will necessarily break. Instead, for each software
-    version, we conceptually have a _list_ of Component Versions that this software supports (even if that list only contains a single element most of the time).
-    
+Important: 
+* ❗Don’t couple the software version to the component version! We know there will be scenarios where we want one software to implement multiple
+  Component Versions and at that point, any one-to-one coupling of Software and Component Version will necessarily break. Instead, for each software
+  version, we conceptually have a _list_ of Component Versions that this software supports (even if that list only contains a single element most of the time).
+* ❗It is not a requirement that a software version must support all previous component versions.
+   - For all nodes (except Access Nodes), we need at most 2 epochs of a history. Their goal is to _extend_ the chain - not act as an archive.
+   - We explicitly deviate from Ethereum's practise, where there is one software that can process all blocks since genesis.  In practise, this ability to process all blocks since genesis
+     is hardly ever used (impractical time cost). However, it has huge complexity cost for the implementation (littered with if statements, 
+     stuck with design patters that were useful long ago but now are more a hindrance for the latest protocol version) and negatively impacts the evolution speed of the overall protocol.    
+   - We feel the best approach for Flow is to limit the requirement for downwards compatability for software (in general).
+     Containerization provides means run different software versions in parallel should this be desired (e.g. for Archive Nodes).
+     This shifts the complexity away from the protocol implementation to the operational layer, where sophisticated widely-adopted solutions already exist.  
 
 # Roadmap: Dynamic Protocol State for coordinating Execution Stack upgrades (including Cadence changes)
 
@@ -332,7 +340,7 @@ This FLIP makes no suggestions how to version software (on purpose). However, it
 * decouple component version from software versions 
 * A single component software can implement multiple component versions. Hence, each software must itself know which component versions it implements.
 
-### Enforcing that Sofware is compatible with a specified component Version  
+### Enforcing that Software is compatible with a specified component Version  
 
 * A component software must _automatically verify_ that it runs a compatible version:
    * In most cases, nodes run the Consensus Follower component, which emits notifications when a new block was ingested, finalized etc. 
