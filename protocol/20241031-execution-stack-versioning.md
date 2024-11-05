@@ -341,8 +341,24 @@ This FLIP makes no suggestions how to version software (on purpose). However, it
    * For components versioned through the Dynamic Protocol State, the component software should check for each task that it implements the appropriate component version specified by the block corresponding to the task.    
    * At the moment, we focus on components, whose tasks are associated to blocks. That is not the case for all components (a counter example is the networking layer) - though _the vast majority_ of tasks
     (especially Cadence execution) are associated with blocks.    
+   * The first time when a node checks compatability between software and component version is when it is bootstrapped from a Sealing Segment.
+     The Sealing Segment contains blocks, blocks specify component versions and the software reading the sealing segment needs to support the specified component versions.
+     If that is not the case, node instantiation must fail.
+     Hence, nodes that successfully bootstrapped have confirmed that their software is compatible with at least the blocks in the Sealing Segment. As they ingest blocks,
+     nodes learn about _upcoming_ version changes, before those version changes take effect, through blocks they are guaranteed to be compatible with.
+     The edge case that a node might miss the information about an upcoming version upgrade does not exist (a major advancement of the Dynamic Protocol State over the old version beacon).
+   * Note that the proposal only provides a mechanism to retrieve the current component version. If the software version does not support this component version,
+     the proposed mechanism does not provide any work around. This is on purpose, because for the protocol to make progress, software needs to implement the respective protocol requirements.
+     Being incompatible is a failure scenario. In such a case, it is up to the component to decide how to proceed (e.g. return an exception, crash, etc.)
 * With the introduction of new version, it is important to keep track and document them. For human readability, we recommend a light-weight process, like a changelog.
-  However, the software must also provide algorithmic means to determine whether it can process a specific task according to specified component version.  
+  However, the software must also provide algorithmic means to determine whether it can process a specific task according to specified component version.
+  - For a software, human-readable information about what component versions it support is important for node operators:
+    The node operator needs to know which software version they have to bootstrap their node with (depending on the component versions specified by the blocks in the Sealing Segment). 
+    If they bring up a node starting from a sealing segment far into the past, the node will catch up and might quickly learn that it requires yet another upgrade and then automatically stop/crash.
+    It is helpful for the node operator to know this upfront to plan further software upgrades.
+  - Note that the human-readable versioning information is helpful for the node operator to do the right thing (use compatible software). But human-readable versioning information in insufficient to
+    guarantee that node operators will do the right thing. Hence, the software must additionally automatically check that is supports the specified component version for every block it processes and
+    all tasks associated with hat block.    
 
 ## Comparison to other approaches in the blockchain industry
 
