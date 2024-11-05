@@ -304,17 +304,29 @@ Feature flags are still a great tool for the implementation to provide downwards
 behaviour changes are frequently bundled and form a strict chronological sequence is important. 
 
 
-## Guidelines for Choosing a Component Version Convention
+## Guidelines and Best Practices for Choosing a Versioning Scheme
 
-- Use semantic versioning for areas where
-  - benefit from backwards compatibility outweigh the implementation and complexity cost
-  - we want to maintain backwards compatability over a longer period of time and across multiple upgrades
-- In areas where we can’t easily provide backwards compatibility (e.g. for security or BFT reasons), we should make this explicit by using a single-integer for the Component Version.
+- It is recommended that maintainers primarily use Integer Versioning:
+  Integer versioning is a comparatively simplistic tool. Though it is also extremely general as it makes effectively no assumptions about usage patterns.
+  Low complexity and its generality are strong reasons for using Integer Versioning.
 
-:construction: section needs further extension
+For Flow, controlling complexity and codifying compatibility is essential. While we have little practical experience, there are strong conceptual arguments that
+compatibility expectations, associated risks and additional complexity of more sophisticated versioning schemes may not be beneficial in various areas of core protocol.
+Maintainers considering schemes other than Integer Versioning should present _convincing reasoning_ in which areas Integer Versioning falls short for their particular component. 
+
+- SemVer may be considered for components:
+  - The benefit from backwards compatibility outweigh the implementation and complexity cost.
+  - We are happy to commit to _consistently_ creating software that supports _all_ preceding Component Specification Versions.
+    Specifically, consider that you are releasing a component specification with version $2.k$, then SemVer makes sense if you can commit that any software
+    that supports $2.k$ will _also_ support $2.0, 2.1, \ldots, 2.k-1, 2.k$.
+  - In comparison, we recommend to _not_ use SemVer if you are considering software releases that support only a subset of preceding minor versions,
+    for example $[2.3, 3.0]$ (but $2.0, 2.1, 2.2$ are not supported). In this case, the software would need to enumerate the supported component versions
+    explicitly, or know that all minor versions between $2.8$ (lower bound) and $2.13$ (upper bound) are supported (which only works within one major version).
+    In this case, Integer Versioning is equally useful (for enumerating supported component versions, or providing an interval of supported component versions). 
+    The additional structure of SemVer is more of a hindrance than a help.
+
 
 ## Comparison to other approaches in the blockchain industry
-
 
 💡Note that this approach is significantly different from Ethereum's. In Ethereum, it is common practise to hard-code the block heights / views at which features
 change directly into the implementation. For Flow, we have the Dynamic Protocol State as an interim abstraction layer: 
