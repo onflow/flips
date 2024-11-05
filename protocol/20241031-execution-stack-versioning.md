@@ -120,7 +120,7 @@ In the nutshell, for every block there is one and only one correct way of how to
 For distributed BFT systems, we need this notion of ‘correct behaviour’, which is inherently implementation agnostic.
 We want to explicitly express that up to a certain view $v$, we want the protocol to behave in one way and for higher views differently. 
 
-### Relationships between **Software and Component Version**
+### Relationships between Software and Component Version
 
 - Conceptually, for every block, each component of Flow has one and only one component version.
 - A single software version can implement multiple Component Versions.
