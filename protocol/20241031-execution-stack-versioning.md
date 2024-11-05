@@ -306,6 +306,7 @@ behaviour changes are frequently bundled and form a strict chronological sequenc
 
 ## Guidelines and Best Practices for Choosing a Versioning Scheme
 
+### Component Versioning Scheme
 - It is recommended that maintainers primarily use Integer Versioning:
   Integer versioning is a comparatively simplistic tool. Though it is also extremely general as it makes effectively no assumptions about usage patterns.
   Low complexity and its generality are strong reasons for using Integer Versioning.
@@ -325,6 +326,23 @@ Maintainers considering schemes other than Integer Versioning should present _co
     In this case, Integer Versioning is equally useful (for enumerating supported component versions, or providing an interval of supported component versions). 
     The additional structure of SemVer is more of a hindrance than a help.
 
+### Software Versioning
+
+This FLIP makes no suggestions how to version software (on purpose). However, it is critically important to:
+* decouple component version from software versions 
+* A single component software can implement multiple component versions. Hence, each software must itself know which component versions it implements.
+
+### Enforcing that Sofware is compatible with a specified component Version  
+
+* A component software must _automatically verify_ that it runs a compatible version:
+   * In most cases, nodes run the Consensus Follower component, which emits notifications when a new block was ingested, finalized etc. 
+   * Component software generally subscribes and listens to those notifications and then determines its respective tasks.
+   * At this point we have a block and tasks resulting from knowing this block. A component typically includes its own way of queueing and executing the resulting tasks.
+   * For components versioned through the Dynamic Protocol State, the component software should check for each task that it implements the appropriate component version specified by the block corresponding to the task.    
+   * At the moment, we focus on components, whose tasks are associated to blocks. That is not the case for all components (a counter example is the networking layer) - though _the vast majority_ of tasks
+    (especially Cadence execution) are associated with blocks.    
+* With the introduction of new version, it is important to keep track and document them. For human readability, we recommend a light-weight process, like a changelog.
+  However, the software must also provide algorithmic means to determine whether it can process a specific task according to specified component version.  
 
 ## Comparison to other approaches in the blockchain industry
 
