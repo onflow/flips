@@ -19,6 +19,12 @@ This will remove the node from the network in the next epoch.
    The node was staked by Metrika who no longer intends to run the node.
    Even though access nodes no longer have to be added to the approved list of nodes, this node was added to the network before the launch of permissionless access nodes and therefore had to be added to the approved list back then.
 
+## Transaction
+
+Transaction script: [remove_approved_nodes.cdc](https://github.com/onflow/service-account/blob/main/templates/remove_approved_nodes.cdc)
+
+Transaction executed on Oct 8th 2024 - https://www.flowdiver.io/tx/c692a70d2b314e9ad99c834c64052e38cdc1ce90f773899cf9f94b1c3755cba6
+
 ### [Issue](https://github.com/onflow/flips/issues/291)
 
 ### [Forum Post](fourm post: https://forum.flow.com/t/flip-gov-291-remove-two-nodes-from-the-approved-list-of-nodes/6599)
