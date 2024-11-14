@@ -1,54 +1,97 @@
 ---
 status: proposed
 flip: 255
-authors: darkdrag00n (darkdrag00n@proton.me)
-sponsor: Bastian Müller (bastian.mueller@flowfoundation.org)
-updated: 2024-02-25
+authors: darkdrag00n (darkdrag00n@proton.me), Bastian Müller (bastian.mueller@flowfoundation.org)
+updated: 2024-11-13
 ---
 
-# FLIP 255: Cadence Webassembly API
+# FLIP 255: Cadence WebAssembly API
 
 ## Objective
 
-This FLIP proposes addition of a WebAssembly (WASM) execution engine API to Cadence.
+This FLIP proposes the addition of an API to allow the execution of  WebAssembly programs in Cadence.
 
 ## Motivation
 
-More and more projects are putting non-trivial computationally expensive logic in Cadence. Examples of this are games or zero-knowledge proof checks. 
+More and more projects are putting non-trivial computationally expensive logic in Cadence.
+Examples of this are games or zero-knowledge proof checks.
+Developers would also like to utilize code written in other programming languages.
 
-WASM could offer a great algorithmic throughput for such workloads by providing a way to offload the pure logic calculation to it without exposing Resource objects to it. 
+Support for WebAssembly in Cadence could enable such workloads.
+For example, same way Python developers often import numerical libraries written in C,
+Cadence developers might also want to import such and other libraries into Cadence.
 
-The motivation is explained in further details in [this forum post](https://forum.flow.com/t/idea-wasm-execution-engine-in-cadence/5164) by Dete.
+The motivation is explained in further details in
+[this forum post](https://forum.flow.com/t/idea-wasm-execution-engine-in-cadence/5164) by Dieter Shirley.
 
 ## User Benefit
 
-Users can benefit from the raw algorithmic throughput of WASM by offloading computationally expensive pure logic calculations to it while still keeping the security benefits of Cadence.
+Adding support for WebAssembly to Cadence has several benefits.
+
+First, it allows developers to implement and speed up computationally expensive pure logic calculations,
+which can be efficiently executed in WebAssembly.
+
+Developers will also benefit from using existing non-Cadence programs, such as Rust or C,
+by compiling such code to WebAssembly.
 
 ## Proposal
 
 ### Scope
 
-As mentioned earlier, the feature is targeted towards utilizing algorithmic throughput provided by WASM. So the scope of this proposal is as follows:
+This proposal targets a first, small iteration on adding a WebAssembly API to Cadence,
+mostly focusing on allowing developers to utilize the algorithmic throughput provided by WebAssembly.
 
-1. Allow instantiating a WebAssembly module, without imports (i.e. the WebAssembly module has no access to Cadence)
-2. Function exports with argument and return value types as i32 or i64. Floats (f32 or f64) will not be supported
-3. The function exports could be called from Cadence, and receive the results back
+The scope of this proposal is as follows:
+
+1. Allow Cadence programs to instantiate a WebAssembly module.
+2. Allow Cadence programs to call functions exported from the WebAssembly module.
+
+The WebAssembly module must:
+- Not define any imports, i.e. the WebAssembly module has no access to Cadence,
+  and other imports such as memories, globals, and tables are not supported
+- Only export functions, i.e. other exports such as memories, globals, and tables are not supports
+- Use the functionality defined in the [WebAssembly Core Specification 1.0](https://www.w3.org/TR/wasm-core-1/).
+  Other extensions, such as the following, but not limited to, are not supported:
+    - Bulk memory
+    - Sign extension
+    - Multi value
+    - Multi memory
+    - 64-bit memor
+    - Mutable globals
+    - Reference types
+    - Tail calls
+    - Extended const
+    - Saturating float to int
+    - Atomics
+    - SIMD
+- NaNs need to be canonicalized
+
+Function exports must only have argument and return value types `i32` or `i64`.
+Floats (`f32` or `f64`) are not supported.
 
 ### Design
 
 The WebAssembly API will be implemented as a Cadence contract and will expose functions and structs to use them.
 
-There are two main structs that will be exposed via the contract:
-1. InstantiatedSource: Represents a source that has been compiled and instantiated via the Webassembly module.
-2. Instance: Represents an instance of an instantiated webassebmly module that can be used to get the exports and use them in Cadence code.
+The API is inspired by the [WebAssembly JavaScript Interface](https://www.w3.org/TR/wasm-js-api-2/#webassembly-namespace).
 
-The `InstantiatedSource` can be created using the `compileAndInstantiate` function which takes the WebAssembly binary code and compiles it into a Module.
+There are two main structs that will be exposed via the contract:
+
+1. `InstantiatedSource`: Represents a WebAssembly module and its instance.
+   The instantiated source only provides access to the instance.
+   The WebAssembly module cannot be introspected.
+
+2. `Instance`: Represents an instance of an instantiated WebAssembly module.
+   The instance only provides access to the exported functions.
+
+The `InstantiatedSource` can be created using the `compileAndInstantiate` function.
+It takes a WebAssembly module in binary format and compiles and instantiates it.
 
 ```cadence
 access(all)
 contract WebAssembly {
 
-    /// Compile WebAssembly binary code into a Module 
+    /// Compile WebAssembly binary code into a Module
     /// and instantiate it. Imports are not supported.
     access(all)
     view fun compileAndInstantiate(bytes: [UInt8]): &WebAssembly.InstantiatedSource
@@ -72,7 +115,8 @@ contract WebAssembly {
 
 #### Example
 
-Example usage of the WASM API to load a simple `add(i32, i32) -> i32` function, calling it with Cadence `Int32` values, and getting back the result as a Cadence `Int32`:
+Example usage of the WASM API to load a simple `add(i32, i32) -> i32` function,
+calling it with Cadence `Int32` values, and getting back the result as a Cadence `Int32`:
 
 ```cadence
 
@@ -104,32 +148,51 @@ func main() {
 }
 ```
 
+#### Implementation
+
+An implementation of this proposal will likely use an existing WebAssembly execution environment
+that satisfies the requirements.
+
 #### Metering
 
-Like regular Cadence programs, code executed within the WASM engine will be metered and the memory consumption will be limited.
+Like regular Cadence programs,
+code executed and the memory consumed by the WebAssembly execution environment must be limited and metered.
 
 ##### Computation
 
-Popular WASM engines support some form of limits on the execution of the code. They will be utilized to implement the metering.
+The specifics of exactly how computation usage is limited and metered is an implementation detail.
 
-While the specifics are dependant on the exact engine used, the high level idea is the following:
-1. FVM should provide a way to remaining computation units: A new function `RemainingComputation(kind)` will be added in FVM.
-2. Computation units should be converted to its WASM engine equivalent. For example, in wasmtime, it is called `Fuel`.
-3. The user code must be executed with the computed amount of wasm engine computation units.
+Popular WebAssembly execution environments support some form to limit and meter the amount of executed code.
+Such a mechanism is required and will be used to implement the computation metering.
+The mechanism must be compatible and integrate with the metering of the FVM.
+
+The high level idea of computation metering is:
+1. The FVM needs a mechanism to provide the number of remaining computation units to Cadence.
+2. Computation units are converted to the equivalent of the WebAssembly execution environment equivalent ("engine units").
+   For example, the wasmtime engine has the concept of "fuel", and has a cost associated with each executed instruction.
+3. The WebAssembly code is executed with an upper limit of engine units determined from the available FVM computation units.
+4. If the execution exceeds the limit, execution is aborted and the Cadence program is aborted.
+5. If the execution succeeds, the amount of engine units is converted back to FVM computation units and metered.
 
 ##### Memory
-To limit the memory being consumed, some constraints will be defined on the various ways that memory is used in the wasm-engine.
 
-While the specifics are dependant on the exact engine used, the following memory usage areas can usually be limited by all popular engines:
-1. Stack size
-2. Linear memory
-3. Tables
+The specifics of exactly how memory usage is limited and metered is an implementation detail.
+
+To limit the memory being consumed, some constraints will be defined
+on the various ways that memory is used within the WebAssembly execution environment.
+
+While the specifics are not defined in this proposal,
+the following aspects will be limited and metered:
+1. Stack size/depth
+2. Linear memory (number of WebAssembly pages)
+3. Number and size of tables
 
 ### Drawbacks
 
 None
 
 ### Alternatives Considered
+
 None
 
 ### Performance Implications
@@ -162,6 +225,7 @@ None
 None
 
 ## Implementation
+
 Will be done as part of https://github.com/onflow/cadence/issues/2853.
 
 A proof of concept has already been done as part of https://github.com/onflow/cadence/pull/2760.
