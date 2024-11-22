@@ -15,7 +15,7 @@ _The removal is strictly because Animoca no longer wishes to be one of the multi
 
 ## Implementation
 
-The key index for equilibrium is 10 on the service account and 4 on the staking account.
+The key index for Animoca is [10](https://github.com/onflow/service-account/blob/main/flow.json#L45-L49) on the service account and [4](https://github.com/onflow/service-account/blob/main/flow-staking.json#L57-L62) on the staking account.
 
 The key will be removed by executing the following transaction:
 
@@ -41,4 +41,4 @@ transaction {
 
 ## Links
 - [FLIP Tracker Issue](https://github.com/onflow/flips/issues/312)
-
+- [Forum post](https://forum.flow.com/t/flip-312-removing-animoca-as-a-multi-signer/6844)

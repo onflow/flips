@@ -15,7 +15,7 @@ _The removal is strictly because Equilibrium no longer wishes to be one of the m
 
 ## Implementation
 
-The key index for equilibrium is 8 on the service account and 2 on the staking account.
+The key index for equilibrium is [8](https://github.com/onflow/service-account/blob/main/flow.json#L25-L29) on the service account and [2](https://github.com/onflow/service-account/blob/main/flow-staking.json#L25-L30) on the staking account.
 
 The key will be removed by executing the following transaction:
 
