@@ -1,9 +1,9 @@
 ---
-Status: Proposed
+Status: Released
 Flip: 310
 Authors: Vishal Changrani
 Sponsor: Vishal Changrani
-Updated: 2024-11-15
+Updated: 2024-11-27
 ---
 
 # FLIP 310: Removing Equilibrium as a multi-signer
@@ -42,3 +42,5 @@ transaction {
 ## Links
 - [FLIP Tracker Issue](https://github.com/onflow/flips/issues/310)
 - [Forum post](https://forum.flow.com/t/flip-310-removing-equilibrium-as-a-multi-signer/6782)
+- [Transaction 1](https://www.flowscan.io/tx/3969c4e8172afe32866c40dd16dbe3e591de42d336db32739c376d0351044434)
+- [Transaction 2](https://www.flowscan.io/tx/c1b06e5a3a52c4bc526aac42189fe12ae8a7983752fe40d5560d670cb7ca06f1)
