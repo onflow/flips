@@ -1,12 +1,12 @@
 ---
 status: draft 
-flip: NNN (set to the issue number)
-authors: My Name (me@example.org), AN Other (you@example.org) 
-sponsor: AN Expert (core-contributor@example.org) 
-updated: YYYY-MM-DD 
+flip: 314
+authors: Raymond Zhang (raymond.zhang@flowfoundation.org)
+sponsor: Supun Setunga (supun.setunga@flowfoundation.org)
+updated: 2024-12-17
 ---
 
-# FLIP NNN: Import Aliasing
+# FLIP 314: Import Aliasing
 
 ## Objective
 
@@ -18,11 +18,11 @@ From previous discussions:
 - https://github.com/onflow/Flow-Working-Groups/blob/main/cadence_language_and_execution_working_group/meetings/2024-12-10.md#survey-feedback
 - https://github.com/onflow/cadence/issues/1171
 
-There can be two contracts operating on separate pools (e.g. `FlowUSDT` vs `FUSDUSDT`) which each expose a contract `UniswapPair`. In current contracts or transactions, developers cannot reference both these pools in the same code. There are workarounds, but these involve duplication of code.
+There can be two contracts operating on separate pools (e.g. `FlowUSDT` vs `FUSDUSDT`) which each expose a contract `UniswapPair`. In current contracts or transactions, developers cannot reference both these pools in the same code. There are workarounds, but these involve duplication of code. An additional use case is to shorten the name of imported types.
 
 ## User Benefit
 
-This will reduce code duplication and help developers avoid conflicts.
+This will reduce code duplication, code size and help developers avoid conflicts.
 
 ## Design Proposal
 
@@ -70,6 +70,9 @@ Feature addition, no impact.
 ## Related Issues
 
 Consider extension for type aliasing in the future. 
+
+## Implementation
+https://github.com/onflow/cadence/pull/3717
 
 ## Prior Art
 
