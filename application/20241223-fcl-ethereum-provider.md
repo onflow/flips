@@ -68,8 +68,8 @@ function createEthereumProvider(config: {
 }): Eip1193Provider
 ```
 
-- `service` is an optional FCL service to be used to perform the authentication handshake and will default to the FCL Discovery service.
-- `gateway` is the JSON-RPC provider corresponding to the Flow EVM gateway, will default to the public Flow EVM gateway
+- `service` is an optional FCL service to be used to perform the authentication handshake and will default to the FCL Discovery service.  This can be used to target individual FCL services instead of FCL Discovery.
+- `gateway` is the JSON-RPC provider corresponding to the Flow EVM gateway, will default to the public Flow EVM gateway.
 
 The FCL Ethereum provider can be interacted with as follows:
 
@@ -182,11 +182,11 @@ All of the following events defined in [EIP-1193](https://eips.ethereum.org/EIPS
 
 **Risk of Ethereum JSON-RPC Changes**
 
-An assumption of an FCL-based Ethereum JSON-RPC API is that all necessary RPC methods are expressible using the FCL Protocol.  If future additions to the API violate this assumption, re-establishing equivalence will require changes to the FCL protocol.
+This proposal assumes that all necessary Ethereum JSON-RPC methods can be expressed using the FCL Protocol.  If future additions to the API violate this assumption, re-establishing equivalence will require changes to the FCL protocol.
 
 **Risk of Evolving COA Standards**
 
-An assumption of the FCL Ethereum provider is that a user’s COA will always be stored at the canonical `/storage/evm` path.  Future evolution of ecosystem standards for COA storage may necessitate additional changes to accommodate these schemes.
+This proposal assumes that an FCL user’s COA will always be stored at the canonical `/storage/evm` path.  Future evolution of ecosystem standards for COA storage may necessitate additional changes to accommodate alternate schemes.
 
 ### Alternatives Considered
 
