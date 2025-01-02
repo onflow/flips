@@ -37,14 +37,35 @@ The integration also enhances user experience by enabling Flow EVM applications 
 Application developers will typically not interact directly with the FCL Ethereum provider.  Instead, it will typically be transparently configured by developers as follows (e.g. Rainbowkit):
 
 ```tsx
-// Import from '@onflow/cross-vm-rainbowkit' instead of '@rainbow-me/rainbowkit'
 import { getDefaultConfig } from "@onflow/cross-vm-rainbowkit"
 
-// Default config includes connectors for Cadence-aware wallets
 const config = getDefaultConfig({
   appName: 'My RainbowKit App',
   projectId: 'YOUR_PROJECT_ID',
 });
+```
+
+In this example, once the user has authenticated with Rainbowkit, FCL interactions can be used interchangeably with Wagmi.
+
+```tsx
+import * as fcl from "@onflow/fcl";
+import { useSendTransaction } from "wagmi"
+
+function MyComponent() {
+  const sendTransaction = useSendTransaction()
+
+  const sendEVMTransaction = async () => {
+    await sendTransaction({
+      to: "0x1234...",
+      data: "0x1234...",
+      value: "0x1234...",
+    })
+  }
+
+  const sendCadenceTransaction = async () => {
+    await fcl.mutate({ cadence: ... })
+  }
+}
 ```
 
 ## Design Proposal
