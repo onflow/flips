@@ -45,7 +45,9 @@ const config = getDefaultConfig({
 });
 ```
 
-In this example, once the user has authenticated with Rainbowkit, FCL interactions can be used interchangeably with Wagmi.
+In this example, once the user has authenticated with Rainbowkit *with a Cadence-aware wallet*, FCL interactions can be used interchangeably with Wagmi.
+
+If the user's wallet does not support Cadence interactions (e.g. MetaMask), only Wagmi interactions will be available.
 
 ```tsx
 import * as fcl from "@onflow/fcl";
