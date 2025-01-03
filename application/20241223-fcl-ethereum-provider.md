@@ -34,7 +34,9 @@ The integration also enhances user experience by enabling Flow EVM applications 
 
 ### **Example Usage**
 
-Application developers will typically not interact directly with the FCL Ethereum provider.  Instead, it will typically be transparently configured by developers as follows (e.g. Rainbowkit):
+In practice, application developers will not typically interact directly with the provider, but instead through higher-level tooling where it exists behind layers of abstraction.
+
+For instance, a developer using Wagmi & Raindowkit would configure their applications using a pre-built adapter.
 
 ```tsx
 import { getDefaultConfig } from "@onflow/cross-vm-rainbowkit"
@@ -94,7 +96,7 @@ function createEthereumProvider(config: {
 - `service` is an optional FCL service to be used to perform the authentication handshake and will default to the FCL Discovery service.  This can be used to target individual FCL services instead of FCL Discovery.
 - `gateway` is the JSON-RPC provider corresponding to the Flow EVM gateway, will default to the public Flow EVM gateway.
 
-The FCL Ethereum provider can be interacted with as follows:
+The FCL Ethereum provider can be interacted with in the same way as a standard [EIP-1193](https://eips.ethereum.org/EIPS/eip-1193) provider, however, active sessions will be shared between the Ethereum JSON-RPC and FCL.
 
 ```tsx
 import * as fcl from "@onflow/fcl";
@@ -110,13 +112,13 @@ console.log("EVM Address:", evmAddress)
 console.log("Cadence Address:", (await fcl.currentUser().snapshot()).addr)
 
 // Send EVM TX from COA
-await signer.sendTransaction(...)
+const txHash = await provider.request({ method: "eth_sendTransaction", params: ... })
 
 // Send FCL Transaction from Cadence account
 fcl.mutate({ cadence: ... })
 ```
 
-In practice, application developers will typically interact directly with the provider, but instead through higher-level tooling where it exists behind layers of abstraction.
+In practice, application developers will not typically interact directly with the provider, but instead through higher-level tooling where it exists behind layers of abstraction.
 
 ### Ethereum JSON-RPC Methods
 
@@ -195,7 +197,7 @@ Any errors encountered when handling these requests will include error codes ali
 
 ### Ethereum Provider Events
 
-All of the following events defined in [EIP-1193](https://eips.ethereum.org/EIPS/eip-1193#provider-errors) will be implemented on the FCL Ethereum Provider.
+All of the following events defined in [EIP-1193](https://eips.ethereum.org/EIPS/eip-1193) will be implemented on the FCL Ethereum Provider.
 
 - `connect` should be emitted when FCL user has authenticated
 - `disconnect` should be emitted when FCL user has unauthenticated
