@@ -76,7 +76,7 @@ function MyComponent() {
 
 FCL will expose an [EIP-1193](https://eips.ethereum.org/EIPS/eip-1193) Ethereum provider which can be used to interact with a Cadence-aware wallet’s COA via the Ethereum JSON-RPC API.  This provider will behave as a middleware between EVM tooling and FCL-JS by translating Ethereum JSON-RPC requests to interactions with an FCL wallet provider.
 
-It will be assumed that the user’s COA is stored at the path `/storage/coa`.
+It will be assumed that the user’s COA is stored at the path `/storage/evm`.
 
 The FCL Ethereum provider will be compatible with all FCL-compatible wallets.  Some Cadence-aware wallets already include an integrated Ethereum JSON-RPC API (e.g. Flow Wallet).  However, for wallets which do not include this API, the FCL Ethereum provider can behave as a compatibility adapter to interact with Flow EVM tooling & applications.
 
