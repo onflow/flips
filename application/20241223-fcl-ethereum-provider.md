@@ -203,6 +203,12 @@ All of the following events defined in [EIP-1193](https://eips.ethereum.org/EIPS
 
 ### Drawbacks
 
+**Loss of Human-Readable eth_signTypedData_v4 Signatures**
+
+The FCL Ethereum provider will not support human-readable signatures for `eth_signTypedData_v4` requests.  While wallets can still sign these requests using FCL's user signature service, the information presented to the user will be less user-friendly than the human-readable data provided by Ethereum JSON-RPC wallets.
+
+This is a trade-off of a client-side Ethereum JSON-RPC handler, which is only as expressive as its parent FCL interface.  Future standards for typed data signing may be considered in future iterations of the FCL protocol.
+
 **Risk of Ethereum JSON-RPC Changes**
 
 This proposal assumes that all necessary Ethereum JSON-RPC methods can be expressed using the FCL Protocol.  If future additions to the API violate this assumption, re-establishing equivalence will require changes to the FCL protocol.
