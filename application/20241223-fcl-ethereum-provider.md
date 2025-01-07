@@ -147,7 +147,7 @@ The provider will handle the following types of requests:
         
         /// Executes the calldata from the signer's COA
         ///
-        transaction(evmContractAddressHex: String, calldata: String, gasLimit: UInt64, value: UFix64) {
+        transaction(evmContractAddressHex: String, calldata: String, gasLimit: UInt64, value: UInt256) {
         
             let evmAddress: EVM.EVMAddress
             let coa: auth(EVM.Call) &EVM.CadenceOwnedAccount
@@ -160,8 +160,7 @@ The provider will handle the following types of requests:
             }
         
             execute {
-                let valueBalance = EVM.Balance(attoflow: 0)
-                valueBalance.setFLOW(flow: value)
+                let valueBalance = EVM.Balance(attoflow: value)
                 let callResult = self.coa.call(
                     to: self.evmAddress,
                     data: calldata.decodeHex(),
