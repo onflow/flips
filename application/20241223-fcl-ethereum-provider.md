@@ -36,7 +36,7 @@ The integration also enhances user experience by enabling Flow EVM applications 
 
 In practice, application developers will not typically interact directly with the provider, but instead through higher-level tooling where it exists behind layers of abstraction.
 
-For instance, a developer using Wagmi & Raindowkit would configure their applications using a pre-built adapter.
+For instance, a developer using Wagmi & Rainbowkit would configure their applications using a pre-built adapter.
 
 ```tsx
 import { getDefaultConfig } from "@onflow/cross-vm-rainbowkit"
