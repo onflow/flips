@@ -93,7 +93,7 @@ The above implies the following:
 ### Visual Overview
 
 ![Depicted is a high level overview of the current state of bridge contracts and core components across Cadence &
-EVM.](20250131-cross-vm-nft-support-resources/Screenshot_2025-01-24_at_10.58.56_AM.png) *Depicted is a high level
+EVM.](20250131-cross-vm-nft-support-resources/current_vm_bridge_overview.png) *Depicted is a high level
 overview of the current state of bridge contracts and core components across Cadence & EVM.*
 
 ## Functional Requirements
@@ -377,7 +377,7 @@ Developer calls to `FlowEVMBridge.onboardCrossVMAssetWithPointers()` , providing
 ![Both the Cadence and EVM implementations point to each other. Since both declare association with each other, it can
 be assumed that the deployer of both contracts intended the association. Of course, it’s not sufficient to trust one
 contract’s declaration without also checking the other end of the connection without risk of
-impersonation.](20250131-cross-vm-nft-support-resources/Screenshot_2025-01-30_at_5.02.38_PM.png)
+impersonation.](20250131-cross-vm-nft-support-resources/cross_vm_pointers.png)
 
 Both the Cadence and EVM implementations point to each other. Since both declare association with each other, it can be
 assumed that the deployer of both contracts intended the association. Of course, it’s not sufficient to trust one
@@ -425,11 +425,10 @@ contract’s declaration without also checking the other end of the connection w
 ![After integration, ExampleNFT & ExampleERC721 will be associated in the CustomAssociations contract with the
 associative details preserved in the CustomConfig. Note the section outlined by the red box denoting the association
 created as a result of the developer
-action.](20250131-cross-vm-nft-support-resources/Screenshot_2025-01-30_at_5.03.28_PM.png)
-
-After integration, ExampleNFT & ExampleERC721 will be associated in the CustomAssociations contract with the associative
-details preserved in the CustomConfig. Note the section outlined by the red box denoting the association created as a
-result of the developer action.
+action.](20250131-cross-vm-nft-support-resources/updated_vm_bridge_overview.png) *After integration, ExampleNFT
+& ExampleERC721 will be associated in the CustomAssociations contract with the associative details preserved in the
+CustomConfig. Note the section outlined by the red box denoting the association created as a result of the developer
+action and the relationship defined by both associated contracts.*
 
 ## Interfaces
 
@@ -441,7 +440,6 @@ result of the developer action.
 /// bridging. This optional view would allow EVM side metadata to be updated based on current Cadence state. If the
 /// view is not supported, no bytes will be passed into EVM when bridging.
 access(all) struct EVMBytesMetadata {
-    access(all) let bytes: EVM.EVMBytes?
     /// Returns the bytes to be passed to the EVM contract on `fulfillToEVM` call, allowing the EVM contract to update
     /// the metadata associated with the NFT. The corresponding Solidity `bytes` type allows the implementer greater
     /// flexibility by enabling them to pass arbitrary data between VMs.
