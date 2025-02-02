@@ -1,5 +1,5 @@
 ---
-status: draft 
+status: proposed
 flip: 316 (set to the issue number)
 authors: Jordan Ribbink (jordan.ribbink@flowfoundation.org), Chase Fleming (chase.fleming@flowfoundation.org)
 sponsor: Jordan Ribbink (jordan.ribbink@flowfoundation.org)
@@ -179,7 +179,7 @@ The provider will handle the following types of requests:
     
     The provider should respond with the Flow EVM chain ID.
     
-- **`eth_personalSign`**
+- **`personal_sign`**
     
     The emulated provider will request a request a user signature from the user’s FCL wallet.  The hex-encoded payload remains unchanged.
     
