@@ -50,7 +50,7 @@ The above implies the following:
 - **Secure migration** - any assets that have thus far been onboarded to the VM bridge (and therefore have a
   bridge-defined representation) in the non-native VM can be safely migrated to a custom non-native implementation.
     - Updating from a bridge-defined to a project-specified implementation is supported at most one time, allowing
-      projects to update their non-native contract from the permissionlessly deployed bridged asset definition.
+      projects to update their non-native contract from the permissionlessly deployed bridged asset definition to their own implementation.
     - Migrations are initiated by asset owners, allowing users to move from bridge-defined assets to the native asset,
       and back into the non-native VM as the project-defined implementation.
     - The ability to update bridge-defined associations beyond this upgrade remains an [open question](#open-questions)
@@ -434,7 +434,10 @@ action and the relationship defined by both associated contracts.*
 
 ### Cadence-Native NFTs
 
-#### EVMBytesMetadata view
+#### EVMBytesMetadata View
+
+A new metadata view will need to be added to the `MetadataViews` [standard](https://github.com/onflow/flow-nft/blob/master/contracts/MetadataViews.cdc) to support updating EVM metadata.
+
 ```cadence
 /// View resolved at resource level denoting any metadata to be passed to the associated EVM contract at the time of
 /// bridging. This optional view would allow EVM side metadata to be updated based on current Cadence state. If the
@@ -709,8 +712,8 @@ declare associations by virtue of their validated privileged access on both cont
 
 ## Open Questions
 
-- Should asset migrations to bridge-defined assets be supported beyond this update or should this only be allowed for
-  legacy NFTs?
+- Should asset migrations from bridge-defined assets to custom implementations be supported beyond this update or should this only be allowed for
+legacy bridge-defined NFTs that were created before this upgrade?
   - Options:
     - No migrations beyond legacy assets
     - Allow migrations to bridge-defined assets indefinitely
