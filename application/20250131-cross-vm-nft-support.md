@@ -12,28 +12,45 @@ updated: 2025-01-31
 <details>
 <summary>Table of Contents</summary>
 
-- [Objective](#objective)
-- [Current State](#current-state)
-  - [Visual Overview](#visual-overview)
-- [Functional Requirements](#functional-requirements)
-- [High-Level Implementation Plan](#high-level-implementation-plan)
-- [Proposed Processes](#proposed-processes)
-  - [Scenarios](#scenarios)
-  - [Asset Migration](#asset-migration)
-- [Case Study: Integrating a Net New Cadence-Native Cross-VM NFT](#case-study-integrating-a-net-new-cadence-native-cross-vm-nft)
-  - [Pre-Requisites](#pre-requisites)
-  - [Deployment](#deployment)
-  - [Verification](#verification)
-- [Interfaces](#interfaces)
-  - [Cadence-Native NFTs](#cadence-native-nfts)
-  - [EVM-Native NFTs](#evm-native-nfts)
-  - [Cross-VM Pointers](#cross-vm-pointers)
-- [Limitations \& Considerations](#limitations--considerations)
-- [Alternatives Considered](#alternatives-considered)
-  - [Status Quo](#status-quo)
-  - [Router Passthrough](#router-passthrough)
-  - [Signature Verification Mechanism](#signature-verification-mechanism)
-- [Open Questions](#open-questions)
+- [FLIP 318: VM Bridge Support for Cross-VM NFTs](#flip-318-vm-bridge-support-for-cross-vm-nfts)
+  - [Objective](#objective)
+  - [Current State](#current-state)
+    - [Visual Overview](#visual-overview)
+  - [Functional Requirements](#functional-requirements)
+  - [High-Level Implementation Plan](#high-level-implementation-plan)
+  - [Proposed Processes](#proposed-processes)
+    - [Scenarios](#scenarios)
+    - [Asset Migration](#asset-migration)
+  - [Case Study: Integrating a Net New Cadence-Native Cross-VM NFT](#case-study-integrating-a-net-new-cadence-native-cross-vm-nft)
+    - [Pre-Requisites](#pre-requisites)
+    - [Deployment](#deployment)
+    - [Verification](#verification)
+      - [Developer Action](#developer-action)
+  - [Interfaces](#interfaces)
+    - [Cross-VM Pointers](#cross-vm-pointers)
+      - [Cadence](#cadence)
+      - [Solidity](#solidity)
+    - [Cadence-Native NFTs](#cadence-native-nfts)
+      - [EVMBytesMetadata View](#evmbytesmetadata-view)
+      - [ICrossVMBridgeFulfillment interface \& CrossVMBridgeFulfillment Solidity base contract](#icrossvmbridgefulfillment-interface--crossvmbridgefulfillment-solidity-base-contract)
+    - [EVM-Native NFTs](#evm-native-nfts)
+  - [Limitations \& Considerations](#limitations--considerations)
+  - [Alternatives Considered](#alternatives-considered)
+    - [Status Quo](#status-quo)
+      - [Summary](#summary)
+      - [Benefits](#benefits)
+      - [Drawbacks](#drawbacks)
+    - [Router Passthrough](#router-passthrough)
+      - [Summary](#summary-1)
+      - [Benefits](#benefits-1)
+      - [Drawbacks](#drawbacks-1)
+      - [Notes](#notes)
+    - [Signature Verification Mechanism](#signature-verification-mechanism)
+      - [Summary](#summary-2)
+      - [Potential Process](#potential-process)
+      - [Benefits](#benefits-2)
+      - [Drawbacks](#drawbacks-2)
+  - [Open Questions](#open-questions)
 
 </details>
 
@@ -432,65 +449,6 @@ action and the relationship defined by both associated contracts.*
 
 ## Interfaces
 
-### Cadence-Native NFTs
-
-#### EVMBytesMetadata View
-
-A new metadata view will need to be added to the `MetadataViews` [standard](https://github.com/onflow/flow-nft/blob/master/contracts/MetadataViews.cdc) to support updating EVM metadata.
-
-```cadence
-/// View resolved at resource level denoting any metadata to be passed to the associated EVM contract at the time of
-/// bridging. This optional view would allow EVM side metadata to be updated based on current Cadence state. If the
-/// view is not supported, no bytes will be passed into EVM when bridging.
-access(all) struct EVMBytesMetadata {
-    /// Returns the bytes to be passed to the EVM contract on `fulfillToEVM` call, allowing the EVM contract to update
-    /// the metadata associated with the NFT. The corresponding Solidity `bytes` type allows the implementer greater
-    /// flexibility by enabling them to pass arbitrary data between VMs.
-    access(all) fun bytes(): EVM.EVMBytes?
-}
-```
-
-#### ICrossVMBridgeFulfillment interface & CrossVMBridgeFulfillment Solidity base contract
-```solidity
-/**
- * This base contract is intended to allow the VM bridge to fulfill bridge requests moving Cadence-native NFTs into EVM
- */
-abstract contract CrossVMBridgeFulfillment is ERC721, ICrossVMBridgeFulfillment {
-    /**
-     * Sets the bridge EVM address such that only the bridge COA can call the privileged methods
-     */
-    constructor(address vmBridge)
-    /**
-     * Modifier restricting access to the designated VM bridge EVM address 
-     */
-    modifier onlyVMBridge()
-    /**
-     * Returns the designated VM bridge’s EVM address
-     */
-    function getVMBridgeAddress() public view returns (address)
-    /**
-     * Fulfills the bridge request, minting (if non-existent) or transferring (if escrowed) the NFT with given ID to
-     * the provided address
-     */
-    function fulfillToEVM(address to, uint256 id, bytes data) external onlyVMBridge
-    /**
-     * ERC165 - Allows a caller to determine the contract conforms to the `ICrossVMFulfillment` interface
-     */
-    function supportsInterface(bytes4 interfaceId) public view virtual returns (bool)
-}
-```
-### EVM-Native NFTs
-
-```cadence
-/// This resource interface must be implemented for EVM-native NFT and a Capability transmitted to the bridge when the
-/// cross-VM association is verified & established.
-resource interface CrossVMBridgeFullfillmentMinter {
-    /// Mints an NFT on bridging from EVM, returning the minted NFT to the bridge context to complete the caller’s
-    /// request
-    access(all) fun fulfillFromEVM(id: UInt64): @{NonFungibleToken.NFT}
-}
-```
-
 ### Cross-VM Pointers
 
 The following view & interface must be implemented in all cases whether the collection is Cadence- or EVM-native.
@@ -564,6 +522,65 @@ access(all) fun validatePointers(forType: Type): Bool {
 	return pointer!.cadenceType == evmPointer!.cadenceType &&
 		pointer!.cadenceContractAddress == evmPointer!.cadenceContractAddress &&
 		pointer!.evmContractAddress == evmPointer!.evmContractAddress
+}
+```
+
+### Cadence-Native NFTs
+
+#### EVMBytesMetadata View
+
+A new metadata view will need to be added to the `MetadataViews` [standard](https://github.com/onflow/flow-nft/blob/master/contracts/MetadataViews.cdc) to support updating EVM metadata.
+
+```cadence
+/// View resolved at resource level denoting any metadata to be passed to the associated EVM contract at the time of
+/// bridging. This optional view would allow EVM side metadata to be updated based on current Cadence state. If the
+/// view is not supported, no bytes will be passed into EVM when bridging.
+access(all) struct EVMBytesMetadata {
+    /// Returns the bytes to be passed to the EVM contract on `fulfillToEVM` call, allowing the EVM contract to update
+    /// the metadata associated with the NFT. The corresponding Solidity `bytes` type allows the implementer greater
+    /// flexibility by enabling them to pass arbitrary data between VMs.
+    access(all) fun bytes(): EVM.EVMBytes?
+}
+```
+
+#### ICrossVMBridgeFulfillment interface & CrossVMBridgeFulfillment Solidity base contract
+```solidity
+/**
+ * This base contract is intended to allow the VM bridge to fulfill bridge requests moving Cadence-native NFTs into EVM
+ */
+abstract contract CrossVMBridgeFulfillment is ERC721, ICrossVMBridgeFulfillment {
+    /**
+     * Sets the bridge EVM address such that only the bridge COA can call the privileged methods
+     */
+    constructor(address vmBridge)
+    /**
+     * Modifier restricting access to the designated VM bridge EVM address 
+     */
+    modifier onlyVMBridge()
+    /**
+     * Returns the designated VM bridge’s EVM address
+     */
+    function getVMBridgeAddress() public view returns (address)
+    /**
+     * Fulfills the bridge request, minting (if non-existent) or transferring (if escrowed) the NFT with given ID to
+     * the provided address
+     */
+    function fulfillToEVM(address to, uint256 id, bytes data) external onlyVMBridge
+    /**
+     * ERC165 - Allows a caller to determine the contract conforms to the `ICrossVMFulfillment` interface
+     */
+    function supportsInterface(bytes4 interfaceId) public view virtual returns (bool)
+}
+```
+### EVM-Native NFTs
+
+```cadence
+/// This resource interface must be implemented for EVM-native NFT and a Capability transmitted to the bridge when the
+/// cross-VM association is verified & established.
+resource interface CrossVMBridgeFullfillmentMinter {
+    /// Mints an NFT on bridging from EVM, returning the minted NFT to the bridge context to complete the caller’s
+    /// request
+    access(all) fun fulfillFromEVM(id: UInt64): @{NonFungibleToken.NFT}
 }
 ```
 
@@ -715,10 +732,10 @@ declare associations by virtue of their validated privileged access on both cont
 - Should asset migrations from bridge-defined assets to custom implementations be supported beyond this update or should this only be allowed for
 legacy bridge-defined NFTs that were created before this upgrade?
   - Options:
-    - No migrations beyond legacy assets
-    - Allow migrations to bridge-defined assets indefinitely
+    - Allow migrations to bridge-defined assets indefinitely (currently proposed)
     - Allow for migrations within a set period after permissionless onboarding - e.g. custom associations allowed
       within one month of onboarding to the bridge
+    - No migrations beyond legacy assets
   - The issue here is one of security - if the keys to the account/owner become compromised at some point, an attacker
     could migrate a bridged NFT to an attacker owned NFT and compromise all NFTs in the collection
     - On one hand, this risk vector is not entirely different than the owned contract being compromised irrespective
