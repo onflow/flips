@@ -156,7 +156,7 @@ overview of the current state of bridge contracts and core components across Cad
     a single associated EVM contract.
     - A Cadence asset type points to an EVM contract address, and an EVM contract points to a Cadence asset type. This
       may run counter to intuition which would relate associations on a contract to contract basis.
-- In support of the previous point, add a `CrossVMPointer` metadata view to be resolved at the contract & NFT level
+- In support of the previous point, add a `EVMPointer` metadata view to be resolved at the contract & NFT level
   pointing into EVM, and leverage the existing `ICrossVM.sol` contract interface for EVM contracts to point into
   Cadence.
 - Add a custom associations table (and reverse lookup) within a new `FlowEVMBridgeCustomAssociations` contract tracking
@@ -207,7 +207,7 @@ and whether the requested asset must first be migrated
    1. Verify the provided type is an NFT implementation
    2. Verify the provided type is not an FT Vault implementation
 4. Validate the cross-VM association
-    1. Successfully resolve the `CrossVMPointer` view from the defining `NonFungibleToken` contract
+    1. Successfully resolve the `EVMPointer` view from the defining `NonFungibleToken` contract
     2. Successfully call to the resulting associated EVM contract address `ICrossVM.getCadenceIdentifier() (string)` and
        `ICrossVM.getCadenceAddress() (string)` 
     3. If both pointer values match, the association is considered valid
@@ -364,7 +364,7 @@ and associating the Cadence & Solidity contracts with the VM Bridge.
       fulfillment into EVM.
     - If EVM-native, the Cadence contract will need to implement an NFT minter conforming to
       `CrossVMBridgeFullfillmentMinter` interface and grant a Capability on that minter to the bridge 
-2. **Cross-VM Pointers:** Implement the `CrossVMPointer` view resolution at the Cadence contract & NFT level and the
+2. **Cross-VM Pointers:** Implement the `EVMPointer` view resolution at the Cadence contract & NFT level and the
    `ICrossVM` Solidity contract interface (see [Interfaces](#interfaces) below). Will also need to conform to and
    implement `CrossVMBridgeFulfillment` interface, allowing the bridge COA to fulfill requests from Cadence to EVM.
 
@@ -408,15 +408,15 @@ contract’s declaration without also checking the other end of the connection w
 3. Validate pointer from the Cadence side
    1. Derive Cadence contract address from provided type as `0x123`
    2. Borrow the defining contract as `&{NonFungibleToken}`
-   3. Resolve the `CrossVMPointer` view for the given NFT Type
+   3. Resolve the `EVMPointer` view for the given NFT Type
    4. Confirm the view was resolved and move on to validating pointer from the EVM side
-   5. Since no minter provided, ensure `CrossVMPointer.isCadenceNative == true`
+   5. Since no minter provided, ensure `EVMPointer.isCadenceNative == true`
 4. Retrieve pointer from the EVM side
    1. Retrieve the associated Cadence address from the view’s associated EVM address
    2. Retrieve the associated Type identifier from the view’s associated EVM address
-   3. Return a constructed `CrossVMPointer` view from retrieved values and the called EVM address
+   3. Return a constructed `EVMPointer` view from retrieved values and the called EVM address
 5.  Compare the pointers, continuing if all pointer values match
-6.  Since `CrossVMPointer.isCadenceNative == true`, check EVM contract conformance with expected
+6.  Since `EVMPointer.isCadenceNative == true`, check EVM contract conformance with expected
     `ICrossVMBridgeFulfillment` contract interface
    1. If false, panic
    2. Check the designated VM bridge EVM address & compare against bridge COA address
@@ -460,7 +460,7 @@ The following new view **must** be resolved at the contract level (`ViewResolver
 
 ```cadence
 /// View resolved at contract & resource level pointing to the associated EVM implementation
-access(all) struct CrossVMPointer {
+access(all) struct EVMPointer {
     /// The associated Cadence Type
     access(all) let cadenceType: Type
     /// The defining Cadence contract address
@@ -502,20 +502,20 @@ access(all) fun validatePointers(forType: Type): Bool {
 	let nftContract = getAccount(contractAddress).contracts.borrow<&{NonFungibleToken}>(name: forType.contractName)
 	if nftContract == nil { return false }
 
-	// resolve the CrossVMPointer from the defining NFT contract
+	// resolve the EVMPointer from the defining NFT contract
 	let pointer = nftContract!.resolveContractView(
 			resourceType: forType,
-			viewType: MetadataViews.CrossVMPointer
-		) as! MetadataViews.CrossVMPointer?
+			viewType: MetadataViews.EVMPointer
+		) as! MetadataViews.EVMPointer?
     // ensure the pointer is resolved and relevant for the provided Type, avoiding possible impersonation
 	if pointer == nil || pointer!.cadenceType != forType || pointer!.cadenceContractAddress != contractAddress {
 		return false
 	}
 	
 	// internal call to helper method that inspects EVM contract
-	// and returns an optional CrossVMPointer view constructed from
+	// and returns an optional EVMPointer view constructed from
 	// EVM results - nil if ICrossVM calls fail implying non-conformance
-	let evmPointer = self.getCrossVMPointer(fromEVMContract: pointer!.evmContractAddress)
+	let evmPointer = self.getCadencePointer(fromEVMContract: pointer!.evmContractAddress)
 	if evmPointer == nil { return false }
 
 	// return true if pointers match
