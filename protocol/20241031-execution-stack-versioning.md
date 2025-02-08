@@ -2,7 +2,7 @@
 status: Accepted 
 flip: 298
 authors: Alex Hentschel (alex.hentschel@flowfoundation.org)
-sponsor: Jordan Schalm (jordan.schalm@flowfoundation.org),<br>Janez Podhostnik (janez.podhostnik@flowfoundation.org),<br>Leo Zhang (leo.zhang@flowfoundation.org) 
+sponsor: Jordan Schalm (jordan.schalm@flowfoundation.org), Janez Podhostnik (janez.podhostnik@flowfoundation.org), Leo Zhang (leo.zhang@flowfoundation.org) 
 updated: 2025-02-01
 ---
 
