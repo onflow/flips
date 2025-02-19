@@ -167,7 +167,6 @@ The provider will handle the following types of requests:
                     gasLimit: gasLimit,
                     value: valueBalance
                 )
-                assert(callResult.status == EVM.Status.successful, message: "Call failed")
             }
         }
         ```
