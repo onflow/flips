@@ -1,0 +1,221 @@
+---
+status: Draft
+flip: 264
+authors: Tarak Ben Youssef (tarak.benyoussef@flowfoundation.org)
+sponsor: [TODO - Janez?]
+updated: 2024-02-03
+---
+
+# FLIP 264: WebAuthn Credential Support
+
+## Objective
+
+This FLIP proposes the integration of the WebAuthn standard into Flow, enabling users to leverage WebAuthn credentials such as passkeys for Flow transaction signing, in the same way they are used for authenticating to web services.
+
+[Webauthn](https://www.w3.org/TR/webauthn-3) is a standard provided by the [FIDO2](https://www.passkeys.com/what-is-fido2-fido-2-explained) framework to enable passwordless authentication.
+It replaces passwords and multi-factor authentication with public key cryptography when logging into a service, for a more user-friendly experience and multiple security benefits (phishing resistance, no credential interception, avoid password reuse, resistance to server breaches, etc.). 
+
+Passkeys are the most common form of WebAuthn credentials.
+When a user registers for a web service, a new public passkey is generated on their device's authenticator and shared with the service's server.
+The user's authenticator securely stores the private passkey and allows its use in future sessions through biometric authorizations (e.g., face ID).
+The private passkey generates a cryptographic signature that authenticates the user to the web service.
+
+Flow (like other blockchains) uses public key cryptography to authenticate account owners and authorize on-chain actions.
+This is done by signing transactions using the account owner's private key, while the chain stores the public key counterpart for verification.
+Flow already employs the same key infrastructure required by FIDO2 and can thus leverage the existing WebAuthn implementations for account authentication.
+Flow users would inherit the high usability of passkeys provided by major platforms and ecosystems (Apple, Google, browsers, password managers, etc.).
+Additionally, Flow users could also use other compatible WebAuthn credentials, such as hardware keys (e.g., Yubikey).
+
+## Motivation
+
+For self-custody wallets, enabling users to control their private keys presents two main flaws.
+First, users are responsible for safeguarding their secret seeds, which is prone to user error, leading to situations where users either lose access to their secrets or fall victim to exploits.
+Secure elements provide a good solution to safeguard the user's private keys by preventing their leakage and unauthorized usage.
+This turns devices equipped with secure elements into secure hardware wallets, eliminating the need for a secret seed and reducing the burden on users to safeguard their keys.
+However, this solution introduces the second flaw in existing self-custody mechanisms: private keys are tied to specific devices making portability of the keys across devices not possible.
+Losing the user's device often means losing access to their private keys.
+
+FIDO2 is already implemented by major platforms and operating systems. These implementations use passkeys as FIDO2 credentials, which are backed by secure hardware and are very convenient to use.
+On certain systems, passkey credentials are shared between the user's devices for easier access, and are securely backed up for later recovery in cases of loss.
+Wallets based on passkeys would resolve the current self-custody flaws. 
+
+## User Benefit
+
+Flow account users would be able to use self-custody wallets based on passkeys from major platforms (Apple's Password app, Google's Password Manager, etc.). 
+They would be able to register account public keys from their devices and authorize transaction signing via the device's biometric authentication.
+This combination offers strong security through hardware elements (no phishing, protection at rest and in use) and high usability through the portability and recovery features provided by passkeys.
+This would be possible without the need to remember seed phrases (as in hardware wallets) or master passwords (as in some browser wallets).
+
+Flow account users would also be able to use any compatible Webauthn credentials other than passkeys, to both register and authorize transactions. 
+
+## Scope of the proposal
+
+Currently, the Flow protocol cannot verify Webauthn-generated signatures.
+This FLIP outlines the changes required at the Flow protocol level in order to support Webauthn credentials for both registration (adding public keys to new or existing Flow accounts) and authentication (Flow transaction authorization). This would enable the usage of Webauthn-compatible credentials, including passkeys, to control Flow accounts.
+
+The proposal focuses on the changes required at the Flow protocol level (mainly within the Access API and the Flow Virtual Machine).
+It is not a complete guide for Flow client developers on how to integrate Webauthn credentials and it does not replace the [Webauthn specifications](https://www.w3.org/TR/webauthn-3).
+Wallet developers must still refer to the original specifications on how to manage credentials and communicate with authenticators. 
+That said, the proposal highlights the points where Flow client usage differs from the original Webauthn authentication use case. 
+
+## Design Proposal
+
+# Terminology
+
+The Webauthn specifications originally provide a safe and user-friendly ways to authenticate users into web applications.
+A recent [variation](https://www.w3.org/TR/secure-payment-confirmation/), authored by the same [W3C](https://www.w3.org/) consortium, covers similar secure methods to authorize payments on web services.
+Neither of these specifications was meant to address the case of blockchain transactions. 
+This FLIP proposes using some Webauthn methods and functions for a different use-case.
+Here is how WebAuthn terminology corresponds to blockchain terms:
+
+- [Public key Credential](https://www.w3.org/TR/webauthn-3/#public-key-credential): The cryptographic key pair used to authenticate. In Flow, this corresponds to the account key pair, with the private key controlled by the user and the public key stored on-chain.
+
+- [Authenticator](https://www.w3.org/TR/webauthn-3/#authenticator): The cryptographic component (software or hardware) that generates and uses the credential private key. In Flow Wallets, the authenticator depends on the wallet implementation. In the common case of passkeys, it corresponds to the OS passkeys manager (for instance Apple's Passwords on iOS and macOS).
+
+- [Client](https://www.w3.org/TR/webauthn-3/#client): The client-side components that interacts with a remote server. In Flow, this would be the wallet software interacting with the chain.
+
+- [Relying Party server](https://www.w3.org/TR/webauthn-3/#webauthn-relying-party): The server side component of the authentication process that registers the user's public credentials and authenticates users. In Flow, the relying party runs on-chain within the Flow Virtual Machine (FVM). The transaction validation module validates the user assertions (signatures) while the execution state stores the public credentials (account public keys). While Webauthn requires the relying party to connect to clients using a secure channel, the chain communication with clients is not confidential and does not require an encrypted channel. 
+
+- [Authentication Assertion](https://www.w3.org/TR/webauthn-3/#authentication-assertion): The proof provided by an authenticator to the relying party (via a client) upon the user’s approval, proving possession of the private credentials. In Flow, the assertion is the transaction signature that proves ownership of the account's private key.
+
+# Scenarios
+
+1. Account public key registration:
+
+- A wallet wants to add a new account public key to an existing Flow account, or create a new Flow account with a new public key.
+- The wallet initiates the process by calling [`authenticatorMakeCredential`](https://www.w3.org/TR/webauthn-3/#sctn-op-make-cred). In most platforms this is invoked via the higher level web API [`navigator.credentials.create()`](https://www.w3.org/TR/webauthn-3/#sctn-createCredential). This requests the authenticator to create a new key pair credential with the options specified in [`PublicKeyCredentialCreationOptions`](https://www.w3.org/TR/webauthn-3/#dictionary-makecredentialoptions):
+    - The relying party ID `rpID` is a string set by the wallet to identify the Flow credentials. This is a constant defined by the wallet for all Flow usage (for example `"FLOW-WEBAUTHN-MYWALLET-V0.0"`). Note that further map indexes like [user handles](https://www.w3.org/TR/webauthn-3/#user-handle) and [credential IDs](https://www.w3.org/TR/webauthn-3/#credential-id) would allow the look up of the Flow private credential in the authenticator internal map.
+    - Unlike the original Webauthn registration case, the `challenge` is not sent by the server to the client. The wallet sets `challenge` to any constant string that should be stored temporarily during till receiving the authenticator response. It is not necessary to use a random challenge.
+    - The list [`PublicKeyCredentialParameters`](https://www.w3.org/TR/webauthn-3/#dictdef-publickeycredentialparameters) must only contain items with the algorithm being `ES256` or `ES256k` as defined in the [COSE](https://www.iana.org/assignments/cose/cose.xhtml#algorithms) list. These are the only COSE algorithms currently supported by Flow accounts. `ES256` is ECDSA (using P-256)[https://www.w3.org/TR/webauthn-3/#sctn-alg-identifier] with SHA2-256, while `ES256k` is ECDSA using secp256k1 curve and SHA2-256.
+- Once the user confirms registration through an authorization gesture, the authenticator creates the key pair and returns an [AuthenticatorAttestationResponse](https://www.w3.org/TR/webauthn-3/#iface-authenticatorattestationresponse) to the wallet. The response contains all the data needed to verify and register the new account public key.
+- The wallet extracts the new public key and the attestation signature from the authenticator response. It also constructs the [attested signed message](https://www.w3.org/TR/webauthn-3/#sctn-attestation) from the response and validates it contains the expected constant `challenge` set earlier. The wallet should also check the rest of the settings are set as expected in the attestation response such as the `rpIDHash` (should be hashed correctly from the `rpID`) and the other flags.  
+- Unlike the traditional Webauthn registration process, the attestation signature is not verified on the server side. It is highly recommended to verify it on the wallet side, against the newly created public key and the attested message. This step is important to validate the public key before finalizing its registration on-chain. It serves as a proof that the authenticator possesses the private key corresponding to the public credential. 
+- If the validation succeeds, the wallet builds a new account public key using the newly generated public key, the signature algorithm returned by the authenticator, and the hash algorithm SHA2-256. 
+- The wallet includes the new account public key into a transaction to create a new Flow account with the key, or to add the new account key to an existing Flow account. The transaction is then submitted by the wallet.
+- The wallet stores the credential data required to look up the user private key in future calls to the authenticator. This may be a combination of the rpID, user handle and credential ID depending on the wallet implementation.
+- The chain processes the transaction and no modifications are required on the Flow protocol level.
+
+2. User Transaction Submission:
+
+- A wallet needs to sign a transaction for an account previously registered with a Webauthn credential.
+- The wallet looks up the user's credential data locally, and pulls the transaction data required from the chain.
+- The wallet initiates the process by calling [`authenticatorGetAssertion `](https://www.w3.org/TR/webauthn-3/#authenticatorgetassertion). On most platforms this is called via the higher level web API [`navigator.credentials.get()`](https://www.w3.org/TR/webauthn-3/#sctn-getAssertion). This requests the authenticator to generate an assertion signature using a previously generated private credential with the inputs provided in [`PublicKeyCredentialRequestOptions`](https://www.w3.org/TR/webauthn-3/#dictionary-assertion-options):
+    - The relying party ID `rpID` must be the constant string set by the wallet for all Flow credential registrations.
+    - Unlike the original Webauthn registration case, the `challenge` is not sent by the server to the client. In FLow, it is not necessary to use a challenge-response mechanism to sign transactions. Replay attacks are mitigated using [the account key sequence number](https://developers.flow.com/build/basics/transactions#sequence-numbers) which is incremented for every valid transaction signature, and is part of the signable transaction payload. The wallet sets `challenge` to the signable transaction message hash. The hash used is SHA2-256, which produces a 32-bytes `challenge`. The transaction message is either the transaction [payload](https://developers.flow.com/build/basics/transactions#payload) or the [authorization envelope](https://developers.flow.com/build/basics/transactions#authorization-envelope), depending on the signer role. Note that a signable message in Flow includes a domain separation tag to scope the message to the Flow transaction context.
+    - When calling `navigator.credentials.get()`, other fields of the request (including [CollectedClientData](https://www.w3.org/TR/webauthn-3/#dictionary-client-data)) are set implicitly by the web API and cannot be set by the developer.
+- Once the user confirms the registration through an authorization gesture, the authenticator uses the private key to sign an internally constructed message and returns an [AuthenticatorAssertionResponse](https://www.w3.org/TR/webauthn-3/#iface-authenticatorassertionresponse) to the wallet. The response contains the signature as well as all the required data to rebuild the signed message. The exact signed message is [defined](https://www.w3.org/TR/webauthn-3/#sctn-op-get-assertion) by the Webauthn specification as `webauthn_message = authenticatorData || Hash(json(collectedClientData))`, where [authenticator data](https://www.w3.org/TR/webauthn-3/#sctn-authenticator-data) is set by the authenticator and [`collectedClientData`](https://www.w3.org/TR/webauthn-3/#dictionary-client-data) is set by the wallet and includes the `challenge` above. 
+- The wallet should sanity-check that `authenticatorData` and  `collectedClientData` returned by the authenticator are set according to the query. This includes the `challenge` value and the `rpIDhash` value (which should be hashed correctly from `rpID`). Other [authenticator flags](https://www.w3.org/TR/webauthn-3/#authdata-flags-up) should be checked as required by the Webauthn specs and the wallet settings. In particular the User Presence `UP` must be set while the User Verification `UV` should be set according to the wallet preference.
+- The wallet extracts the signature and the signed message data from the assertion response. It then builds a new transaction using the authenticator signature along with the extra signed message, forming the transaction signature (payload signature or envelope signature depending on the case).
+- Once the transaction is submitted, the chain processes the transaction. The transaction signature is not verifiable on the current protocol because the signed message extends beyond the usual payload data (or authorization envelope data). The signed message includes new data added by the webauth scheme. Verifying these transactions require modifications on two different levels: the access API should be able to transmit the extra verification data as part of the transaction (changes described in #access-api-changes), and the FVM should be able to construct the Webauthn verification message (changes described in #fvm-transaction-validation-changes).
+
+# Access API changes
+
+To support WebAuthn signatures, Flow's transaction signatures need to be extended to include additional verification data such as `authenticatorData` and `collectedClientData`. 
+We refer to this data by `extension_data`. 
+The new structure must support the Webauthn scheme as well as continue to support the original non-webauthn scheme (also called plain scheme) without breaking changes.
+
+Currently, the Flow transaction signature only supports the plain scheme, and is [defined](https://github.com/onflow/flow/blob/master/protobuf/flow/entities/transaction.proto#L26) as:
+```protobuf
+message Signature {
+    bytes address = 1;
+    uint32 key_id = 2;
+    bytes signature = 3;
+}
+```
+The proposed transaction signature to support additional schemes is:
+```protobuf
+message Signature {
+    bytes address = 1;
+    uint32 key_id = 2;
+    bytes signature = 3;
+    bytes extension_data = 4;
+}
+```
+The  `extension_data` field represents any extra data required to verify the signature.
+This will be used to support Webauthn and to potentially support other schemes in the future.
+The `signature` field continues to represent the cryptographic signature to be verified against the public key. 
+The first byte of `extension_data` is a scheme identifier that scopes the signature to a defined signing scheme and specifies the signature verification process.
+The signing scheme here identifies a protocol or a framework and should not be confused with cryptographic signature schemes (such as ECDSA, RSA, etc).
+
+    - The scheme identifier is a byte which encodes up to 256 possible schemes. The plain scheme identifier is `0x0`, while the Webauthn scheme identifier is `0x1`. Only these two signature schemes will be supported in Flow for now.
+    - For backward compatibility, and to optimize for the plain scheme case (expected to be the commonly used scheme), the plain scheme identifier does not need to be used when using the plain scheme. The `extension_data` field is omitted when building a `Signature` struct and will be decoded to the default language value (for instance empty slice in Golang). `extension_data` needs to be included only when the scheme is not plain. This also avoids a malleability problem where setting `extension_data` to an array `{0x0}` would be equivalent to not setting one. 
+    - Any `extension_data` value that is not at least 1-byte in length or does not start with a valid scheme identifier (currently only `0x1`) makes the transaction signature invalid.
+
+In the case of the Webauthn scheme, `extension_data` should be encoded as:
+```
+ byte(webauthn_scheme_identifier) || 
+			RLP({
+			"authenticator_data" : bytes
+	        "collectedClientData_json" : bytes
+			})
+```
+- `authenticator_data` is the [data](https://www.w3.org/TR/webauthn-3/#sctn-authenticator-data) set by the authenticator and returned in the assertion response. The data must be at least `35` bytes, and is the concatenation of the following fields:
+    - the first 32 bytes represent the `rpIDHash`
+    - the next byte represents the flags 
+    - the following 4 bytes represents the `signCount`
+    - the two remaining fields are `attestedCredentialData` and `extensions`. They are optional and usually not included. The flags byte encode the presence or not of these two fields. If included, they are both of variable size.
+- `collectedClientData_json` is the json encoding of [`collectedClientData`](https://www.w3.org/TR/webauthn-3/#dictionary-client-data) (or `json(collectedClientData)`) as formed by the client when requesting an assertion from the authenticator. It is important to include the same json encoding used during the assertion request because `collectedClientData` is a dictionary and the field order of the serialization must be preserved. `collectedClientData_json` must be a valid json encoding of a dictionary with the required fields `"type"`, `"challenge"` and `"origin"`. The type field must be `"webauthn.get"` and the challenge must be decoded into exactly 32 bytes. The origin is a string of arbitrary size. This adds up to at least 93 bytes, with an average of about 145 bytes if the data are constructed honestly.
+
+# FVM transaction validation changes
+
+Upon receiving each transaction signature, the FVM transaction validation module performs the following steps to validate the transaction signature. It returns "valid" if the transaction signature is correct, and "invalid" otherwise.
+The existing validation steps before this FLIP are not detailed.
+
+- Decode the protobuf fields of the new proposed `Signature` structure.
+- Check the public key has a valid `key_id` and is not revoked, otherwise return "invalid".
+- If the `extension_data` field is not provided, set the current scheme to the plain scheme.
+- If the `extension_data` field is provided, check it is of byte-size larger than `1`, otherwise return "invalid".
+- Set the current scheme to `extension_data[0]`.
+- Check that the current scheme is supported. Currently, only the Webauthn scheme identifier (`0x1`) is accepted at this step. Otherwise return "invalid".
+- At this point, the scheme is Webauthn. RLP decode the remaining data `extension_data[1:]` into `authenticator_data` and `collectedClientData_json`. Return "invalid" if decoding fails. We recall the expected structure of `extension_data` in the webauthn case:
+```
+ byte(webauthn_scheme_identifier) || 
+			RLP({
+			"authenticator_data" : bytes
+	        "collectedClientData_json" : bytes
+			})
+```
+- Json-decode `collectedClientData_json` into [`collectedClientData`](https://www.w3.org/TR/webauthn-3/#dictionary-client-data) and make sure the resulting dictionary contains the required keys `"type"`, `"challenge"` and `"origin"`. Return "invalid" if any of the steps fail.
+- Extract the `challenge` value from the `collectedClientData` dictionary using the "challenge" key, and make sure it is exactly 32 bytes.
+- Reconstruct the payload hash `SHA2-256(flow_domain_tag || payload)` from the received transaction and check that it equals the `challenge` field value. If the values do not match, return "invalid". Use the authorization envelope instead of `payload` in the case of a payer signature.
+- Read the `type` value from the dictionary using the "type" key. If the value is different than `"webauthn.get"` return "invalid". 
+- In Webauthn, the server checks client from the dictionary such as `origin` and `crossOrigin` to make sure the assertion was generated for the right relying party. These checks aren't required in the Flow transaction case. Unlike the classic Webauthn case, the wallet can connect to the chain via multiple access nodes. The domain tag scopes the assertion to the Flow transactions.
+- Check `authenticatorData` has the minimum length of 37 bytes.
+- Extract the [user flags](https://www.w3.org/TR/webauthn-3/#authdata-flags-up) from [`authenticatorData`](https://www.w3.org/TR/webauthn-3/#sctn-authenticator-data) and check `UP` is set, `BS` is not set if `BE` is not set, `AT` is only set if [attested data](https://www.w3.org/TR/webauthn-3/#attested-credential-data) is included, `ED` is set only if [extension data](https://www.w3.org/TR/webauthn-3/#authdata-extensions) is included. If any of the checks fail, return "invalid".
+- In Webauthn, the `counter` field in `authenticatorData` is incremented by the authenticator for each assertion and is tracked and verified by the server. This provides an additional layer of replay attacks mitigation in addition to the use of random challenges. It also prevents authenticator cloning where the local counters can get out of sync with the server's privately-stored counter. In Flow, the replay attack is mitigated by the [proposal key sequence number](https://developers.flow.com/build/basics/transactions#sequence-numbers). Sequence numbers are publicly stored on-chain and are therefore not effective against authenticator cloning. A cloned authenticator is able to look up the next valid sequence number before signing.
+- No other checks are required on the fields of `authenticatorData`. The `rpIDHash` is set arbitrarily by the wallet, while the extension [may be ignored](https://www.w3.org/TR/webauthn-3/#authn-ceremony-verify-extension-outputs) during the attestation verification, as long as they are covered by the cryptographic verification.
+- Construct the message `webauthn_message = authenticatorData || Hash(collectedClientData_json)`.
+- Compute the cryptographic verification of the `signature` value against `webauthn_message` and the cryptographic public key, taking into account the hashing algorithm stored in the account key. Return "valid" is the verification succeeds, and "invalid" otherwise.
+
+### Alternatives Considered
+
+1. transaction signing (payload hash)
+2. access API changes (Option 1: Modify the existing Signature structure to support extra data)
+3. account keys
+
+
+### Drawbacks
+
+These changes require a coordinated update to access, collection, execution and verification nodes to maintain the integrity and consistency of transaction validation.
+
+[TODO: user experience impact - logging instead of signing]
+
+
+### Performance Implications
+
+The Webauthn scheme transactions require larger transactions in size to include the extra verification data.
+The extra data per Webauthn transaction signature are at least 130 bytes (37 bytes for `authenticatorData` + 93 bytes for `collectedClientData_json`) and about 180 bytes in a general case for a valid signature.
+The FVM execution overhead to decode the extra data and perform extra hashes is negligible.
+
+There is no size or execution impact on the the non-Webauthn transactions.
+
+### Engineering Impact
+
+The changes require code updates to the access API, FVM and collection node software.
+Updates will also be required to some tooling libraries like Flow SDKs. 
+
+### Compatibility
+
+Proposed changes are backwards compatible.
+Current plain scheme transactions (non-Webauthn) continue to work as usual. 
+
