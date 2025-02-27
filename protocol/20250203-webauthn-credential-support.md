@@ -137,18 +137,20 @@ The `signature` field continues to represent the cryptographic signature to be v
 The first byte of `extension_data` is a scheme identifier that scopes the signature to a defined signing scheme and specifies the signature verification process.
 The signing scheme here identifies a protocol or a framework and should not be confused with cryptographic signature schemes (such as ECDSA, RSA, etc).
 
-    - The scheme identifier is a byte which encodes up to 256 possible schemes. The plain scheme identifier is `0x0`, while the Webauthn scheme identifier is `0x1`. Only these two signature schemes will be supported in Flow for now.
-    - For backward compatibility, and to optimize for the plain scheme case (expected to be the commonly used scheme), the plain scheme identifier does not need to be used when using the plain scheme. The `extension_data` field is omitted when building a `Signature` struct and will be decoded to the default language value (for instance empty slice in Golang). `extension_data` needs to be included only when the scheme is not plain. This also avoids a malleability problem where setting `extension_data` to an array `{0x0}` would be equivalent to not setting one. 
-    - Any `extension_data` value that is not at least 1-byte in length or does not start with a valid scheme identifier (currently only `0x1`) makes the transaction signature invalid.
+Here is how the bytes of `extension_data` should be set:
+- The scheme identifier is a byte which encodes up to 256 possible schemes. The plain scheme identifier is `0x0`, while the Webauthn scheme identifier is `0x1`. Only these two signature schemes will be supported in Flow for now.
+- For backward compatibility, and to optimize for the plain scheme case (expected to be the commonly used scheme), the plain scheme identifier does not need to be used when using the plain scheme. The `extension_data` field is omitted when building a `Signature` struct and will be decoded to the default language value (for instance empty slice in Golang). `extension_data` needs to be included only when the scheme is not plain. This also avoids a malleability problem where setting `extension_data` to an array `{0x0}` would be equivalent to not setting one. 
+- Any `extension_data` value that is not at least 1-byte in length or does not start with a valid scheme identifier (currently only `0x1`) makes the transaction signature invalid.
 
 In the case of the Webauthn scheme, `extension_data` should be encoded as:
 ```
  byte(webauthn_scheme_identifier) || 
-			RLP({
-			"authenticator_data" : bytes
-	        "collectedClientData_json" : bytes
-			})
+		RLP({
+		"authenticator_data" : bytes
+		"collectedClientData_json" : bytes
+		})
 ```
+
 - `authenticator_data` is the [data](https://www.w3.org/TR/webauthn-3/#sctn-authenticator-data) set by the authenticator and returned in the assertion response. The data must be at least `35` bytes, and is the concatenation of the following fields:
     - the first 32 bytes represent the `rpIDHash`
     - the next byte represents the flags 
@@ -193,13 +195,9 @@ The existing validation steps before this FLIP are not detailed.
 2. access API changes (Option 1: Modify the existing Signature structure to support extra data)
 3. account keys
 
-
 ### Drawbacks
 
 These changes require a coordinated update to access, collection, execution and verification nodes to maintain the integrity and consistency of transaction validation.
-
-[TODO: user experience impact - logging instead of signing]
-
 
 ### Performance Implications
 
