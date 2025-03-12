@@ -43,7 +43,7 @@ Wallets based on passkeys would resolve the current self-custody flaws.
 
 Flow account users would be able to use self-custody wallets based on passkeys from major platforms (Apple's Password app, Google's Password Manager, etc.). 
 They would be able to register account public keys from their devices and authorize transaction signing via the device's biometric authentication.
-This combination provides strong security through hardware elements (no phishing, protection at rest and in use) and high usability through the portability and recovery features provided by passkeys.
+This combination provides strong security through hardware elements (no phishing, protection at rest and in use) and high usability through the portability between devices and recovery features in cases of loss.
 This would be possible without the need to remember seed phrases (as in hardware wallets) or master passwords (as in some browser wallets).
 
 Flow account users would also be able to use any compatible WebAuthn credentials other than passkeys, to both register and authorize transactions. 
@@ -85,11 +85,10 @@ Here is how WebAuthn terminology corresponds to blockchain terms:
 - A wallet wants to add a new account public key to an existing Flow account, or create a new Flow account with a new public key.
 - The wallet initiates the process by calling [`authenticatorMakeCredential`](https://www.w3.org/TR/webauthn-3/#sctn-op-make-cred). In most platforms this is invoked via the higher level web API [`navigator.credentials.create()`](https://www.w3.org/TR/webauthn-3/#sctn-createCredential). This requests the authenticator to create a new key pair credential with the options specified in [`PublicKeyCredentialCreationOptions`](https://www.w3.org/TR/webauthn-3/#dictionary-makecredentialoptions):
     - The relying party ID `rpID` is a string set by the wallet to identify the Flow credentials. This is a constant defined by the wallet for all Flow usage (for example `"FLOW-WEBAUTHN-MYWALLET-V0.0"`). Note that further map indices like [user handles](https://www.w3.org/TR/webauthn-3/#user-handle) and [credential IDs](https://www.w3.org/TR/webauthn-3/#credential-id) would allow the look up of the Flow private credential in the authenticator internal map.
-    - Unlike the original WebAuthn registration case, the `challenge` is not sent by the server to the client. The wallet sets `challenge` to any constant string that should be stored temporarily during till receiving the authenticator response. It is not necessary to use a random challenge.
-    - The list [`PublicKeyCredentialParameters`](https://www.w3.org/TR/webauthn-3/#dictdef-publickeycredentialparameters) must only contain items with the algorithm being `ES256` or `ES256k` as defined in the [COSE](https://www.iana.org/assignments/cose/cose.xhtml#algorithms) list. These are the only COSE algorithms currently supported by Flow accounts. `ES256` is ECDSA [using P-256]([)https://www.w3.org/TR/webauthn-3/#sctn-alg-identifier) with SHA2-256, while `ES256k` is ECDSA using secp256k1 curve and SHA2-256.
-- Once the user confirms registration through an authorization gesture, the authenticator creates the key pair and returns an [AuthenticatorAttestationResponse](https://www.w3.org/TR/webauthn-3/#iface-authenticatorattestationresponse) to the wallet. The response contains all the data needed to verify and register the new account public key.
-- The wallet extracts the new public key and the attestation signature from the authenticator response. It also constructs the [attested signed message](https://www.w3.org/TR/webauthn-3/#sctn-attestation) from the response and validates it contains the expected constant `challenge` set earlier. The wallet should also check the rest of the settings are set as expected in the attestation response such as the `rpIDHash` (should be hashed correctly from the `rpID`) and the other flags.  
-- Unlike the traditional WebAuthn registration process, the attestation signature is not verified on the server side. It is highly recommended to verify it on the wallet side, against the newly created public key and the attested message. This step is important to validate the public key before finalizing its registration on-chain. It serves as a proof that the authenticator possesses the private key corresponding to the public credential. 
+    - Unlike the original WebAuthn registration case, the `challenge` is not sent by the server to the client. The wallet sets `challenge` to any constant string that should be stored temporarily till receiving the authenticator response. It is not necessary to use a random challenge (more details in #replay-attacks).
+    - The list [`PublicKeyCredentialParameters`](https://www.w3.org/TR/webauthn-3/#dictdef-publickeycredentialparameters) must only contain items with the algorithm being `ES256` or `ES256k` as defined in the [COSE](https://www.iana.org/assignments/cose/cose.xhtml#algorithms) list. These are the only COSE algorithms currently supported by Flow accounts. `ES256` is ECDSA [using P-256](https://www.w3.org/TR/webauthn-3/#sctn-alg-identifier) with SHA2-256, while `ES256k` is ECDSA using secp256k1 curve and SHA2-256.
+- Once the user confirms registration through an authorization gesture, the authenticator creates the key pair and returns an [AuthenticatorAttestationResponse](https://www.w3.org/TR/webauthn-3/#iface-authenticatorattestationresponse) to the wallet. The response contains all the data needed to register the new account public key.
+- The wallet extracts the new public key, the client data and the attestation object from the authenticator response. It validates it contains the expected constant `challenge` set earlier, and checks that the `rpIDHash` is hashed correctly from the provided `rpID`. The wallet may also check the other flags are set properly. 
 - If the validation succeeds, the wallet builds a new account public key using the newly generated public key, the signature algorithm returned by the authenticator, and the hash algorithm SHA2-256. 
 - The wallet includes the new account public key into a transaction to create a new Flow account with the key, or to add the new account key to an existing Flow account. The transaction is then submitted by the wallet.
 - The wallet stores the credential data required to look up the user private key in future calls to the authenticator. This may be a combination of the rpID, user handle and credential ID depending on the wallet implementation.
@@ -230,13 +229,15 @@ The sequence number tracks the number of signatures per account public key, it i
 Flow sequence numbers are not effective against authenticator cloning because the expected sequence number is publicly stored on-chain.
 A cloned authenticator can look up the next valid sequence number before signing.
 
-### Server side attestation verification
+### Attestation verification
 
-Unlike WebAuthn, Flow does not require a signature from the newly registered account key.
-Account public keys can be added to new or existing accounts without providing a valid signature by the new private key (though the proposer key's signature must be valid).
-WebAuthn new key registration results in the authenticator generating a signature attestation that is traditionally verified on the server.
-Flow wallets are encouraged to verify the authenticator's attestation locally before registering the new key on-chain.
-This would be a proof that the authenticator possesses the right user's private key. 
+WebAuthn new key registration results in the authenticator generating an attestation that is traditionally verified by the relying party.
+Depending on the attestation type specified by the client when calling `navigator.credentials.create()`, the returned [attestation object](https://www.w3.org/TR/webauthn-2/#sctn-attestation) has a different format and may or may not contain an attestation signature.
+None of these attestations are natively verifiable on chain.
+
+Flow wallets are encouraged to verify the authenticator's attestation object locally before registering the new key on-chain.
+In particular, if the [attestation type](https://www.w3.org/TR/webauthn-2/#sctn-attestation-types) chosen is "self-attestation", the attestation signature is generated using the new private credential.
+Verifying the signature on the client would be a proof that the authenticator possesses the right user's private key.
 
 ### Order of Cryptographic and Contextual checks
 
@@ -247,7 +248,7 @@ The cryptographic verification would then only impact the transaction payer.
 
 # Alternatives Considered
 
-### RP ID is a protocol constant**
+### RP ID is a protocol constant
 
 `RP_ID` could be a unique protocol-wide constant that is used by all wallets submitting WebAuthn transactions.
 Wallets would use the Flow constant instead of arbitrarily choosing their own `RP_ID`.
@@ -296,11 +297,11 @@ message Signature {
 ### Encode the scheme within account public keys
 
 Instead of attaching the scheme information to the transaction signature (through the scheme identifier byte), the scheme information could have been attached the account public key.
-The process of validation a signature would be specified to the FVM by looking at the account public key.
+The process of validating a signature would be identified by the FVM by looking at the account public key.
 Different options have been considered to attach such information to the account key, and they all present disadvantages. Some of the drawbacks include:
  - An account public key would be bound to a single scheme, removing the flexibility of using the same account key in different schemes (without avoiding a new key registration). The scheme and key value are orthogonal and should ideally not be bound.
- - update the account public key format which results in Cadence language changes and breaks existing basic transactions to add keys and create accounts.
- - encode the scheme (plain, WebAuthn, and others) within the signature algorithm field of the account key, breaking with reading the algorithm field as a cryptographic signature algorithm and surcharging it with extra definitions. This would impact multiple tools and libraries in the ecosystem. 
+ - Updating the account public key format means a Cadence language change, which also breaks existing basic transactions to add keys and create accounts.
+ - Encoding the scheme (plain, WebAuthn, and others) within the signature algorithm field of the account key breaks with interpreting the algorithm field as a cryptographic signature algorithm and surcharging it with extra definitions. This can impact multiple tools and libraries in the ecosystem. 
 
 # Drawbacks
 
