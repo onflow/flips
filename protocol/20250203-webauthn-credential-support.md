@@ -10,7 +10,7 @@ updated: 2024-02-03
 
 # Objective
 
-This FLIP proposes the integration of the WebAuthn standard into Flow, enabling users to leverage WebAuthn credentials such as passkeys for Flow transaction signing, in the same way they are used for authenticating to web services.
+This FLIP proposes the integration of some aspects of the WebAuthn standard into Flow, enabling users to leverage WebAuthn credentials such as passkeys for Flow transaction signing, in the same way they are used for authenticating to web services.
 
 [WebAuthn](https://www.w3.org/TR/webauthn-3) is a standard provided by the [FIDO2](https://www.passkeys.com/what-is-fido2-fido-2-explained) framework to enable passwordless authentication.
 It replaces passwords and multi-factor authentication with public key cryptography when logging into a service, for a more user-friendly experience and multiple security benefits (phishing resistance, no credential interception, avoid password reuse, resistance to server breaches, etc.). 
@@ -23,8 +23,13 @@ The private passkey generates a cryptographic signature that authenticates the u
 Flow (like other blockchains) uses public key cryptography to authenticate account owners and authorize on-chain actions.
 This is done by signing transactions using the account owner's private key, while the chain stores the public key counterpart for verification.
 Flow already employs the same key infrastructure required by FIDO2 and can thus leverage the existing WebAuthn implementations for account authentication.
+Flow can use the Webauthn credentials to sign and verify transactions, although it is not the original purpose of the WebAuthn standard.  
 Flow users would inherit the high usability of passkeys provided by major platforms and ecosystems (Apple, Google, browsers, password managers, etc.).
 Additionally, Flow users could also use other compatible WebAuthn credentials, such as hardware keys (e.g., Yubikey).
+
+The objective of this FLIP is to allow signing and verifying transactions using WebAuthn-compatible credentials such as passkeys. The proposal does not implement the full WebAuthn standard into Flow, it only integrates some aspects of the standard to allow signing transactions. 
+The Flow case and the WebAuthn original purpose remain two separate use-cases. The reader will notice that many aspects of the WebAuthn standard do not apply to Flow.
+In particular, the FLIP does not propose ways for dApps to authenticate their users.
 
 # Motivation
 
@@ -51,10 +56,15 @@ Flow account users would also be able to use any compatible WebAuthn credentials
 # Scope of the proposal
 
 Currently, the Flow protocol cannot verify WebAuthn-generated signatures.
-This FLIP outlines the changes required at the Flow protocol level in order to support WebAuthn credentials for both registration (adding public keys to new or existing Flow accounts) and authentication (Flow transaction authorization). This would enable the usage of WebAuthn-compatible credentials, including passkeys, to control Flow accounts.
+This FLIP outlines the changes required at the Flow protocol level in order to support WebAuthn credentials for both registration (adding public keys to new or existing Flow accounts) and authentication (Flow transaction authorization).
+This would enable the usage of WebAuthn-compatible credentials, including passkeys, to control Flow accounts.
+
 
 The proposal focuses on the changes required at the Flow protocol level (mainly within the Access API and the Flow Virtual Machine).
-It is not a complete guide for Flow client developers on how to integrate WebAuthn credentials and it does not replace the [WebAuthn specifications](https://www.w3.org/TR/webauthn-3).
+The FLIP is presented from a platform point of view.
+It aims to remain as generic as possible so that it supports a wide range of client cases, without making assumptions about wallet architectures.
+
+The proposal is not a complete guide for Flow client developers on how to integrate WebAuthn credentials and it does not replace the [WebAuthn specifications](https://www.w3.org/TR/webauthn-3). 
 Wallet developers must still refer to the original specifications on how to manage credentials and communicate with authenticators. 
 That said, the proposal highlights the points where Flow client usage differs from the original WebAuthn authentication use case. 
 
@@ -65,18 +75,18 @@ That said, the proposal highlights the points where Flow client usage differs fr
 The WebAuthn specifications originally provide a safe and user-friendly way to authenticate users into web applications.
 A recent [variation](https://www.w3.org/TR/secure-payment-confirmation/), authored by the same [W3C](https://www.w3.org/) consortium, covers similar secure methods to authorize payments on web services.
 Neither of these specifications was meant to address the case of blockchain transactions. 
-This FLIP proposes using certain WebAuthn methods and functions for a different use case.
-Here is how WebAuthn terminology corresponds to blockchain terms:
+This FLIP proposes using certain WebAuthn methods and functions for a different blockchain use case.
+It is important to clarify how the WebAuthn terminology translates into blockchain terms:
 
-- [Public key Credential](https://www.w3.org/TR/webauthn-3/#public-key-credential): The cryptographic key pair used to authenticate. In Flow, this corresponds to the account key pair, with the private key controlled by the user and the public key stored on-chain.
-
-- [Authenticator](https://www.w3.org/TR/webauthn-3/#authenticator): The cryptographic component (software or hardware) that generates and uses the credential private key. In Flow Wallets, the authenticator depends on the wallet implementation. In the common case of passkeys, it corresponds to the OS passkeys manager (for instance Apple's Passwords on iOS and macOS).
+- [Public key Credential](https://www.w3.org/TR/webauthn-3/#public-key-credential): The cryptographic key pair used to authenticate users. In Flow, this corresponds to the account key pair, where the private key is controlled by the user and the public key is stored on-chain.
 
 - [Client](https://www.w3.org/TR/webauthn-3/#client): The client-side components that interacts with a remote server. In Flow, this would be the wallet software interacting with the chain.
 
-- [Relying Party server](https://www.w3.org/TR/webauthn-3/#webauthn-relying-party): The server side component of the authentication process that registers the user's public credentials and authenticates users. In Flow, the relying party runs on-chain within the Flow Virtual Machine (FVM). The transaction validation module validates the user assertions (signatures) while the execution state stores the public credentials (account public keys). While WebAuthn requires the relying party to connect to clients using a secure channel, the chain communication with clients is not confidential and does not require an encrypted channel. 
+- [Authenticator](https://www.w3.org/TR/webauthn-3/#authenticator): The cryptographic component (software or hardware) on the client side that generates and uses the credential private key. In Flow Wallets, the authenticator depends on the wallet implementation. In the common case of passkeys, it corresponds to the device's OS passkeys manager (for instance Apple's Passwords on iOS and macOS).
 
-- [Authentication Assertion](https://www.w3.org/TR/webauthn-3/#authentication-assertion): The proof provided by an authenticator to the relying party (via a client) upon the user’s approval, proving possession of the private credentials. In Flow, the assertion is the transaction signature that proves ownership of the account's private key.
+- [Relying Party server](https://www.w3.org/TR/webauthn-3/#webauthn-relying-party): The server side component of the authentication process that registers the user's public credentials and authenticates users. In Flow, the relying party server runs on-chain within the Flow Virtual Machine (FVM). The transaction validation module validates the user assertions (signatures) while the execution state stores the public credentials (account public keys). While WebAuthn requires the relying party to connect to clients using a secure channel, the chain communication with clients is not confidential and does not require an encrypted channel.
+
+- [Authentication Assertion](https://www.w3.org/TR/webauthn-3/#authentication-assertion): The proof provided by an authenticator to the relying party server (via a client) upon the user’s approval, proving possession of the private credentials. In Flow, the assertion is the transaction signature that proves ownership of the account's private key. It is generated by the wallet's authenticator and is sent to the chain for verification.
 
 ## Scenarios
 
