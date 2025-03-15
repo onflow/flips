@@ -29,7 +29,7 @@ Additionally, Flow users could also use other compatible WebAuthn credentials, s
 
 The objective of this FLIP is to allow signing and verifying transactions using WebAuthn-compatible credentials such as passkeys. The proposal does not implement the full WebAuthn standard into Flow, it only integrates some aspects of the standard to allow signing transactions. 
 The Flow case and the WebAuthn original purpose remain two separate use-cases. The reader will notice that many aspects of the WebAuthn standard do not apply to Flow.
-In particular, the FLIP does not propose ways for dApps to authenticate their users.
+In particular, the FLIP does not propose or detail ways for wallets or dApps to authenticate their users.
 
 # Motivation
 
@@ -92,9 +92,9 @@ It is important to clarify how the WebAuthn terminology translates into blockcha
 
 ### Account public key registration
 
-- A wallet wants to add a new account public key to an existing Flow account, or create a new Flow account with a new public key.
+- A wallet has already authenticated its user and wants to add a new account public key to an existing Flow account, or create a new Flow account with a new public key.
 - The wallet initiates the process by calling [`authenticatorMakeCredential`](https://www.w3.org/TR/webauthn-3/#sctn-op-make-cred). In most platforms this is invoked via the higher level web API [`navigator.credentials.create()`](https://www.w3.org/TR/webauthn-3/#sctn-createCredential). This requests the authenticator to create a new key pair credential with the options specified in [`PublicKeyCredentialCreationOptions`](https://www.w3.org/TR/webauthn-3/#dictionary-makecredentialoptions):
-    - The relying party ID `rpID` is a string set by the wallet to identify the Flow credentials. This is a constant defined by the wallet for all Flow usage (for example `"FLOW-WEBAUTHN-MYWALLET-V0.0"`). Note that further map indices like [user handles](https://www.w3.org/TR/webauthn-3/#user-handle) and [credential IDs](https://www.w3.org/TR/webauthn-3/#credential-id) would allow the look up of the Flow private credential in the authenticator internal map.
+    - The relying party ID `rpID` is a string set by the wallet to identify the Flow credentials. It is a specific constant to the wallet architecture that is derived from the web origin on the wallet client when making the attestation request. Note that further map indices like [user handles](https://www.w3.org/TR/webauthn-3/#user-handle) and [credential IDs](https://www.w3.org/TR/webauthn-3/#credential-id) can allow the look up of the Flow private credential in the authenticator internal map.
     - Unlike the original WebAuthn registration case, the `challenge` is not sent by the server to the client. The wallet sets `challenge` to any constant string that should be stored temporarily till receiving the authenticator response. It is not necessary to use a random challenge (more details in #replay-attacks).
     - The list [`PublicKeyCredentialParameters`](https://www.w3.org/TR/webauthn-3/#dictdef-publickeycredentialparameters) must only contain items with the algorithm being `ES256` or `ES256k` as defined in the [COSE](https://www.iana.org/assignments/cose/cose.xhtml#algorithms) list. These are the only COSE algorithms currently supported by Flow accounts. `ES256` is ECDSA [using P-256](https://www.w3.org/TR/webauthn-3/#sctn-alg-identifier) with SHA2-256, while `ES256k` is ECDSA using secp256k1 curve and SHA2-256.
 - Once the user confirms registration through an authorization gesture, the authenticator creates the key pair and returns an [AuthenticatorAttestationResponse](https://www.w3.org/TR/webauthn-3/#iface-authenticatorattestationresponse) to the wallet. The response contains all the data needed to register the new account public key.
@@ -104,12 +104,12 @@ It is important to clarify how the WebAuthn terminology translates into blockcha
 - The wallet stores the credential data required to look up the user private key in future calls to the authenticator. This may be a combination of the rpID, user handle and credential ID depending on the wallet implementation.
 - The chain processes the transaction and no modifications are required on the Flow protocol level.
 
-### User Transaction Submission
+### User Transaction Signing and Submission
 
-- A wallet needs to sign a transaction for an account previously registered with a WebAuthn credential.
-- The wallet looks up the user's credential data locally, and pulls the transaction data required from the chain.
-- The wallet initiates the process by calling [`authenticatorGetAssertion `](https://www.w3.org/TR/webauthn-3/#authenticatorgetassertion). On most platforms this is called via the higher level web API [`navigator.credentials.get()`](https://www.w3.org/TR/webauthn-3/#sctn-getAssertion). This requests the authenticator to generate an assertion signature using a previously generated private credential with the inputs provided in [`PublicKeyCredentialRequestOptions`](https://www.w3.org/TR/webauthn-3/#dictionary-assertion-options):
-    - The relying party ID `rpID` must be the constant string set by the wallet for all Flow credential registrations.
+- A wallet has already authenticated its user and needs to sign a transaction for an account previously registered with a WebAuthn credential.
+- The wallet (client or off-chain server) looks up the user's credential data, and pulls the transaction data required from the chain.
+- The wallet client initiates the process by calling [`authenticatorGetAssertion `](https://www.w3.org/TR/webauthn-3/#authenticatorgetassertion). On most platforms this is called via the higher level web API [`navigator.credentials.get()`](https://www.w3.org/TR/webauthn-3/#sctn-getAssertion). This requests the authenticator to generate an assertion signature using a previously generated private credential with the inputs provided in [`PublicKeyCredentialRequestOptions`](https://www.w3.org/TR/webauthn-3/#dictionary-assertion-options):
+    - The relying party ID `rpID` must be the same constant set by the wallet during the Flow credential registration. It is a specific constant to the wallet architecture and is derived from the web origin on the wallet client when making the assertion request.
     - Unlike the original WebAuthn assertion case, the `challenge` is not sent by the server to the client. In Flow, it is not necessary to use a challenge-response mechanism to sign transactions (more details in #replay-attacks). The wallet sets `challenge` to the signable transaction message hash. The hash used is SHA2-256, which produces a 32-bytes `challenge`. The transaction message is either the transaction [payload](https://developers.flow.com/build/basics/transactions#payload) or the [authorization envelope](https://developers.flow.com/build/basics/transactions#authorization-envelope), depending on the signer role. Note that a signable message in Flow includes a domain separation tag to scope the message to the Flow transaction context.
     - When calling `navigator.credentials.get()`, other fields of the request (including [CollectedClientData](https://www.w3.org/TR/webauthn-3/#dictionary-client-data)) are set implicitly by the web API and cannot be set by the developer.
 - Once the user confirms the registration through an authorization gesture, the authenticator uses the private key to sign an internally constructed message and returns an [AuthenticatorAssertionResponse](https://www.w3.org/TR/webauthn-3/#iface-authenticatorassertionresponse) to the wallet. The response contains the signature as well as all the required data to rebuild the signed message. The exact signed message is [defined](https://www.w3.org/TR/webauthn-3/#sctn-op-get-assertion) by the WebAuthn specification as `webauthn_message = authenticatorData || Hash(json(collectedClientData))`, where [authenticator data](https://www.w3.org/TR/webauthn-3/#sctn-authenticator-data) is set by the authenticator and [`collectedClientData`](https://www.w3.org/TR/webauthn-3/#dictionary-client-data) is set by the wallet and includes the `challenge` above. 
@@ -218,7 +218,7 @@ The signable message in the plain scheme also begins with 32 bytes of the [Flow 
 The DST scopes the signable message to the Flow transaction context: `scoped_message = Flow_DST || payload`.
 It would be an issue if a malicious/careless wallet chooses `rpIdHash` to match `Flow_DST`.
 In that case, a signature generated by a private credential in the WebAuthn scheme would be a valid plain-scheme signature under the same private key, but with a different intent than the original transaction (or vice versa). 
-FVM verification must check that the `RP_ID_HASH` attached to the signature data is different than `Flow_DST`, in the case of wallets that skip the `RP_ID` hashing step.
+FVM verification must check that the `RP_ID_HASH` attached to the signature data is different than `Flow_DST`, in the case of wallets that skip the `RP_ID` hashing step (without using an authenticator).
 
 ### Hash of the payload as a challenge
 
@@ -242,11 +242,11 @@ A cloned authenticator can look up the next valid sequence number before signing
 ### Attestation verification
 
 WebAuthn new key registration results in the authenticator generating an attestation that is traditionally verified by the relying party.
-Depending on the attestation type specified by the client when calling `navigator.credentials.create()`, the returned [attestation object](https://www.w3.org/TR/webauthn-2/#sctn-attestation) has a different format and may or may not contain an attestation signature.
+Depending on the attestation type specified by the client when calling `navigator.credentials.create()`, the returned [attestation object](https://www.w3.org/TR/webauthn-3/#sctn-attestation) has a different format and may or may not contain an attestation signature.
 None of these attestations are natively verifiable on chain.
 
 Flow wallets are encouraged to verify the authenticator's attestation object locally before registering the new key on-chain.
-In particular, if the [attestation type](https://www.w3.org/TR/webauthn-2/#sctn-attestation-types) chosen is "self-attestation", the attestation signature is generated using the new private credential.
+In particular, if the [attestation type](https://www.w3.org/TR/webauthn-3/#sctn-attestation-types) chosen is "self-attestation", the attestation signature is generated using the new private credential.
 Verifying the signature on the client would be a proof that the authenticator possesses the right user's private key.
 
 ### Order of Cryptographic and Contextual checks
@@ -261,9 +261,13 @@ The cryptographic verification would then only impact the transaction payer.
 ### RP ID is a protocol constant
 
 `RP_ID` could be a unique protocol-wide constant that is used by all wallets submitting WebAuthn transactions.
-Wallets would use the Flow constant instead of arbitrarily choosing their own `RP_ID`.
+Wallets would have to use the Flow constant instead of different `RP_ID`s.
 `RP_ID_hash` can thus be omitted from `authenticatorData` when attached to the signature.
 This reduces the size of a transaction signature by 32 bytes.
+
+However this assumes all Flow wallet client software wishing to use WebAuthn credentials must connect to a single
+web domain, because browsers and mobile OSs check that the RP ID matches the origin domain.
+This means FVM would need to trust a centralized entity that serves as a thin server for all wallets.
 
 ### Hash of the payload as `clientDataHash` and the high level API limitation
 
