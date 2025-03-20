@@ -368,21 +368,21 @@ Execution Fork: when 2 or more execution nodes produce different `ExecutionResul
 
 There are several options to choose from when deciding when to ingest an ExecutionResult
 
-1. Immediately after receiving the first receipt → this is the most aggressive, and is vulnerable to attack by byzantine
+0. Immediately after receiving the first receipt → this is the most aggressive, and is vulnerable to attack by byzantine
    execution nodes (see [below](#bft-considerations-when-ingesting-executionresults)).
    This option will not be allowed.
-2. After result’s block is certified → this is the earliest a node could *safely* start processing the data. Since the
+1. After result’s block is certified → this is the earliest a node could *safely* start processing the data. Since the
    result’s block is certified, the execution node’s stake is on the line for their result. However, the block is not
    finalized yet so it’s possible that it becomes part of an abandoned *consensus fork*, wasting resources if we were to
    optimistically process it. Consensus forks occur at a low but persistent frequency of around ~5% of blocks. This
    provides the lowest latency, with some resource (memory/network) overhead.
-3. After the result’s block is finalized → at this point the block is guaranteed, but an execution result that we
+2. After the result’s block is finalized → at this point the block is guaranteed, but an execution result that we
    download could still turn out to be on an abandoned *execution fork*. Execution forks are currently rare, occurring
    less than once per month. This is a balance of latency and resource overhead.
-4. After receiving N (>1) `ExecutionReceipts` with the same result → the more agreeing executors there are, the more
+3. After receiving N (>1) `ExecutionReceipts` with the same result → the more agreeing executors there are, the more
    likely the result is correct since it increases the amount of stake behind the result. This is a risk-reduction
    variant of approach 1. or 2. above, applicable to either certified or finalized blocks.
-5. Sealed result → this is the most conservative and ensures the node only invests resources on data that is guaranteed
+4. Sealed result → this is the most conservative and ensures the node only invests resources on data that is guaranteed
    by the network to be correct.
 
 Options 1-4 should be configurable by the operator. I think option 2 is a good default.
