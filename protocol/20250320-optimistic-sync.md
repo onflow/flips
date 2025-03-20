@@ -144,15 +144,10 @@ Criteria for starting to process a result should be configurable by the operator
 
   This is the lowest latency, with some network bandwidth overhead.
 
-<aside>
 On mainnet, we see that approximately 5% of blocks proposed by consensus nodes are abandoned. This number is likely
-lower for executed blocks.
-
-We also see that execution forks on finalized blocks is very rare (< 1 block per month).
-
+lower for executed blocks. We also see that execution forks on finalized blocks is very rare (< 1 block per month). 
 I don’t have an exact number for the amount of latency between certified and finalized, but it’s likely on the order of
 1 second.
-</aside>
 
 The ingestion engine will need to track the latest persisted sealed result in the database.
 
@@ -175,7 +170,7 @@ the [note](#a-note-on-pruning) below on pruning).
 
 At startup, the node loads all unprocessed results from disk into to the mempool. These will be a combination of sealed
 and unsealed results since the node needs to catch up with the chain. As new results are discovered from the network,
-they are added to the forest. We will likely want to put some limits on the number of results added into the tree to
+they are added to the forest. We will likely want to put some limits on the number of results added into the forest to
 manage node resources.
 
 Among the different trees in the `Results Forest`, we primarily care about the tree descending from the latest persisted
@@ -203,10 +198,10 @@ persisted sealed result. We prune only vertices with strictly smaller
 views.
 
 `R[X]` depicts a result (for a certified block) that has not yet been discovered. It is represented in the disconnected
-forest and initial processing may start, but child processing will eventually block if it is never received. Note: we
-wait until we receive `R[X]` before downloading for BFT reasons *(so ENs cannot mount resource exhaustion attacks by
-publishing results for known blocks whose parent result is never revealed)*. If `R[X]` was eventually added, it would
-connect to its parent `R[0]`, and signal to its descendants that they are also now connected to `R[0]`.
+forest, however processing may not start in any descendants until we receive `R[X]`. This is for BFT reasons *(so ENs
+cannot mount resource exhaustion attacks by publishing results for known blocks whose parent result is never revealed)*.
+If `R[X]` was eventually added, it would connect to its parent `R[0]`, and signal to its descendants that they are also
+now connected to `R[0]`.
 
 If `R[A]` was eventually sealed, the fork `R[X]` becomes disconnected and is eventually pruned.
 
@@ -228,7 +223,7 @@ Each individual `ExecutionResult` will go through the following processing seque
 3. Persist data
 
 Downloading and indexing can happen concurrently with other results. Since the datastores used by the indexer are
-fork-aware, data can be safely written out of order. Data can only be *read* for connected forks (See TBD).
+fork-aware, data can be safely written out of order. Data can only be *read* for connected forks.
 
 After data is downloaded and indexed for a result, it will check if the data can be persisted. To persist data for a
 result, the following conditions must be met:
@@ -237,7 +232,7 @@ result, the following conditions must be met:
 2. the parent must be persisted.
 
 After data for a result is persisted, its vertex becomes the new latest persisted sealed `ExecutionResult`, and
-processing is aborted for all vertices in the forest that do not descend from the latest persisted result.Such vertices
+processing is aborted for all vertices in the forest that do not descend from the latest persisted result. Such vertices
 are eventually pruned (by view).
 
 Processing for each step must be idempotent. While we will be using in-memory caches for some of the data, others like
@@ -277,13 +272,6 @@ block’s guarantees (otherwise, the AN is observing a protocol violation and sh
 a [dedicated logging keyword](https://github.com/onflow/flow-go/blob/b334c811f5c88941e7a1fa3a7e067c4a5e291350/utils/logging/consts.go#L4-L23)).
 We will need to add this explicit check to allow storing non-sealed data, which will simplify access for collections and
 transactions.
-
-- BFT Considerations
-
-  Access nodes need to handle the case where a malicious Collection cluster includes a transaction multiple times (
-  See ‣). We will need to ensure the collection indexes (tx/collection, tx index, etc) are created in a way that allows
-  querying for each of the instances accurately. This is not necessarily part of the scope of this work, but something
-  to keep in mind as we are making changes to the collecting indexing.
 
 ### Storage
 
