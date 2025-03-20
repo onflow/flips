@@ -3,7 +3,7 @@ status: draft
 flip: 322
 authors: peter.argue@flowfoundation.org, alex.hentschel@flowfoundation.org
 sponsor: peter.argue@flowfoundation.org
-updated: 2025-03-18 
+updated: 2025-03-20
 ---
 
 # FLIP 322: Optimistic Syncing of Execution Data
@@ -55,7 +55,7 @@ and query the node’s execution state indexes using data from that result’s f
 
 This will require changes across the pipeline, as depicted below
 
-![Changes Overview](20250318-optimistic-sync/changes-overview.png)
+![Changes Overview](20250320-optimistic-sync/changes-overview.png)
 
 ### Ingestion Engine
 
@@ -191,7 +191,7 @@ persisted. We may also set some limits on the number of incomplete vertices allo
 limit the number of vertices in the tree descending from the latest persisted sealed result). This allows concurrent
 processing of data during catchup, while maintaining a consistent state in the database.
 
-![Results Forest](20250318-optimistic-sync/results-forest.png)
+![Results Forest](20250320-optimistic-sync/results-forest.png)
 **Illustration of the `Results Forest` data structure:** Each vertex in the graph represents the data processing
 pipeline for a result. At the bottom of the figure is the distinguished vertex representing the latest persisted sealed
 `ExecutionResult`. Each additional result is either a descendent of this result or part of another disconnected tree,
@@ -246,7 +246,7 @@ partial or completed download must be safe.
 
 Below is an illustration of the processing flow, highlighting the data stores, processing flow and state inputs.
 
-![Processing Pipeline](20250318-optimistic-sync/processing-pipeline.png)
+![Processing Pipeline](20250320-optimistic-sync/processing-pipeline.png)
 
 ### Worker Pool
 
