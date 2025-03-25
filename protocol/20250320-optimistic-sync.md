@@ -289,6 +289,9 @@ register as of the specified block. This means that each lookup may need to trav
 There is similar logic implemented for storehouse that could be used as a reference ([
 `InMemoryRegisterStore`](https://github.com/onflow/flow-go/blob/76ffa809efb055c955d44cfdb2d23be747946eff/engine/execution/storehouse/in_memory_register_store.go#L39))
 
+
+![Storage Tree](20250320-optimistic-sync/storage.png)
+
 ### Access APIs
 
 Currently, the Access API follows 2 paths for execution data:
