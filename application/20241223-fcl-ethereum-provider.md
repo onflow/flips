@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 flip: 316 (set to the issue number)
 authors: Jordan Ribbink (jordan.ribbink@flowfoundation.org), Chase Fleming (chase.fleming@flowfoundation.org)
 sponsor: Jordan Ribbink (jordan.ribbink@flowfoundation.org)
