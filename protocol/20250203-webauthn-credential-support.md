@@ -1,9 +1,9 @@
 ---
-status: Draft
+status: Proposed
 flip: 264
 authors: Tarak Ben Youssef (tarak.benyoussef@flowfoundation.org)
 sponsor: Janez Podhostnik (janez.podhostnik@flowfoundation.org)
-updated: 2024-02-03
+updated: 2024-27-03
 ---
 
 # FLIP 264: WebAuthn Credential Support
@@ -167,7 +167,7 @@ In the case of the WebAuthn scheme, `extension_data` should be encoded as:
     - the first 32 bytes represent the `rpIDHash`
     - the next byte represents the flags 
     - the following 4 bytes represent the `signCount`
-    - the two remaining fields are `attestedCredentialData` and `extensions`. They are optional and usually not included. The flags byte encode the presence or not of these two fields. If included, they are both of variable size.
+    - the two remaining fields are `attestedCredentialData` and `extensions`. They are optional and usually not included. The flags byte encode the presence or not of these two fields. If included, they both have a variable size.
 - `collectedClientData_json` is the json encoding of [`collectedClientData`](https://www.w3.org/TR/webauthn-3/#dictionary-client-data) (or `json(collectedClientData)`) as formed by the client when requesting an assertion from the authenticator. It is important to include the same json encoding used during the assertion request because `collectedClientData` is a dictionary and the field order of the serialization must be preserved. `collectedClientData_json` must be a valid json encoding of a dictionary with the required fields `"type"`, `"challenge"` and `"origin"`. The type field must be `"webauthn.get"` and the challenge must be decoded into exactly 32 bytes. The origin is a string of arbitrary size. This adds up to at least 93 bytes, with an average of about 145 bytes if the data are constructed honestly.
 
 ## FVM transaction validation changes
@@ -195,7 +195,7 @@ The existing validation steps before this FLIP are not detailed.
 - Read the `type` value from the dictionary using the "type" key. If the value is different than `"webauthn.get"` return "invalid". 
 - In WebAuthn, the server checks client from the dictionary such as `origin` and `crossOrigin` to make sure the assertion was generated for the right relying party. These checks aren't required in the Flow transaction case. Unlike the classic WebAuthn case, the wallet can connect to the chain via multiple access nodes. The domain tag scopes the assertion to the Flow transactions.
 - Check `authenticatorData` has the minimum length of 37 bytes.
-- Read `rpIDHash` and check it is not equal to the Flow plain transactions [Domain Separation Tag](https://github.com/onflow/flow-go/blob/bc341a46060ab2ee6c6b23d4dc5a6d4a262a9931/model/flow/constants.go#L85). 
+- Read `rpIDHash` and check it is not equal to the Flow plain transactions [Domain Separation Tag](https://github.com/onflow/flow-go/blob/bc341a46060ab2ee6c6b23d4dc5a6d4a262a9931/model/flow/constants.go#L85)(check [RP ID hash and the Flow DST](#rp-id-hash-and-the-flow-dst) for details).
 - Extract the [user flags](https://www.w3.org/TR/webauthn-3/#authdata-flags-up) from [`authenticatorData`](https://www.w3.org/TR/webauthn-3/#sctn-authenticator-data) and check `UP` is set, `BS` is not set if `BE` is not set, `AT` is only set if [attested data](https://www.w3.org/TR/webauthn-3/#attested-credential-data) is included, `ED` is set only if [extension data](https://www.w3.org/TR/webauthn-3/#authdata-extensions) is included. If any of the checks fail, return "invalid".
 - No other checks are required on the fields of `authenticatorData`. The `counter` check is not needed in Flow to mitigate replay attacks (more details about [replay attacks](#replay-attacks)). The `rpIDHash` is set arbitrarily by the wallet, while the extension [may be ignored](https://www.w3.org/TR/webauthn-3/#authn-ceremony-verify-extension-outputs) during the attestation verification, as long as they are covered by the cryptographic verification.
 - Construct the message `webauthn_message = authenticatorData || Hash(collectedClientData_json)`.
@@ -205,7 +205,7 @@ The existing validation steps before this FLIP are not detailed.
 
 Access nodes and collection nodes make sanity checks on the ingested transactions.
 As these nodes do not have access to the execution state (which contains the account public keys), the checks are limited to transaction format validation and contextual verification, including the signature fields.
-Access node and collection nodes should integrate all the checks in the FVM validation process above, excluding the cryptographic signature verification any any other check involving the account public keys.
+Access nodes and collection nodes should integrate all the checks from the FVM validation process above, excluding the cryptographic signature verification and any other check involving the account public keys.
 
 ## Design and security considerations
 
@@ -213,6 +213,7 @@ Access node and collection nodes should integrate all the checks in the FVM vali
 
 Some fields in the signature extension data have arbitrary size and can be made purposely long in malicious transactions.
 Access nodes and collection nodes already implement a size check when ingesting transaction into the protocol and such malicious transactions won't pass the check.
+Reasonably built WebAuthn transactions with extension data are still below the maximum transaction size.
 
 ### RP ID hash and the Flow DST
 
@@ -233,8 +234,8 @@ The other reason is that `collectedClientData` is submitted as part of the trans
 ### Replay attacks
 
 The original WebAuthn scheme uses two layers of protection against replay attacks: 
-- The random challenge-response mechanism: The server initiates the process by generating a random challenge and only authenticate the user when the challenge is answered (i.e. signed).
-- The signing counter: This counter is privately stored on the server to track the signature count per authenticator. The authenticator must provide a valid incremented counter along with every signature (included in `authenticatorData`). The server compares the provided count in a signature against the server stored one. This counter also prevents authenticator cloning across sessions, where the local counters can get out of sync with the server's stored counter. 
+- The random challenge-response mechanism: The server initiates the process by generating a random challenge and only authenticates the user when the challenge is answered (i.e. signed).
+- The signing counter: This counter is privately stored on the server to track the signature count per authenticator. The authenticator must provide a valid incremented counter along with every signature (included in `authenticatorData`). The server compares the provided count in a signature against the server stored value. This counter also prevents authenticator cloning across sessions, where the local counters can get out of sync with the server's stored counter. 
 
 The proposal does not require random challenges (the challenge is the payload hash) and does not store or check the authenticator's signing counts. 
 Instead, Flow relies on the [proposal key sequence number](https://developers.flow.com/build/basics/transactions#sequence-numbers) to prevent replay attacks. 
@@ -282,7 +283,7 @@ This alternative not only simplifies the overall design, but it also makes the a
 The payload hash does not need to be sent as an extension data with the signature because the verifier can recompute it from the transaction payload. The signable message in this case would be `authenticatorData || hash(signable_payload)`.
 
 This method entirely omits the dictionary `CollectedClientData` and all the complexity of parsing and verifying its fields.
-They will be no use of the dictionary fields `type`, `challenge`, `origin` and `crossOrigin`, which are all not necessary in the Flow integration. 
+There will be no use of the dictionary fields `type`, `challenge`, `origin` and `crossOrigin`, which are all not necessary in the Flow integration. 
 Flow transaction payloads already use a domain separation tag and do not require extra measures to scope the signature. 
 The FVM wouldn't need to make the extra check of consistency between `challenge` and the payload hash. 
 
@@ -313,12 +314,12 @@ message Signature {
 
 ### Encode the scheme within account public keys
 
-Instead of attaching the scheme information to the transaction signature (through the scheme identifier byte), the scheme information could have been attached the account public key.
-The process of validating a signature would be identified by the FVM by looking at the account public key.
+Instead of attaching the scheme information to the transaction signature (through the scheme identifier byte), the scheme information could have been attached to the account public key.
+The process of validating a signature in the FVM would be identified by looking at the account public key.
 Different options have been considered to attach such information to the account key, and they all present disadvantages. Some of the drawbacks include:
  - An account public key would be bound to a single scheme, removing the flexibility of using the same account key in different schemes (without avoiding a new key registration). The scheme and key value are orthogonal and should ideally not be bound.
  - Updating the account public key format means a Cadence language change, which also breaks existing basic transactions to add keys and create accounts.
- - Encoding the scheme (plain, WebAuthn, and others) within the signature algorithm field of the account key breaks with interpreting the algorithm field as a cryptographic signature algorithm and surcharging it with extra definitions. This can impact multiple tools and libraries in the ecosystem. 
+ - Encoding the scheme (plain, WebAuthn, and others) within the signature algorithm field of the account key breaks with interpreting the algorithm field as a cryptographic signature algorithm and surcharging it with extra definitions. This would also impact multiple tools and libraries in the ecosystem. 
 
 # Drawbacks
 
@@ -330,7 +331,7 @@ The WebAuthn scheme transactions require larger transactions in size to include 
 The extra data per WebAuthn transaction signature are at least 130 bytes (37 bytes for `authenticatorData` + 93 bytes for `collectedClientData_json`) and about 180 bytes in a general case for a valid signature.
 The FVM execution overhead to decode the extra data and perform extra hashes is negligible.
 
-There is no size or execution impact on the the non-WebAuthn transactions.
+There is no size or execution impact on the non-WebAuthn transactions.
 
 # Engineering Impact
 
