@@ -3,7 +3,7 @@ status: Proposed
 flip: 264
 authors: Tarak Ben Youssef (tarak.benyoussef@flowfoundation.org)
 sponsor: Janez Podhostnik (janez.podhostnik@flowfoundation.org)
-updated: 2024-27-03
+updated: 2025-03-27
 ---
 
 # FLIP 264: WebAuthn Credential Support
@@ -126,7 +126,7 @@ To support WebAuthn signatures, Flow's transaction signatures need to be extende
 We refer to this data by `extension_data`. 
 The new structure must support the WebAuthn scheme as well as continue to support the original non-webauthn scheme (also called plain scheme) without breaking changes.
 
-Currently, the Flow transaction signature only supports the plain scheme, and is [defined](https://github.com/onflow/flow/blob/master/protobuf/flow/entities/transaction.proto#L26) as:
+Currently, the Flow (legacy) transaction signature only supports the plain scheme, and is [defined](https://github.com/onflow/flow/blob/master/protobuf/flow/entities/transaction.proto#L26) as:
 ```protobuf
 message Signature {
     bytes address = 1;
@@ -150,9 +150,10 @@ The first byte of `extension_data` is a scheme identifier that scopes the signat
 The signing scheme here identifies a protocol or a framework and should not be confused with cryptographic signature schemes (such as ECDSA, RSA, etc).
 
 Here is how the bytes of `extension_data` should be set:
-- The scheme identifier is a byte which encodes up to 256 possible schemes. The plain scheme identifier is `0x0`, while the WebAuthn scheme identifier is `0x1`. Only these two signature schemes will be supported in Flow for now.
-- For backward compatibility, and to optimize for the plain scheme case (expected to be the commonly used scheme), the plain scheme identifier does not need to be used when using the plain scheme. The `extension_data` field is omitted when building a `Signature` struct and will be decoded to the default language value (e.g., an empty slice in Golang). `extension_data` needs to be included only when the scheme is not plain. This also avoids a malleability problem where setting `extension_data` to an array `{0x0}` would be equivalent to not setting one. 
-- Any `extension_data` value that is not at least 1-byte in length or does not start with a valid scheme identifier (currently only `0x1`) makes the transaction signature invalid.
+- The scheme identifier is a byte which encodes up to 256 possible schemes. The plain scheme identifier is `0x0`, while the WebAuthn scheme identifier is `0x1`. Only these two signature schemes will be supported in Flow for now and additional schemes can be supported in the future.
+- For backward compatibility, and to optimize for the plain scheme case (expected to be the commonly used scheme), the plain scheme identifier does not need to be added when using the plain scheme. The `extension_data` field can be omitted when building a `Signature` struct and it will be decoded to the default language value (e.g., an empty slice in Golang). The access API interprets an empty `extension_data` field as the plain scheme. `extension_data` must be included only when the scheme is not plain.
+- Any `extension_data` value that is not at least 1-byte in length or does not start with a valid scheme identifier makes the transaction signature invalid.
+- In the plain scheme, the only valid non-nil `extension_data` field value is the array `{0x0}`.
 
 In the case of the WebAuthn scheme, `extension_data` should be encoded as:
 ```
@@ -170,6 +171,15 @@ In the case of the WebAuthn scheme, `extension_data` should be encoded as:
     - the two remaining fields are `attestedCredentialData` and `extensions`. They are optional and usually not included. The flags byte encode the presence or not of these two fields. If included, they both have a variable size.
 - `collectedClientData_json` is the json encoding of [`collectedClientData`](https://www.w3.org/TR/webauthn-3/#dictionary-client-data) (or `json(collectedClientData)`) as formed by the client when requesting an assertion from the authenticator. It is important to include the same json encoding used during the assertion request because `collectedClientData` is a dictionary and the field order of the serialization must be preserved. `collectedClientData_json` must be a valid json encoding of a dictionary with the required fields `"type"`, `"challenge"` and `"origin"`. The type field must be `"webauthn.get"` and the challenge must be decoded into exactly 32 bytes. The origin is a string of arbitrary size. This adds up to at least 93 bytes, with an average of about 145 bytes if the data are constructed honestly.
 
+### Signature Serialization change
+
+A `Signature` structure is currently being serialized to compute both the authorization envelope (which is the message signable by the payer) and the transaction ID.
+The structure currently uses the RLP encoding of the legacy `Signature` definition.
+For the non-plain schemes, the FLIP proposes to serialize the structure as the RLP encoding of the new structure (including the `extension_data` field).
+For backward compatibility of the plain scheme, the serialization of `Signature` continues to be the RLP encoding of the legacy structure.
+Excluding the `extension_data` field from the serialization also avoids malleability issues with regards to ID computation.
+Such malleability cases happen when `extension_data` equal to the array `{0x0}` can be substituted with the empty array and result in different transaction IDs.
+
 ## FVM transaction validation changes
 
 Upon receiving each transaction signature, the FVM transaction validation module performs the following steps to validate the transaction signature. It returns "valid" if the transaction signature is correct, and "invalid" otherwise.
@@ -177,11 +187,11 @@ The existing validation steps before this FLIP are not detailed.
 
 - Decode the protobuf fields of the new proposed `Signature` structure.
 - Check the public key has a valid `key_id` and is not revoked, otherwise return "invalid".
-- If the `extension_data` field is not provided, set the current scheme to the plain scheme.
-- If the `extension_data` field is provided, check it is of byte-size larger than `1`, otherwise return "invalid".
-- Set the current scheme to `extension_data[0]`.
-- Check that the current scheme is supported. Currently, only the WebAuthn scheme identifier (`0x1`) is accepted at this step. Otherwise return "invalid".
-- At this point, the scheme is WebAuthn. RLP decode the remaining data `extension_data[1:]` into `authenticator_data` and `collectedClientData_json`. Return "invalid" if decoding fails. We recall the expected structure of `extension_data` in the webauthn case:
+- If the `extension_data` field is empty (empty array or nil), set the current scheme to the plain scheme.
+- If the `extension_data` field is non-empty, set the current scheme to `extension_data[0]`.
+- Check that the current scheme is supported. Currently, only the plain scheme identifier (`0x0`) and the WebAuthn scheme identifier (`0x1`) are accepted. Otherwise return "invalid".
+- If the scheme is set to plain, check that `extension_data` is of byte-size `1`, otherwise return "invalid". Serialization of the current `Signature` structure uses the RLP encoding of the legacy structure. The remaining validation steps are performed without changes.
+- In the remaining steps, the scheme is set to WebAuthn. RLP-decode the remaining data `extension_data[1:]` into `authenticator_data` and `collectedClientData_json`. Return "invalid" if decoding fails. We recall the expected structure of `extension_data` in the webauthn case:
 ```
  byte(webauthn_scheme_identifier) || 
 		RLP({
