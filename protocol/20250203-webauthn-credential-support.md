@@ -3,7 +3,7 @@ status: Proposed
 flip: 264
 authors: Tarak Ben Youssef (tarak.benyoussef@flowfoundation.org)
 sponsor: Janez Podhostnik (janez.podhostnik@flowfoundation.org)
-updated: 2025-03-27
+updated: 2025-04-04
 ---
 
 # FLIP 264: WebAuthn Credential Support
@@ -115,7 +115,7 @@ They following details focus solely on the WebAuthn considerations.
     - The relying party ID `rpID` must be the same constant set by the wallet during the Flow credential registration. It is a specific constant to the wallet architecture and is derived from the web origin on the wallet client when making the assertion request.
     - Unlike the original WebAuthn assertion case, the `challenge` is not sent by the server to the client. In Flow, it is not necessary to use a challenge-response mechanism to sign transactions (more details about [replay attacks](#replay-attacks)). The wallet sets `challenge` to the signable transaction message hash. The hash used is SHA2-256, which produces a 32-bytes `challenge`. The transaction message is either the transaction [payload](https://developers.flow.com/build/basics/transactions#payload) or the [authorization envelope](https://developers.flow.com/build/basics/transactions#authorization-envelope), depending on the signer role. Note that a signable message in Flow includes a domain separation tag to scope the message to the Flow transaction context.
     - When calling `navigator.credentials.get()`, other fields of the request (including [CollectedClientData](https://www.w3.org/TR/webauthn-3/#dictionary-client-data)) are set implicitly by the web API and cannot be set by the developer.
-- Once the user confirms the registration through an authorization gesture, the authenticator uses the private key to sign an internally constructed message and returns an [AuthenticatorAssertionResponse](https://www.w3.org/TR/webauthn-3/#iface-authenticatorassertionresponse) to the wallet. The response contains the signature as well as all the required data to rebuild the signed message. The exact signed message is [defined](https://www.w3.org/TR/webauthn-3/#sctn-op-get-assertion) by the WebAuthn specification as `webauthn_message = authenticatorData || Hash(json(collectedClientData))`, where [authenticator data](https://www.w3.org/TR/webauthn-3/#sctn-authenticator-data) is set by the authenticator and [`collectedClientData`](https://www.w3.org/TR/webauthn-3/#dictionary-client-data) is set by the wallet and includes the `challenge` above. 
+- Once the user confirms the registration through an authorization gesture, the authenticator uses the private key to sign an internally constructed message and returns an [AuthenticatorAssertionResponse](https://www.w3.org/TR/webauthn-3/#iface-authenticatorassertionresponse) to the wallet. The response contains the signature as well as all the required data to rebuild the signed message. The exact signed message is [defined](https://www.w3.org/TR/webauthn-3/#sctn-op-get-assertion) by the WebAuthn specification as `webauthn_message = authenticatorData || SHA2-256(JSON(collectedClientData))`, where [authenticator data](https://www.w3.org/TR/webauthn-3/#sctn-authenticator-data) is set by the authenticator and [`collectedClientData`](https://www.w3.org/TR/webauthn-3/#dictionary-client-data) is set by the wallet and includes the `challenge` above. 
 - The wallet should sanity-check that `authenticatorData` and  `collectedClientData` returned by the authenticator are set according to the query. This includes the `challenge` value and the `rpIDhash` value (which should be hashed correctly from `rpID`). Other [authenticator flags](https://www.w3.org/TR/webauthn-3/#authdata-flags-up) should be checked as required by the WebAuthn specs and the wallet settings. In particular the User Presence `UP` must be set while the User Verification `UV` should be set according to the wallet preference.
 - The wallet extracts the signature and the signed message data from the assertion response. It then builds a new transaction using the authenticator signature along with the extra signed message, forming the transaction signature (payload signature or envelope signature depending on the case).
 - Once the transaction is submitted, the chain processes the transaction. The transaction signature is not verifiable on the current protocol because the signed message extends beyond the usual payload data (or authorization envelope data). The signed message includes new data added by the webauth scheme. Verifying these transactions require modifications on two different levels: the access API should be able to transmit the extra verification data as part of the transaction (access API [changes](#access-api-changes)), and the FVM should be able to construct the WebAuthn verification message (FVM [changes](#fvm-transaction-validation-changes)).
@@ -159,17 +159,17 @@ In the case of the WebAuthn scheme, `extension_data` should be encoded as:
 ```
  byte(webauthn_scheme_identifier) || 
 		RLP({
-		"authenticator_data" : bytes
-		"collectedClientData_json" : bytes
+		"authenticatorData" : bytes
+		"clientDataJSON" : bytes
 		})
 ```
 
-- `authenticator_data` is the [data](https://www.w3.org/TR/webauthn-3/#sctn-authenticator-data) set by the authenticator and returned in the assertion response. The data must be at least `35` bytes, and is the concatenation of the following fields:
+- `authenticatorData` is the [data](https://www.w3.org/TR/webauthn-3/#sctn-authenticator-data) set by the authenticator and returned in the assertion response. The data must be at least `35` bytes, and is the concatenation of the following fields:
     - the first 32 bytes represent the `rpIDHash`
     - the next byte represents the flags 
     - the following 4 bytes represent the `signCount`
     - the two remaining fields are `attestedCredentialData` and `extensions`. They are optional and usually not included. The flags byte encode the presence or not of these two fields. If included, they both have a variable size.
-- `collectedClientData_json` is the json encoding of [`collectedClientData`](https://www.w3.org/TR/webauthn-3/#dictionary-client-data) (or `json(collectedClientData)`) as formed by the client when requesting an assertion from the authenticator. It is important to include the same json encoding used during the assertion request because `collectedClientData` is a dictionary and the field order of the serialization must be preserved. `collectedClientData_json` must be a valid json encoding of a dictionary with the required fields `"type"`, `"challenge"` and `"origin"`. The type field must be `"webauthn.get"` and the challenge must be decoded into exactly 32 bytes. The origin is a string of arbitrary size. This adds up to at least 93 bytes, with an average of about 145 bytes if the data are constructed honestly.
+- `clientDataJSON` is the JSON encoding of [`collectedClientData`](https://www.w3.org/TR/webauthn-3/#dictionary-client-data) (or `JSON(collectedClientData)`) as formed by the client when requesting an assertion from the authenticator. It is important to include the same JSON encoding used during the assertion request because `collectedClientData` is a dictionary and the field order of the serialization must be preserved. `clientDataJSON` must be a valid JSON encoding of a dictionary with the required fields `"type"`, `"challenge"` and `"origin"`. The type field must be `"webauthn.get"` and the challenge must be decoded into exactly 32 bytes. The origin is a string of arbitrary size. This adds up to at least 93 bytes, with an average of about 145 bytes if the data are constructed honestly.
 
 ### Signature Serialization change
 
@@ -191,15 +191,15 @@ The existing validation steps before this FLIP are not detailed.
 - If the `extension_data` field is non-empty, set the current scheme to `extension_data[0]`.
 - Check that the current scheme is supported. Currently, only the plain scheme identifier (`0x0`) and the WebAuthn scheme identifier (`0x1`) are accepted. Otherwise return "invalid".
 - If the scheme is set to plain, check that `extension_data` is of byte-size `1`, otherwise return "invalid". Serialization of the current `Signature` structure uses the RLP encoding of the legacy structure. The remaining validation steps are performed without changes.
-- In the remaining steps, the scheme is set to WebAuthn. RLP-decode the remaining data `extension_data[1:]` into `authenticator_data` and `collectedClientData_json`. Return "invalid" if decoding fails. We recall the expected structure of `extension_data` in the webauthn case:
+- In the remaining steps, the scheme is set to WebAuthn. RLP-decode the remaining data `extension_data[1:]` into `authenticatorData` and `clientDataJSON`. Return "invalid" if decoding fails. We recall the expected structure of `extension_data` in the webauthn case:
 ```
  byte(webauthn_scheme_identifier) || 
 		RLP({
-		"authenticator_data" : bytes
-		"collectedClientData_json" : bytes
+		"authenticatorData" : bytes
+		"clientDataJSON" : bytes
 		})
 ```
-- Json-decode `collectedClientData_json` into [`collectedClientData`](https://www.w3.org/TR/webauthn-3/#dictionary-client-data) and make sure the resulting dictionary contains the required keys `"type"`, `"challenge"` and `"origin"`. Return "invalid" if any of the steps fail.
+- JSON-decode `clientDataJSON` into [`collectedClientData`](https://www.w3.org/TR/webauthn-3/#dictionary-client-data) and make sure the resulting dictionary contains the required keys `"type"`, `"challenge"` and `"origin"`. Return "invalid" if any of the steps fail.
 - Extract the `challenge` value from the `collectedClientData` dictionary using the "challenge" key, and make sure it is exactly 32 bytes.
 - Reconstruct the payload hash `SHA2-256(flow_domain_tag || payload)` from the received transaction and check that it equals the `challenge` field value. If the values do not match, return "invalid". Use the authorization envelope instead of `payload` in the case of a payer signature.
 - Read the `type` value from the dictionary using the "type" key. If the value is different than `"webauthn.get"` return "invalid". 
@@ -208,7 +208,7 @@ The existing validation steps before this FLIP are not detailed.
 - Read `rpIDHash` and check it is not equal to the Flow plain transactions [Domain Separation Tag](https://github.com/onflow/flow-go/blob/bc341a46060ab2ee6c6b23d4dc5a6d4a262a9931/model/flow/constants.go#L85)(check [RP ID hash and the Flow DST](#rp-id-hash-and-the-flow-dst) for details).
 - Extract the [user flags](https://www.w3.org/TR/webauthn-3/#authdata-flags-up) from [`authenticatorData`](https://www.w3.org/TR/webauthn-3/#sctn-authenticator-data) and check `UP` is set, `BS` is not set if `BE` is not set, `AT` is only set if [attested data](https://www.w3.org/TR/webauthn-3/#attested-credential-data) is included, `ED` is set only if [extension data](https://www.w3.org/TR/webauthn-3/#authdata-extensions) is included. If any of the checks fail, return "invalid".
 - No other checks are required on the fields of `authenticatorData`. The `counter` check is not needed in Flow to mitigate replay attacks (more details about [replay attacks](#replay-attacks)). The `rpIDHash` is set arbitrarily by the wallet, while the extension [may be ignored](https://www.w3.org/TR/webauthn-3/#authn-ceremony-verify-extension-outputs) during the attestation verification, as long as they are covered by the cryptographic verification.
-- Construct the message `webauthn_message = authenticatorData || Hash(collectedClientData_json)`.
+- Construct the message `webauthn_message = authenticatorData || SHA2-256(clientDataJSON)`.
 - Compute the cryptographic verification of the `signature` value against `webauthn_message` and the cryptographic public key, taking into account the hashing algorithm stored in the account key. Return "valid" is the verification succeeds, and "invalid" otherwise.
 
 ### Access and Collection Validation
@@ -285,7 +285,7 @@ This means FVM would need to trust a centralized entity that serves as a thin se
 
 ### Hash of the payload as `clientDataHash` and the high level API limitation
 
-The `authenticatorGetAssertion` function accepts `clientDataHash` and not the full json encoding of `CollectedClientData`. 
+The `authenticatorGetAssertion` function accepts `clientDataHash` and not the full JSON encoding of `CollectedClientData`. 
 The wallet design could have simply passed the signable payload hash as the input `clientDataHash`.
 The authenticator would then sign the signable payload hash, and not the `clientDataHash`. 
 
@@ -338,7 +338,7 @@ These changes require a coordinated update across access, collection, execution 
 # Performance Implications
 
 The WebAuthn scheme transactions require larger transactions in size to include the extra verification data.
-The extra data per WebAuthn transaction signature are at least 130 bytes (37 bytes for `authenticatorData` + 93 bytes for `collectedClientData_json`) and about 180 bytes in a general case for a valid signature.
+The extra data per WebAuthn transaction signature are at least 130 bytes (37 bytes for `authenticatorData` + 93 bytes for `clientDataJSON`) and about 180 bytes in a general case for a valid signature.
 The FVM execution overhead to decode the extra data and perform extra hashes is negligible.
 
 There is no size or execution impact on the non-WebAuthn transactions.
