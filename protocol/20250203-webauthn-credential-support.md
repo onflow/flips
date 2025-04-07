@@ -124,9 +124,10 @@ They following details focus solely on the WebAuthn considerations.
 
 To support WebAuthn signatures, Flow's transaction signatures need to be extended to include additional verification data such as `authenticatorData` and `collectedClientData`. 
 We refer to this data by `extension_data`. 
-The new structure must support the WebAuthn scheme as well as continue to support the original non-webauthn scheme (also called plain scheme) without breaking changes.
+The new structure must support the WebAuthn scheme as well as continue to support the original non-webauthn scheme (which we call plain scheme) without breaking changes.
+The proposal refers to the plain and WebAuthn schemes by authentication schemes.
 
-Currently, the Flow (legacy) transaction signature only supports the plain scheme, and is [defined](https://github.com/onflow/flow/blob/master/protobuf/flow/entities/transaction.proto#L26) as:
+Currently, the Flow (legacy) transaction signature only supports the plain authentication scheme, and is [defined](https://github.com/onflow/flow/blob/master/protobuf/flow/entities/transaction.proto#L26) as:
 ```protobuf
 message Signature {
     bytes address = 1;
@@ -144,13 +145,13 @@ message Signature {
 }
 ```
 The  `extension_data` field represents any extra data required to verify the signature.
-This will be used to support WebAuthn and to potentially support other schemes in the future.
+This will be used to support WebAuthn and to potentially support other authentication schemes in the future.
 The `signature` field continues to represent the cryptographic signature to be verified against the public key. 
-The first byte of `extension_data` is a scheme identifier that scopes the signature to a defined signing scheme and specifies the signature verification process.
-The signing scheme here identifies a protocol or a framework and should not be confused with cryptographic signature schemes (such as ECDSA, RSA, etc).
+The first byte of `extension_data` is a scheme identifier that scopes the signature to a defined authentication scheme and specifies the signature verification process.
+The authentication scheme here identifies a protocol or a framework and should not be confused with cryptographic signature schemes (such as ECDSA, RSA, etc).
 
 Here is how the bytes of `extension_data` should be set:
-- The scheme identifier is a byte which encodes up to 256 possible schemes. The plain scheme identifier is `0x0`, while the WebAuthn scheme identifier is `0x1`. Only these two signature schemes will be supported in Flow for now and additional schemes can be supported in the future.
+- The scheme identifier is a byte which encodes up to 256 possible schemes. The plain scheme identifier is `0x0`, while the WebAuthn scheme identifier is `0x1`. Only these two authentication schemes will be supported in Flow for now and additional schemes can be supported in the future.
 - For backward compatibility, and to optimize for the plain scheme case (expected to be the commonly used scheme), the plain scheme identifier does not need to be added when using the plain scheme. The `extension_data` field can be omitted when building a `Signature` struct and it will be decoded to the default language value (e.g., an empty slice in Golang). The access API interprets an empty `extension_data` field as the plain scheme. `extension_data` must be included only when the scheme is not plain.
 - Any `extension_data` value that is not at least 1-byte in length or does not start with a valid scheme identifier makes the transaction signature invalid.
 - In the plain scheme, the only valid non-nil `extension_data` field value is the array `{0x0}`.
@@ -187,9 +188,9 @@ The existing validation steps before this FLIP are not detailed.
 
 - Decode the protobuf fields of the new proposed `Signature` structure.
 - Check the public key has a valid `key_id` and is not revoked, otherwise return "invalid".
-- If the `extension_data` field is empty (empty array or nil), set the current scheme to the plain scheme.
-- If the `extension_data` field is non-empty, set the current scheme to `extension_data[0]`.
-- Check that the current scheme is supported. Currently, only the plain scheme identifier (`0x0`) and the WebAuthn scheme identifier (`0x1`) are accepted. Otherwise return "invalid".
+- If the `extension_data` field is empty (empty array or nil), set the current authentication scheme to the plain scheme.
+- If the `extension_data` field is non-empty, set the current authentication scheme to `extension_data[0]`.
+- Check that the current authentication scheme is supported. Currently, only the plain scheme identifier (`0x0`) and the WebAuthn scheme identifier (`0x1`) are accepted. Otherwise return "invalid".
 - If the scheme is set to plain, check that `extension_data` is of byte-size `1`, otherwise return "invalid". Serialization of the current `Signature` structure uses the RLP encoding of the legacy structure. The remaining validation steps are performed without changes.
 - In the remaining steps, the scheme is set to WebAuthn. RLP-decode the remaining data `extension_data[1:]` into `authenticatorData` and `clientDataJSON`. Return "invalid" if decoding fails. We recall the expected structure of `extension_data` in the webauthn case:
 ```
