@@ -3,7 +3,7 @@ status: Proposed
 flip: 264
 authors: Tarak Ben Youssef (tarak.benyoussef@flowfoundation.org)
 sponsor: Janez Podhostnik (janez.podhostnik@flowfoundation.org)
-updated: 2025-04-04
+updated: 2025-04-07
 ---
 
 # FLIP 264: WebAuthn Credential Support
@@ -175,10 +175,10 @@ In the case of the WebAuthn scheme, `extension_data` should be encoded as:
 ### Signature Serialization change
 
 A `Signature` structure is currently being serialized to compute both the authorization envelope (which is the message signable by the payer) and the transaction ID.
-The structure currently uses the RLP encoding of the legacy `Signature` definition.
+The serialization currently uses the RLP encoding of the legacy `Signature` definition.
 For the non-plain schemes, the FLIP proposes to serialize the structure as the RLP encoding of the new structure (including the `extension_data` field).
 For backward compatibility of the plain scheme, the serialization of `Signature` continues to be the RLP encoding of the legacy structure.
-Excluding the `extension_data` field from the serialization also avoids malleability issues with regards to ID computation.
+Excluding the `extension_data` field from the serialization also avoids malleability issues with regards to the ID computation.
 Such malleability cases happen when `extension_data` equal to the array `{0x0}` can be substituted with the empty array and result in different transaction IDs.
 
 ## FVM transaction validation changes
