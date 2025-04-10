@@ -39,12 +39,40 @@ In practice, application developers will not typically interact directly with th
 For instance, a developer using Wagmi & Rainbowkit would configure their applications using a pre-built adapter.
 
 ```tsx
-import { getDefaultConfig } from "@onflow/cross-vm-rainbowkit"
+import { flowWallet, walletConnectWallet } from '@onflow/fcl-rainbowkit-adapter';
+import { connectorsForWallets } from '@rainbow-me/rainbowkit';
+import {
+  flowTestnet,
+} from 'wagmi/chains';
+import * as fcl from '@onflow/fcl';
+import { createConfig, http } from 'wagmi';
 
 const config = getDefaultConfig({
   appName: 'My RainbowKit App',
   projectId: 'YOUR_PROJECT_ID',
 });
+
+const connectors = connectorsForWallets([
+  {
+    groupName: "Recommended",
+    wallets: [
+      flowWallet(),
+      walletConnectWallet,
+    ],
+  }
+], {
+  appName: 'RainbowKit demo',
+  projectId: '<<PROJECT_ID>>',
+});
+
+export const config = createConfig({
+  chains: [
+    flowTestnet
+  ],
+  connectors,
+  transports: { [flowTestnet.id]: http() }
+});
+
 ```
 
 In this example, once the user has authenticated with Rainbowkit *with a Cadence-aware wallet*, FCL interactions can be used interchangeably with Wagmi.
@@ -100,9 +128,13 @@ The FCL Ethereum provider can be interacted with in the same way as a standard [
 
 ```tsx
 import * as fcl from "@onflow/fcl";
+import { createProvider } from "@onflow/fcl-ethereum-provider";
 
 // Get COA Ethereum provider
-const provider = fcl.currentUser().createEthereumProvider()
+const provider = createProvider({
+  user: fcl.currentUser,
+  service: ...
+})
 
 // Will authenticate both FCL currentUser & COA Ethereum provider
 const evmAddress = await provider.request({ method: "eth_requestAccounts" })[0]
