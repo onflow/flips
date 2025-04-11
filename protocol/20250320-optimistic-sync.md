@@ -281,6 +281,8 @@ implement the same interface as the persistent storage, requiring that the calle
 The returned snapshot object can be queried the same as the existing databases. The caller could also request a snapshot
 for persisted data, allowing queries using an identical API for sealed or unsealed data.
 
+![Storage Tree](20250320-optimistic-sync/storage.png)
+
 The storage layer will need to be aware of the processing state of the underlying pipeline object. If the requested
 result or any ancestors have not completed indexing, requesting the snapshot should fail with a “not found” error.
 
@@ -290,7 +292,6 @@ There is similar logic implemented for storehouse that could be used as a refere
 `InMemoryRegisterStore`](https://github.com/onflow/flow-go/blob/76ffa809efb055c955d44cfdb2d23be747946eff/engine/execution/storehouse/in_memory_register_store.go#L39))
 
 
-![Storage Tree](20250320-optimistic-sync/storage.png)
 
 ### Access APIs
 
