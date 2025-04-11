@@ -1,9 +1,9 @@
 ---
-status: draft
+status: Accepted
 flip: 322
 authors: peter.argue@flowfoundation.org, alex.hentschel@flowfoundation.org
 sponsor: peter.argue@flowfoundation.org
-updated: 2025-03-20
+updated: 2025-04-11
 ---
 
 # FLIP 322: Optimistic Syncing of Execution Data
