@@ -59,6 +59,7 @@ Cadence changes will currently fall under Protocol FLIPs because they are tightl
     - [FLIP 1057: Automated Slot Assignment](protocol/20220719-automated-slot-assignment.md)
     - [FLIP 57: Access Node Staking Minimum](protocol/20230110-accessnode-stake.md)
     - [FLIP 73: Event Streaming API (alpha version)](protocol/20230309-accessnode-event-streaming-api.md)
+    - [FLIP 322: Optimistic Syncing of Execution Data](protocol/20250320-optimistic-sync.md)
 
 # Process
 
