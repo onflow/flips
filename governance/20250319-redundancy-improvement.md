@@ -1,9 +1,9 @@
 ---
-status: draft 
+status: Released
 flip: 321
 authors: Layne Lafrance 
 sponsor: Vishal Changrani 
-updated: 2025-03-19
+updated: 2025-04-15
 ---
 
 # FLIP 321: Update service account signers
@@ -121,3 +121,10 @@ https://github.com/onflow/flips/issues/310
 ## Questions and Discussion
 
 Please bring any questions / concerns to this issue
+
+## Transactions
+
+Following are the transactions submitted by the service committee to implement this FLIP and FLIP 326,
+
+Service Account: https://www.flowscan.io/tx/02841acc58dd74fb57ee4eb89ef14ccce19bc120684f64df15bcc806b978eddd
+Staking Account: https://www.flowscan.io/tx/5fc1215ed2d8be18c46de837d64999b5f85898b8845bdcce271e382d49f99020
