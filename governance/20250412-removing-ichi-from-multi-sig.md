@@ -6,7 +6,7 @@ Sponsor: Vishal Changrani
 Updated: 2025-04-15
 ---
 
-# FLIP 326: Removing Ichi as a multi-signer
+# FLIP 326: Redundancy Improvement - update service account signers (part 2)
 
 ## Proposal
 
