@@ -1,5 +1,5 @@
 ---
-status: approved
+status: implemented
 flip: 318
 title: VM Bridge Support for Cross-VM NFTs
 authors: Giovanni Sanchez (giovanni.sanchez@flowfoundation.org)
