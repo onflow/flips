@@ -3,7 +3,7 @@ status: released
 flip: 45
 authors: Greg Santos (greg.santos@dapperlabs.com)
 sponsor: Justin Barry (justin.barry@dapperlabs.com)
-updated: 2023-05-31
+updated: 2025-05-01
 ---
 
 # FLIP 45: Flow Client Library (FCL) Specification
@@ -1189,6 +1189,8 @@ The eventual response back from the `authn-refresh` service should resolve to an
 
 An application may wish to prove that their current user controls the account authenticated with. To do so, the application can supply a app identifier (string), and a nonce (hex string), which can be used by the wallet to return an optional `account-proof` service as part of user authentication. The application can use this service to verify that the current user is in control of the account they authenticated with.
 
+App identifiers should correspond to the application's origin (https://my-awesome-app.com), such that the wallet can verify that the request is coming from the same origin as the application to prevent phishing attacks.  Wallet providers are expected to verify that this condition is satisfied through browser APIs (e.g. from postMessage event).  Some legacy applications may continue to use non-origin app identifiers, however this is discouraged.
+
 ```javascript
 {
   f_type: "Service",                       // Its a service!
@@ -1202,6 +1204,7 @@ An application may wish to prove that their current user controls the account au
     // The user's address (8 bytes, i.e 16 hex characters)
     address: "0xf8d6e0586b0a20c7",
     // Nonce signed by the current account-proof (minimum 32 bytes in total, i.e 64 hex characters)
+    appIdentifier: "https://my-awesome-app.com",
     nonce: "75f8587e5bd5f9dcc9909d0dae1f0ac5814458b2ae129620502cb936fde7120a",
     signatures: [CompositeSignature],
   }
