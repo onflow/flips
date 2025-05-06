@@ -3,7 +3,7 @@ status: Proposed
 flip: 264
 authors: Tarak Ben Youssef (tarak.benyoussef@flowfoundation.org)
 sponsor: Janez Podhostnik (janez.podhostnik@flowfoundation.org)
-updated: 2025-04-07
+updated: 2025-05-06
 ---
 
 # FLIP 264: WebAuthn Credential Support
@@ -165,12 +165,19 @@ In the case of the WebAuthn scheme, `extension_data` should be encoded as:
 		})
 ```
 
-- `authenticatorData` is the [data](https://www.w3.org/TR/webauthn-3/#sctn-authenticator-data) set by the authenticator and returned in the assertion response. The data must be at least `35` bytes, and is the concatenation of the following fields:
+- `authenticatorData` is the [data](https://www.w3.org/TR/webauthn-3/#sctn-authenticator-data) set by the authenticator and returned in the assertion response.
+    The data must be at least `35` bytes, and is the concatenation of the following fields:
     - the first 32 bytes represent the `rpIDHash`
     - the next byte represents the flags 
     - the following 4 bytes represent the `signCount`
     - the two remaining fields are `attestedCredentialData` and `extensions`. They are optional and usually not included. The flags byte encode the presence or not of these two fields. If included, they both have a variable size.
-- `clientDataJSON` is the JSON encoding of [`collectedClientData`](https://www.w3.org/TR/webauthn-3/#dictionary-client-data) (or `JSON(collectedClientData)`) as formed by the client when requesting an assertion from the authenticator. It is important to include the same JSON encoding used during the assertion request because `collectedClientData` is a dictionary and the field order of the serialization must be preserved. `clientDataJSON` must be a valid JSON encoding of a dictionary with the required fields `"type"`, `"challenge"` and `"origin"`. The type field must be `"webauthn.get"` and the challenge must be decoded into exactly 32 bytes. The origin is a string of arbitrary size. This adds up to at least 93 bytes, with an average of about 145 bytes if the data are constructed honestly.
+- `clientDataJSON` is the JSON encoding of [`collectedClientData`](https://www.w3.org/TR/webauthn-3/#dictionary-client-data) (or `JSON(collectedClientData)`)
+    as formed by the client when requesting an assertion from the authenticator.
+    It is important to include the same JSON encoding used during the assertion request because `collectedClientData` is a dictionary and the field order of the serialization must be preserved.
+    `clientDataJSON` must be a valid JSON encoding of a dictionary with the required fields `"type"`, `"challenge"` and `"origin"`.
+    The type field must be `"webauthn.get"` and the challenge must be decoded (from base64url) into exactly 32 bytes.
+    The origin is a string of arbitrary size.
+    This adds up to at least 93 bytes, with an average of about 145 bytes if the data are constructed honestly.
 
 ### Signature Serialization change
 
@@ -200,17 +207,34 @@ The existing validation steps before this FLIP are not detailed.
 		"clientDataJSON" : bytes
 		})
 ```
-- JSON-decode `clientDataJSON` into [`collectedClientData`](https://www.w3.org/TR/webauthn-3/#dictionary-client-data) and make sure the resulting dictionary contains the required keys `"type"`, `"challenge"` and `"origin"`. Return "invalid" if any of the steps fail.
-- Extract the `challenge` value from the `collectedClientData` dictionary using the "challenge" key, and make sure it is exactly 32 bytes.
-- Reconstruct the payload hash `SHA2-256(flow_domain_tag || payload)` from the received transaction and check that it equals the `challenge` field value. If the values do not match, return "invalid". Use the authorization envelope instead of `payload` in the case of a payer signature.
-- Read the `type` value from the dictionary using the "type" key. If the value is different than `"webauthn.get"` return "invalid". 
-- In WebAuthn, the server checks client from the dictionary such as `origin` and `crossOrigin` to make sure the assertion was generated for the right relying party. These checks aren't required in the Flow transaction case. Unlike the classic WebAuthn case, the wallet can connect to the chain via multiple access nodes. The domain tag scopes the assertion to the Flow transactions.
+- JSON-decode `clientDataJSON` into [`collectedClientData`](https://www.w3.org/TR/webauthn-3/#dictionary-client-data)
+    and make sure the resulting dictionary contains the required keys `"type"`, `"challenge"` and `"origin"`.
+    Return "invalid" if any of the steps fail.
+- Extract the `challenge` value from the `collectedClientData` dictionary using the "challenge" key,
+    decode it from base64url, and make sure it is exactly 32 bytes.
+- Reconstruct the payload hash `SHA2-256(flow_domain_tag || payload)` from the received transaction and check that it equals the `challenge` field value.
+    If the values do not match, return "invalid". Use the authorization envelope instead of `payload` in the case of a payer signature.
+- Read the `type` value from the dictionary using the "type" key.
+    If the value is different than `"webauthn.get"` return "invalid". 
+- In WebAuthn, the server checks client from the dictionary such as `origin` and `crossOrigin` to make sure the assertion was generated for the right relying party.
+    These checks aren't required in the Flow transaction case.
+    Unlike the classic WebAuthn case, the wallet can connect to the chain via multiple access nodes.
+    The domain tag scopes the assertion to the Flow transactions.
 - Check `authenticatorData` has the minimum length of 37 bytes.
 - Read `rpIDHash` and check it is not equal to the Flow plain transactions [Domain Separation Tag](https://github.com/onflow/flow-go/blob/bc341a46060ab2ee6c6b23d4dc5a6d4a262a9931/model/flow/constants.go#L85)(check [RP ID hash and the Flow DST](#rp-id-hash-and-the-flow-dst) for details).
-- Extract the [user flags](https://www.w3.org/TR/webauthn-3/#authdata-flags-up) from [`authenticatorData`](https://www.w3.org/TR/webauthn-3/#sctn-authenticator-data) and check `UP` is set, `BS` is not set if `BE` is not set, `AT` is only set if [attested data](https://www.w3.org/TR/webauthn-3/#attested-credential-data) is included, `ED` is set only if [extension data](https://www.w3.org/TR/webauthn-3/#authdata-extensions) is included. If any of the checks fail, return "invalid".
-- No other checks are required on the fields of `authenticatorData`. The `counter` check is not needed in Flow to mitigate replay attacks (more details about [replay attacks](#replay-attacks)). The `rpIDHash` is set arbitrarily by the wallet, while the extension [may be ignored](https://www.w3.org/TR/webauthn-3/#authn-ceremony-verify-extension-outputs) during the attestation verification, as long as they are covered by the cryptographic verification.
+- Extract the [user flags](https://www.w3.org/TR/webauthn-3/#authdata-flags-up) from [`authenticatorData`](https://www.w3.org/TR/webauthn-3/#sctn-authenticator-data)
+    and check `UP` is set, `BS` is not set if `BE` is not set,
+    `AT` is only set if [attested data](https://www.w3.org/TR/webauthn-3/#attested-credential-data) is included,
+    `ED` is set only if [extension data](https://www.w3.org/TR/webauthn-3/#authdata-extensions) is included.
+    If any of the checks fail, return "invalid".
+- No other checks are required on the fields of `authenticatorData`.
+    The `counter` check is not needed in Flow to mitigate replay attacks (more details about [replay attacks](#replay-attacks)).
+    The `rpIDHash` is set arbitrarily by the wallet, while the extension [may be ignored](https://www.w3.org/TR/webauthn-3/#authn-ceremony-verify-extension-outputs)
+    during the attestation verification, as long as they are covered by the cryptographic verification.
 - Construct the message `webauthn_message = authenticatorData || SHA2-256(clientDataJSON)`.
-- Compute the cryptographic verification of the `signature` value against `webauthn_message` and the cryptographic public key, taking into account the hashing algorithm stored in the account key. Return "valid" is the verification succeeds, and "invalid" otherwise.
+- Compute the cryptographic verification of the `signature` value against `webauthn_message` and the cryptographic public key,
+    taking into account the hashing algorithm stored in the account key.
+    Return "valid" is the verification succeeds, and "invalid" otherwise.
 
 ### Access and Collection Validation
 
