@@ -1,7 +1,7 @@
 ---
 status: draft 
 flip: 330
-authors: Gregor Gololicic (gregor@gololicic.net)
+authors: Gregor Gololicic (gregor@gololicic.net), Dieter Shirley dete@flowfoundation.com
 sponsor: Janez Podhostnik (janez.podhostnik@flowfoundation.org) 
 updated: 2025-06-09
 ---
