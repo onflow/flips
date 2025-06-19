@@ -72,7 +72,7 @@ Feature addition, no impact.
 Consider extension for type aliasing in the future. 
 
 ## Implementation
-https://github.com/onflow/cadence/pull/3717
+https://github.com/onflow/cadence/pull/4033
 
 ## Prior Art
 
