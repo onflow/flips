@@ -32,6 +32,8 @@ The FLIP proposes to:
 
 To register a node on the Flow network, an operator submits a [node registration transaction](https://developers.flow.com/networks/staking/staking-collection#register-stakers), which includes the networking address of the node. This address is how other nodes establish peer connections with this node.
 
+The networking address has two parts - the TCP/IP address or domain name of the node and the port used by the node for peer-to-peer communication.q
+
 While [best practices](https://developers.flow.com/networks/node-ops/node-operation/node-bootstrap#generate-your-node-keys) recommend using a fully qualified domain name (FQDN) and including the port, the staking contract does not enforce these recommendations.
 
 ### Drawbacks of IP-Based Addresses
