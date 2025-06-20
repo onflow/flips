@@ -1,9 +1,9 @@
 ---
 status: draft 
-flip: NNN (set to the issue number)
-authors: My Name (me@example.org), AN Other (you@example.org) 
-sponsor: AN Expert (core-contributor@example.org) 
-updated: YYYY-MM-DD 
+flip: 332
+authors: Vishal Changrani
+sponsor:
+updated: 2025-06-19
 ---
 # FLIP 332: Enforcing Domain-Based Networking Addresses for Nodes
 
