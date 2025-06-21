@@ -52,9 +52,9 @@ Furthermore, omitting the port number causes node initialization to fail. This a
 
 A validation check will be added to the [`FlowIDTableStaking` contract](https://github.com/onflow/flow-core-contracts/blob/master/contracts/FlowIDTableStaking.cdc).
 
-### Draft Implementation
+### Implementation
 
-A preliminary implementation is available in this [pull request](https://github.com/onflow/flow-core-contracts/pull/484/files#diff-65336be374bb3fc9ad7b822243e065a389d73e758c7c16223e52fc3181cea59bR170).
+The implementation is available in this [pull request](https://github.com/onflow/flow-core-contracts/pull/484/files#diff-65336be374bb3fc9ad7b822243e065a389d73e758c7c16223e52fc3181cea59bR170).
 
 This same validation must also be applied to updates made through the [`NetworkingAddressUpdate` function](https://github.com/onflow/flow-core-contracts/blob/master/contracts/FlowIDTableStaking.cdc#L53).
 
@@ -77,4 +77,4 @@ None.
 
 ## Status
 
-A draft implementation is available for review in [PR #484](https://github.com/onflow/flow-core-contracts/pull/484).
+Contract updates are available for review in [PR #484](https://github.com/onflow/flow-core-contracts/pull/484).
