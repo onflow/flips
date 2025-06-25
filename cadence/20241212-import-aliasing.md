@@ -3,7 +3,7 @@ status: accepted
 flip: 314
 authors: Raymond Zhang (raymond.zhang@flowfoundation.org)
 sponsor: Supun Setunga (supun.setunga@flowfoundation.org)
-updated: 2024-12-17
+updated: 2025-06-25
 ---
 
 # FLIP 314: Import Aliasing
