@@ -231,7 +231,9 @@ The `CallbackHandler` is an interface that defines a single method `executeCallb
 - The data that was passed in during the `schedule` call
 
 ```jsx
-access(all) entitlement Callback
+access(all) entitlement mayExecuteCallback
+access(all) entitlement mayCancelCallback
+access(all) entitlement mayReadCallbackStatus
 
 access(all) struct interface CallbackHandler {
 	access(Callback) fun executeCallback(ID: Uint64, data: AnyStruct?)
