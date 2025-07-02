@@ -68,6 +68,11 @@ Priority also determines the submission fee multiplier. High-priority callbacks 
 
 Storing the data argument used for callback execution also requires a storage reserve. On Flow storing 1MB requires 0.01 Flow of balance as a storage reserve. The limitation on the data provided to the schedule function is 100 bytes, which equates to 0.000001 Flow (`0.0001 MB * 0.01 Flow`). Converted from Flow to execution effort, it is 0.00000004, which is covered by 10 execution effort minimum.  
 
+### Economics
+Fees for scheduled callbacks are paid upfront and held in escrow by the scheduler contract. Upon execution, a portion of the fee—based on the callback's specified executionEffort and the network’s base cost parameters—is transferred to the FlowFees contract, ensuring rewards are distributed to validators through the existing mechanism. Any remaining premium, determined by the callback’s priority level is burned. Higher-priority callbacks burn a larger share of the premium, adding a deflationary pressure that scales with network congestion.
+
+If a callback is canceled, only 50% of the originally deposited fee is refunded. The remaining 50% is burned to discourage abusive mass-scheduling and cancellation. All fee multipliers, burn ratios, and refund parameters can be adjusted via governance through the Service Account.
+
 ### Validation
 
 Each callback submission undergoes validation to ensure it meets the following criteria:
