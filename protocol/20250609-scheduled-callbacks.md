@@ -240,7 +240,7 @@ access(all) entitlement mayExecuteCallback
 access(all) entitlement mayCancelCallback
 access(all) entitlement mayReadCallbackStatus
 
-access(all) struct interface CallbackHandler {
+access(all) resource interface CallbackHandler {
 	access(Callback) fun executeCallback(ID: Uint64, data: AnyStruct?)
 }
 
