@@ -205,6 +205,7 @@ The `schedule` function is the primary entry point for scheduling a new callback
 The schedule function accepts the following arguments:
 
 - `handler`: A capability to an object (struct or resource) in storage that implements the callback handler interface. This handler will be invoked at execution time and will receive the specified data payload.
+- `data`: Data payload that is passed into the handler function during the callback execution. The type is `AnyStruct?` and can be nil. The data content encoding/decoding and type casting should be implemented by the handler.
 - `timestamp`: Specifies the earliest block timestamp at which the callback is eligible for execution (fractional seconds values are ignored). It must be set in the future.
 - `priority`: An enum value (`high`, `medium`, or `low`) that influences the scheduling behavior and determines how soon after the timestamp the callback will be executed.
 - `computationEffort`: Defines the maximum computational resources allocated to the callback. This also determines the fee charged. Unused computation effort is not refunded.
