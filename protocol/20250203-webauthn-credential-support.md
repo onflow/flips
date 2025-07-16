@@ -1,9 +1,9 @@
 ---
-status: Proposed
+status: Accepted
 flip: 264
 authors: Tarak Ben Youssef (tarak.benyoussef@flowfoundation.org)
 sponsor: Janez Podhostnik (janez.podhostnik@flowfoundation.org)
-updated: 2025-05-06
+updated: 2025-07-16
 ---
 
 # FLIP 264: WebAuthn Credential Support
