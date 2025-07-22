@@ -1,9 +1,9 @@
 ---
-status: Accepted
+status: Released
 flip: 332
 authors: Vishal Changrani
 sponsor:
-updated: 2025-07-08
+updated: 2025-07-22
 ---
 # FLIP 332: Enforcing Domain-Based Networking Addresses for Nodes
 
@@ -78,3 +78,5 @@ None.
 ## Status
 
 Contract updates are available for review in [PR #484](https://github.com/onflow/flow-core-contracts/pull/484).
+
+**7/22/2025: This FLIP has been released by updating the staking contract on mainnet.**
