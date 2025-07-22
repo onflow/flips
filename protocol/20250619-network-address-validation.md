@@ -78,3 +78,5 @@ None.
 ## Status
 
 Contract updates are available for review in [PR #484](https://github.com/onflow/flow-core-contracts/pull/484).
+
+**7/22/2025: This FLIP has been released by updating the staking contract on mainnet.**
