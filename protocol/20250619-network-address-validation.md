@@ -1,9 +1,9 @@
 ---
-status: Accepted
+status: Released
 flip: 332
 authors: Vishal Changrani
 sponsor:
-updated: 2025-07-08
+updated: 2025-07-22
 ---
 # FLIP 332: Enforcing Domain-Based Networking Addresses for Nodes
 
