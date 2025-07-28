@@ -99,7 +99,7 @@ Each time slot has a limit of 35,000 execution effort (35kee). This value can be
 - Fungible Token transfer ~20 → 1750 transfers
 - Non-fungible token transfer (normal size) ~180 → 195 transfers
 - Simple EVM transaction ~20 → 1750 transactions
-- Maximum transaction limit 9999 → 35 transactions
+- Maximum transaction limit 9999 → ~3.5 transactions
 
 The time slot limit is divided between high-priority and medium-priority callbacks. Both high-priority and medium-priority callbacks can use up to 10kee per slot. Additionally, each slot reserves 10kee exclusively for high-priority callbacks and 5kee exclusively for medium-priority callbacks. This reservation ensures that both priority levels can always be scheduled within each slot. 
 
