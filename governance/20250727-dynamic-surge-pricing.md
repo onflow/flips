@@ -40,7 +40,7 @@ Transaction Fee = (Inclusion Fee + Execution Fee) × Surge Factor
 
 This logic is already implemented in the [FlowFees contract](https://github.com/onflow/flow-core-contracts/blob/master/contracts/FlowFees.cdc), and the [SurgeFactor](https://github.com/onflow/flow-core-contracts/blob/master/contracts/FlowFees.cdc#L61) field is stored on-chain. This FLIP does not propose changing the formula, but instead proposes adjusting the multiplier dynamically.
 
-The proposed model uses the ratio of observed computation units (CU) per second to the estimated computation capacity per second as the core signal. The estimated capacity is a performance benchmark informed by current network measurements.
+The proposed model uses the ratio of observed [computation units (CU)](https://developers.flow.com/build/basics/transactions#gas-limit) per second to the estimated computation capacity per second as the core signal. The estimated capacity is a performance benchmark informed by current network measurements.
 
 ```
 Utilization Ratio (U) = Observed CU per sec / Estimated Capacity in CU per sec
