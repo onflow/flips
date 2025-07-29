@@ -127,7 +127,7 @@ The following steps will govern how surge adjustments are handled during the man
 
 2. **Threshold Detection**
 
-   If hourly averages approach the lower (5% of capacity) or upper (70% of capacity) thresholds consistently over a period of several hours, an alert will be triggered and shared with the Service Committee.
+   If hourly averages approach the upper (70% of capacity) thresholds consistently over a period of several hours, an alert will be triggered and shared with the Service Committee.
 
 3. **Committee Review and Surge Calculation**
 
