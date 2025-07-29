@@ -6,7 +6,7 @@ sponsor: Vishal Changrani
 updated: 2025-07-28
 ---
 
-# FLIP 336: Dynamic Surge Pricing for Transaction Fees
+# FLIP 336: Dynamic Transaction Fees
 
 ## Introduction
 
