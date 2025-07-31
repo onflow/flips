@@ -57,18 +57,28 @@ updated: 2025-07-30
 
 ## Objective
 
-This proposal introduces DeFiActions (DFA), a suite of standardized Cadence interfaces that enable developers to compose complex DeFi workflows by connecting small, reusable components. DFA provides a "money LEGO" framework where each component performs a single DeFi operation (deposit, withdraw, swap, price lookup) while maintaining composability with other components to create sophisticated financial strategies executable in a single atomic transaction.
+This proposal introduces DeFiActions (DFA), a suite of standardized Cadence interfaces that enable developers to compose
+complex DeFi workflows by connecting small, reusable components. DFA provides a "money LEGO" framework where each
+component performs a single DeFi operation (deposit, withdraw, swap, price lookup, flash loan) while maintaining
+composability with other components to create sophisticated financial strategies executable in a single atomic
+transaction.
 
 ## Motivation
 
-Flow's DeFi ecosystem currently lacks standardized interfaces for connecting protocols and creating complex workflows. Developers building applications that interact with multiple DeFi protocols face several challenges:
+Flow's DeFi ecosystem currently lacks standardized interfaces for connecting protocols and creating complex workflows.
+Developers building applications that interact with multiple DeFi protocols face several challenges:
 
-1. **Protocol Fragmentation**: Each DeFi protocol implements unique interfaces, requiring custom integration code and deep protocol-specific knowledge
-2. **Workflow Complexity**: Building multi-step DeFi strategies (like leverage, yield farming, or automated rebalancing) requires managing multiple protocol calls
-3. **Limited Composability**: Without shared interfaces, protocols cannot easily integrate with each other, limiting composability and increasing the barrier to entry for new developers
-4. **Development Overhead**: Each application must implement protocol-specific logic, leading to duplicated effort and increased maintenance burden
+1. **Protocol Fragmentation**: Each DeFi protocol implements unique interfaces, requiring custom integration code and
+   deep protocol-specific knowledge
+2. **Workflow Complexity**: Building multi-step DeFi strategies (like leverage, yield farming, or automated rebalancing)
+   requires managing multiple protocol calls
+3. **Limited Composability**: Without shared interfaces, protocols cannot easily integrate with each other, limiting
+   composability and increasing the barrier to entry for new developers
+4. **Development Overhead**: Each application must implement protocol-specific logic, leading to duplicated effort and
+   increased maintenance burden
 
-DeFiActions addresses these challenges by providing a unified abstraction layer that makes DeFi protocols interoperable while maintaining the security and flexibility developers expect.
+DeFiActions addresses these challenges by providing a unified abstraction layer that makes DeFi protocols interoperable
+while maintaining the security and flexibility developers expect.
 
 ## User Benefit
 
@@ -77,28 +87,33 @@ DeFiActions provides significant benefits to different stakeholders in the Flow 
 **For Application Developers:**
 - **Simplified Integration**: Connect to any DFA-compatible protocol through standardized interfaces
 - **Rapid Prototyping**: Build complex DeFi workflows by composing pre-built components
-- **Reduced Maintenance**: Protocol updates are abstracted away by connector implementations, enabling more modular dependency architectures
+- **Reduced Maintenance**: Protocol updates are abstracted away by connector implementations, enabling more modular
+  dependency architectures
 - **Enhanced Functionality**: Create sophisticated strategies that would be complex to implement from scratch
 
 **For Protocol Developers:**
-- **Increased Adoption**: Protocols become instantly compatible with any DFA-built application by simply creating DFA connectors adapted to their protocol
-- **Network Effects**: Benefit from integration work done by other protocols in the ecosystem and tapping into a community of DFA-focussed developers
+- **Increased Adoption**: Protocols become instantly compatible with any DFA-built application by simply creating DFA
+  connectors adapted to their protocol
+- **Network Effects**: Benefit from integration work done by other protocols in the ecosystem and tapping into a
+  community of DFA-focussed developers
 
 **For End Users:**
 - **Advanced Strategies**: Access to sophisticated DeFi workflows through simple interfaces
 - **Atomic Execution**: Complex multi-protocol operations execute in single transactions
-- **Autonomous Operations**: Integration with scheduled callbacks enables self-executing strategies, enabling trustless active management
+- **Autonomous Operations**: Integration with scheduled callbacks enables self-executing strategies, enabling trustless
+  active management
 
 ## Design Proposal
 
 ### Core Philosophy
 
-DeFiActions is inspired by Unix terminal piping, where simple command outputs can be connected together to create complex operations in aggregate. Analagously, each DFA component should exhibit:
+DeFiActions is inspired by Unix terminal piping, where simple command outputs can be connected together to create
+complex operations in aggregate. Analagously, each DFA component should exhibit:
 
 - **Single Responsibility**: Each component performs one specific DeFi operation
 - **Composable**: Shared standards in an open environment allow developers to reuse and remix actions built by others
 - **Standardized**: All components of the same type implement identical interfaces
-- **Graceful Failure**: Components handle edge cases gracefully rather than reverting
+- **Graceful Failure**: Components handle edge cases gracefully rather than reverting where possible
 
 ### Component Model Overview
 
@@ -112,17 +127,26 @@ DFA defines five core component types, each representing a fundamental DeFi oper
 
 Additional specialized components build upon and/or support these primitives:
 
-6. **AutoBalancer**: Automated rebalancing system that uses Sources, Sinks, and PriceOracles to maintain a token balance around the value of historical deposits, directing excess value to a Sink and topping up deficient value from a Source if either or both are configured.
-7. **Quote**: Data structure for swap price estimates and execution parameters, allowing Swapper consumers to cache swap quotes in either direction.
-8. **UniqueIdentifier**: Identifies components as related to the same composition or "stack" in both the Cadence runtime and DFA interface events. If two components share the same `UniqueIdentifier`, they be assumed to be a part of the same workflow stack.
-9. **IdentifiableStruct/IdentifiableResource**: Interfaces inherited by all other DFA components allowing for them to be identified by their corresponding `UniqueIdentifier`, for stacks to be extended with newly identified components, and to enable stack introspection allowing for the querying of included components.
-10. **ComponentInfo**: Serves basic information about a component and its inner components, allowing for introspection across a stack of components.
+1. **AutoBalancer**: Automated rebalancing system that uses Sources, Sinks, and PriceOracles to maintain a token balance
+   around the value of historical deposits, directing excess value to a Sink and topping up deficient value from a
+   Source if configured.
+2. **Quote**: Data structure for swap price estimates and execution parameters, allowing Swapper consumers to cache swap
+   quotes in either direction.
+3. **UniqueIdentifier**: Identifies components as related to the same composition or "stack" in both the Cadence runtime
+   and DFA interface events. If two components share the same `UniqueIdentifier`, they be assumed to be a part of the
+   same workflow stack.
+4. **IdentifiableStruct/IdentifiableResource**: Interfaces inherited by all other DFA components allowing for them to be
+   identified by their corresponding `UniqueIdentifier`, for stacks to be extended with newly identified components, and
+   to enable stack introspection allowing for the querying of included components.
+5.  **ComponentInfo**: Serves basic information about a component and its inner components, allowing for introspection
+    across a stack of components.
 
 ### Interfaces
 
 #### Source Interface
 
-Similar to `FungibleToken.Provider`, a `Source` provides tokens while gracefully handling scenarios where the requested amount may not be fully available:
+Similar to `FungibleToken.Provider`, a `Source` provides tokens while gracefully handling scenarios where the requested
+amount may not be fully available:
 
 ```cadence
 access(all) struct interface Source : Identifiable {
@@ -138,7 +162,7 @@ access(all) struct interface Source : Identifiable {
 Key design principles:
 - **Graceful Degradation**: Returns available amount rather than reverting when the full amount unavailable
 - **Predictable Interface**: Always returns a Vault, even if empty
-- **Estimation**: Provides an estimate of the available amount as well as the type
+- **Estimation**: Provides an estimate of the available amount as well as the return type
 
 #### Sink Interface
 
@@ -150,13 +174,14 @@ access(all) struct interface Sink : Identifiable {
     access(all) view fun getSinkType(): Type
     /// Returns an estimate of remaining capacity
     access(all) fun minimumCapacity(): UFix64
-    /// Deposits up to capacity, leaving remainder in source vault
+    /// Deposits up to capacity, leaving remainder in the referenced vault
     access(all) fun depositCapacity(from: auth(FungibleToken.Withdraw) &{FungibleToken.Vault})
 }
 ```
 
 Key design principles:
-- **Capacity Management**: Only accepts tokens up to its current capacity which may include the full balance of the referenced `Vault`
+- **Capacity Management**: Only accepts tokens up to its current capacity which may include the full balance of the
+  referenced `Vault`
 - **Non-destructive**: Excess tokens remain in the referenced `Vault`
 - **Flexible Limits**: Capacity can be dynamic based on underlying recipient's capacity
 
@@ -181,7 +206,8 @@ access(all) struct interface Swapper : Identifiable {
 ```
 
 Key design principles:
-- **Bidirectional**: Supports swaps in both directions via `swapBack()`, a requisite feature in the event an inner connector can't accept the full swap output balance
+- **Bidirectional**: Supports swaps in both directions via `swapBack()`, a requisite feature in the event an inner
+  connector can't accept the full swap output balance
 - **Price Discovery**: Provides estimated amounts in and out before execution via `{Quote}` object
 - **Quote System**: Enables price caching and execution parameter optimization
 
@@ -191,7 +217,7 @@ A PriceOracle provides price data for assets with a consistent denomination:
 
 ```cadence
 access(all) struct interface PriceOracle : Identifiable {
-    /// Returns the denomination asset (e.g., USD, FLOW)
+    /// Returns the denomination asset (e.g., USDCf, FLOW)
     access(all) view fun unitOfAccount(): Type
     /// Returns current price or nil if unavailable, conditions for which are implementation-specific
     access(all) fun price(ofToken: Type): UFix64?
@@ -201,7 +227,8 @@ access(all) struct interface PriceOracle : Identifiable {
 Key design principles:
 - **Consistent Denomination**: All prices returned in the same unit of account
 - **Graceful Unavailability**: Returns `nil` rather than reverting in the event a price is unavailable
-- **Type-Based**: Prices indexed by Cadence Type, requiring a distinct Cadence-based token type for which to serve prices
+- **Type-Based**: Prices indexed by Cadence Type, requiring a distinct Cadence-based token type for which to serve
+  prices
 
 #### Flasher Interface
 
@@ -213,8 +240,8 @@ access(all) struct interface Flasher : Identifiable {
     access(all) view fun borrowType(): Type
     /// Returns the estimated fee for a flash loan of the specified amount
     access(all) fun calculateFee(loanAmount: UFix64): UFix64
-    /// Performs a flash loan of the specified amount. The callback function is passed the fee amount and a Vault
-    /// containing the loan. The callback function should return a Vault containing the loan + fee.
+    /// Performs a flash loan of the specified amount. The callback function is passed the fee amount, a loan Vault,
+    /// and data. The callback function should return a Vault containing the loan + fee.
     access(all) fun flashLoan(
         amount: UFix64,
         data: {String: AnyStruct},
@@ -224,12 +251,13 @@ access(all) struct interface Flasher : Identifiable {
 ```
 
 Key design principles:
-- **Atomic Repayment**: Loan must be repaid within the same transaction
+- **Atomic Repayment**: Loan must be repaid within the callback's function scope
 - **Callback Pattern**: Consumer logic runs in provided function rather than separate components
 - **Fee Transparency**: Implementations provide fee calculation before execution
 - **Repayment Guarantee**: Implementers must validate full repayment (loan + fee) before transaction completion
 
-**Design Rationale**: The callback function pattern was chosen over requiring separate Sink/Source components for several reasons:
+**Design Rationale**: The callback function pattern was chosen over requiring separate Sink/Source components for
+several reasons:
 - **Lighter Weight**: No contract deployment required to define flash loan logic
 - **Competitive Advantage**: Transaction-scoped logic maintains user edge over permanent on-chain code
 - **Consolidated Context**: Single execution scope rather than split between multiple components
@@ -247,13 +275,21 @@ sink.depositCapacity(from: &swappedTokens as auth(FungibleToken.Withdraw) &{Fung
 ```
 
 Compositions connectors include:
-- **SwapSink**: Combines Swapper + Sink for automatic token conversion before deposit (e.g. deposit to SwapSink as TokenA, swap to TokenB and deposit TokenB to inner Sink)
-- **SwapSource**: Combines Source + Swapper for automatic token conversion after withdrawal (e.g. initiate withdrawal of TokenA, withdraw from inner Source as TokenB, swap to TokenA and return the swapped result)
+- **SwapSink**: Combines Swapper + Sink for automatic token conversion before deposit (e.g. deposit to SwapSink as
+  TokenA, swap to TokenB and deposit TokenB to inner Sink)
+- **SwapSource**: Combines Source + Swapper for automatic token conversion after withdrawal (e.g. initiate withdrawal of
+  TokenA, withdraw from inner Source as TokenB, swap to TokenA and return the swapped result)
 - **MultiSwapper**: Aggregates multiple Swappers to find optimal pricing
 
 ### Identification & Traceability
 
-The `UniqueIdentifier` enables protocols to trace stack operations via DeFiActions interface-level events, identifying them by UniqueIdentifier IDs. `IdentifiableResource` Implementations should ensure that access to them is encapsulated by the structures they are used to identify. While Cadence struct types can be created in any context (including being passed in as transaction parameters), the authorized `AuthenticationToken` Capability ensures that only those issued by the DFA contract can be utilized in connectors, preventing forgery.
+The `UniqueIdentifier` enables protocols to trace stack operations via DeFiActions interface-level events, identifying
+them by IDs. `IdentifiableResource` Implementations should ensure that access to the identifier is encapsulated by the
+structures they identify.
+
+While Cadence struct types can be created in any context (including being passed in as transaction parameters), the
+authorized `AuthenticationToken` Capability ensures that only those issued by the DFA contract can be utilized in
+connectors, preventing forgery.
 
 ```cadence
 access(all) struct UniqueIdentifier {
@@ -274,7 +310,9 @@ access(all) struct UniqueIdentifier {
 }
 ```
 
-All DFA components implement the `IdentifiableStruct` interface, which includes an optional `UniqueIdentifier` resource for operation tracing. Since the AutoBalancer is a resource type, an analagous interface `IdentifiableResource` is also proposed (though omitted in this doc) for use in existing and future resource typed DFA components.
+All DFA connectors implement the `IdentifiableStruct` interface, which includes an optional `UniqueIdentifier` resource
+for operation tracing. Since the AutoBalancer is a resource type, an analagous interface `IdentifiableResource` is also
+proposed (though omitted in this doc) for use in existing and future resource typed DFA components.
 
 ```cadence
 access(all) struct interface IdentifiableStruct {
@@ -284,12 +322,12 @@ access(all) struct interface IdentifiableStruct {
     /// Convenience method returning the inner UniqueIdentifier's id or `nil` if none is set.
     ///
     /// NOTE: This interface method may be spoofed if the function is overridden, so callers should not rely on it
-    /// for critical identification unless the implementation itself is known and trusted
+    /// for critical identification unless the implementation is known and trusted
     access(all) view fun id(): UInt64? {
         return self.uniqueID?.id
     }
-    /// Returns a list of ComponentInfo for each component in the stack. This list should be ordered from the outer
-    /// to the inner components, traceable by the innerComponents map.
+    /// Returns a ComponentInfo struct containing information about this component and a list of ComponentInfo for
+    /// each inner component in the stack.
     access(all) fun getComponentInfo(): ComponentInfo
     /// Returns a copy of the struct's UniqueIdentifier, used in extending a stack to identify another connector in
     /// a DeFiActions stack. See DeFiActions.align() for more information.
@@ -310,7 +348,8 @@ access(all) struct interface IdentifiableStruct {
                 newID: self.uniqueID?.id,
                 component: self.getType().identifier,
                 uuid: nil // no UUID for structs
-            ): "Unknown error emitting DeFiActions.UpdatedID from IdentifiableStruct \(self.getType().identifier) with ID ".concat(self.id()?.toString() ?? "UNASSIGNED")
+            ): "Unknown error emitting DeFiActions.UpdatedID from IdentifiableStruct \(self.getType().identifier) with ID "
+                .concat(self.id()?.toString() ?? "UNASSIGNED")
         }
     }
 }
@@ -318,11 +357,15 @@ access(all) struct interface IdentifiableStruct {
 
 This enables:
 - **Event Correlation**: All component operations emit events tagged with the same ID
-- **Stack Tracing**: Understanding the complete component chain
-- **Analytics**: Tracking complex workflow performance and usage patterns
+- **Stack Tracing**: Understanding the complete nested component chain
+- **Analytics**: Tracking complex workflow performance and usage patterns via event analysis
 
 
-Readers may notice that the `copyID()` and `setID()` methods are `access(contract)`. This is to restrict access to the `UniqueIdentifier` values while still allowing for the extension of workflow stacks. A contract method `alignIDs()` is proposed to align IDs between two authorized component references. Due to the number of permutations between struct & resource types, the method is proposed with `AnyStruct` parameters with casting logic that prevents setting if values fail to cast properly.
+Readers may notice that the `copyID()` and `setID()` methods are `access(contract)`. This is to restrict access to the
+`UniqueIdentifier` values while still allowing for the extension of workflow stacks. A contract method `alignIDs()` is
+proposed to align IDs between two authorized component references. Due to the number of permutations between struct &
+resource types, the method is proposed with `AnyStruct` parameters with casting logic that prevents setting if values
+fail to cast properly.
 
 ```cadence
 /// Aligns the UniqueIdentifier of the provided component with the provided component, setting the UniqueIdentifier of
@@ -348,20 +391,20 @@ access(all) fun alignID(toUpdate: AnyStruct, with: AnyStruct) {
 }
 ```
 
-While this logic could be embedded in the interfaces as default methods, implementations overriding the default methods would also override the post-condition block emitting the interface event. Instead, the interface as proposed prioritizes the guaranteed emission of `UpdatedID` events within on `setID()` execution over the convenience of methods.
+While this logic could be embedded in the interfaces as default methods, implementations overriding the default methods
+would also override the post-condition block emitting the interface event. Instead, the interface as proposed
+prioritizes the guaranteed emission of `UpdatedID` events on `setID()` execution over the convenience of methods.
 
 
 ### Stack Introspection
 
-Components can be inspected to understand their composition via `Identifiable.getStackInfo(): [ComponentInfo]`:
+Components can be inspected to understand their composition via `Identifiable.getComponentInfo(): ComponentInfo`:
 
 ```cadence
 access(all) struct ComponentInfo {
     /// The type of the component
     access(all) let type: Type
-    /// The unique identifier of the component
-    access(all) let uuid: UInt64
-    /// The identifier of the component
+    /// The UniqueIdentifier.id of the component
     access(all) let id: UInt64?
     /// The inner component types of the serving component
     access(all) let innerComponents: [ComponentInfo]
@@ -372,20 +415,25 @@ This allows:
 - **Dynamic Workflow Analysis**: Understanding component relationships programmatically
 - **Debugging Support**: Identifying which components are involved in complex operations
 
-> :information_source: Due to the implementation-specific nature of DFA connectors, it's not possible to provide a default implementation at the interface level that would satisfy all connectors nor guarantee through pre-post conditions that `ComponentInfo.innerComponents` preserves correct and/or standard formatting. Similar to NFT metadata, it's therefore the responsibility of the developer to ensure the method is implemented correctly, requiring trust on the part of the consumer.
+> :information_source: Due to the implementation-specific nature of DFA connectors, it's not possible to provide a
+> default implementation at the interface level that would satisfy all connectors nor guarantee through pre-post
+> conditions that `ComponentInfo.innerComponents` serves correct information. Similar to NFT metadata, it's therefore
+> the responsibility of the developer to ensure the method is implemented correctly, requiring trust on the part of the
+> consumer.
 
 #### Simple Stack Introspection Example
 
-The FungibleTokenStack VaultSink is a simple sink just direct deposited funds to a Vault via Capability, so it has not inner commponents.
+The FungibleTokenStack VaultSink is a simple sink just direct deposited funds to a Vault via Capability, so it has not
+inner commponents.
 
 ```cadence
 access(all) struct VaultSink : DeFiActions.Sink {
     // ...
     /// Simply returns info about itself since there exist no inner components
-    access(all) fun getStackInfo(): [DeFiActions.ComponentInfo] {
+    access(all) fun getComponentInfo(): DeFiActionsComponentInfo {
         return DeFiActions.ComponentInfo(
                 type: self.getType(),
-                id: self.id() ?? nil,
+                id: self.id(),
                 innerComponents: []
             )
     }
@@ -395,7 +443,10 @@ access(all) struct VaultSink : DeFiActions.Sink {
 
 #### Complex Stack Introspection Example
 
-The AutoBalancer contains at minimum a PriceOracle, but can also optionally include a Sink (to direct excess value) and Source (to top up deficient value). Introspection results should then include not only the AutoBalancer's `ComponentInfo`, but also the `ComponentInfo` of each contained connector and any connectors those may also contain. The hierarchy of each element can be inferred from the `innerComponents` value.
+The AutoBalancer contains at minimum a PriceOracle, but can also optionally include a Sink (to direct excess value) and
+Source (to top up deficient value). Introspection results should then include not only the AutoBalancer's
+`ComponentInfo`, but also the `ComponentInfo` of each contained connector and any connectors those may also contain. The
+hierarchy of each element can be inferred from the `innerComponents` value.
 
 ```cadence
 access(all) resource AutoBalancer : IdentifiableResource, ... {
@@ -419,7 +470,7 @@ access(all) resource AutoBalancer : IdentifiableResource, ... {
             // create the ComponentInfo for the AutoBalancer and insert it at the beginning of the list
             return ComponentInfo(
                 type: self.getType(),
-                id: self.id() ?? nil,
+                id: self.id(),
                 innerComponents: inner
             )
         }
@@ -434,7 +485,7 @@ access(all) resource AutoBalancer : IdentifiableResource, ... {
 The complete DeFiActions interface specification includes:
 
 <details>
-<summary>Full DFA Code</summary>
+<summary>Full DeFiActions Code</summary>
 
 ```cadence
 import "Burner"
@@ -557,8 +608,8 @@ access(all) contract DeFiActions {
     access(all) struct UniqueIdentifier {
         /// The ID value of this UniqueIdentifier
         access(all) let id: UInt64
-        /// The AuthenticationToken Capability required to create this UniqueIdentifier. Since this is a struct which 
-        /// can be created in any context, this authorized Capability ensures that the UniqueIdentifier can only be 
+        /// The AuthenticationToken Capability required to create this UniqueIdentifier. Since this is a struct which
+        /// can be created in any context, this authorized Capability ensures that the UniqueIdentifier can only be
         /// created by the DeFiActions contract, thus preventing forged UniqueIdentifiers from being created.
         access(self) let authCap: Capability<auth(Identify) &AuthenticationToken>
 
@@ -570,7 +621,7 @@ access(all) contract DeFiActions {
             self.authCap = authCap
         }
     }
-    
+
     /// ComponentInfo
     ///
     /// A struct containing minimal information about a DeFiActions component and its inner components
@@ -578,7 +629,7 @@ access(all) contract DeFiActions {
     access(all) struct ComponentInfo {
         /// The type of the component
         access(all) let type: Type
-        /// The identifier of the component
+        /// The UniqueIdentifier.id of the component
         access(all) let id: UInt64?
         /// The inner component types of the serving component
         access(all) let innerComponents: [ComponentInfo]
@@ -611,8 +662,8 @@ access(all) contract DeFiActions {
         access(all) view fun id(): UInt64? {
             return self.uniqueID?.id
         }
-        /// Returns a list of ComponentInfo for each component in the stack. This list should be ordered from the outer
-        /// to the inner components, traceable by the innerComponents map.
+        /// Returns a ComponentInfo struct containing information about this component and a list of ComponentInfo for
+        /// each inner component in the stack.
         access(all) fun getComponentInfo(): ComponentInfo
         /// Returns a copy of the struct's UniqueIdentifier, used in extending a stack to identify another connector in
         /// a DeFiActions stack. See DeFiActions.align() for more information.
@@ -653,8 +704,8 @@ access(all) contract DeFiActions {
         access(all) view fun id(): UInt64? {
             return self.uniqueID?.id
         }
-        /// Returns a list of ComponentInfo for each component in the stack. This list should be ordered from the outer
-        /// to the inner components, traceable by the innerComponents map.
+        /// Returns a ComponentInfo struct containing information about this component and a list of ComponentInfo for
+        /// each inner component in the stack.
         access(all) fun getComponentInfo(): ComponentInfo
         /// Returns a copy of the struct's UniqueIdentifier, used in extending a stack to identify another connector in
         /// a DeFiActions stack. See DeFiActions.align() for more information.
@@ -695,6 +746,10 @@ access(all) contract DeFiActions {
         access(all) fun minimumCapacity(): UFix64
         /// Deposits up to the Sink's capacity from the provided Vault
         access(all) fun depositCapacity(from: auth(FungibleToken.Withdraw) &{FungibleToken.Vault}) {
+            pre {
+                from.getType() == self.getSinkType():
+                "Invalid vault provided for deposit - \(from.getType().identifier) is not \(self.getSinkType().identifier)"
+            }
             post {
                 DeFiActions.emitDeposited(
                     type: from.getType().identifier,
@@ -725,6 +780,8 @@ access(all) contract DeFiActions {
         /// returned
         access(FungibleToken.Withdraw) fun withdrawAvailable(maxAmount: UFix64): @{FungibleToken.Vault} {
             post {
+                result.getType() == self.getSourceType():
+                "Invalid vault provided for withdraw - \(result.getType().identifier) is not \(self.getSourceType().identifier)"
                 DeFiActions.emitWithdrawn(
                     type: result.getType().identifier,
                     amount: result.balance,
@@ -816,7 +873,7 @@ access(all) contract DeFiActions {
 
     /// PriceOracle
     ///
-    /// An interface for a price oracle connector. Implementations should adapt this interface to various price feed
+    /// An interface for a price oracle adapter. Implementations should adapt this interface to various price feed
     /// oracles deployed on Flow
     ///
     access(all) struct interface PriceOracle : IdentifiableStruct {
@@ -830,7 +887,7 @@ access(all) contract DeFiActions {
 
     /// Flasher
     ///
-    /// An interface for a flash loan connector. Implementations should adapt this interface to various flash loan
+    /// An interface for a flash loan adapter. Implementations should adapt this interface to various flash loan
     /// protocols deployed on Flow
     ///
     access(all) struct interface Flasher : IdentifiableStruct {
@@ -896,11 +953,12 @@ access(all) contract DeFiActions {
             }
             return
         }
-        /// Returns a list of ComponentInfo for each component in the stack
+        /// Returns a ComponentInfo struct containing information about this component and a list of ComponentInfo for
+        /// each inner component in the stack.
         access(all) fun getComponentInfo(): ComponentInfo {
             return ComponentInfo(
                 type: self.getType(),
-                id: self.id() ?? nil,
+                id: self.id(),
                 innerComponents: []
             )
         }
@@ -939,6 +997,7 @@ access(all) contract DeFiActions {
             self.autoBalancer = autoBalancer
             self.uniqueID = uniqueID
         }
+
         /// Returns the Vault type provided by this Source
         access(all) view fun getSourceType(): Type {
             return self.type
@@ -960,11 +1019,12 @@ access(all) contract DeFiActions {
             }
             return <- DeFiActionsUtils.getEmptyVault(self.type)
         }
-        /// Returns information about this AutoBalancerSource
+        /// Returns a ComponentInfo struct containing information about this component and a list of ComponentInfo for
+        /// each inner component in the stack.
         access(all) fun getComponentInfo(): ComponentInfo {
             return ComponentInfo(
                 type: self.getType(),
-                id: self.id() ?? nil,
+                id: self.id(),
                 innerComponents: []
             )
         }
@@ -1060,6 +1120,7 @@ access(all) contract DeFiActions {
                 uniqueID: self.id()
             )
         }
+
         /* Core AutoBalancer Functionality */
 
         /// Returns the balance of the inner Vault
@@ -1112,9 +1173,10 @@ access(all) contract DeFiActions {
             }
             return nil
         }
-        /// Returns a list of ComponentInfo for each component in the stack
+        /// Returns a ComponentInfo struct containing information about this AutoBalancer and its inner DFA components
         ///
-        /// @return a list of ComponentInfo for each inner DeFiActions component in the AutoBalancer
+        /// @return a ComponentInfo struct containing information about this component and a list of ComponentInfo for
+        ///     each inner component in the stack.
         ///
         access(all) fun getComponentInfo(): ComponentInfo {
             // get the inner components
@@ -1134,7 +1196,7 @@ access(all) contract DeFiActions {
             // create the ComponentInfo for the AutoBalancer and insert it at the beginning of the list
             return ComponentInfo(
                 type: self.getType(),
-                id: self.id() ?? nil,
+                id: self.id(),
                 innerComponents: inner
             )
         }
@@ -1202,7 +1264,6 @@ access(all) contract DeFiActions {
             }
             self._selfCap = cap
         }
-
         /// Sets the rebalance range of this AutoBalancer
         ///
         /// @param range: a sorted array containing lower and upper thresholds that condition rebalance execution. The
@@ -1215,19 +1276,16 @@ access(all) contract DeFiActions {
             }
             self._rebalanceRange = range
         }
-
         /// Returns a copy of the struct's UniqueIdentifier, used in extending a stack to identify another connector in
         /// a DeFiActions stack. See DeFiActions.align() for more information.
         access(contract) view fun copyID(): UniqueIdentifier? {
             return self.uniqueID
         }
-
         /// Sets the UniqueIdentifier of this component to the provided UniqueIdentifier, used in extending a stack to
         /// identify another connector in a DeFiActions stack. See DeFiActions.align() for more information.
         access(contract) fun setID(_ id: UniqueIdentifier?) {
             self.uniqueID = id
         }
-
         /// Allows for external parties to call on the AutoBalancer and execute a rebalance according to it's rebalance
         /// parameters. This method must be called by external party regularly in order for rebalancing to occur.
         ///
@@ -1294,7 +1352,7 @@ access(all) contract DeFiActions {
         }
 
         /* ViewResolver.Resolver conformance */
-        //
+
         /// Passthrough to inner Vault's view Types
         access(all) view fun getViews(): [Type] {
             return self._borrowVault().getViews()
@@ -1303,8 +1361,9 @@ access(all) contract DeFiActions {
         access(all) fun resolveView(_ view: Type): AnyStruct? {
             return self._borrowVault().resolveView(view)
         }
+
         /* FungibleToken.Receiver & .Provider conformance */
-        //
+
         /// Only the nested Vault type is supported by this AutoBalancer for deposits & withdrawal for the sake of
         /// single asset accounting
         access(all) view fun getSupportedVaultTypes(): {Type: Bool} {
@@ -1349,7 +1408,7 @@ access(all) contract DeFiActions {
         }
 
         /* Burnable.Burner conformance */
-        //
+
         /// Executed in Burner.burn(). Passes along the inner vault to be burned, executing the inner Vault's
         /// burnCallback() logic
         access(contract) fun burnCallback() {
@@ -1358,7 +1417,7 @@ access(all) contract DeFiActions {
         }
 
         /* Internal */
-        //
+
         /// Returns a reference to the inner Vault
         access(self) view fun _borrowVault(): auth(FungibleToken.Withdraw) &{FungibleToken.Vault} {
             return (&self._vault)!
@@ -1570,7 +1629,7 @@ access(all) struct VaultSink : DeFiActions.Sink {
     access(all) fun getComponentInfo(): DeFiActions.ComponentInfo {
         return DeFiActions.ComponentInfo(
             type: self.getType(),
-            id: self.id() ?? nil,
+            id: self.id(),
             innerComponents: []
         )
     }
@@ -1646,7 +1705,7 @@ access(all) struct VaultSource : DeFiActions.Source {
     access(all) fun getComponentInfo(): DeFiActions.ComponentInfo {
         return DeFiActions.ComponentInfo(
             type: self.getType(),
-            id: self.id() ?? nil,
+            id: self.id(),
             innerComponents: []
         )
     }
@@ -1702,6 +1761,7 @@ Connectors that combine swapping with other actions:
 ```cadence
 /// SwapSink DeFiActions connector that deposits the resulting post-conversion currency of a token swap to an inner
 /// DeFiActions Sink, sourcing funds from a deposited Vault of a pre-set Type.
+///
 access(all) struct SwapSink : DeFiActions.Sink {
     access(self) let swapper: {DeFiActions.Swapper}
     access(self) let sink: {DeFiActions.Sink}
@@ -1718,14 +1778,15 @@ access(all) struct SwapSink : DeFiActions.Sink {
         self.uniqueID = uniqueID
     }
 
-    /// Returns a list of ComponentInfo for each component in the stack
+    /// Returns a ComponentInfo struct containing information about this SwapSink and its inner DFA components
     ///
-    /// @return a list of ComponentInfo for each inner DeFiActions component in the SwapSink
+    /// @return a ComponentInfo struct containing information about this component and a list of ComponentInfo for
+    ///     each inner component in the stack.
     ///
     access(all) fun getComponentInfo(): DeFiActions.ComponentInfo {
         return DeFiActions.ComponentInfo(
             type: self.getType(),
-            id: self.id() ?? nil,
+            id: self.id(),
             innerComponents: [
                 self.swapper.getComponentInfo(),
                 self.sink.getComponentInfo()
@@ -1798,6 +1859,7 @@ access(all) struct SwapSink : DeFiActions.Sink {
 
 /// SwapSource DeFiActions connector that returns post-conversion currency, sourcing pre-converted funds from an inner
 /// DeFiActions Source
+///
 access(all) struct SwapSource : DeFiActions.Source {
     access(self) let swapper: {DeFiActions.Swapper}
     access(self) let source: {DeFiActions.Source}
@@ -1814,14 +1876,15 @@ access(all) struct SwapSource : DeFiActions.Source {
         self.uniqueID = uniqueID
     }
 
-    /// Returns information about this SwapSource
+    /// Returns a ComponentInfo struct containing information about this SwapSource and its inner DFA components
     ///
-    /// @return a ComponentInfo for this SwapSource
+    /// @return a ComponentInfo struct containing information about this component and a list of ComponentInfo for
+    ///     each inner component in the stack.
     ///
     access(all) fun getComponentInfo(): DeFiActions.ComponentInfo {
         return DeFiActions.ComponentInfo(
             type: self.getType(),
-            id: self.id() ?? nil,
+            id: self.id(),
             innerComponents: [
                 self.swapper.getComponentInfo(),
                 self.source.getComponentInfo()
@@ -1901,9 +1964,12 @@ access(all) struct SwapSource : DeFiActions.Source {
 
 #### DEX Connectors
 
-Since DFA acts as an abstraction layer above DeFi protocols on Flow across both Cadence and EVM, protocols may be adapted for use in DFA workflows. Below are two examples - one specific to IncrementFi, the largest Cadence-based DeFi protocol, and another generically suited for UniswapV2 EVM-based protocols.
+Since DFA acts as an abstraction layer above DeFi protocols on Flow across both Cadence and EVM, protocols may be
+adapted for use in DFA workflows. Below are two examples - one specific to IncrementFi, the largest Cadence-based DeFi
+protocol, and another generically suited for UniswapV2 EVM-based protocols.
 
-> :information_source: The two example Swapper implementations below do not account for slippage, but could be configured to do so before production use.
+> :information_source: The two example Swapper implementations below do not account for slippage, but could be
+> configured to do so before production use.
 
 <details>
 <summary>IncrementFi Swapper implementation</summary>
@@ -1941,14 +2007,15 @@ access(all) struct Swapper : DeFiActions.Swapper {
         self.uniqueID = uniqueID
     }
 
-    /// Returns a list of ComponentInfo for each component in the stack
+    /// Returns a ComponentInfo struct containing information about this Swapper and its inner DFA components
     ///
-    /// @return a list of ComponentInfo for each inner DeFiActions component in the Swapper
+    /// @return a ComponentInfo struct containing information about this component and a list of ComponentInfo for
+    ///     each inner component in the stack.
     ///
     access(all) fun getComponentInfo(): DeFiActions.ComponentInfo {
         return DeFiActions.ComponentInfo(
             type: self.getType(),
-            id: self.id() ?? nil,
+            id: self.id(),
             innerComponents: []
         )
     }
@@ -2073,9 +2140,10 @@ access(all) struct UniswapV2EVMSwapper : DeFiActions.Swapper {
         self.coaCapability = coaCapability
     }
 
-    /// Returns information about this UniswapV2EVMSwapper
+    /// Returns a ComponentInfo struct containing information about this Swapper and its inner DFA components
     ///
-    /// @return a ComponentInfo for this UniswapV2EVMSwapper
+    /// @return a ComponentInfo struct containing information about this component and a list of ComponentInfo for
+    ///     each inner component in the stack.
     ///
     access(all) fun getComponentInfo(): DeFiActions.ComponentInfo {
         return DeFiActions.ComponentInfo(
@@ -2340,14 +2408,19 @@ access(all) struct UniswapV2EVMSwapper : DeFiActions.Swapper {
 
 #### Flash Loan Connectors
 
-Since a flash loan must be executed atomically, protocols often include generic calldata and callback patterns to ensure the loan is repaid in full plus a fee within their contract call scope. The Flasher interface design allows for that callback to be defined in either contract or transaction context. In the example Flasher below, an externally defined function can be passed into the the `Flasher.flashloan()` method, but other implementations may also decide to pass in contract-defined methods conditionally directing flashloan callbacks to pre-defined contract logic depending on the conditions and optional parameters.
+Since a flash loan must be executed atomically, protocols often include generic calldata and callback patterns to ensure
+the loan is repaid in full plus a fee within their contract call scope. The Flasher interface design allows for that
+callback to be defined in either contract or transaction context.
+
+In the example Flasher below, an externally defined function can be passed into the the `Flasher.flashloan()` method,
+but other implementations may also decide to pass in contract-defined methods conditionally directing flashloan
+callbacks to pre-defined contract logic depending on the conditions and optional parameters.
 
 <details>
 
 <summary>IncrementFi Flasher implementation</summary>
 
 ```cadence
-/// An implementation of DeFiActions.Flasher connector that performs flash loans using IncrementFi's SwapPair contract
 access(all) struct Flasher : SwapInterfaces.FlashLoanExecutor, DeFiActions.Flasher {
     /// The address of the SwapPair contract to use for flash loans
     access(all) let pairAddress: Address
@@ -2369,14 +2442,15 @@ access(all) struct Flasher : SwapInterfaces.FlashLoanExecutor, DeFiActions.Flash
         self.uniqueID = uniqueID
     }
 
-    /// Returns a list of ComponentInfo for each component in the stack
+    /// Returns a ComponentInfo struct containing information about this Flasher and its inner DFA components
     ///
-    /// @return a list of ComponentInfo for each inner DeFiActions component in the Flasher
+    /// @return a ComponentInfo struct containing information about this component and a list of ComponentInfo for
+    ///     each inner component in the stack.
     ///
     access(all) fun getComponentInfo(): DeFiActions.ComponentInfo {
         return DeFiActions.ComponentInfo(
             type: self.getType(),
-            id: self.id() ?? nil,
+            id: self.id(),
             innerComponents: []
         )
     }
@@ -2450,9 +2524,13 @@ access(all) struct Flasher : SwapInterfaces.FlashLoanExecutor, DeFiActions.Flash
 
 ### AutoBalancer Component
 
-The AutoBalancer is a sophisticated component that demonstrates advanced DFA composition, leveraging a PriceOracle and optional rebalance Sink and/or Source. An AutoBalancer's `rebalance()` method is designed for use with Scheduled Callbacks, allowing for automated management of the contained balance.
+The AutoBalancer is a sophisticated component that demonstrates advanced DFA composition, leveraging a PriceOracle and
+optional rebalance Sink and/or Source. An AutoBalancer's `rebalance()` method is designed for use with Scheduled
+Callbacks, allowing for automated management of the contained balance.
 
-> :information_source: Since the AutoBalancer is intended to leverage scheduled callbacks for `rebalance()` execution, the method's final implementation and the resource's conformance set is contingent on the production interface for the scheduled callbacks feature.
+> :information_source: Since the AutoBalancer is intended to leverage scheduled callbacks for `rebalance()` execution,
+> the method's final implementation and the resource's conformance set is contingent on the production interface for the
+> scheduled callbacks feature.
 
 ```cadence
 access(all) resource AutoBalancer : IdentifiableResource, FungibleToken.Receiver, FungibleToken.Provider, ViewResolver.Resolver, Burner.Burnable {
@@ -2621,19 +2699,28 @@ access(all) event Rebalanced(
 )
 ```
 
-Component actions are associated by their `uniqueID` event values. Since `UniqueIdentifier` structs are issued by the contract and the interfaces limit external access, it can be assumed that DFA events sharing the same `uniqueID` relate to the same workflow stack. So for instance in the case of a SwapSink where the outer SwapSink, inner Swapper and inner Sink all share the same `uniqueID`, the `Deposited.uniqueID` and `Swapped.uniqueID` and final `Deposited.uniqueID` denote that all DFA interface events relate to the same stack operation.
+Component actions are associated by their `uniqueID` event values. Since `UniqueIdentifier` structs are issued by the
+contract and the interfaces limit external access, it can be assumed that DFA events sharing the same `uniqueID` relate
+to the same workflow stack. For instance, in the case of a SwapSink where the outer SwapSink, inner Swapper and inner
+Sink all share the same `uniqueID`, the `Deposited.uniqueID` and `Swapped.uniqueID` and final `Deposited.uniqueID`
+denote that all DFA interface events relate to the same stack operation.
 
 ## Use Cases
 
 ### Automated Token Transmission
 
-This example `Shuttle` object can be used to simply move tokens, as in the case of an autopay subscription, dollar-cost average into a token, or auto-claim & restake staking rewards - which one depends on the token DFA connectors configured on initialization. Using the same prototype object below, several immediate configuration options exist to execute different DeFi workflow: 
+This example `Shuttle` object can be used to simply move tokens. The workflow executed depends on the DFA connectors
+configured on the `Shuttle`'s initialization. Using the same prototype object below, several immediate configuration
+options exist to execute different DeFi workflow: 
 
 1. A VaultSink would simply receive the deposited tokens, transferring from the Shuttle's Source to the Sink.
-2. Configured with a SwapSink, the deposited tokens would be swapped before depositing to an inner SwapSink's inner Sink.
-3. Provided a Source tied to staking rewards and a Sink that stakes deposited tokens, this object could be used to optimize staking rewards by auto-claiming & re-staking.
+2. Configured with a SwapSink, the deposited tokens would be swapped before depositing to an inner SwapSink's inner
+   Sink.
+3. Provided a Source tied to staking rewards and a Sink that stakes deposited tokens, this object could be used to
+   optimize staking rewards by auto-claiming & re-staking.
 
-> :information_source: This example is included to demonstrate the modularity of DFA architecture and not as an accompanying standard object in its own right.
+> :information_source: This example is included to demonstrate the modularity of DFA architecture and not as an
+> accompanying standard object in its own right.
 
 <detail>
 
@@ -2668,8 +2755,8 @@ access(all) contract TokenShuttleService {
         access(self) var interval: UFix64
         /// An authorized Capability enabling scheduled callbacks
         access(self) let selfCapability: Capability<auth(UnsafeCallbackScheduler.mayExecuteCallback) &Shuttle>
-        /// Callbacks that have been scheduled
-        access(self) let scheduledCallbacks: {UInt64: UnsafeCallbackScheduler.ScheduledCallback}
+        /// The next scheduled callback - production would deal with more intelligently
+        access(self) var pendingCallback: UnsafeCallbackScheduler.ScheduledCallback?
 
         // init( ... ) { ... }
 
@@ -2727,7 +2814,7 @@ access(all) contract TokenShuttleService {
                 executionEffort: effort,
                 fees: <-feesVault
             )
-            self.scheduledCallbacks[scheduledCallback.ID] = scheduledCallback
+            self.pendingCallback = scheduledCallback
         }
 
         /* INTERNAL */
@@ -2756,7 +2843,7 @@ access(all) contract TokenShuttleService {
 
 </detail>
 
-To drive home the example, below is a transaction that would configure the `Shuttle` for a DCA strategy:
+To drive the example home, below is a transaction that would configure the `Shuttle` for a DCA strategy:
 
 <detail>
 
@@ -2868,6 +2955,10 @@ transaction(
 }
 ```
 </detail>
+
+Generally speaking, you can see from the transaction above how one deals with DFA connectors in a sort of backwards
+approach. We start with the most deeply nested connectors, then put them all together in the surface-level component,
+tying together the workflow stack.
 
 ## Considerations
 
