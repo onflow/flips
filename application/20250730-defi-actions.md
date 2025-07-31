@@ -3,8 +3,8 @@ status: draft
 flip: 338
 title: DeFiActions: Composable DeFi Standards for Flow
 authors: Giovanni Sanchez (giovanni.sanchez@flowfoundation.org)
-sponsor: Giovanni Sanchez (giovanni.sanchez@flowfoundation.org)
-updated: 2025-01-XX
+sponsor: Kan Zhang (kan.zhang@flowfoundation.org)
+updated: 2025-07-30
 ---
 
 # FLIP 338: DeFiActions - Composable DeFi Standards for Flow
@@ -38,8 +38,8 @@ updated: 2025-01-XX
     - [Connector Examples](#connector-examples)
       - [FungibleToken Connectors](#fungibletoken-connectors)
       - [Swap Connectors](#swap-connectors)
-      - [DEX Adapters](#dex-adapters)
-      - [Flash Loan Adapters](#flash-loan-adapters)
+      - [DEX Connectors](#dex-connectors)
+      - [Flash Loan Connectors](#flash-loan-connectors)
     - [AutoBalancer Component](#autobalancer-component)
     - [Event System](#event-system)
   - [Use Cases](#use-cases)
@@ -77,7 +77,7 @@ DeFiActions provides significant benefits to different stakeholders in the Flow 
 **For Application Developers:**
 - **Simplified Integration**: Connect to any DFA-compatible protocol through standardized interfaces
 - **Rapid Prototyping**: Build complex DeFi workflows by composing pre-built components
-- **Reduced Maintenance**: Protocol updates are abstracted away by adapter implementations, enabling more modular dependency architectures
+- **Reduced Maintenance**: Protocol updates are abstracted away by connector implementations, enabling more modular dependency architectures
 - **Enhanced Functionality**: Create sophisticated strategies that would be complex to implement from scratch
 
 **For Protocol Developers:**
@@ -237,8 +237,6 @@ Key design principles:
 
 ### Component Composition
 
-<!-- TODO: This section needs some work - add in VaultSink/VaultSource, SwapSink/SwapSource, MultiSwapper implementations -->
-
 Components are designed to connect seamlessly where compatible:
 
 ```cadence
@@ -248,7 +246,7 @@ let swappedTokens <- swapper.swap(quote: nil, inVault: <-tokens)
 sink.depositCapacity(from: &swappedTokens as auth(FungibleToken.Withdraw) &{FungibleToken.Vault})
 ```
 
-Compositions include:
+Compositions connectors include:
 - **SwapSink**: Combines Swapper + Sink for automatic token conversion before deposit (e.g. deposit to SwapSink as TokenA, swap to TokenB and deposit TokenB to inner Sink)
 - **SwapSource**: Combines Source + Swapper for automatic token conversion after withdrawal (e.g. initiate withdrawal of TokenA, withdraw from inner Source as TokenB, swap to TokenA and return the swapped result)
 - **MultiSwapper**: Aggregates multiple Swappers to find optimal pricing
@@ -818,7 +816,7 @@ access(all) contract DeFiActions {
 
     /// PriceOracle
     ///
-    /// An interface for a price oracle adapter. Implementations should adapt this interface to various price feed
+    /// An interface for a price oracle connector. Implementations should adapt this interface to various price feed
     /// oracles deployed on Flow
     ///
     access(all) struct interface PriceOracle : IdentifiableStruct {
@@ -832,7 +830,7 @@ access(all) contract DeFiActions {
 
     /// Flasher
     ///
-    /// An interface for a flash loan adapter. Implementations should adapt this interface to various flash loan
+    /// An interface for a flash loan connector. Implementations should adapt this interface to various flash loan
     /// protocols deployed on Flow
     ///
     access(all) struct interface Flasher : IdentifiableStruct {
@@ -1901,7 +1899,7 @@ access(all) struct SwapSource : DeFiActions.Source {
 ```
 </details>
 
-#### DEX Adapters
+#### DEX Connectors
 
 Since DFA acts as an abstraction layer above DeFi protocols on Flow across both Cadence and EVM, protocols may be adapted for use in DFA workflows. Below are two examples - one specific to IncrementFi, the largest Cadence-based DeFi protocol, and another generically suited for UniswapV2 EVM-based protocols.
 
@@ -1935,7 +1933,7 @@ access(all) struct Swapper : DeFiActions.Swapper {
             path.length >= 2:
             "Provided path must have a length of at least 2 - provided path has \(path.length) elements"
         }
-        IncrementFiAdapters._validateSwapperInitArgs(path: path, inVault: inVault, outVault: outVault)
+        IncrementFiConnectors._validateSwapperInitArgs(path: path, inVault: inVault, outVault: outVault)
 
         self.path = path
         self.inVault = inVault
@@ -2031,7 +2029,7 @@ access(all) struct Swapper : DeFiActions.Swapper {
 <summary>UniswapV2 Swapper implementation</summary>
 
 ```cadence
-/// Adapts an EVM-based UniswapV2Router contract's primary functionality to DeFiActions.Swapper adapter interface
+/// Adapts an EVM-based UniswapV2Router contract's primary functionality to DeFiActions.Swapper connector interface
 access(all) struct UniswapV2EVMSwapper : DeFiActions.Swapper {
     /// UniswapV2Router contract's EVM address
     access(all) let routerAddress: EVM.EVMAddress
@@ -2234,7 +2232,7 @@ access(all) struct UniswapV2EVMSwapper : DeFiActions.Swapper {
             dryCall: false
         )!
         if res.status != EVM.Status.successful {
-            DeFiActionsEVMAdapters._callError("approve(address,uint256)",
+            DeFiActionsEVMConnectors._callError("approve(address,uint256)",
                 res, inTokenAddress, idType, id, self.getType())
         }
         // perform the swap
@@ -2247,7 +2245,7 @@ access(all) struct UniswapV2EVMSwapper : DeFiActions.Swapper {
         )!
         if res.status != EVM.Status.successful {
             // revert because the funds have already been deposited to the COA - a no-op would leave the funds in EVM
-            DeFiActionsEVMAdapters._callError("swapExactTokensForTokens(uint,uint,address[],address,uint)",
+            DeFiActionsEVMConnectors._callError("swapExactTokensForTokens(uint,uint,address[],address,uint)",
                 res, self.routerAddress, idType, id, self.getType())
         }
         let decoded = EVM.decodeABI(types: [Type<[UInt256]>()], data: res.data)
@@ -2340,7 +2338,7 @@ access(all) struct UniswapV2EVMSwapper : DeFiActions.Swapper {
 ```
 </details>
 
-#### Flash Loan Adapters
+#### Flash Loan Connectors
 
 Since a flash loan must be executed atomically, protocols often include generic calldata and callback patterns to ensure the loan is repaid in full plus a fee within their contract call scope. The Flasher interface design allows for that callback to be defined in either contract or transaction context. In the example Flasher below, an externally defined function can be passed into the the `Flasher.flashloan()` method, but other implementations may also decide to pass in contract-defined methods conditionally directing flashloan callbacks to pre-defined contract logic depending on the conditions and optional parameters.
 
@@ -2770,7 +2768,7 @@ import "FlowToken"
 
 import "DeFiActions"
 import "FungibleTokenStack"
-import "IncrementFiAdapters"
+import "IncrementFiConnectors"
 
 import "TokenShuttleService"
 
@@ -2834,7 +2832,7 @@ transaction(
             )
         
         // configure the Swapper
-        let swapper = IncrementFiAdapters.Swapper(
+        let swapper = IncrementFiConnectors.Swapper(
             path: incrementSwapPath,
             inVault: originProvider.borrow()!.getType(),
             outVault: destinationReceiver.borrow()!.getType(),
@@ -2955,7 +2953,7 @@ DeFiActions is a new standard that maintains full compatibility with existing Fl
 - No modifications needed to deployed contracts
 
 **Integration Approach:**  
-- Protocols can add DFA support via adapter contracts
+- Protocols can add DFA support via integrating connectors
 - Applications may mix DFA components with direct protocol calls
 - Developers can choose adoption level based on use case complexity
 
@@ -2970,7 +2968,7 @@ DeFiActions is a new standard that maintains full compatibility with existing Fl
 - **Staking Rewards Connectors**: Integrate Source & Sink for protocol staking & claiming rewards
 
 **Ecosystem Development:**
-- **Protocol Partner Program**: Collaboration framework for adapter development
+- **Protocol Partner Program**: Collaboration framework for connector development
 - **Developer Tooling**: Protocol integration scaffolds, component mocks, and development tooling
 - **Educational Resources**: Comprehensive guides, tutorials, and best practices
 - **Community Components**: Registry of community-developed connectors and patterns
