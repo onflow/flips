@@ -244,8 +244,8 @@ access(all) struct interface Flasher : Identifiable {
     /// and data. The callback function should return a Vault containing the loan + fee.
     access(all) fun flashLoan(
         amount: UFix64,
-        data: {String: AnyStruct},
-        callback: fun(UFix64, @{FungibleToken.Vault}, {String: AnyStruct}): @{FungibleToken.Vault} // fee, loan, data
+        data: AnyStruct?,
+        callback: fun(UFix64, @{FungibleToken.Vault}, AnyStruct?): @{FungibleToken.Vault} // fee, loan, data
     )
 }
 ```
@@ -451,8 +451,7 @@ hierarchy of each element can be inferred from the `innerComponents` value.
 ```cadence
 access(all) resource AutoBalancer : IdentifiableResource, ... {
     // ...
-    ///
-    access(all) fun getComponentInfo(): ComponentInfo {
+    (all) fun getComponentInfo(): ComponentInfo {
             // get the inner components
             let oracle = self._borrowOracle()
             let inner: [ComponentInfo] = [oracle.getComponentInfo()]
@@ -596,16 +595,14 @@ access(all) contract DeFiActions {
     /// AuthenticationToken
     ///
     /// A resource intended to ensure UniqueIdentifiers are only created by the DeFiActions contract
-    ///
-    access(all) resource AuthenticationToken {}
+    (all) resource AuthenticationToken {}
 
     /// UniqueIdentifier
     ///
     /// This construct enables protocols to trace stack operations via DeFiActions interface-level events, identifying
     /// them by UniqueIdentifier IDs. IdentifiableResource Implementations should ensure that access to them is
     /// encapsulated by the structures they are used to identify.
-    ///
-    access(all) struct UniqueIdentifier {
+    (all) struct UniqueIdentifier {
         /// The ID value of this UniqueIdentifier
         access(all) let id: UInt64
         /// The AuthenticationToken Capability required to create this UniqueIdentifier. Since this is a struct which
@@ -625,8 +622,7 @@ access(all) contract DeFiActions {
     /// ComponentInfo
     ///
     /// A struct containing minimal information about a DeFiActions component and its inner components
-    ///
-    access(all) struct ComponentInfo {
+    (all) struct ComponentInfo {
         /// The type of the component
         access(all) let type: Type
         /// The UniqueIdentifier.id of the component
@@ -650,8 +646,7 @@ access(all) contract DeFiActions {
     /// IdentifiableResource
     ///
     /// A resource interface containing a UniqueIdentifier and convenience getters about it
-    ///
-    access(all) struct interface IdentifiableStruct {
+    (all) struct interface IdentifiableStruct {
         /// An optional identifier allowing protocols to identify stacked connector operations by defining a protocol-
         /// specific Identifier to associated connectors on construction
         access(contract) var uniqueID: UniqueIdentifier?
@@ -692,8 +687,7 @@ access(all) contract DeFiActions {
     /// IdentifiableResource
     ///
     /// A resource interface containing a UniqueIdentifier and convenience getters about it
-    ///
-    access(all) resource interface IdentifiableResource {
+    (all) resource interface IdentifiableResource {
         /// An optional identifier allowing protocols to identify stacked connector operations by defining a protocol-
         /// specific Identifier to associated connectors on construction
         access(contract) var uniqueID: UniqueIdentifier?
@@ -738,8 +732,7 @@ access(all) contract DeFiActions {
     /// interface) and allows for the graceful handling of Sinks that have a limited capacity on the amount they can
     /// accept for deposit. Implementations should therefore avoid the possibility of reversion with graceful fallback
     /// on unexpected conditions, executing no-ops instead of reverting.
-    ///
-    access(all) struct interface Sink : IdentifiableStruct {
+    (all) struct interface Sink : IdentifiableStruct {
         /// Returns the Vault type accepted by this Sink
         access(all) view fun getSinkType(): Type
         /// Returns an estimate of how much can be withdrawn from the depositing Vault for this Sink to reach capacity
@@ -770,8 +763,7 @@ access(all) contract DeFiActions {
     /// interface) and allows for graceful handling of the case that the Source might not know exactly the total amount
     /// of funds available to be withdrawn. Implementations should therefore avoid the possibility of reversion with
     /// graceful fallback on unexpected conditions, executing no-ops or returning an empty Vault instead of reverting.
-    ///
-    access(all) struct interface Source : IdentifiableStruct {
+    (all) struct interface Source : IdentifiableStruct {
         /// Returns the Vault type provided by this Source
         access(all) view fun getSourceType(): Type
         /// Returns an estimate of how much of the associated Vault Type can be provided by this Source
@@ -798,8 +790,7 @@ access(all) contract DeFiActions {
     /// An interface for an estimate to be returned by a Swapper when asking for a swap estimate. This may be helpful
     /// for passing additional parameters to a Swapper relevant to the use case. Implementations may choose to add
     /// fields relevant to their Swapper implementation and downcast in swap() and/or swapBack() scope.
-    ///
-    access(all) struct interface Quote {
+    (all) struct interface Quote {
         /// The quoted pre-swap Vault type
         access(all) let inType: Type
         /// The quoted post-swap Vault type
@@ -814,8 +805,7 @@ access(all) contract DeFiActions {
     ///
     /// A basic interface for a struct that swaps between tokens. Implementations may choose to adapt this interface
     /// to fit any given swap protocol or set of protocols.
-    ///
-    access(all) struct interface Swapper : IdentifiableStruct {
+    (all) struct interface Swapper : IdentifiableStruct {
         /// The type of Vault this Swapper accepts when performing a swap
         access(all) view fun inType(): Type
         /// The type of Vault this Swapper provides when performing a swap
@@ -875,8 +865,7 @@ access(all) contract DeFiActions {
     ///
     /// An interface for a price oracle adapter. Implementations should adapt this interface to various price feed
     /// oracles deployed on Flow
-    ///
-    access(all) struct interface PriceOracle : IdentifiableStruct {
+    (all) struct interface PriceOracle : IdentifiableStruct {
         /// Returns the asset type serving as the price basis - e.g. USD in FLOW/USD
         access(all) view fun unitOfAccount(): Type
         /// Returns the latest price data for a given asset denominated in unitOfAccount() if available, otherwise `nil`
@@ -889,8 +878,7 @@ access(all) contract DeFiActions {
     ///
     /// An interface for a flash loan adapter. Implementations should adapt this interface to various flash loan
     /// protocols deployed on Flow
-    ///
-    access(all) struct interface Flasher : IdentifiableStruct {
+    (all) struct interface Flasher : IdentifiableStruct {
         /// Returns the asset type this Flasher can issue as a flash loan
         access(all) view fun borrowType(): Type
         /// Returns the estimated fee for a flash loan of the specified amount
@@ -899,8 +887,8 @@ access(all) contract DeFiActions {
         /// containing the loan. The executor function should return a Vault containing the loan and fee.
         access(all) fun flashLoan(
             amount: UFix64,
-            data: {String: AnyStruct},
-            callback: fun(UFix64, @{FungibleToken.Vault}, {String: AnyStruct}): @{FungibleToken.Vault} // fee, loan, data
+            data: AnyStruct?,
+            callback: fun(UFix64, @{FungibleToken.Vault}, AnyStruct?): @{FungibleToken.Vault} // fee, loan, data
         ) {
             post {
                 emit Flashed(
@@ -917,8 +905,7 @@ access(all) contract DeFiActions {
     ///
     /// A DeFiActions Sink enabling the deposit of funds to an underlying AutoBalancer resource. As written, this Source
     /// may be used with externally defined AutoBalancer implementations
-    ///
-    access(all) struct AutoBalancerSink : Sink {
+    (all) struct AutoBalancerSink : Sink {
         /// The Type this Sink accepts
         access(self) let type: Type
         /// An authorized Capability on the underlying AutoBalancer where funds are deposited
@@ -978,8 +965,7 @@ access(all) contract DeFiActions {
     ///
     /// A DeFiActions Source targeting an underlying AutoBalancer resource. As written, this Source may be used with
     /// externally defined AutoBalancer implementations
-    ///
-    access(all) struct AutoBalancerSource : Source {
+    (all) struct AutoBalancerSource : Source {
         /// The Type this Source provides
         access(self) let type: Type
         /// An authorized Capability on the underlying AutoBalancer where funds are sourced
@@ -1050,8 +1036,7 @@ access(all) contract DeFiActions {
     /// A resource designed to enable permissionless rebalancing of value around a wrapped Vault. An
     /// AutoBalancer can be a critical component of DeFiActions stacks by allowing for strategies to compound, repay
     /// loans or direct accumulated value to other sub-systems and/or user Vaults.
-    ///
-    access(all) resource AutoBalancer : IdentifiableResource, FungibleToken.Receiver, FungibleToken.Provider, ViewResolver.Resolver, Burner.Burnable {
+    (all) resource AutoBalancer : IdentifiableResource, FungibleToken.Receiver, FungibleToken.Provider, ViewResolver.Resolver, Burner.Burnable {
         /// The value in deposits & withdrawals over time denominated in oracle.unitOfAccount()
         access(self) var _valueOfDeposits: UFix64
         /// The percentage low and high thresholds defining when a rebalance executes
@@ -1446,8 +1431,7 @@ access(all) contract DeFiActions {
     /// @param outSink: An optional DeFiActions Sink to which excess value is directed when rebalancing
     /// @param inSource: An optional DeFiActions Source from which value is withdrawn to the inner vault when rebalancing
     /// @param uniqueID: An optional DeFiActions UniqueIdentifier used for identifying rebalance events
-    ///
-    access(all) fun createAutoBalancer(
+    (all) fun createAutoBalancer(
         oracle: {PriceOracle},
         vaultType: Type,
         lowerThreshold: UFix64,
@@ -1471,8 +1455,7 @@ access(all) contract DeFiActions {
     /// Creates a new UniqueIdentifier used for identifying action stacks
     ///
     /// @return a new UniqueIdentifier
-    ///
-    access(all) fun createUniqueIdentifier(): UniqueIdentifier {
+    (all) fun createUniqueIdentifier(): UniqueIdentifier {
         let id = UniqueIdentifier(self.currentID, self.authTokenCap)
         self.currentID = self.currentID + 1
         return id
@@ -1487,8 +1470,7 @@ access(all) contract DeFiActions {
     ///     or auth(Extend) &{IdentifiableResource}
     /// @param with: The component to align the UniqueIdentifier of the provided component with. Must be an
     ///     auth(Identify) &{IdentifiableStruct} or auth(Identify) &{IdentifiableResource}
-    ///
-    access(all) fun alignID(toUpdate: AnyStruct, with: AnyStruct) {
+    (all) fun alignID(toUpdate: AnyStruct, with: AnyStruct) {
         let maybeISToUpdate = toUpdate as? auth(Extend) &{IdentifiableStruct}
         let maybeIRToUpdate = toUpdate as? auth(Extend) &{IdentifiableResource}
         let maybeISWith = with as? auth(Identify) &{IdentifiableStruct}
@@ -1625,8 +1607,7 @@ access(all) struct VaultSink : DeFiActions.Sink {
     /// Returns a list of ComponentInfo for each component in the stack
     ///
     /// @return a list of ComponentInfo for each inner DeFiActions component in the VaultSink
-    ///
-    access(all) fun getComponentInfo(): DeFiActions.ComponentInfo {
+    (all) fun getComponentInfo(): DeFiActions.ComponentInfo {
         return DeFiActions.ComponentInfo(
             type: self.getType(),
             id: self.id(),
@@ -1637,16 +1618,14 @@ access(all) struct VaultSink : DeFiActions.Sink {
     /// a DeFiActions stack. See DeFiActions.align() for more information.
     ///
     /// @return a copy of the struct's UniqueIdentifier
-    ///
-    access(contract) view fun copyID(): DeFiActions.UniqueIdentifier? {
+    (contract) view fun copyID(): DeFiActions.UniqueIdentifier? {
         return self.uniqueID
     }
     /// Sets the UniqueIdentifier of this component to the provided UniqueIdentifier, used in extending a stack to
     /// identify another connector in a DeFiActions stack. See DeFiActions.align() for more information.
     ///
     /// @param id: the UniqueIdentifier to set for this component
-    ///
-    access(contract) fun setID(_ id: DeFiActions.UniqueIdentifier?) {
+    (contract) fun setID(_ id: DeFiActions.UniqueIdentifier?) {
         self.uniqueID = id
     }
     /// Returns the Vault type accepted by this Sink
@@ -1701,8 +1680,7 @@ access(all) struct VaultSource : DeFiActions.Source {
     /// Returns a list of ComponentInfo for each component in the stack
     ///
     /// @return a list of ComponentInfo for each inner DeFiActions component in the VaultSource
-    ///
-    access(all) fun getComponentInfo(): DeFiActions.ComponentInfo {
+    (all) fun getComponentInfo(): DeFiActions.ComponentInfo {
         return DeFiActions.ComponentInfo(
             type: self.getType(),
             id: self.id(),
@@ -1713,16 +1691,14 @@ access(all) struct VaultSource : DeFiActions.Source {
     /// a DeFiActions stack. See DeFiActions.align() for more information.
     ///
     /// @return a copy of the struct's UniqueIdentifier
-    ///
-    access(contract) view fun copyID(): DeFiActions.UniqueIdentifier? {
+    (contract) view fun copyID(): DeFiActions.UniqueIdentifier? {
         return self.uniqueID
     }
     /// Sets the UniqueIdentifier of this component to the provided UniqueIdentifier, used in extending a stack to
     /// identify another connector in a DeFiActions stack. See DeFiActions.align() for more information.
     ///
     /// @param id: the UniqueIdentifier to set for this component
-    ///
-    access(contract) fun setID(_ id: DeFiActions.UniqueIdentifier?) {
+    (contract) fun setID(_ id: DeFiActions.UniqueIdentifier?) {
         self.uniqueID = id
     }
     /// Returns the Vault type provided by this Source
@@ -1782,8 +1758,7 @@ access(all) struct SwapSink : DeFiActions.Sink {
     ///
     /// @return a ComponentInfo struct containing information about this component and a list of ComponentInfo for
     ///     each inner component in the stack.
-    ///
-    access(all) fun getComponentInfo(): DeFiActions.ComponentInfo {
+    (all) fun getComponentInfo(): DeFiActions.ComponentInfo {
         return DeFiActions.ComponentInfo(
             type: self.getType(),
             id: self.id(),
@@ -1797,37 +1772,32 @@ access(all) struct SwapSink : DeFiActions.Sink {
     /// a DeFiActions stack. See DeFiActions.align() for more information.
     ///
     /// @return a copy of the struct's UniqueIdentifier
-    ///
-    access(contract) view fun copyID(): DeFiActions.UniqueIdentifier? {
+    (contract) view fun copyID(): DeFiActions.UniqueIdentifier? {
         return self.uniqueID
     }
     /// Sets the UniqueIdentifier of this component to the provided UniqueIdentifier, used in extending a stack to
     /// identify another connector in a DeFiActions stack. See DeFiActions.align() for more information.
     ///
     /// @param id: the UniqueIdentifier to set for this component
-    ///
-    access(contract) fun setID(_ id: DeFiActions.UniqueIdentifier?) {
+    (contract) fun setID(_ id: DeFiActions.UniqueIdentifier?) {
         self.uniqueID = id
     }
     /// Returns the type of Vault this Sink accepts when performing a swap
     ///
     /// @return the type of Vault this Sink accepts when performing a swap
-    ///
-    access(all) view fun getSinkType(): Type {
+    (all) view fun getSinkType(): Type {
         return self.swapper.inType()
     }
     /// Returns the minimum capacity required to deposit to this Sink
     ///
     /// @return the minimum capacity required to deposit to this Sink
-    ///
-    access(all) fun minimumCapacity(): UFix64 {
+    (all) fun minimumCapacity(): UFix64 {
         return self.swapper.quoteIn(forDesired: self.sink.minimumCapacity(), reverse: false).inAmount
     }
     /// Deposits the provided Vault to this Sink, swapping the provided Vault to the required type if necessary
     ///
     /// @param from: the Vault to source deposits from
-    ///
-    access(all) fun depositCapacity(from: auth(FungibleToken.Withdraw) &{FungibleToken.Vault}) {
+    (all) fun depositCapacity(from: auth(FungibleToken.Withdraw) &{FungibleToken.Vault}) {
         let limit = self.sink.minimumCapacity()
         if from.balance == 0.0 || limit == 0.0 || from.getType() != self.getSinkType() {
             return // nothing to swap from, no capacity to ingest, invalid Vault type - do nothing
@@ -1880,7 +1850,6 @@ access(all) struct SwapSource : DeFiActions.Source {
     ///
     /// @return a ComponentInfo struct containing information about this component and a list of ComponentInfo for
     ///     each inner component in the stack.
-    ///
     access(all) fun getComponentInfo(): DeFiActions.ComponentInfo {
         return DeFiActions.ComponentInfo(
             type: self.getType(),
@@ -1895,7 +1864,6 @@ access(all) struct SwapSource : DeFiActions.Source {
     /// a DeFiActions stack. See DeFiActions.align() for more information.
     ///
     /// @return a copy of the struct's UniqueIdentifier
-    ///
     access(contract) view fun copyID(): DeFiActions.UniqueIdentifier? {
         return self.uniqueID
     }
@@ -1903,21 +1871,18 @@ access(all) struct SwapSource : DeFiActions.Source {
     /// identify another connector in a DeFiActions stack. See DeFiActions.align() for more information.
     ///
     /// @param id: the UniqueIdentifier to set for this component
-    ///
     access(contract) fun setID(_ id: DeFiActions.UniqueIdentifier?) {
         self.uniqueID = id
     }
     /// Returns the type of Vault this Source provides when performing a swap
     ///
     /// @return the type of Vault this Source provides when performing a swap
-    ///
     access(all) view fun getSourceType(): Type {
         return self.swapper.outType()
     }
     /// Returns the minimum amount of currency available to withdraw from this Source
     ///
     /// @return the minimum amount of currency available to withdraw from this Source
-    ///
     access(all) fun minimumAvailable(): UFix64 {
         // estimate post-conversion currency based on the source's pre-conversion balance available
         let availableIn = self.source.minimumAvailable()
@@ -1930,7 +1895,6 @@ access(all) struct SwapSource : DeFiActions.Source {
     /// @param maxAmount: the maximum amount of currency to withdraw from this Source
     ///
     /// @return the Vault containing the withdrawn currency
-    ///
     access(FungibleToken.Withdraw) fun withdrawAvailable(maxAmount: UFix64): @{FungibleToken.Vault} {
         let minimumAvail = self.minimumAvailable()
         if minimumAvail == 0.0 || maxAmount == 0.0 {
@@ -2011,7 +1975,6 @@ access(all) struct Swapper : DeFiActions.Swapper {
     ///
     /// @return a ComponentInfo struct containing information about this component and a list of ComponentInfo for
     ///     each inner component in the stack.
-    ///
     access(all) fun getComponentInfo(): DeFiActions.ComponentInfo {
         return DeFiActions.ComponentInfo(
             type: self.getType(),
@@ -2023,7 +1986,6 @@ access(all) struct Swapper : DeFiActions.Swapper {
     /// a DeFiActions stack. See DeFiActions.align() for more information.
     ///
     /// @return a copy of the struct's UniqueIdentifier
-    ///
     access(contract) view fun copyID(): DeFiActions.UniqueIdentifier? {
         return self.uniqueID
     }
@@ -2031,7 +1993,6 @@ access(all) struct Swapper : DeFiActions.Swapper {
     /// identify another connector in a DeFiActions stack. See DeFiActions.align() for more information.
     ///
     /// @param id: the UniqueIdentifier to set for this component
-    ///
     access(contract) fun setID(_ id: DeFiActions.UniqueIdentifier?) {
         self.uniqueID = id
     }
@@ -2144,7 +2105,6 @@ access(all) struct UniswapV2EVMSwapper : DeFiActions.Swapper {
     ///
     /// @return a ComponentInfo struct containing information about this component and a list of ComponentInfo for
     ///     each inner component in the stack.
-    ///
     access(all) fun getComponentInfo(): DeFiActions.ComponentInfo {
         return DeFiActions.ComponentInfo(
             type: self.getType(),
@@ -2156,7 +2116,6 @@ access(all) struct UniswapV2EVMSwapper : DeFiActions.Swapper {
     /// a DeFiActions stack. See DeFiActions.align() for more information.
     ///
     /// @return a copy of the struct's UniqueIdentifier
-    ///
     access(contract) view fun copyID(): DeFiActions.UniqueIdentifier? {
         return self.uniqueID
     }
@@ -2164,7 +2123,6 @@ access(all) struct UniswapV2EVMSwapper : DeFiActions.Swapper {
     /// identify another connector in a DeFiActions stack. See DeFiActions.align() for more information.
     ///
     /// @param id: the UniqueIdentifier to set for this component
-    ///
     access(contract) fun setID(_ id: DeFiActions.UniqueIdentifier?) {
         self.uniqueID = id
     }
@@ -2186,7 +2144,6 @@ access(all) struct UniswapV2EVMSwapper : DeFiActions.Swapper {
     ///
     /// @return a SwapStack.BasicQuote containing estimate data. In order to prevent upstream reversion,
     ///     result.inAmount and result.outAmount will be 0.0 if an estimate is not available
-    ///
     access(all) fun quoteIn(forDesired: UFix64, reverse: Bool): {DeFiActions.Quote} {
         let amountIn = self.getAmount(out: false, amount: forDesired, path: reverse ? self.addressPath.reverse() : self.addressPath)
         return SwapStack.BasicQuote(
@@ -2206,7 +2163,6 @@ access(all) struct UniswapV2EVMSwapper : DeFiActions.Swapper {
     ///
     /// @return a SwapStack.BasicQuote containing estimate data. In order to prevent upstream reversion,
     ///     result.inAmount and result.outAmount will be 0.0 if an estimate is not available
-    ///
     access(all) fun quoteOut(forProvided: UFix64, reverse: Bool): {DeFiActions.Quote} {
         let amountOut = self.getAmount(out: true, amount: forProvided, path: reverse ? self.addressPath.reverse() : self.addressPath)
         return SwapStack.BasicQuote(
@@ -2216,7 +2172,6 @@ access(all) struct UniswapV2EVMSwapper : DeFiActions.Swapper {
             outAmount: amountOut != nil ? amountOut! : 0.0
         )
     }
-
     /// Performs a swap taking a Vault of type inVault, outputting a resulting outVault. This implementation swaps
     /// along a path defined on init routing the swap to the pre-defined UniswapV2Router implementation on Flow EVM.
     /// Any Quote provided defines the amountOutMin value - if none is provided, the current quoted outAmount is
@@ -2228,12 +2183,10 @@ access(all) struct UniswapV2EVMSwapper : DeFiActions.Swapper {
     /// @param inVault: Tokens of type `inVault` to swap for a vault of type `outVault`
     ///
     /// @return a Vault of type `outVault` containing the swapped currency.
-    ///
     access(all) fun swap(quote: {DeFiActions.Quote}?, inVault: @{FungibleToken.Vault}): @{FungibleToken.Vault} {
         let amountOutMin = quote?.outAmount ?? self.quoteOut(forProvided: inVault.balance, reverse: true).outAmount
         return <-self.swapExactTokensForTokens(exactVaultIn: <-inVault, amountOutMin: amountOutMin, reverse: false)
     }
-
     /// Performs a swap taking a Vault of type outVault, outputting a resulting inVault. Implementations may choose
     /// to swap along a pre-set path or an optimal path of a set of paths or even set of contained Swappers adapted
     /// to use multiple Flow swap protocols.
@@ -2246,7 +2199,6 @@ access(all) struct UniswapV2EVMSwapper : DeFiActions.Swapper {
     /// @param residual: Tokens of type `outVault` to swap back to `inVault`
     ///
     /// @return a Vault of type `inVault` containing the swapped currency.
-    ///
     access(all) fun swapBack(quote: {DeFiActions.Quote}?, residual: @{FungibleToken.Vault}): @{FungibleToken.Vault} {
         let amountOutMin = quote?.outAmount ?? self.quoteOut(forProvided: residual.balance, reverse: true).outAmount
         return <-self.swapExactTokensForTokens(
@@ -2255,7 +2207,6 @@ access(all) struct UniswapV2EVMSwapper : DeFiActions.Swapper {
             reverse: true
         )
     }
-
     /// Port of UniswapV2Router.swapExactTokensForTokens swapping the exact amount provided along the given path,
     /// returning the final output Vault
     ///
@@ -2265,7 +2216,6 @@ access(all) struct UniswapV2EVMSwapper : DeFiActions.Swapper {
     ///     opposite direction, outVault -> inVault
     ///
     /// @return the resulting Vault containing the swapped tokens
-    ///
     access(self) fun swapExactTokensForTokens(
         exactVaultIn: @{FungibleToken.Vault},
         amountOutMin: UFix64,
@@ -2344,7 +2294,6 @@ access(all) struct UniswapV2EVMSwapper : DeFiActions.Swapper {
     ///
     /// @return An estimate of the amounts for each swap along the path. If out is true, the return value contains
     ///     the values in, otherwise the array contains the values out for each swap along the path
-    ///
     access(self) fun getAmount(out: Bool, amount: UFix64, path: [EVM.EVMAddress]): UFix64? {
         let callRes = self.call(to: self.routerAddress,
             signature: out ? "getAmountsOut(uint,address[])" : "getAmountsIn(uint,address[])",
@@ -2366,7 +2315,6 @@ access(all) struct UniswapV2EVMSwapper : DeFiActions.Swapper {
             return FlowEVMBridgeUtils.convertERC20AmountToCadenceAmount(uintAmounts[0], erc20Address: path[0])
         }
     }
-
     /// Deposits any remainder in the provided Vault or burns if it it's empty
     access(self) fun handleRemainingFeeVault(_ vault: @FlowToken.Vault) {
         if vault.balance > 0.0 {
@@ -2375,12 +2323,10 @@ access(all) struct UniswapV2EVMSwapper : DeFiActions.Swapper {
             Burner.burn(<-vault)
         }
     }
-
     /// Returns a reference to the Swapper's COA or `nil` if the contained Capability is invalid
     access(self) view fun borrowCOA(): auth(EVM.Owner) &EVM.CadenceOwnedAccount? {
         return self.coaCapability.borrow()
     }
-
     /// Makes a call to the Swapper's routerEVMAddress via the contained COA Capability with the provided signature,
     /// args, and value. If flagged as dryCall, the more efficient and non-mutating COA.dryCall is used. A result is
     /// returned as long as the COA Capability is valid, otherwise `nil` is returned.
@@ -2446,7 +2392,6 @@ access(all) struct Flasher : SwapInterfaces.FlashLoanExecutor, DeFiActions.Flash
     ///
     /// @return a ComponentInfo struct containing information about this component and a list of ComponentInfo for
     ///     each inner component in the stack.
-    ///
     access(all) fun getComponentInfo(): DeFiActions.ComponentInfo {
         return DeFiActions.ComponentInfo(
             type: self.getType(),
@@ -2458,7 +2403,6 @@ access(all) struct Flasher : SwapInterfaces.FlashLoanExecutor, DeFiActions.Flash
     /// a DeFiActions stack. See DeFiActions.align() for more information.
     ///
     /// @return a copy of the struct's UniqueIdentifier
-    ///
     access(contract) view fun copyID(): DeFiActions.UniqueIdentifier? {
         return self.uniqueID
     }
@@ -2466,43 +2410,44 @@ access(all) struct Flasher : SwapInterfaces.FlashLoanExecutor, DeFiActions.Flash
     /// identify another connector in a DeFiActions stack. See DeFiActions.align() for more information.
     ///
     /// @param id: the UniqueIdentifier to set for this component
-    ///
-    access(contract) fun setID(_ id: DeFiActions.UniqueIdentifier?) {
+    (contract) fun setID(_ id: DeFiActions.UniqueIdentifier?) {
         self.uniqueID = id
     }
     /// Returns the asset type this Flasher can issue as a flash loan
     ///
     /// @return the type of token this Flasher can issue as a flash loan
-    ///
-    access(all) view fun borrowType(): Type {
+    (all) view fun borrowType(): Type {
         return self.type
     }
     /// Returns the estimated fee for a flash loan of the specified amount
     ///
     /// @param loanAmount: The amount of tokens to borrow
     /// @return the estimated fee for a flash loan of the specified amount
-    ///
-    access(all) fun calculateFee(loanAmount: UFix64): UFix64 {
+    (all) fun calculateFee(loanAmount: UFix64): UFix64 {
         return UFix64(SwapFactory.getFlashloanRateBps()) * loanAmount / 10000.0
     }
-    /// Performs a flash loan of the specified amount. The executor function is passed the fee amount and a Vault
-    /// containing the loan. The executor function should return a Vault containing the loan and fee.
+    /// Performs a flash loan of the specified amount. The callback function is passed the fee amount, a Vault
+    /// containing the loan, and the data. The callback function should return a Vault containing the loan + fee.
     ///
     /// @param amount: The amount of tokens to borrow
-    /// @param executor: The executor function to use for the flash loan
-    ///
-    access(all) fun flashLoan(
+    /// @param data: Optional data to pass to the callback function
+    /// @param callback: The callback function to use for the flash loan
+    (all) fun flashLoan(
         amount: UFix64,
-        data: {String: AnyStruct},
-        callback: fun(UFix64, @{FungibleToken.Vault}, {String: AnyStruct}): @{FungibleToken.Vault} // fee, loan, data
+        data: AnyStruct?,
+        callback: fun(UFix64, @{FungibleToken.Vault}, AnyStruct?): @{FungibleToken.Vault} // fee, loan, data
     ) {
+        // get the SwapPair public capability on which to perform the flash loan
         let pair = getAccount(self.pairAddress).capabilities.borrow<&{SwapInterfaces.PairPublic}>(
                 SwapConfig.PairPublicPath
             ) ?? panic("Could not reference SwapPair public capability at address \(self.pairAddress)")
-        let params: {String: AnyStruct} = {
-            "fee": self.calculateFee(loanAmount: amount),
-            "callback": callback
-        }
+
+        // cast data to expected params type and add fee and callback to params for the callback function
+        let params = data as! {String: AnyStruct}? ?? {}
+        params["fee"] = self.calculateFee(loanAmount: amount)
+        params["callback"] = callback
+
+        // perform the flash loan
         pair.flashloan(
             executor: &self as &{SwapInterfaces.FlashLoanExecutor},
             requestedTokenVaultType: self.type,
@@ -2565,8 +2510,7 @@ access(all) resource AutoBalancer : IdentifiableResource, FungibleToken.Receiver
     ///
     /// @param force: if false, rebalance will occur only when beyond upper or lower thresholds; if true, rebalance
     ///     will execute as long as a price is available via the oracle and the current value is non-zero
-    ///
-    access(Auto) fun rebalance(force: Bool) {
+    (Auto) fun rebalance(force: Bool) {
         let currentPrice = self._oracle.price(ofToken: self._vaultType)
         if currentPrice == nil {
             return // no price available -> do nothing
@@ -2956,7 +2900,7 @@ transaction(
 ```
 </detail>
 
-Generally speaking, you can see from the transaction above how one deals with DFA connectors in a sort of backwards
+Generally speaking, the transaction above demonstrates how one deals with DFA connectors in a sort of backwards
 approach. We start with the most deeply nested connectors, then put them all together in the surface-level component,
 tying together the workflow stack.
 
