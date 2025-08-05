@@ -1,21 +1,21 @@
 ---
 status: draft
 flip: 338
-title: DeFiActions: Composable DeFi Standards for Flow
+title: Flow Actions: Composable Standards for Protocols
 authors: Giovanni Sanchez (giovanni.sanchez@flowfoundation.org)
 sponsor: Kan Zhang (kan.zhang@flowfoundation.org)
 updated: 2025-07-30
 ---
 
-# FLIP 338: DeFiActions - Composable DeFi Standards for Flow
+# FLIP 338: Flow Actions - Composable Standards for Protocols
 
-> Standardized interfaces enabling composition of common DeFi operations through pluggable, reusable components
+> Standardized interfaces enabling composition of common operations through pluggable, reusable components
 
 <details>
 
 <summary>Table of contents</summary>
 
-- [FLIP 338: DeFiActions - Composable DeFi Standards for Flow](#flip-338-defiactions---composable-defi-standards-for-flow)
+- [FLIP 338: Flow Actions - Composable Standards for Protocols](#flip-338-defiactions---composable-defi-standards-for-flow)
   - [Objective](#objective)
   - [Motivation](#motivation)
   - [User Benefit](#user-benefit)
@@ -57,48 +57,47 @@ updated: 2025-07-30
 
 ## Objective
 
-This proposal introduces DeFiActions (DFA), a suite of standardized Cadence interfaces that enable developers to compose
-complex DeFi workflows by connecting small, reusable components. DFA provides a "money LEGO" framework where each
-component performs a single DeFi operation (deposit, withdraw, swap, price lookup, flash loan) while maintaining
-composability with other components to create sophisticated financial strategies executable in a single atomic
+This proposal introduces Flow Actions, a suite of standardized Cadence interfaces that enable developers to compose
+complex workflows, starting with DeFi, by connecting small, reusable components. Actions provide a "LEGO" framework where each
+component performs a single operation (deposit, withdraw, swap, price lookup, flash loan) while maintaining
+composability with other components to create sophisticated workflows executable in a single atomic
 transaction.
 
 ## Motivation
 
-Flow's DeFi ecosystem currently lacks standardized interfaces for connecting protocols and creating complex workflows.
-Developers building applications that interact with multiple DeFi protocols face several challenges:
+The web3 ecosystem lacks standardized interfaces for connecting protocols and creating complex workflows.
+Developers building applications that interact with multiple protocols face several challenges:
 
-1. **Protocol Fragmentation**: Each DeFi protocol implements unique interfaces, requiring custom integration code and
+1. **Protocol Fragmentation**: Each protocol implements unique interfaces, requiring custom integration code and
    deep protocol-specific knowledge
-2. **Workflow Complexity**: Building multi-step DeFi strategies (like leverage, yield farming, or automated rebalancing)
-   requires managing multiple protocol calls
+2. **Workflow Complexity**: Building multi-step workflows requires managing multiple protocol calls
 3. **Limited Composability**: Without shared interfaces, protocols cannot easily integrate with each other, limiting
    composability and increasing the barrier to entry for new developers
 4. **Development Overhead**: Each application must implement protocol-specific logic, leading to duplicated effort and
    increased maintenance burden
 
-DeFiActions addresses these challenges by providing a unified abstraction layer that makes DeFi protocols interoperable
+Flow Actions addresses these challenges by providing a unified abstraction layer that make protocols interoperable
 while maintaining the security and flexibility developers expect.
 
 ## User Benefit
 
-DeFiActions provides significant benefits to different stakeholders in the Flow ecosystem:
+Flow Actions provides significant benefits to different stakeholders in the Flow ecosystem:
 
 **For Application Developers:**
-- **Simplified Integration**: Connect to any DFA-compatible protocol through standardized interfaces
-- **Rapid Prototyping**: Build complex DeFi workflows by composing pre-built components
+- **Simplified Integration**: Connect to any Action-compatible protocol through standardized interfaces
+- **Rapid Prototyping**: Build complex workflows by composing pre-built components
 - **Reduced Maintenance**: Protocol updates are abstracted away by connector implementations, enabling more modular
   dependency architectures
 - **Enhanced Functionality**: Create sophisticated strategies that would be complex to implement from scratch
 
 **For Protocol Developers:**
-- **Increased Adoption**: Protocols become instantly compatible with any DFA-built application by simply creating DFA
+- **Increased Adoption**: Protocols become instantly compatible with any Action-built application by simply creating Action
   connectors adapted to their protocol
 - **Network Effects**: Benefit from integration work done by other protocols in the ecosystem and tapping into a
-  community of DFA-focussed developers
+  community of action-focussed developers
 
 **For End Users:**
-- **Advanced Strategies**: Access to sophisticated DeFi workflows through simple interfaces
+- **Advanced Strategies**: Access to sophisticated workflows through simple interfaces
 - **Atomic Execution**: Complex multi-protocol operations execute in single transactions
 - **Autonomous Operations**: Integration with scheduled callbacks enables self-executing strategies, enabling trustless
   active management
@@ -107,17 +106,17 @@ DeFiActions provides significant benefits to different stakeholders in the Flow 
 
 ### Core Philosophy
 
-DeFiActions is inspired by Unix terminal piping, where simple command outputs can be connected together to create
-complex operations in aggregate. Analagously, each DFA component should exhibit:
+Flow Actions are inspired by Unix terminal piping, where simple command outputs can be connected together to create
+complex operations in aggregate. Analagously, each action component should exhibit:
 
-- **Single Responsibility**: Each component performs one specific DeFi operation
+- **Single Responsibility**: Each component performs one specific operation
 - **Composable**: Shared standards in an open environment allow developers to reuse and remix actions built by others
 - **Standardized**: All components of the same type implement identical interfaces
 - **Graceful Failure**: Components handle edge cases gracefully rather than reverting where possible
 
 ### Component Model Overview
 
-DFA defines five core component types, each representing a fundamental DeFi operation:
+Flow Actions are starting with DeFi and is defined with five core component types, each representing a fundamental DeFi operation:
 
 1. **Source**: Provides tokens on demand (e.g. withdraw from vault, claim rewards, pull liquidity)
 2. **Sink**: Accepts tokens up to capacity (e.g. deposit to vault, repay loan, add liquidity)
@@ -133,9 +132,9 @@ Additional specialized components build upon and/or support these primitives:
 2. **Quote**: Data structure for swap price estimates and execution parameters, allowing Swapper consumers to cache swap
    quotes in either direction.
 3. **UniqueIdentifier**: Identifies components as related to the same composition or "stack" in both the Cadence runtime
-   and DFA interface events. If two components share the same `UniqueIdentifier`, they be assumed to be a part of the
+   and Flow Actions interface events. If two components share the same `UniqueIdentifier`, they be assumed to be a part of the
    same workflow stack.
-4. **IdentifiableStruct/IdentifiableResource**: Interfaces inherited by all other DFA components allowing for them to be
+4. **IdentifiableStruct/IdentifiableResource**: Interfaces inherited by all other Flow Actions components allowing for them to be
    identified by their corresponding `UniqueIdentifier`, for stacks to be extended with newly identified components, and
    to enable stack introspection allowing for the querying of included components.
 5.  **ComponentInfo**: Serves basic information about a component and its inner components, allowing for introspection
@@ -288,7 +287,7 @@ them by IDs. `IdentifiableResource` Implementations should ensure that access to
 structures they identify.
 
 While Cadence struct types can be created in any context (including being passed in as transaction parameters), the
-authorized `AuthenticationToken` Capability ensures that only those issued by the DFA contract can be utilized in
+authorized `AuthenticationToken` Capability ensures that only those issued by the DeFiActions contract can be utilized in
 connectors, preventing forgery.
 
 ```cadence
@@ -310,9 +309,9 @@ access(all) struct UniqueIdentifier {
 }
 ```
 
-All DFA connectors implement the `IdentifiableStruct` interface, which includes an optional `UniqueIdentifier` resource
+All Flow Actions connectors implement the `IdentifiableStruct` interface, which includes an optional `UniqueIdentifier` resource
 for operation tracing. Since the AutoBalancer is a resource type, an analagous interface `IdentifiableResource` is also
-proposed (though omitted in this doc) for use in existing and future resource typed DFA components.
+proposed (though omitted in this doc) for use in existing and future resource typed DeFiActions components.
 
 ```cadence
 access(all) struct interface IdentifiableStruct {
@@ -415,7 +414,7 @@ This allows:
 - **Dynamic Workflow Analysis**: Understanding component relationships programmatically
 - **Debugging Support**: Identifying which components are involved in complex operations
 
-> :information_source: Due to the implementation-specific nature of DFA connectors, it's not possible to provide a
+> :information_source: Due to the implementation-specific nature of Flow Action connectors, it's not possible to provide a
 > default implementation at the interface level that would satisfy all connectors nor guarantee through pre-post
 > conditions that `ComponentInfo.innerComponents` serves correct information. Similar to NFT metadata, it's therefore
 > the responsibility of the developer to ensure the method is implemented correctly, requiring trust on the part of the
@@ -481,10 +480,10 @@ access(all) resource AutoBalancer : IdentifiableResource, ... {
 
 ### Core Interfaces
 
-The complete DeFiActions interface specification includes:
+The complete DeFi Actions interface specification includes:
 
 <details>
-<summary>Full DeFiActions Code</summary>
+<summary>Full DeFi Actions Code</summary>
 
 ```cadence
 import "Burner"
@@ -558,7 +557,7 @@ access(all) contract DeFiActions {
         uniqueID: UInt64?,
         flasherType: String
     )
-    /// Emitted when an IdentifiableResource's UniqueIdentifier is aligned with another DFA component
+    /// Emitted when an IdentifiableResource's UniqueIdentifier is aligned with another DeFiActions component
     access(all) event UpdatedID(
         oldID: UInt64?,
         newID: UInt64?,
@@ -1158,7 +1157,7 @@ access(all) contract DeFiActions {
             }
             return nil
         }
-        /// Returns a ComponentInfo struct containing information about this AutoBalancer and its inner DFA components
+        /// Returns a ComponentInfo struct containing information about this AutoBalancer and its inner DeFiActions components
         ///
         /// @return a ComponentInfo struct containing information about this component and a list of ComponentInfo for
         ///     each inner component in the stack.
@@ -1735,7 +1734,7 @@ Connectors that combine swapping with other actions:
 <summary>SwapSink & SwapSource implementations</summary>
 
 ```cadence
-/// SwapSink DeFiActions connector that deposits the resulting post-conversion currency of a token swap to an inner
+/// SwapSink DeFi Actions connector that deposits the resulting post-conversion currency of a token swap to an inner
 /// DeFiActions Sink, sourcing funds from a deposited Vault of a pre-set Type.
 ///
 access(all) struct SwapSink : DeFiActions.Sink {
@@ -1754,7 +1753,7 @@ access(all) struct SwapSink : DeFiActions.Sink {
         self.uniqueID = uniqueID
     }
 
-    /// Returns a ComponentInfo struct containing information about this SwapSink and its inner DFA components
+    /// Returns a ComponentInfo struct containing information about this SwapSink and its inner DeFiActions components
     ///
     /// @return a ComponentInfo struct containing information about this component and a list of ComponentInfo for
     ///     each inner component in the stack.
@@ -1846,7 +1845,7 @@ access(all) struct SwapSource : DeFiActions.Source {
         self.uniqueID = uniqueID
     }
 
-    /// Returns a ComponentInfo struct containing information about this SwapSource and its inner DFA components
+    /// Returns a ComponentInfo struct containing information about this SwapSource and its inner DeFiActions components
     ///
     /// @return a ComponentInfo struct containing information about this component and a list of ComponentInfo for
     ///     each inner component in the stack.
@@ -1928,8 +1927,8 @@ access(all) struct SwapSource : DeFiActions.Source {
 
 #### DEX Connectors
 
-Since DFA acts as an abstraction layer above DeFi protocols on Flow across both Cadence and EVM, protocols may be
-adapted for use in DFA workflows. Below are two examples - one specific to IncrementFi, the largest Cadence-based DeFi
+Since Flow Actions acts as an abstraction layer above DeFi protocols on Flow across both Cadence and EVM, protocols may be
+adapted for use in Flow Action workflows. Below are two examples - one specific to IncrementFi, the largest Cadence-based DeFi
 protocol, and another generically suited for UniswapV2 EVM-based protocols.
 
 > :information_source: The two example Swapper implementations below do not account for slippage, but could be
@@ -1971,7 +1970,7 @@ access(all) struct Swapper : DeFiActions.Swapper {
         self.uniqueID = uniqueID
     }
 
-    /// Returns a ComponentInfo struct containing information about this Swapper and its inner DFA components
+    /// Returns a ComponentInfo struct containing information about this Swapper and its inner DeFiActions components
     ///
     /// @return a ComponentInfo struct containing information about this component and a list of ComponentInfo for
     ///     each inner component in the stack.
@@ -2101,7 +2100,7 @@ access(all) struct UniswapV2EVMSwapper : DeFiActions.Swapper {
         self.coaCapability = coaCapability
     }
 
-    /// Returns a ComponentInfo struct containing information about this Swapper and its inner DFA components
+    /// Returns a ComponentInfo struct containing information about this Swapper and its inner DeFiActions components
     ///
     /// @return a ComponentInfo struct containing information about this component and a list of ComponentInfo for
     ///     each inner component in the stack.
@@ -2388,7 +2387,7 @@ access(all) struct Flasher : SwapInterfaces.FlashLoanExecutor, DeFiActions.Flash
         self.uniqueID = uniqueID
     }
 
-    /// Returns a ComponentInfo struct containing information about this Flasher and its inner DFA components
+    /// Returns a ComponentInfo struct containing information about this Flasher and its inner DeFiActions components
     ///
     /// @return a ComponentInfo struct containing information about this component and a list of ComponentInfo for
     ///     each inner component in the stack.
@@ -2469,7 +2468,7 @@ access(all) struct Flasher : SwapInterfaces.FlashLoanExecutor, DeFiActions.Flash
 
 ### AutoBalancer Component
 
-The AutoBalancer is a sophisticated component that demonstrates advanced DFA composition, leveraging a PriceOracle and
+The AutoBalancer is a sophisticated component that demonstrates advanced DeFiActions composition, leveraging a PriceOracle and
 optional rebalance Sink and/or Source. An AutoBalancer's `rebalance()` method is designed for use with Scheduled
 Callbacks, allowing for automated management of the contained balance.
 
@@ -2575,7 +2574,7 @@ access(all) resource AutoBalancer : IdentifiableResource, FungibleToken.Receiver
 
 ### Event System
 
-DFA components emit standardized events for operation tracing:
+DeFiActions components emit standardized events for operation tracing:
 
 ```cadence
 /// Emitted when value is deposited to a Sink
@@ -2612,7 +2611,7 @@ access(all) event Flashed(
     uniqueID: UInt64?,
     flasherType: String
 )
-/// Emitted when an IdentifiableResource's UniqueIdentifier is aligned with another DFA component
+/// Emitted when an IdentifiableResource's UniqueIdentifier is aligned with another DeFiActions component
 access(all) event UpdatedID(
     oldID: UInt64?,
     newID: UInt64?,
@@ -2644,16 +2643,16 @@ access(all) event Rebalanced(
 ```
 
 Component actions are associated by their `uniqueID` event values. Since `UniqueIdentifier` structs are issued by the
-contract and the interfaces limit external access, it can be assumed that DFA events sharing the same `uniqueID` relate
+contract and the interfaces limit external access, it can be assumed that DeFiActions events sharing the same `uniqueID` relate
 to the same workflow stack. For instance, in the case of a SwapSink where the outer SwapSink, inner Swapper and inner
 Sink all share the same `uniqueID`, the `Deposited.uniqueID` and `Swapped.uniqueID` and final `Deposited.uniqueID`
-denote that all DFA interface events relate to the same stack operation.
+denote that all DeFiActions interface events relate to the same stack operation.
 
 ## Use Cases
 
 ### Automated Token Transmission
 
-This example `Shuttle` object can be used to simply move tokens. The workflow executed depends on the DFA connectors
+This example `Shuttle` object can be used to simply move tokens. The workflow executed depends on the DeFiActions connectors
 configured on the `Shuttle`'s initialization. Using the same prototype object below, several immediate configuration
 options exist to execute different DeFi workflow: 
 
@@ -2663,7 +2662,7 @@ options exist to execute different DeFi workflow:
 3. Provided a Source tied to staking rewards and a Sink that stakes deposited tokens, this object could be used to
    optimize staking rewards by auto-claiming & re-staking.
 
-> :information_source: This example is included to demonstrate the modularity of DFA architecture and not as an
+> :information_source: This example is included to demonstrate the modularity of DeFiActions architecture and not as an
 > accompanying standard object in its own right.
 
 <detail>
@@ -2671,7 +2670,7 @@ options exist to execute different DeFi workflow:
 <summary>TokenShuttleService example</summary>
 
 ```cadence
-/// Example auto token transmission using DFA connectors for use in DCA strategies, onchain subscriptions, and staking 
+/// Example auto token transmission using DeFiActions connectors for use in DCA strategies, onchain subscriptions, and staking 
 /// rewards claim + restake
 ///
 /// Usage of Scheduled Callbacks based on current state of FLIP #331
@@ -2877,7 +2876,7 @@ transaction(
                 uniqueID: id
             )
         
-        // configure the Shuttle in storage, putting together all the DFA components
+        // configure the Shuttle in storage, putting together all the DeFiActions components
         let newShuttle <- TokenShuttleService.createShuttle(
                 tokenOrigin: vaultSinkSource,
                 tokenDestination: swapSink,
@@ -2900,7 +2899,7 @@ transaction(
 ```
 </detail>
 
-Generally speaking, the transaction above demonstrates how one deals with DFA connectors in a sort of backwards
+Generally speaking, the transaction above demonstrates how one deals with DeFiActions connectors in a sort of backwards
 approach. We start with the most deeply nested connectors, then put them all together in the surface-level component,
 tying together the workflow stack.
 
@@ -2908,7 +2907,7 @@ tying together the workflow stack.
 
 ### Security Model
 
-DFA's design philosophy prioritizes graceful failure over strict guarantees, which creates both benefits and security considerations:
+Flow Action's design philosophy prioritizes graceful failure over strict guarantees, which creates both benefits and security considerations:
 
 **Weak Behavioral Guarantees:**
 - Sources may return less than requested without reverting
@@ -2933,7 +2932,7 @@ DFA's design philosophy prioritizes graceful failure over strict guarantees, whi
 **Computational Complexity:**
 - **Aggregation Overhead**: MultiSwapper components querying many Swappers can be expensive
 - **Deep Call Stacks**: Complex compositions may hit computation limits
-- **Event Volume**: DFA stacks emit extensive events, increasing transaction costs
+- **Event Volume**: DeFiActions stacks emit extensive events, increasing transaction costs
 - **Cross-VM Operations**: Future EVM bridge connectors will add computational overhead
 
 **Optimization Strategies:**
@@ -2980,16 +2979,16 @@ DFA's design philosophy prioritizes graceful failure over strict guarantees, whi
 
 ## Compatibility
 
-DeFiActions is a new standard that maintains full compatibility with existing Flow infrastructure. The standard exists as a layer of abstraction above new and existing infrastructure, so there should be no concerns of breaking changes. Any realized incompatibility should be reported as feedback on this FLIP and considered in the component interface design.
+Flow Actions are a new standard that maintains full compatibility with existing Flow infrastructure. The standard exists as a layer of abstraction above new and existing infrastructure, so there should be no concerns of breaking changes. Any realized incompatibility should be reported as feedback on this FLIP and considered in the component interface design.
 
 **No Migration Required:**
 - Existing DeFi protocols continue operating unchanged
-- Current applications can gradually adopt DFA components
+- Current applications can gradually adopt DeFiActions components
 - No modifications needed to deployed contracts
 
 **Integration Approach:**  
-- Protocols can add DFA support via integrating connectors
-- Applications may mix DFA components with direct protocol calls
+- Protocols can add Flow Action support via integrating connectors
+- Applications may mix Flow Action components with direct protocol calls
 - Developers can choose adoption level based on use case complexity
 
 **Forward Compatibility:**
