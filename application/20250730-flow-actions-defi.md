@@ -76,7 +76,7 @@ Developers building applications that interact with multiple protocols face seve
 4. **Development Overhead**: Each application must implement protocol-specific logic, leading to duplicated effort and
    increased maintenance burden
 
-Flow Actions addresses these challenges by providing a unified abstraction layer that make protocols interoperable
+Flow Actions address these challenges by providing a unified abstraction layer that make protocols interoperable
 while maintaining the security and flexibility developers expect.
 
 ## User Benefit
@@ -84,14 +84,14 @@ while maintaining the security and flexibility developers expect.
 Flow Actions provides significant benefits to different stakeholders in the Flow ecosystem:
 
 **For Application Developers:**
-- **Simplified Integration**: Connect to any Action-compatible protocol through standardized interfaces
+- **Simplified Integration**: Connect to any action-compatible protocol through standardized interfaces
 - **Rapid Prototyping**: Build complex workflows by composing pre-built components
 - **Reduced Maintenance**: Protocol updates are abstracted away by connector implementations, enabling more modular
   dependency architectures
 - **Enhanced Functionality**: Create sophisticated strategies that would be complex to implement from scratch
 
 **For Protocol Developers:**
-- **Increased Adoption**: Protocols become instantly compatible with any Action-built application by simply creating Action
+- **Increased Adoption**: Protocols become instantly compatible with any action-built application by simply creating Flow Action
   connectors adapted to their protocol
 - **Network Effects**: Benefit from integration work done by other protocols in the ecosystem and tapping into a
   community of action-focussed developers
@@ -107,7 +107,7 @@ Flow Actions provides significant benefits to different stakeholders in the Flow
 ### Core Philosophy
 
 Flow Actions are inspired by Unix terminal piping, where simple command outputs can be connected together to create
-complex operations in aggregate. Analagously, each action component should exhibit:
+complex operations in aggregate. Analagously, each Flow Action component should exhibit:
 
 - **Single Responsibility**: Each component performs one specific operation
 - **Composable**: Shared standards in an open environment allow developers to reuse and remix actions built by others
