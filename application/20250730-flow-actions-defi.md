@@ -15,7 +15,7 @@ updated: 2025-07-30
 
 <summary>Table of contents</summary>
 
-- [FLIP 338: Flow Actions - Composable Standards for Protocols](#flip-338-defiactions---composable-defi-standards-for-flow)
+- [FLIP 338: Flow Actions - Composable Standards for Protocols](#flip-338-flow-actions---composable-standards-for-protocols)
   - [Objective](#objective)
   - [Motivation](#motivation)
   - [User Benefit](#user-benefit)
@@ -59,7 +59,7 @@ updated: 2025-07-30
 
 This proposal introduces Flow Actions, a suite of standardized Cadence interfaces that enable developers to compose
 complex workflows, starting with DeFi, by connecting small, reusable components. Actions provide a "LEGO" framework where each
-component performs a single operation (deposit, withdraw, swap, price lookup, flash loan) while maintaining
+component performs a single operation (e.g. deposit, withdraw, swap, price lookup, flash loan) while maintaining
 composability with other components to create sophisticated workflows executable in a single atomic
 transaction.
 
@@ -116,7 +116,8 @@ complex operations in aggregate. Analagously, each Flow Action component should 
 
 ### Component Model Overview
 
-Flow Actions are starting with DeFi and is defined with five core component types, each representing a fundamental DeFi operation:
+Flow Actions are starting with DeFi as [DeFiActions](https://github.com/onflow/DeFiActions) and is defined with five
+core component types, each representing a fundamental DeFi operation:
 
 1. **Source**: Provides tokens on demand (e.g. withdraw from vault, claim rewards, pull liquidity)
 2. **Sink**: Accepts tokens up to capacity (e.g. deposit to vault, repay loan, add liquidity)
@@ -141,6 +142,9 @@ Additional specialized components build upon and/or support these primitives:
     across a stack of components.
 
 ### Interfaces
+
+> :information_source: Initial DeFi Actions implementations can be found in the [onflow/DeFiActions
+> repo](https://github.com/onflow/DeFiActions)
 
 #### Source Interface
 
