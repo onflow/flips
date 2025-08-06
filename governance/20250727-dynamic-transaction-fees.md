@@ -98,11 +98,11 @@ This proposal adopts CU/s as the basis for computing the surge factor, allowing 
 #### 1.2 Network Scaling and Surge Thresholds
 As Flow’s execution nodes and network capacity expand, surge pricing thresholds will scale with throughput. Increased capacity ensures that:
 
-Higher surge thresholds - The network can handle significantly more traffic before surges activate.
+1. Higher surge thresholds - The network can handle significantly more traffic before surges activate.
 
-Less frequent surges - Typical network usage will remain in the stable, non-surge zone more often.
+2. Less frequent surges - Typical network usage will remain in the stable, non-surge zone more often.
 
-Ongoing performance improvements expected over the next year will raise effective capacity, allowing Flow to support greater transaction volumes while maintaining predictable and fair fee dynamics
+Ongoing performance improvements expected over the next year will raise effective capacity, allowing Flow to support greater transaction volumes while maintaining predictable and fair fee dynamics.
 
 #### 2. Fee Adjustment and Transaction Fairness
 
