@@ -102,7 +102,7 @@ As Flow’s execution nodes and network capacity expand, surge pricing threshold
 
 2. Less frequent surges - Typical network usage will remain in the stable, non-surge zone more often.
 
-Ongoing performance improvements expected over the next year will raise effective capacity, allowing Flow to support greater transaction volumes while maintaining predictable and fair fee dynamics.
+Ongoing performance improvements will raise effective capacity, allowing Flow to support greater transaction volumes while maintaining predictable and fair fee dynamics.
 
 #### 2. Fee Adjustment and Transaction Fairness
 
