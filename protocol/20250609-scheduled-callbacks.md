@@ -64,14 +64,19 @@ In contrast, low-priority scheduling returns no such prediction, developers must
 
 ### Fees
 
+Fees for callback execution are calculated using multiple parameters:
+- execution effort provided to the schedule function is used as the base value the user will pay for execution
+- priority provided to the schedule will be used as a multiplier of the base value
+- size of the data provided to the schedule will add to the total fee
+
 Priority also determines the submission fee multiplier. High-priority callbacks cost 10x the base fee, medium-priority 5x, and low-priority 2x. These values can be modified through governance (via the service account). In particular, the low-priority multiplier could be set to a fractional value less than one, making scheduled transactions cheaper than manual ones. This would incentivize users to allow the network to balance its own load. Since this is a new model for blockchain execution, the first release will be incredibly conservative and charge a premium for all scheduling to mitigate potential attack scenarios.
 
 Storing the data argument used for callback execution also requires a storage reserve. On Flow storing 1MB requires 0.01 Flow of balance as a storage reserve. The limitation on the data provided to the schedule function is 100 bytes, which equates to 0.000001 Flow (`0.0001 MB * 0.01 Flow`). Converted from Flow to execution effort, it is 0.00000004, which is covered by 10 execution effort minimum.  
 
 ### Economics
-Fees for scheduled callbacks are paid upfront and held in escrow by the scheduler contract. Upon execution, a portion of the fee—based on the callback's specified executionEffort and the network’s base cost parameters—is transferred to the FlowFees contract, ensuring rewards are distributed to validators through the existing mechanism. Any remaining premium, determined by the callback’s priority level is burned. Higher-priority callbacks burn a larger share of the premium, adding a deflationary pressure that scales with network congestion.
+Fees for scheduled callbacks are paid upfront and held in escrow by the scheduler contract. Upon execution, the fees are transferred to the FlowFees contract, ensuring rewards are distributed to validators through the existing mechanism. 
 
-If a callback is canceled, only 50% of the originally deposited fee is refunded. The remaining 50% is burned to discourage abusive mass-scheduling and cancellation. All fee multipliers, burn ratios, and refund parameters can be adjusted via governance through the Service Account.
+If a callback is canceled, only 50% of the originally deposited fee is refunded. The remaining 50% is sent to the FlowFees to discourage abusive mass-scheduling and cancellation. All fee multipliers and refund ratios can be adjusted via governance through the Service Account.
 
 ### Validation
 
@@ -86,7 +91,7 @@ Each callback submission undergoes validation to ensure it meets the following c
 
 Upon successful scheduling, a `ScheduledCallback` struct instance is returned to the caller. This object contains ID, timestamp, status, and a cancel function.
 
-When a callback is canceled using the `cancel` function, the system returns a Vault resource, refunding a portion of the originally deposited amount. However, only 50% of the initial deposit is refunded. The remaining portion is retained as a cancellation penalty to protect the system against denial-of-service (DoS) attacks involving mass scheduling and subsequent cancellation of callbacks. (This percentage can be adjusted in the future through governance via the Service Account.)
+When a callback is canceled using the `cancel` function, the system returns a Vault resource, refunding a portion of the originally deposited amount. However, only 50% of the initial deposit is refunded. The remaining portion is sent to the Flow Fee vault as a cancellation penalty to protect the system against denial-of-service (DoS) attacks involving mass scheduling and subsequent cancellation of callbacks. (This percentage can be adjusted in the future through governance via the Service Account.)
 
 We must make sure the cancel function does not allow canceling arbitrary callbacks, but only the callback on which the cancel function is called. This can be achieved in multiple ways (closures, protected initializers etc) and is an implementation detail.
 
