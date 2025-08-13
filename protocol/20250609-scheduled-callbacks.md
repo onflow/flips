@@ -225,26 +225,25 @@ The schedule function accepts the following arguments:
 
 The `estimate` function calculates the required fee in Flow and expected execution time for a callback based on its data (ignored for now, but can be used in the future for data-based fees), timestamp, priority, and computation effort. 
 
-Return value: The function returns an optional `EstimatedCallback` object, which includes:
+Return value: The function returns `EstimatedCallback` object, which includes:
 
 - The fee in Flow tokens needed to cover execution.
 - The estimated timestamp at which the callback will likely be executed.
-
-If the provided arguments are invalid or the callback cannot be scheduled (e.g., due to insufficient computation effort or unavailable time slots) the `estimate` function returns `nil`.
+- The optional error string in case the request arguments were invalid or the callback cannot be scheduled (e.g., due to insufficient computation effort or unavailable time slots)
 
 This helps developers ensure sufficient funding and preview the expected scheduling window, reducing the risk of unnecessary cancellations.
 
 ### `CallbackHandler`
 
-The `CallbackHandler` is an interface that defines a single method `executeCallback` that must be implemented by the contract that would like to schedule the callback. The callback gets executed by the scheduler contract by calling the handler provided to `schedule` function with `Callback` entitlement. The arguments are:
+The `CallbackHandler` is an interface that defines a single method `executeCallback` that must be implemented by the contract that would like to schedule the callback. 
+The callback gets executed by the scheduler contract by calling the handler provided to `schedule` function with `Callback` entitlement. The arguments are:
 
 - ID of the scheduled callback (this can be useful for any internal tracking)
 - The data that was passed in during the `schedule` call
 
 ```jsx
-access(all) entitlement mayExecuteCallback
-access(all) entitlement mayCancelCallback
-access(all) entitlement mayReadCallbackStatus
+access(all) entitlement Execute
+access(all) entitlement Cancel
 
 access(all) resource interface CallbackHandler {
 	access(Callback) fun executeCallback(ID: Uint64, data: AnyStruct?)
@@ -257,26 +256,56 @@ access(all) enum Priority: UInt8 {
 }
 
 access(all) struct interface ScheduledCallback {
-		access(all) let ID: UInt64
+    access(all) let ID: UInt64
     access(all) let timestamp: UFix64
     access(all) let fees: @FlowVault?
 
-    access(all) let cancel: (fun(): @FlowVault)?
+    access(all) view fun status(): Status?
 }
 
 access(all) struct interface EstimatedCallback {
 	access(all) var flowFee: UFix64
 	access(all) var timestamp: UFix64
+    access(all) let error: String?
 }
 
-access(all) event CallbackScheduled(id: UInt64, timestamp: UFix64, priority: UInt8, computationEffort: UInt64)
-access(all) event CallbackProcessed(id: UInt64, computationEffort: UInt64)
-access(all) event CallbackExecuted(id: UInt64)
-access(all) event CallbackCanceled(id: UInt64)
+
+access(all) event Scheduled(
+    id: UInt64,
+    priority: UInt8,
+    timestamp: UFix64,
+    executionEffort: UInt64,
+    fees: UFix64,
+    callbackOwner: Address
+)
+
+access(all) event PendingExecution(
+    id: UInt64,
+    priority: UInt8,
+    executionEffort: UInt64,
+    callbackOwner: Address
+)
+
+access(all) event Executed(
+    id: UInt64,
+    priority: UInt8,
+    executionEffort: UInt64,
+    fees: UFix64,
+    callbackOwner: Address,
+    status: UInt8
+)
+
+access(all) event Canceled(
+    id: UInt64,
+    priority: UInt8,
+    feesReturned: UFix64,
+    feesDeducted: UFix64,
+    callbackOwner: Address
+)
 
 access(all) resource interface Scheduler {
     access(all) fun schedule(
-        callback: Capability<auth(mayExecuteCallback) &{CallbackHandler}>,
+        callback: Capability<auth(Execute) &{CallbackHandler}>,
         data: AnyStruct?,
         timestamp: UFix64,
         priority: Priority,
@@ -289,11 +318,11 @@ access(all) resource interface Scheduler {
         timestamp: UFix64,
         priority: Priority,
         executionEffort: UInt64
-    ): EstimatedCallback?
+    ): EstimatedCallback
 
     access(mayReadCallbackStatus) fun getStatus(ID: UInt64): Status
     
-    access(mayCancelCallback) fun cancel(ID: UInt64): @FlowToken.Vault
+    access(mayCancelCallback) fun cancel(callback: ScheduledCallback): @FlowToken.Vault
 }
 ```
 
@@ -381,19 +410,25 @@ Here are some examples for using the scheduler contract.
 This is an example contract that implements an execute callback and would be called by a scheduled callback.
 
 ```jsx
-import "UnsafeCallbackScheduler"
+import "FlowCallbackScheduler"
 
 // Test contract that implements a callback handler
-access(all) contract TestCallback {
+access(all) contract TestFlowCallbackHandler {
+    access(all) let HandlerStoragePath: StoragePath
+
+    access(all) init() {
+        self.HandlerStoragePath = /storage/testCallbackHandler
+    }
+
     // Resource that implements the callback handler interface
-    access(all) resource TestCallbackHandler: UnsafeCallbackScheduler.CallbackHandler {
-        access(UnsafeCallbackScheduler.Callback) fun executeCallback(data: AnyStruct?) {
+    access(all) resource TestCallbackHandler: FlowCallbackScheduler.CallbackHandler {
+        access(FlowCallbackScheduler.Execute) fun executeCallback(data: AnyStruct?) {
             log("The future is now!")
         }
     }
  
     // Function to create a new callback handler
-    access(all) fun createHandler(): @TestCallbackHandler {
+    access(all) fun createHandler(): @TestFlowCallbackHandler {
         return <- create TestCallbackHandler()
     }
 } 
@@ -404,46 +439,57 @@ access(all) contract TestCallback {
 This is a transaction example that would schedule the above contract.
 
 ```jsx
+import "FlowCallbackScheduler"
+import "TestFlowCallbackHandler"
 import "FlowToken"
-import "UnsafeCallbackScheduler"
-import "TestCallback"
 import "FungibleToken"
 
-transaction(
-    timestamp: UFix64,
-    executionEffort: UInt64
-) {
-    prepare(signer: auth(Storage, Capabilities) &Account) {
-        let priority = UnsafeCallbackScheduler.Priority.High
+/// Schedules a callback for the TestFlowCallbackHandler contract
+///
+/// This is just an example transaction that uses an example contract
+/// If you want to schedule your own callbacks, you need to develop your own contract
+/// that has a resource that implements the FlowCallbackScheduler.CallbackHandler interface
+/// that contains your custom code that should be executed when the callback is scheduled.
+/// Your transaction will look similar to this one, but will use your custom contract and types
+/// instead of TestFlowCallbackHandler
+transaction(timestamp: UFix64, feeAmount: UFix64, effort: UInt64, priority: UInt8, testData: String) {
 
-        let estimate = UnsafeCallbackScheduler.estimate(
-            data: nil,
-            timestamp: timestamp,
-            priority: priority,
-            executionEffort: executionEffort
-        ) ?? panic("Could not estimate callback fee")
+    prepare(account: auth(BorrowValue, SaveValue, IssueStorageCapabilityController, PublishCapability, GetStorageCapabilityController) &Account) {
+        
+        // If a callback handler has not been created for this account yet, create one,
+        // store it, and issue a capability that will be used to create the callback
+        if !account.storage.check<@TestFlowCallbackHandler.Handler>(from: TestFlowCallbackHandler.HandlerStoragePath) {
+            let handler <- TestFlowCallbackHandler.createHandler()
+        
+            account.storage.save(<-handler, to: TestFlowCallbackHandler.HandlerStoragePath)
+            account.capabilities.storage.issue<auth(FlowCallbackScheduler.Execute) &{FlowCallbackScheduler.CallbackHandler}>(TestFlowCallbackHandler.HandlerStoragePath)
+        }
 
-				// Prepare required fees
-				let vaultRef = signer.storage.borrow<auth(FungibleToken.Withdraw) &FlowToken.Vault>(from: /storage/flowTokenVault)
+        // Get the capability that will be used to create the callback
+        let callbackCap = account.capabilities.storage
+                            .getControllers(forPath: TestFlowCallbackHandler.HandlerStoragePath)[0]
+                            .capability as! Capability<auth(FlowCallbackScheduler.Execute) &{FlowCallbackScheduler.CallbackHandler}>
+        
+        // borrow a reference to the vault that will be used for fees
+        let vault = account.storage.borrow<auth(FungibleToken.Withdraw) &FlowToken.Vault>(from: /storage/flowTokenVault)
             ?? panic("Could not borrow FlowToken vault")
-        let feesVault <- vaultRef.withdraw(amount: estimate.flowFee) as! @FlowToken.Vault
         
-        // Create callback handler capability
-        let handler <- TestCallback.createHandler()
-        signer.storage.save(<-handler, to: /storage/TestCallbackHandler)
-        let handlerCap = signer.capabilities.storage.issue<auth(UnsafeCallbackScheduler.Callback) &{UnsafeCallbackScheduler.CallbackHandler}>(/storage/TestCallbackHandler)
-        
-        // Scheduled the callback
-        let scheduledCallback = UnsafeCallbackScheduler.schedule(
-            callback: handlerCap,
-            data: nil,
+        let fees <- vault.withdraw(amount: feeAmount) as! @FlowToken.Vault
+        let priorityEnum = FlowCallbackScheduler.Priority(rawValue: priority)
+            ?? FlowCallbackScheduler.Priority.High
+
+        // Schedule the callback with the main contract
+        let scheduledCallback = FlowCallbackScheduler.schedule(
+            callback: callbackCap,
+            data: testData,
             timestamp: timestamp,
-            priority: priority,
-            executionEffort: executionEffort,
-            fees: <-feesVault
-        )    
+            priority: priorityEnum,
+            executionEffort: effort,
+            fees: <-fees
+        )
     }
 } 
+
 ```
 
 ### Compatibility
