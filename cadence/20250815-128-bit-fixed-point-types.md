@@ -32,8 +32,13 @@ Developers can use fixed-point values in Cadence for high-precision arithmetics,
 
 Add `Fix128` and `UFix128` to Cadence.
 
-The proposal is to use a scale of 24,  and hence a scaling factor of 1e-24.
-Thus, the new fixed-point type can accommodate values in the following ranges:
+The proposal is to use a scale of 24, and therefore a scaling factor of 1e-24.
+This scaling factor was chosen because the main objective of adding 128-bit length types is to achieve higher precision,
+rather than being able to represent extremely large numbers.
+Thus, we think having a scaling factor of 24 provides a high-enough precision for fractional values,
+while also leaving large enough upper and lower bounds sufficient for most real-world use cases.
+
+The new fixed-point type can accommodate values in the following ranges:
 - `Fix128`: `-170141183460469.231731687303715884105728` through `170141183460469.231731687303715884105727`
 - `UFix128`: `0.0` through `340282366920938.463463374607431768211455`
 
