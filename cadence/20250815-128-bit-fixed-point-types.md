@@ -33,10 +33,20 @@ Developers can use fixed-point values in Cadence for high-precision arithmetics,
 Add `Fix128` and `UFix128` to Cadence.
 
 The proposal is to use a scale of 24, and therefore a scaling factor of 1e-24.
-This scaling factor was chosen because the main objective of adding 128-bit length types is to achieve higher precision,
-rather than being able to represent extremely large numbers.
-Thus, we think having a scaling factor of 24 provides a high-enough precision for fractional values,
-while also leaving large enough upper and lower bounds sufficient for most real-world use cases.
+
+Other blockchain ecosystems (most notably Ethereum) frequently use scale factors (usually called "decimals", per ERC-20)
+of 18 (used by ETH itself), 24 (used for internal calculations in MakerDAO), and 27 (used internally by Compound and Aave
+for interest calculations).
+Although 27 is the most commonly used value, the value of 24 has a precedent in Maker, and leads to a range that is
+close to, but slightly larger than the range of `Fix64` and `UFix64`.
+This allows all `UFix64` and `Fix64` values to be converted to the equivalent 128-bit types without any loss of precision
+or range.
+On the other hand, 27 decimals wouldn't have allowed the full range of `Fix64` and `UFix64` to fit in the new types, 
+and using 18 decimals has been deemed to be insufficient by a number of defi protocols.
+
+A scaling factor of 24 provides a very high precision for fractional values, while also leaving large enough upper and 
+lower bounds sufficient for most real-world use cases (which typically will involve internal calculations that convert
+back to the 64-bit types).
 
 The new fixed-point type can accommodate values in the following ranges:
 - `Fix128`: `-170141183460469.231731687303715884105728` through `170141183460469.231731687303715884105727`
