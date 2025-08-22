@@ -37,12 +37,9 @@ The proposal is to use a scale of 24, and therefore a scaling factor of 1e-24.
 Other blockchain ecosystems (most notably Ethereum) frequently use scale factors (usually called "decimals", per ERC-20)
 of 18 (used by ETH itself), 24 (used for internal calculations in MakerDAO), and 27 (used internally by Compound and Aave
 for interest calculations).
-Although 27 is the most commonly used value, the value of 24 has a precedent in Maker, and leads to a range that is
-close to, but slightly larger than the range of `Fix64` and `UFix64`.
-This allows all `UFix64` and `Fix64` values to be converted to the equivalent 128-bit types without any loss of precision
-or range.
-On the other hand, 27 decimals wouldn't have allowed the full range of `Fix64` and `UFix64` to fit in the new types, 
-and using 18 decimals has been deemed to be insufficient by a number of defi protocols.
+Although 27 is the most commonly used value internally by defi protocols, the value of 24 has a precedent in Maker, and
+introduces a type that can hold values in the trillions (extreme, but plausible values for very large financial calculations).
+Note that all `UFix64` and `Fix64` values can be converted to the equivalent 128-bit types without any loss of precision or range.
 
 A scaling factor of 24 provides a very high precision for fractional values, while also leaving large enough upper and 
 lower bounds sufficient for most real-world use cases (which typically will involve internal calculations that convert
