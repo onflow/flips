@@ -1,9 +1,9 @@
 ---
-status: proposed 
+status: accepted 
 flip: 341
 authors: Supun Setunga (supun.setunga@flowfoundation.org)
 sponsor: Dieter Shirley (dete@flowfoundation.com)
-updated: 2025-08-15
+updated: 2025-08-29
 ---
 
 # FLIP 341: Add 128-bit Fixed-point Types to Cadence
