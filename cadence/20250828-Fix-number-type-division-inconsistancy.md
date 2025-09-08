@@ -1,9 +1,9 @@
 ---
-status: proposed 
+status: accepted 
 flip: 343
 authors: Supun Setunga (supun.setunga@flowfoundation.org), Dieter Shirley (dete@flowfoundation.com)
 sponsor: Dieter Shirley (dete@flowfoundation.com)
-updated: 2025-08-28
+updated: 2025-09-08
 ---
 
 # FLIP 343: Fix numeric type rounding inconsistency
