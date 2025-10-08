@@ -24,9 +24,9 @@ The goals are to:
 
 Execution effort is a deterministic estimate of how long a transaction takes to execute. It is computed by accumulating effort contributions every time a transaction or script invokes a **feature** (e.g., “get value from storage”). Each feature has an associated **weight**, which represents its relative cost. The contribution is calculated as:
 
-$$
+```math
 \text{execution\_effort} \;=\; \text{intensity} \times \text{feature\_weight}
-$$
+```
 
 where *intensity* represents the magnitude of the action (e.g., number of bytes read from storage).
 
@@ -76,9 +76,9 @@ To reduce noise:
 
 The calibration task was formulated as a **linear regression problem**:
 
-$$
+```math
 \text{execution time} \;\approx\; \sum{i=1}^{n} \big( \text{feature\_intensity}_i \times \text{feature\_weight}_i \big)
-$$
+```
 
 To ensure interpretability and stability:
 
@@ -114,11 +114,11 @@ Below are the two scatter-plots of estimated execution time compared to actual e
 
 - Proposed model
 
-![new_model.png](./20251008-execution-effort/new_model.png)
+![new_model.png](./20251008-execution-effort-2/new_model.png)
 
 - Current model
 
-![old_model.png](./20251008-execution-effort/old_model.png)
+![old_model.png](./20251008-execution-effort-2/old_model.png)
 
 ## Impact
 
