@@ -1,4 +1,3 @@
-
 ---
 status: Draft
 flip: 346
@@ -115,11 +114,11 @@ Below are the two scatter-plots of estimated execution time compared to actual e
 
 - Proposed model
 
-![image.png](./20251008-execution-effort/new_model.png))
+![new_model.png](./20251008-execution-effort/new_model.png)
 
 - Current model
 
-![image.png](./20251008-execution-effort/old_model.png)
+![old_model.png](./20251008-execution-effort/old_model.png)
 
 ## Impact
 
