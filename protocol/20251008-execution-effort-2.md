@@ -1,5 +1,5 @@
 ---
-status: Draft
+status: Proposed
 flip: 346
 authors: Janez Podhostnik (janez.podhostnik@flowfoundation.org)
 sponsor:
