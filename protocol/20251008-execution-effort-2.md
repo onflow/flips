@@ -156,6 +156,11 @@ Continued iteration on both the calibration process and template coverage will h
 
 ## Q & A
 
-**Q:** How can I test my app with new metering ?
+**Q:** How can I test my app with new metering?
 
 The new weights will be deployed to emulator and testnet before they are deployed on mainnet.
+
+**Q:** How will this change the transaction fees?
+
+1. Minimum and maximum fees for a transaction will be the same.
+2. The more common a transaction is the less it should change in price (e.g.: a token transfer price should change less than an account creation transction)
