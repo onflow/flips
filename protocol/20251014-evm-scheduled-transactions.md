@@ -33,24 +33,25 @@ The implementation of the **EVM Scheduler** introduces new components that integ
 
 ### 2. EVM Scheduler (New, Cadence Contract)
 
-- **Description:** A Cadence contract that bridges EVM transactions into the Flow scheduling framework, intended to be called by Cadence Arch. It defines a schedule function that does not track transaction details, only reserving an execution slot based on effort. During execution, control passes to the Solidity scheduler proxy, which holds the full transaction context. This separation of concerns ensures that scheduling is only possible through the EVM scheduler proxy and data is deduplicated.
+- **Description:** A Cadence contract that bridges EVM transactions into the Flow scheduling framework, intended to be called by Cadence Arch. It defines a schedule function that does not track transaction details, only reserving an execution slot based on effort. During execution, control passes to the Solidity scheduler proxy, which holds the full transaction context. This separation of concerns ensures that scheduling is only possible through the EVM scheduler proxy and data is deduplicated. 
 - **Responsibilities**:
     - Registers transactions with the `FlowTransactionScheduler`.
     - Registers itself as the transaction handler in the `FlowTransactionScheduler`
     - Stores data for EVM transaction execution (gas limit, fees)
     - Withdraws EVM Flow tokens into Cadence during scheduling
 - **API:**
+    - The access is restricted to `access(self)` to ensure only the system call can execute it, this means only the FVM will be able to invoke it through Cadence Arch.
     - The contract also implements the `FlowTransactionScheduler.Handler` interface which is used during execution by the Flow transaction scheduler contract.
     
     ```jsx
-    pub interface EVMScheduler {
+    access(all) interface EVMScheduler {
     	// Schedules a new EVM transaction
     	// - timestamp: timestamp for scheduled transaction
     	// - priority: priority of the transaction
     	// - gasLimit: maximum gas allowed for execution
     	// - fees: Flow tokens to fund the scheduling
     	// Returns: an ID of the scheduled transaction
-    	pub fun schedule(
+    	access(self) fun schedule(
     		timestamp: Uint64, 
     		priority: Priority, 
     		gasLimit: UInt64, 
@@ -266,8 +267,6 @@ The proposed approach delivers several key benefits:
 The primary limitation of this design is the absence of refundable cancellation. Once a transaction is scheduled on Flow, its Cadence callback cannot be revoked. Although execution can be stopped on the EVM side, the resources reserved for Cadence execution are still consumed. Cancellation therefore only prevents the EVM callback, not the underlying Cadence cost.
 
 The new APIs also introduce security considerations. The Cadence Arch `schedule` function is designed to be called exclusively by the Solidity EVM Scheduler Proxy, but in practice any account could invoke it. Successful scheduling, however, requires funds in the EVM Scheduler’s Cadence Owner Account (COA), which prevents most unauthorized use. An attacker could pre-fund the COA and schedule a transaction, yet execution would fail since the proxy would not recognize the transaction ID. This might leave gaps in the proxy’s ID mapping but would not compromise functionality beyond wasted resources.
-
-The same concern applies to the Cadence EVM Scheduler’s own `schedule` method, which should only be accessed through the Cadence Arch. Direct calls without COA funding will fail immediately, and even if funded, execution cannot succeed because the proxy has no record of the corresponding transaction.
 
 To guarantee execution integrity, the EVM Scheduler Proxy must consistently maintain the mapping between transaction IDs and their metadata. IDs must only be created through the proxy and registered only by the COA, ensuring that no transaction can be executed unless it was scheduled through the intended flow.
 
