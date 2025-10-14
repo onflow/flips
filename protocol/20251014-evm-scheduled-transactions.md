@@ -211,7 +211,10 @@ Scheduling involves coordination between all the above components and should be 
 5. **Transaction Scheduler**
     1. Handles scheduling as it would for any other transaction.
 
-![image.png](attachment:5efa83f2-d782-4545-b221-40391678b8bb:image.png)
+--- 
+
+![EVM Flow](./20251014-evm-scheduled-transactions/evm-flow.png)
+
 
 *The complete flow depiction for scheduling and execution (each arrow is marked with number representing the step in the process).*
 
