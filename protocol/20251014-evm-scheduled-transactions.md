@@ -1,7 +1,7 @@
 ---
 status: draft 
 flip: 348
-authors: Gregor Gololicic (gregor@gololicic.net), Joshua Hannan (joshua.hannan@flowfoundation.org)
+authors: Gregor Gololicic (gregor.gololicic@flowfoundation.org), Joshua Hannan (joshua.hannan@flowfoundation.org)
 sponsor: Dieter Shirley (dete@flowfoundation.com)
 updated: 2025-10-14
 ---
