@@ -15,8 +15,9 @@ This FLIP proposes an update to Flow’s execution effort weights, originally in
 The goals are to:
 
 - Improve **fee fairness** by better aligning costs with actual resource usage.
-- Strengthen **network stability** and resilience against resource exhaustion attacks.
-- Define a more accurate methodology for future calibrations.
+- Strengthen **network stability** and resilience to resource exhaustion attacks.
+- Provide a transparent methodology for future calibrations.
+- Minimize the impact of this change to existing users
 
 ## Motivation
 
@@ -53,8 +54,9 @@ Using this loader, we collected approximately 1,000,000 pseudo-random transactio
 
 In addition, a sample of live mainnet traffic was collected to determine the overall execution effort throughput of the network.
 
-- Approximately 4 hours of transaction activity, covering about 70,000 user (non-system) transactions, were recorded on mainnet.
-- These measurements provide a baseline of current throughput, ensuring that after recalibration, the conversion between time and computation is adjusted so that the network maintains the same effective throughput as today.
+- Approximately a day of transaction activity, covering about 550,000 user (non-system) transactions, were recorded on mainnet26.
+- Approximately a day of transaction activity, covering about 624,000 user (non-system) transactions, were recorded on mainnet27.
+- These measurements provide a baseline of computation throughput on mainnet26 and sample transactions for analysis of the calibration results on mainnet27.
 
 ### Feature Instrumentation
 
@@ -77,7 +79,7 @@ To reduce noise:
 The calibration task was formulated as a **linear regression problem**:
 
 ```math
-\text{execution time} \;\approx\; \sum{i=1}^{n} \big( \text{feature\_intensity}_i \times \text{feature\_weight}_i \big)
+\text{execution time} \;\approx\; \sum_{i=1}^{n} \big( \text{feature\_intensity}_i \times \text{feature\_weight}_i \big)
 ```
 
 To ensure interpretability and stability:
@@ -98,15 +100,17 @@ This methodology yields a reproducible process for deriving execution effort wei
 
 ### Conversion Factor Adjustment for Constant Execution Effort
 
-The calibration process not only produces new execution effort weights but also requires a re-examination of the **conversion factor between time and computation**.
+The calibration process not only produces new execution effort weights but also requires a re-evaluation of the **conversion factor between time and computation**.
 
-By design, Flow defines a maximum transaction execution time of **1 second**, which currently maps to **9,999 computation = 9,999 × 65,536 CU**. However, recalibrated weights change the relative cost of individual operations, and if the conversion factor remained unchanged, the overall throughput of the network (in terms of execution effort per unit time) would shift.
+Originally, Flow defined the maximum transaction execution time as **1 second**, corresponding to **9,999 computation = 9,999 × 65,536 CU**. This setting was chosen when Cadence operations were significantly more time-intensive and metering accuracy was limited.
 
-To avoid unintentionally lowering or raising the effective throughput of mainnet, this FLIP proposes to **redefine the conversion factor** such that:
+With the improved calibration and more precise metering, this FLIP proposes to reduce the maximum available execution time per transaction in a controlled and deliberate manner, while minimizing impact on users.
 
-- The **average execution effort throughput** observed on mainnet today is preserved after recalibration.
-- Users will see fairer distribution of costs across operations, but the **aggregate capacity of the network remains constant**.
-- This ensures alignment with governance objectives to maintain predictable throughput while still improving fee fairness and security.
+The new conversion factor is:
+
+- **9,999 computation = 333.4 ms**
+
+This change effectively reduces the average computation throughput per transaction on mainnet by **50%** and at the same time, it maintains near-complete compatibility with existing workloads — allowing **99.995% of user transactions** to continue executing successfully without hitting computation limits.
 
 ## Model comparison
 
@@ -124,12 +128,23 @@ Below are the two scatter-plots of estimated execution time compared to actual e
 
 ### User Impact
 
-The recalibrated weights deliver fairer and more proportional pricing for transactions. This comes with the following changes:
+The recalibrated weights deliver fairer and more proportional pricing for transactions. Users benefit in two main ways:
 
-- Fairer pricing: the pricing will more accurately reflect transaction resource usage.
-- Maximum number of operations will change.
-    - The most noticeable change will be that the amount of new accounts a transaction can create will decrease from about 1000 to 100.
-    - The other significant change will be that Users will be able to fit more EVM gas in a single FVM transaction
+1. Lower costs for common transactions
+
+    Many everyday operations are now significantly cheaper in terms of computation:
+
+    - **Flow token transfer**: reduced from 27 → 19 computation
+    - **Flow account creation**: increased from 19 → 41 computation
+    - **Creating 10 Flow accounts: increased** from 116 → 363 computation
+    - **EVM token transfer**: reduced from 143  → 28 computation
+
+    This makes lightweight operations more affordable and allows users to bundle more actions within a single transaction.
+
+2. Increased EVM gas capacity
+    - The maximum EVM gas that fits within a Flow transaction has increased from 50 ****million → 328 million.
+3. Decreased max transaction time from 1000ms to 333.4ms
+4. Decreased average transaction fees collected on mainnet by a factor of 2 (this will be corrected in a separate Flip)
 
 ### Network Impact
 
