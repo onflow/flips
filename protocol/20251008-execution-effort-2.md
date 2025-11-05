@@ -110,7 +110,7 @@ The new conversion factor is:
 
 - **9,999 computation = 333.4 ms**
 
-This change effectively reduces the average computation throughput per transaction on mainnet by **50%** and at the same time, it maintains near-complete compatibility with existing workloads — allowing **99.995% of user transactions** to continue executing successfully without hitting computation limits.
+This change effectively reduces the average computation throughput per transaction on mainnet by **71%** and at the same time, it maintains near-complete compatibility with existing workloads — allowing **99.995% of user transactions** (of a sample of 624,000 transactions) to continue executing successfully without hitting computation limits.
 
 ## Model comparison
 
@@ -144,7 +144,6 @@ The recalibrated weights deliver fairer and more proportional pricing for transa
 2. Increased EVM gas capacity
     - The maximum EVM gas that fits within a Flow transaction has increased from 50 ****million → 328 million.
 3. Decreased max transaction time from 1000ms to 333.4ms
-4. Decreased average transaction fees collected on mainnet by a factor of 2 (this will be corrected in a separate Flip)
 
 ### Network Impact
 
@@ -175,7 +174,7 @@ Continued iteration on both the calibration process and template coverage will h
 
 The new weights will be deployed to emulator and testnet before they are deployed on mainnet.
 
-**Q:** How will this change the transaction fees?
+**Q:** How will this change the maximum and minimum transaction fees?
 
 1. Minimum and maximum fees for a transaction will be the same.
-2. The more common a transaction is the less it should change in price (e.g.: a token transfer price should change less than an account creation transction)
+2. In general the fees for transactions should be lower.
