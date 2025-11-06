@@ -31,7 +31,7 @@ Execution effort is a deterministic estimate of how long a transaction takes to 
 
 where *intensity* represents the magnitude of the action (e.g., number of bytes read from storage).
 
-The existing weights were established under earlier performance conditions, and since then the efficiency of transaction execution has improved substantially. Consequently, the legacy weights no longer provide an accurate representation of execution effort, resulting in transaction fees that do not precisely reflect the actual computational resources consumed.
+The existing weights were established under earlier performance conditions, and since then the efficiency of transaction execution has improved substantially. Consequently, the legacy weights no longer provide an accurate representation of execution effort, resulting in transaction fees that do not accurately reflect the actual computational resources consumed.
 
 The aim of calibration is to adjust these weights so that execution effort is **proportional** to actual execution time. Absolute alignment to wall-clock time is less important, since performance can vary across machines. What matters is relative proportionality: if transaction A takes twice as long to execute as transaction B, its execution effort should also be roughly twice as large.
 
@@ -116,13 +116,13 @@ This change effectively reduces the average computation throughput per transacti
 
 Below are the two scatter-plots of estimated execution time compared to actual execution time for the current fee model and the proposed fee model.
 
-- Proposed model
-
-![new_model.png](./20251008-execution-effort-2/new_model.png)
-
 - Current model
 
 ![old_model.png](./20251008-execution-effort-2/old_model.png)
+
+- Proposed model
+
+![new_model.png](./20251008-execution-effort-2/new_model.png)
 
 ## Impact
 
@@ -135,14 +135,13 @@ The recalibrated weights deliver fairer and more proportional pricing for transa
     Many everyday operations are now significantly cheaper in terms of computation:
 
     - **Flow token transfer**: reduced from 27 → 19 computation
-    - **Flow account creation**: increased from 19 → 41 computation
-    - **Creating 10 Flow accounts: increased** from 116 → 363 computation
+    - **Single NFT transfer (NFL)**: reduced from 48 → 26 computation
     - **EVM token transfer**: reduced from 143  → 28 computation
 
-    This makes lightweight operations more affordable and allows users to bundle more actions within a single transaction.
+    This makes lightweight operations more affordable and allows users to bundle more actions within a single transaction. (Rarer operations do see an increase, such as account creation going from 19 → 41.)
 
 2. Increased EVM gas capacity
-    - The maximum EVM gas that fits within a Flow transaction has increased from 50 ****million → 328 million.
+    - The maximum EVM gas that fits within a Flow transaction has increased from 50 ****million → 328 million. (Note that, to match the behaviour of the Fusaka update to Ethereum, each _EVM transaction_ is limited to 16 million gas. This increase is still notable, since a single Cadence transaction can include multiple EVM transactions. A single Cadence transaction has more gas capacity than an entire Ethereum block...)
 3. Decreased max transaction time from 1000ms to 333.4ms
 
 ### Network Impact
