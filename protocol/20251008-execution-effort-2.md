@@ -141,7 +141,7 @@ The recalibrated weights deliver fairer and more proportional pricing for transa
     This makes lightweight operations more affordable and allows users to bundle more actions within a single transaction. (Rarer operations do see an increase, such as account creation going from 19 → 41.)
 
 2. Increased EVM gas capacity
-    - The maximum EVM gas that fits within a Flow transaction has increased from 50 ****million → 328 million. (Note that, to match the behaviour of the Fusaka update to Ethereum, each _EVM transaction_ is limited to 16 million gas. This increase is still notable, since a single Cadence transaction can include multiple EVM transactions. A single Cadence transaction has more gas capacity than an entire Ethereum block...)
+    - The maximum EVM gas that fits within a Flow transaction has increased from 50 ****million → 220 million. (Note that, to match the behaviour of the Fusaka update to Ethereum, each _EVM transaction_ is limited to 16 million gas. This increase is still notable, since a single Cadence transaction can include multiple EVM transactions. A single Cadence transaction has more gas capacity than an entire Ethereum block...)
 3. Decreased max transaction time from 1000ms to 333.4ms
 
 ### Network Impact
