@@ -1,4 +1,4 @@
-# FLIP: Revisiting Flow Transaction fee
+# FLIP-74: Revisiting Flow Transaction fee
 
 | Status        | Proposed                                            |
 :-------------- |:---------------------------------------------------- |
@@ -39,7 +39,7 @@ Finally, Flow’s low transaction fee unfortunately makes FLOW use-cases less pe
 
 ## **Proposal**
 
-Today, the functional specification of transaction fee on Flow looks as follows.
+**Today**, the functional specification of transaction fee on Flow looks as follows.
 
 **Transaction fee = {inclusion fee + (execution effort * unit cost)} x surge**
 
@@ -48,10 +48,13 @@ Today, the functional specification of transaction fee on Flow looks as follows.
 - *Surge = 1.0 (currently constant);*
 - *Execution Effort is variable based on transaction type, as [shown here](https://github.com/onflow/flow/blob/c05d847adf2f6fb509e42c17020484d7dd3e89bd/flips/20220111-execution-effort.md).*
 
-**It is proposed that**
+**The proposal** entails the addition of a new multiplier, alongside the surge multiplier, to the transaction fee calculation, resulting in the following formula:
 
-1. *Inclusion fee is maintained as a constant, but increased 100x, from 1E-6 FLOW to 1E-4 FLOW for all transaction types*
-2. *Unit Cost of Execution Effort is increased 100x, from 4.99E-8 FLOW to 4.99E-06 FLOW*
+**Transaction fee = {inclusion fee + (execution effort * unit cost)} x surge x T**
+ 
+- Presently, the Flow network fundamentally supports the dynamic adjustment of transaction fees in response to network congestion. The surge factor (`S`) facilitates fee modifications during periods of network congestion, ensuring optimal network functionality. Although currently fixed at `1.0`, adjustments to this value can be proposed through a FLIP in response to sustained periods of high network demand and saturation.
+- While the surge factor accounts for network usage, it is agnostic of economic conditions. Introducing a Transaction Fee Multiplier (`T`) alongside the existing surge factor would enhance the adaptability and responsiveness of transaction fees to economic conditions in addition to network saturation. It would cater to future requirements for adjusting the unit cost of transactions on Flow in response to market forces. Keeping the multiplier separate, ensures transparency, ease of understanding, and readability of the formula for our community members.
+- **The value of `T` will be set at 100** to increase the transaction fee by 100 times compared to the current rate, thus increasing costs of each transaction by 100x as shown in the table below.
 
 | Transaction type | Effort | Current fee (FLOW) | Proposed fee (FLOW) | Proposed increase |
 | --- | --- | --- | --- | --- |
