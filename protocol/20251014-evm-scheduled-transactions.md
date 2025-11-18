@@ -70,7 +70,7 @@ The implementation of the **EVM Scheduler** introduces new components that integ
 - **Responsibilities**:
     - Stores EVM transaction data (handler address, owner, args…)
     - Emits events in the EVM layer during scheduling and execution.
-    - Forwards funds to the Cadence Owner Account (COA), enabling withdrawal into Cadence EVM Scheduler.
+    - Forwards funds to the Cadence Owned Account (COA), enabling withdrawal into Cadence EVM Scheduler.
     - Supports transaction cancellation (without refunds) prior to execution.
     - Exposes status retrieval functions for tracking execution outcomes.
 - **API:**
