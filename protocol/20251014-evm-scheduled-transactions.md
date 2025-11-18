@@ -152,9 +152,9 @@ The implementation of the **EVM Scheduler** introduces new components that integ
             uint64 gasLimit
         ) external view returns (uint64 fee, uint64 timestamp, bool ok);
 
-    		/// @notice Cancel existing scheduled transaction
-    		/// @param id ID of the scheduled transaction
-    		function cancel(uint64 id) external;
+    	/// @notice Cancel existing scheduled transaction, msg.sender must match the caller of schedule()
+    	/// @param id ID of the scheduled transaction
+    	function cancel(uint64 id) external;
 
         /// @notice Get the status of a transaction
         /// @param id Transaction ID
