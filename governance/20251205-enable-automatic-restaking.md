@@ -1,11 +1,11 @@
 ---
 status: Proposed
-flip: GOV-30
+flip: GOV-353
 authors: Joshua Hannan (joshua.hannan@flowfoundation.org)
 editors:
 ---
 
-# FLIP GOV-30: Enable Automatic Restaking of Staking Rewards
+# FLIP GOV-353: Enable Automatic Restaking of Staking Rewards
 
 ## Abstract
 
@@ -13,17 +13,47 @@ Enable core contract feature to automatically restake rewarded tokens for nodes 
 
 ## Background
 
-Rewards to node operators and delegators are paid at the end of every epoch to each staker's reward bucket. Currently, these rewards will sit there until the user manually does something with them, either withdrawing or restaking them. This can be cumbersome to most stakers who simply want to continue staking their tokens every week. Many users over the years have asked for functionality to automatically restake their rewards for them.
+[Flow Epochs and Staking Documentation](https://developers.flow.com/protocol/staking)
+
+Rewards to node operators and delegators are paid at the end of every epoch, which is once a week at the moment. Currently, these rewards will sit there until the user manually does something with them, either withdrawing or restaking them. This can be cumbersome to most stakers who simply want to continue staking their tokens every week and compound their rewards. Many users over the years have asked for functionality to automatically restake their rewards for them.
 
 Flow originally decided to not include this feature out of an abundance of caution about crypto regulations. Given recent developments in the past five years related to crypto regulations, and especially considering that most other Proof-of-Stake blockchains support this feature with no negative repercussions, the Flow foundation is proposing enabling this feature following community discussion and voting.
 
 ## Proposal
 
-When tokens are moved between buckets at the end of every epoch, for any given staker, transfer all their rewarded tokens to their staked bucket and update all the relevant staking metadata for that user.
+The Flow staking protocol maintains five buckets of tokens for each staker, listed near the end of [this document](https://developers.flow.com/protocol/staking/epoch-terminology):
 
-Because rewards are paid every epoch after tokens are moved between buckets, this means that staking rewards that are paid to users will still stay in their rewards bucket after they are paid every week. This will allow users who want to withdraw rewards every week instead of restaking them to still be able to do without having to wait for the 1-2 week unstaking period. We believe that this will be the least disruptive to any existing stakers who maybe doing something different than restaking every week.
+* Tokens Committed
+* Tokens Staked
+* Tokens Unstaking
+* Tokens Unstaked
+* Tokens Rewarded
 
-In addition to being a convenience for users, this will also ensure that there isn't unstaked FLOW just sitting in rewards buckets and will increase the total amount of FLOW staked overall, further securing the network.
+At the end of every epoch, committed tokens moved to staked, any unstaking requests move from staked to unstaking, and unstaking moves to unstaked. Rewards are paid after all these movements happen and are deposited into a staker's Rewards bucket.
+
+With this change, during this automatic token movement between buckets at the end of every epoch, for any given staker, the protocol will transfer all the tokens in their rewards bucket to their staked bucket.
+
+Because rewards are paid every epoch after tokens are moved between buckets, this means that each staking rewards payment will still stay in the rewards bucket for one week after they have been paid. This means:
+
+* Reward tokens that the staker's / delegator's does not withdraw from their rewards bucket into their account within one week will automatically be staked. Once the tokens are staked, they are subject to the standard 1-2 week unbonding period. 
+
+* Users can withdraw (a portion of or all of) the rewards immediately within one week after the tokens have been rewarded. This moves the tokens out of the rewards bucket. Only the tokens remaining in the rewards bucket will be automatically restaked at the next epoch switchover. 
+
+We believe that this will be the least disruptive to any existing stakers who may be doing something different than restaking every week.
+
+In addition to being a convenience for users, this will also ensure that there isn't rewarded FLOW just sitting in rewards buckets doing nothing and will increase the total amount of FLOW staked overall, further securing the network.
+
+## Other Options
+
+### Opt-in automatic restaking
+
+One option considered was making this feature opt-in, but this was decided against because the changes required for it would be cumbersome because of Cadence's upgrade restrictions with fairly small benefit. Also, because users still have a week to withdraw their rewards, they still have the opportunity to "opt-out" every week by withdrawing their rewards if they want.
+
+### Scheduled Transactions for Restaking
+
+Another option was to introduce [a scheduled transaction handler](https://github.com/onflow/flow-core-contracts/pull/564) that allows users to schedule transactions for themselves to restake their rewards. This also allows users to opt-in, but is unnecessarily complex for something that really should just be a built-in network feature.
+
+## Next Steps
 
 As part of the discussion of this FLIP, we will be sharing it with all the node operators in the network and posting in relevant social channels for other Flow users to see. We will get feedback from all affected parties to ensure that nobody is negatively affected by this change.
 
