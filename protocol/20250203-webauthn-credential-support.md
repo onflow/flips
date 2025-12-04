@@ -1,5 +1,5 @@
 ---
-status: Accepted
+status: Released
 flip: 264
 authors: Tarak Ben Youssef (tarak.benyoussef@flowfoundation.org)
 sponsor: Janez Podhostnik (janez.podhostnik@flowfoundation.org)

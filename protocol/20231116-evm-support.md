@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: Released
 flip: 223
 authors: Ramtin Seraj (ramtin.seraj@flowfoundation.org), Bastian Müller (bastian.mueller@flowfoundation.org), Gregor Gololicic (gregor.gololicic@flowfoundation.org)
 sponsor: Dieter Shirley (dete@dapperlabs.com)
