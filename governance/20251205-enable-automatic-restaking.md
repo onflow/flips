@@ -47,9 +47,19 @@ In addition to being a convenience for users, this will also ensure that there i
 
 ### Opt-in/Opt-out automatic restaking
 
-One option considered was making this feature opt-in, but this was decided against because the changes required for it would be cumbersome because of Cadence's upgrade restrictions with fairly small benefit. Also, because users still have a week to withdraw their rewards, they still have the opportunity to "opt-out" every week by withdrawing their rewards if they want.
+One option considered was making this feature opt-in, so users could choose whether they want this. 
 
-Another option could be to make this automatic by default, but allow users to opt-out by indicating that they don't want their rewards to be automatically restaked every week. This would still have most of the benefits described above, but would allow some users that maybe have unique tax considerations to have control over their rewards. It is also being considered as an option.
+Another option could be to make this automatic by default, but allow users to opt-out.
+
+Both of these options would still have most of the benefits described above, but would allow some users that maybe have unique tax considerations to have control over what is done with their rewards. It is also being considered as an option.
+
+One potential problem with allowing users to choose is that Cadence's upgrade restrictions make including this quite cumbersome. We would have to create a separate record from the existing staking records that are accessed separately from the other records, which, with the large number of existing stakers, could significantly affect the performance and cost of existing epoch operations. We would like to avoid this for the protocol and users if possible.
+
+Additionally, users still have a week to withdraw their rewards, they still have the opportunity to "opt-out" every week by withdrawing their rewards if they want.
+
+### Longer Period between Restakes
+
+If one week feels like it is not enough time to give users to decide whether or not to restake or withdraw, it is possible to extend this to any arbitrary number of weeks between restaking. If a month or more is preferable, this could be included and would not affect performance and cost like making the feature opt-in or opt-out would.
 
 ### Scheduled Transactions for Restaking
 
