@@ -45,9 +45,11 @@ In addition to being a convenience for users, this will also ensure that there i
 
 ## Other Options
 
-### Opt-in automatic restaking
+### Opt-in/Opt-out automatic restaking
 
 One option considered was making this feature opt-in, but this was decided against because the changes required for it would be cumbersome because of Cadence's upgrade restrictions with fairly small benefit. Also, because users still have a week to withdraw their rewards, they still have the opportunity to "opt-out" every week by withdrawing their rewards if they want.
+
+Another option could be to make this automatic by default, but allow users to opt-out by indicating that they don't want their rewards to be automatically restaked every week. This would still have most of the benefits described above, but would allow some users that maybe have unique tax considerations to have control over their rewards. It is also being considered as an option.
 
 ### Scheduled Transactions for Restaking
 
