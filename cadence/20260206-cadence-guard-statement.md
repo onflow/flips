@@ -200,3 +200,7 @@ in Swift 2.0 (2015). They are widely used in production code. Cadence already sh
 Rust added a [similar feature (let-else)](https://doc.rust-lang.org/book/ch06-03-if-let.html#staying-on-the-happy-path-with-letelse)
 in [version 1.65 (2022)](https://blog.rust-lang.org/2022/11/03/Rust-1.65.0/#let-else-statements),
 validating the pattern's utility.
+
+## Implementation
+
+An implementation is available at https://github.com/onflow/cadence/pull/4432
