@@ -2,14 +2,14 @@
 status: draft
 flip: 357
 authors: Bastian Müller (bastian.mueller@flowfoundation.org)
-updated: 2026-02-09
+updated: 2026-02-17
 ---
 
-# FLIP 357: Add minOf and maxOf Functions to Cadence
+# FLIP 357: Add Comparison Functions to Cadence
 
 ## Objective
 
-Add `minOf` and `maxOf` functions to the Cadence standard library,
+Add `min` and `max` functions to a new `Comparison` contract in the Cadence standard library,
 providing a convenient way to find the minimum or maximum of two comparable values.
 
 ## Motivation
@@ -33,11 +33,13 @@ Having standard functions improves code readability and reduces the likelihood o
 
 ## User Benefit
 
-The `minOf` and `maxOf` functions provide several benefits:
+The `min` and `max` functions provide several benefits:
 
 **Improved Readability**: The intent is immediately clear from the function name:
 ```cadence
-let price = minOf(bidPrice, maxPrice)  // Clearer than: bidPrice < maxPrice ? bidPrice : maxPrice
+import Comparison
+
+let price = min(bidPrice, maxPrice)  // Clearer than: bidPrice < maxPrice ? bidPrice : maxPrice
 ```
 
 **Reduced Errors**: Eliminates the risk of swapping comparison operators or ternary branches,
@@ -50,7 +52,17 @@ catching type mismatches at compile time.
 
 ## Design Proposal
 
-Add two generic functions to the Cadence standard library that work with any comparable type.
+Add two generic functions to a new `Comparison` contract in the Cadence standard library
+that work with any comparable type.
+
+### Usage
+
+```cadence
+import Comparison
+
+let smaller = min(a, b)
+let larger = max(a, b)
+```
 
 ### Function Signatures
 
@@ -60,24 +72,24 @@ Add two generic functions to the Cadence standard library that work with any com
 /// The arguments must be of the same comparable type.
 ///
 /// Examples:
-///   minOf(5, 10) == 5
-///   minOf(10, 5) == 5
-///   minOf(1.5, 2.5) == 1.5
-///   minOf("apple", "banana") == "apple"
+///   min(5, 10) == 5
+///   min(10, 5) == 5
+///   min(1.5, 2.5) == 1.5
+///   min("apple", "banana") == "apple"
 ///
-access(all) fun minOf<T>(_ a: T, _ b: T): T
+access(all) fun min<T>(_ a: T, _ b: T): T
 
 /// Returns the maximum of two values
 ///
 /// The arguments must be of the same comparable type.
 ///
 /// Examples:
-///   maxOf(5, 10) == 10
-///   maxOf(10, 5) == 10
-///   maxOf(1.5, 2.5) == 2.5
-///   maxOf("apple", "banana") == "banana"
+///   max(5, 10) == 10
+///   max(10, 5) == 10
+///   max(1.5, 2.5) == 2.5
+///   max("apple", "banana") == "banana"
 ///
-access(all) fun maxOf<T>(_ a: T, _ b: T): T
+access(all) fun max<T>(_ a: T, _ b: T): T
 ```
 
 ### Type Requirements
@@ -86,30 +98,57 @@ The type parameter `T` must be a **comparable type**.
 In Cadence, comparable types are those that support comparison operators (`<`, `>`, `<=`, `>=`),
 e.g. all concrete number types, strings, characters, booleans, and addresses.
 
-### Naming Rationale
+### Naming and Location Rationale
 
-The functions are named `minOf` and `maxOf` (rather than `min` and `max`) to avoid naming conflicts:
+The functions are named `min` and `max` and placed in a `Comparison` contract
+(rather than being global functions) to avoid naming conflicts:
 - Number types already have `min` and `max` fields,
-  which represent the minimum and maximum values of that type, e.g. `Int8.min` is the minimum value of `Int8`
-- Existing contracts may have defined `min` and `max` variables or functions,
-  so using `minOf` and `maxOf` avoids potential conflicts.
-  As of 2026-02-09, there are no global functions named `minOf` or `maxOf`, so this naming is safe.
-- Kotlin uses the names `minOf` and `maxOf`, see e.g. https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.comparisons/min-of.html
+  which represent the minimum and maximum values of that type,
+  e.g. `Int8.min` is the minimum value of `Int8`
+- This provides better compatibility with existing code:
+  Existing contracts may have defined `min` and `max` variables.
+  Placing these functions inside the `Comparison` contract avoids conflicts,
+  since users only bring them into scope by explicitly importing the contract.
 
 ## Drawbacks
 
-**Limited to Two Arguments**: The functions only accept two arguments. Finding the minimum or maximum
-of more values requires chaining:
+**Requires Import**: Unlike some other standard library functions,
+`min` and `max` require an explicit `import Comparison` statement.
+This is a minor inconvenience but necessary to avoid naming conflicts with existing code.
+
+**Limited to Two Arguments**: The functions only accept two arguments.
+Finding the minimum or maximum of more values requires chaining:
 
 ```cadence
-let min = minOf(minOf(a, b), c)
+import Comparison
+
+let minimum = min(min(a, b), c)
 ```
 
 A future enhancement could add variadic versions that accept more than two arguments.
 
 ## Alternatives Considered
 
-### Alternative 1: Methods
+### Alternative 1: Global Functions Named `minOf`/`maxOf`
+
+Use `minOf` and `maxOf` as global standard library functions (no import required):
+
+```cadence
+let smaller = minOf(a, b)
+let larger = maxOf(a, b)
+```
+
+**Pros:**
+- No import required
+- Kotlin uses these names, see e.g. https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.comparisons/min-of.html
+
+**Cons:**
+- Less familiar naming than `min`/`max`
+- Still adds global names that could shadow existing declarations
+
+This was the initial design but was superseded in favor of `min`/`max` in the `Comparison` contract.
+
+### Alternative 2: Methods
 
 Add `min(_ other: T)` and `max(_ other: T)` methods to comparable types `T`:
 
@@ -125,7 +164,7 @@ a.max(b)  // Returns the maximum of a and b
 **Cons:**
 - Requires many separate implementations (one per comparable type)
 
-### Alternative 2: Static Methods
+### Alternative 3: Static Methods
 
 Add `minimum()` and `maximum()` methods to each comparable type:
 
@@ -151,12 +190,9 @@ so they will have minimal overhead compared to manual comparisons.
 ## Compatibility
 
 This is a purely additive feature.
-
-However, to ensure no breaking changes to existing contracts,
-the proposal currently assumes that existing contracts do not declare variables or functions named
-`minOf` or `maxOf`, which is true as of 2026-02-09.
-If a conflict is detected, we may need to consider alternative names,
-or an alternative design such as methods on comparable types.
+The functions are scoped to the `Comparison` contract,
+so they only affect code that explicitly imports it,
+ensuring no breaking changes to existing contracts.
 
 ## Prior Art
 
@@ -207,8 +243,8 @@ minOf(a, b)
 maxOf(a, b)
 ```
 
-Cadence's design follows the Kotlin naming convention, which also distinguishes comparison functions
-from value range constants.
+Cadence's design uses the familiar `min`/`max` naming from Python and Swift,
+while scoping the functions to a `Comparison` contract to avoid naming conflicts.
 
 ## Implementation
 
