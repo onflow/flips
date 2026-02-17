@@ -9,18 +9,21 @@ updated: 2026-02-17
 
 ## Objective
 
-Add `min` and `max` functions to a new `Comparison` contract in the Cadence standard library,
-providing a convenient way to find the minimum or maximum of two comparable values.
+Add `min`, `max`, and `clamp` functions to a new `Comparison` contract in the Cadence standard library,
+providing a convenient way to find the minimum or maximum of two comparable values,
+or to clamp a value within a range.
 
 ## Motivation
 
-Finding the minimum or maximum of two values is a common operation in smart contract development.
+Finding the minimum or maximum of two values, or clamping a value to a range,
+are common operations in smart contract development.
 Currently, developers must implement this logic manually using conditional expressions:
 
 ```cadence
 // Current approach: manual comparison
 let smaller = a < b ? a : b
 let larger = a > b ? a : b
+let clamped = value < low ? low : (value > high ? high : value)
 ```
 
 While this works, it has several drawbacks:
@@ -28,31 +31,32 @@ While this works, it has several drawbacks:
 - **Error-prone**: Easy to make mistakes with the comparison operators or the ternary expression
 - **Less readable**: The intent isn't immediately clear, especially in complex expressions
 
-Other programming languages provide built-in or standard library functions for this common operation.
+Other programming languages provide built-in or standard library functions for these common operations.
 Having standard functions improves code readability and reduces the likelihood of errors.
 
 ## User Benefit
 
-The `min` and `max` functions provide several benefits:
+The `min`, `max`, and `clamp` functions provide several benefits:
 
 **Improved Readability**: The intent is immediately clear from the function name:
 ```cadence
 import Comparison
 
 let price = min(bidPrice, maxPrice)  // Clearer than: bidPrice < maxPrice ? bidPrice : maxPrice
+let fee = clamp(computedFee, min: minFee, max: maxFee)  // Clearer than: computedFee < minFee ? minFee : (computedFee > maxFee ? maxFee : computedFee)
 ```
 
 **Reduced Errors**: Eliminates the risk of swapping comparison operators or ternary branches,
 or accidentally comparing the wrong variables.
 
-**Type Safety**: The functions work with any comparable type and ensure both arguments have the same type,
+**Type Safety**: The functions work with any comparable type and ensure all arguments have the same type,
 catching type mismatches at compile time.
 
 **Consistency**: Provides a standard way to perform these operations across all Cadence codebases.
 
 ## Design Proposal
 
-Add two generic functions to a new `Comparison` contract in the Cadence standard library
+Add three generic functions to a new `Comparison` contract in the Cadence standard library
 that work with any comparable type.
 
 ### Usage
@@ -62,12 +66,13 @@ import Comparison
 
 let smaller = min(a, b)
 let larger = max(a, b)
+let bounded = clamp(value, min: low, max: high)
 ```
 
 ### Function Signatures
 
 ```cadence
-/// Returns the minimum of two values
+/// Returns the minimum of two values.
 ///
 /// The arguments must be of the same comparable type.
 ///
@@ -79,7 +84,7 @@ let larger = max(a, b)
 ///
 access(all) fun min<T>(_ a: T, _ b: T): T
 
-/// Returns the maximum of two values
+/// Returns the maximum of two values.
 ///
 /// The arguments must be of the same comparable type.
 ///
@@ -90,6 +95,20 @@ access(all) fun min<T>(_ a: T, _ b: T): T
 ///   max("apple", "banana") == "banana"
 ///
 access(all) fun max<T>(_ a: T, _ b: T): T
+
+/// Returns the value clamped to the inclusive range [min, max].
+///
+/// If the value is less than min, min is returned.
+/// If the value is greater than max, max is returned.
+/// Otherwise, the value itself is returned.
+/// The arguments must be of the same comparable type.
+///
+/// Examples:
+///   clamp(7, min: 1, max: 10) == 7
+///   clamp(0, min: 1, max: 10) == 1
+///   clamp(20, min: 1, max: 10) == 10
+///
+access(all) fun clamp<T>(_ value: T, min: T, max: T): T
 ```
 
 ### Type Requirements
@@ -113,10 +132,10 @@ The functions are named `min` and `max` and placed in a `Comparison` contract
 ## Drawbacks
 
 **Requires Import**: Unlike some other standard library functions,
-`min` and `max` require an explicit `import Comparison` statement.
+`min`, `max`, and `clamp` require an explicit `import Comparison` statement.
 This is a minor inconvenience but necessary to avoid naming conflicts with existing code.
 
-**Limited to Two Arguments**: The functions only accept two arguments.
+**Limited to Two Arguments for min/max**: The `min` and `max` functions only accept two arguments.
 Finding the minimum or maximum of more values requires chaining:
 
 ```cadence
@@ -196,11 +215,12 @@ ensuring no breaking changes to existing contracts.
 
 ## Prior Art
 
-Nearly all major programming languages provide minimum/maximum functions:
+Nearly all major programming languages provide minimum/maximum/clamp functions:
 
 **Python**:
 
-Global functions that work with any comparable type:
+Global `min`/`max` functions that work with any comparable type.
+No built-in `clamp`, but `max(low, min(value, high))` is the idiomatic form.
 
 ```python
 min(a, b)
@@ -209,41 +229,47 @@ max(a, b)
 
 **JavaScript**:
 
-Functions that only work with numbers, not with strings or other comparable types:
+`min`/`max` functions that only work with numbers.
+No built-in `clamp`.
 
 ```javascript
 Math.min(a, b)
 Math.max(a, b)
+Math.max(low, Math.min(value, high))  // clamp idiom
 ```
 
 **Rust**:
 
-Methods on comparable types:
+Methods on comparable types, including `clamp`:
 
 ```rust
 a.min(b)
 a.max(b)
+a.clamp(min, max)
 ```
 
 **Swift**:
 
-Global functions that work with any comparable type:
+Global `min`/`max` functions that work with any comparable type.
+`clamp` is available on `Comparable` types as `clamped(to:)`:
 
 ```swift
 min(a, b)
 max(a, b)
+value.clamped(to: low...high)
 ```
 
 **Kotlin**:
 
-Global functions that work with any comparable type:
+Global functions that work with any comparable type, including `coerceIn` for clamping:
 
 ```kotlin
 minOf(a, b)
 maxOf(a, b)
+value.coerceIn(low, high)
 ```
 
-Cadence's design uses the familiar `min`/`max` naming from Python and Swift,
+Cadence's design uses the familiar `min`/`max`/`clamp` naming (closest to Rust),
 while scoping the functions to a `Comparison` contract to avoid naming conflicts.
 
 ## Implementation
@@ -257,5 +283,4 @@ None
 ## Questions and Discussion Topics
 
 1. Should we rather use method syntax instead of global functions, or static methods on each comparable type?
-2. Should we add variants that accept more than two arguments in the future?
-3. Should we add `clamp(value, min, max)` as a related utility function?
+2. Should we add variadic variants of `min` and `max` that accept more than two arguments in the future?
