@@ -1,8 +1,8 @@
 ---
-status: draft
+status: accepted
 flip: 359
 authors: Bastian Müller (bastian.mueller@flowfoundation.org)
-updated: 2026-02-25
+updated: 2026-03-10
 ---
 
 # FLIP 359: For-in Iteration Over Dictionary Keys
