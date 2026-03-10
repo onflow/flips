@@ -1,5 +1,5 @@
 ---
-status: approved
+status: released
 flip: 242
 authors: Austin Kline (austin@flowty.io)
 sponsor: Bastian Müller
@@ -28,10 +28,10 @@ behavior as well for other contracts like Flowty Loans.
 
 ## User Benefit
 
-There is value in a Capability not being nil, even if it is not borrowable. 
+There is value in a Capability not being nil, even if it is not borrowable.
 Nil is not the same as invalid, because we still have the address field which is something that is used often by developers.
-Modifying the behavior for obtaining capabilities to instead give an invalid capability allows developers to make use of that address and react to something not being valid. 
-It also introduces fewer panic scenarios that are out of general-purpose platforms' control (like if an NFT Collection panics on Royalty creation because of this). 
+Modifying the behavior for obtaining capabilities to instead give an invalid capability allows developers to make use of that address and react to something not being valid.
+It also introduces fewer panic scenarios that are out of general-purpose platforms' control (like if an NFT Collection panics on Royalty creation because of this).
 
 Even an invalid capability that cannot be borrowed is still valuable, as it provides the address of the account.
 ## Design Proposal
@@ -46,7 +46,7 @@ This "invalid" capability should:
 3. Have an ID of 0.
 4. Have a runtime type that is the same as the type requested in the type argument of `get`
 
-Capability Controller IDs are stated to be a *non-zero*, which 
+Capability Controller IDs are stated to be a *non-zero*, which
 means the value of zero can be used to mark capabilities as invalid.
 
 ## Alternatives Considered
@@ -56,11 +56,11 @@ It was suggested that anything which is expecting a non-nil Capability could ins
 ```
 struct OptCap {
     let address: Address
-    let cap: Capability? 
+    let cap: Capability?
 }
 ```
 
-This might work in cases where the method being called is entirely in control of the caller, but it will not cover cases like Royalties where they are being blindly resolved using the 
+This might work in cases where the method being called is entirely in control of the caller, but it will not cover cases like Royalties where they are being blindly resolved using the
 Flow Metadata Standard. In cases like that, the caller has no way to protect itself again an optional capability that will panic when being created
 
 

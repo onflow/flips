@@ -1,5 +1,5 @@
 ---
-status: implemented
+status: released
 flip: 1071
 authors: Deniz Mert Edincik (deniz@edincik.com)
 sponsor: Austin Kline (austin@flowty.io)

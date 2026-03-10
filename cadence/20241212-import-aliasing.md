@@ -1,5 +1,5 @@
 ---
-status: accepted 
+status: released
 flip: 314
 authors: Raymond Zhang (raymond.zhang@flowfoundation.org)
 sponsor: Supun Setunga (supun.setunga@flowfoundation.org)
@@ -69,7 +69,7 @@ Feature addition, no impact.
 
 ## Related Issues
 
-Consider extension for type aliasing in the future. 
+Consider extension for type aliasing in the future.
 
 ## Implementation
 https://github.com/onflow/cadence/pull/4033
