@@ -4,7 +4,7 @@ flip: 237
 title: Flow EVM VM Bridge
 authors: Giovanni Sanchez (giovanni.sanchez@dapperlabs.com)
 sponsor: Jerome Pimmel (jerome.pimmel@dapperlabs.com)
-updated: 2023-12-22
+updated: 2026-03-13
 ---
 
 # FLIP 237: Flow VM Bridge
@@ -295,6 +295,11 @@ The task of bridging FTs & NFTs between VMs can be split into four distinct case
 asset can either be Cadence- or EVM-native, and it can either be bridged from Cadence to EVM or EVM to Cadence. The
 following sections outline an NFT bridge path for each case.
 
+> :information_source: **Fee model:** Bridge fees are only charged when an operation causes the bridge account to store
+> an asset long-term (e.g., escrowing a Cadence NFT or holding an ERC721 in the bridge's COA). Operations that release
+> assets from existing escrow or burn assets do **not** incur a bridge fee, because they do not add to the bridge
+> account's storage. Onboarding operations always incur a separate flat onboarding fee regardless of direction.
+
 > :information_source: A note about bridge "onboarding" - assets moving from one VM to another must at minimum have
 > contracts defining them in their target VM. These contracts must be deployed in a transaction preceding the movement
 > of the asset as deployed contracts are not available in the Cadence's state space until the deploying transaction has
@@ -320,13 +325,13 @@ following sections outline an NFT bridge path for each case.
 
 *Lock in Cadence & Mint/Transfer in EVM*
 
-1. Pre-flight checks: Assert the type is supported, has been onboarded, and fee provider can provide onboarding fee
+1. Pre-flight checks: Assert the type is supported, has been onboarded, and fee provider can cover the bridge fee
 2. Get a URI for the NFT
     - Default to project-specified URI
     - If not defined, serialize the NFT as JSON data URL
 3. Lock NFT in escrow
-4. Calculate the bridge fee based on flat fee + storage usage
-5. Withdraw onboard fee from given fee Provider & deposit to bridge Vault
+4. Calculate the bridge fee based on storage consumed by escrowing the NFT in the bridge account
+5. Withdraw bridge fee from given fee Provider & deposit to bridge Vault
 6. Get the token's corresponding ERC721 contract address
 5. Execute the bridge
     - Check if the ERC721 is factory-deployed - Cadence-native: return true
@@ -341,9 +346,12 @@ following sections outline an NFT bridge path for each case.
 
 *Unlock in Cadence & Transfer in EVM*
 
-1. Pre-flight checks: Assert the type is supported, has been onboarded, and fee provider can provide onboarding fee
-2. Withdraw the bridge fee from the given Provider & deposit to bridge Vault
-3. Get the requested type's associated EVM contract address
+> :information_source: No bridge fee is charged for this operation. Releasing a Cadence NFT from existing bridge escrow
+> reduces storage in the bridge account rather than adding to it. The storage fee was already covered when the NFT was
+> originally escrowed on the Cadence → EVM path.
+
+1. Pre-flight checks: Assert the type is supported and has been onboarded
+2. Get the requested type's associated EVM contract address
 4. Assert the caller is the requested ERC721 token owner or approved
 5. Execute the provided protected callback
 6. Assert that now the bridge COA is the ERC721 token owner after executing the protected callback
@@ -374,16 +382,17 @@ following sections outline an NFT bridge path for each case.
 
 *Mint/Unlock in Cadence & Transfer in EVM*
 
-1. Pre-flight checks: Assert the type is supported, has been onboarded, and fee provider can provide onboarding fee
-2. Withdraw the bridge fee from the given Provider & deposit to bridge Vault
-3. Get the requested type's associated EVM contract address
-4. Assert the caller is the requested ERC721 token owner or approved
-5. Execute the provided protected callback
-6. Assert that now the bridge COA is the ERC721 token owner after executing the protected callback
-7. Derive the requested type's contract address & name & attempt to borrow the contract as EVMBridgeMinter
-8. Get the tokenURI from the ERC721 contract
-9. If the corresponding Cadence NFT is in escrow, unlock the NFT <- false in this case
-10. Otherwise, mint a new NFT with the ERC721 URI & define the source contract's ERC721 ID and return
+1. Pre-flight checks: Assert the type is supported and has been onboarded, and fee provider can cover the bridge fee
+2. Get the requested type's associated EVM contract address
+3. Assert the caller is the requested ERC721 token owner or approved
+4. Execute the provided protected callback
+5. Assert that now the bridge COA is the ERC721 token owner after executing the protected callback
+6. Calculate the bridge fee based on storage consumed by holding the ERC721 in the bridge's EVM account (COA)
+7. Withdraw bridge fee from the given Provider & deposit to bridge Vault
+8. Derive the requested type's contract address & name & attempt to borrow the contract as EVMBridgeMinter
+9. Get the tokenURI from the ERC721 contract
+10. If the corresponding Cadence NFT is in escrow, unlock the NFT <- false in this case
+11. Otherwise, mint a new NFT with the ERC721 URI & define the source contract's ERC721 ID and return
 
 ![Cadence-native Cadence to EVM](20231222-evm-vm-bridge-resources/evm_native_nft_from_evm.png)
 
