@@ -298,7 +298,9 @@ following sections outline an NFT bridge path for each case.
 > :information_source: **Fee model:** Bridge fees are only charged when an operation causes the bridge account to store
 > an asset long-term (e.g., escrowing a Cadence NFT or holding an ERC721 in the bridge's COA). Operations that release
 > assets from existing escrow or burn assets do **not** incur a bridge fee, because they do not add to the bridge
-> account's storage. Onboarding operations always incur a separate flat onboarding fee regardless of direction.
+> account's storage. Onboarding operations always incur a separate flat onboarding fee regardless of direction. For the
+> full rationale and handler-by-handler breakdown, see
+> [ADR-0001](https://github.com/onflow/flow-evm-bridge/blob/main/docs/adr/ADR-0001-nft-bridge-fee-model.md).
 
 > :information_source: A note about bridge "onboarding" - assets moving from one VM to another must at minimum have
 > contracts defining them in their target VM. These contracts must be deployed in a transaction preceding the movement
@@ -382,6 +384,13 @@ following sections outline an NFT bridge path for each case.
 
 *Mint/Unlock in Cadence & Transfer in EVM*
 
+> :information_source: The steps below describe the **default path** for EVM-native NFTs without a cross-VM
+> registration. For projects registered via `registerCrossVMNFT` (FLIP 318), the bridge dispatches to a dedicated
+> cross-VM handler (`handleEVMNativeCrossVMNFTFromEVM`) that does not add to the bridge's Cadence storage. No bridge
+> fee is charged on that path — see
+> [ADR-0001](https://github.com/onflow/flow-evm-bridge/blob/main/docs/adr/ADR-0001-nft-bridge-fee-model.md) for
+> details.
+
 1. Pre-flight checks: Assert the type is supported and has been onboarded, and fee provider can cover the bridge fee
 2. Get the requested type's associated EVM contract address
 3. Assert the caller is the requested ERC721 token owner or approved
@@ -399,6 +408,9 @@ following sections outline an NFT bridge path for each case.
 #### EVM-Native: Flow -> EVM
 
 *Lock in Flow & Transfer in EVM*
+
+> :information_source: No bridge fee is charged for this operation. The bridge-deployed Cadence NFT is burned (step 6)
+> rather than escrowed, so no new storage is added to the bridge account.
 
 1. Assert the asset is either an NFT or FT & has been onboarded  (it will be by construction)
 2. Determine if asset is FT or NFT
