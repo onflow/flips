@@ -1,5 +1,5 @@
 ---
-status: implemented
+status: released
 flip: 798
 authors: Janez Podhostnik (janez.podhostnik@dapperlabs.com), Bastian Müller (bastian@dapperlabs.com)
 updated: 2024-06-26
@@ -565,18 +565,18 @@ Existing links and capabilities need to be migrated.
 ### Migration of storage links
 
 Each existing storage link is dereferenced to its *target storage path* (`/storage`).
-To determine the target storage path, the link's *source capability path* (`/public` or `/private`) 
+To determine the target storage path, the link's *source capability path* (`/public` or `/private`)
 is followed until a storage (`/storage`) path is encountered.
 
 For each valid link, a new Storage Capability Controller will be issued.
-If the source path is public (`/public`), the resulting capability gets published. 
+If the source path is public (`/public`), the resulting capability gets published.
 
 Note that it is not necessary for the storage path to contain any value at the time of migration.
 
 ### Migration of account links
 
 For each existing account link a new Accout Capability Controller will be issued.
-If the source path is public (`/public`), the resulting capability gets published. 
+If the source path is public (`/public`), the resulting capability gets published.
 
 ### Migration of capabilities
 
