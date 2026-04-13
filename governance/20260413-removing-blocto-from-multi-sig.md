@@ -39,4 +39,3 @@ transaction {
 
 ## Links
 - [FLIP Tracker Issue](https://github.com/onflow/flips/issues/365)
-- [Forum post](TBD)
