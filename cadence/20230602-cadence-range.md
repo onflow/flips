@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: released
 flip: 96
 authors: darkdrag00n (darkdrag00n@proton.me)
 sponsor: Bastian Müller (bastian@dapperlabs.com)
@@ -143,7 +143,7 @@ let invalidDirection = ExclusiveRange(132, 33, step: 3) // Runtime Error
 None
 
 ### Alternatives Considered
-Initial proposal considered defining operators such as `..` or `downTo` for defining `Range`. It also proposed adding another type named `Progression` for allowing non-default values of `step`. 
+Initial proposal considered defining operators such as `..` or `downTo` for defining `Range`. It also proposed adding another type named `Progression` for allowing non-default values of `step`.
 
 Due to the readability concerns associated with the inclusive vs exclusive behavior of the operators, it was considered better to have types and constructor functions with self-explanatory names to avoid ambiguity.
 

@@ -1,5 +1,5 @@
 ---
-status: accepted 
+status: released
 flip: 341
 authors: Supun Setunga (supun.setunga@flowfoundation.org)
 sponsor: Dieter Shirley (dete@flowfoundation.com)
@@ -14,7 +14,7 @@ The objective is to add a set of 128-bit wide fixed-point types, `Fix128` and `U
 
 ## Motivation
 
-Cadence currently only supports 64-bit wide decimal fixed-point types, `Fix64` and `UFix64`, 
+Cadence currently only supports 64-bit wide decimal fixed-point types, `Fix64` and `UFix64`,
 having the ranges `-92233720368.54775808` through `92233720368.54775807` and `0.0` through `184467440737.09551615`
 respectively.
 
@@ -41,7 +41,7 @@ Although 27 is the most commonly used value internally by defi protocols, the va
 introduces a type that can hold values in the trillions (extreme, but plausible values for very large financial calculations).
 Note that all `UFix64` and `Fix64` values can be converted to the equivalent 128-bit types without any loss of precision or range.
 
-A scaling factor of 24 provides a very high precision for fractional values, while also leaving large enough upper and 
+A scaling factor of 24 provides a very high precision for fractional values, while also leaving large enough upper and
 lower bounds sufficient for most real-world use cases (which typically will involve internal calculations that convert
 back to the 64-bit types).
 

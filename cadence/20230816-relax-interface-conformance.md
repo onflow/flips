@@ -1,5 +1,5 @@
 ---
-status: implemented
+status: released
 flip: 134
 authors: Supun Setunga (supun.setunga@dapperlabs.com)
 sponsor: Supun Setunga (supun.setunga@dapperlabs.com)
