@@ -43,10 +43,6 @@ No negative performance impact. Removing an outdated node may improve network pe
 
 None.
 
-### Tutorials and Examples
-
-Not applicable.
-
 ### Compatibility
 
 No compatibility concerns. This is a governance action.
