@@ -43,14 +43,6 @@ No negative performance impact. Removing an outdated node may improve network pe
 
 None.
 
-### Engineering Impact
-
-Minimal. This is a configuration change to the approved node list.
-
-### Best Practices
-
-Node operators running on leased tokens are expected to keep their nodes updated and remain responsive to the Foundation.
-
 ### Tutorials and Examples
 
 Not applicable.
@@ -66,10 +58,6 @@ The Lilico verification node will be unstaked at the next epoch. No impact on ot
 ## Related Issues
 
 - [FLIP Tracker Issue](https://github.com/onflow/flips/issues/367)
-
-## Prior Art
-
-- [FLIP 365: Removing Blocto as a multi-signer](https://github.com/onflow/flips/blob/main/governance/20260413-removing-blocto-from-multi-sig.md) — similar governance action for an unresponsive community member.
 
 ## Questions and Discussion
 
