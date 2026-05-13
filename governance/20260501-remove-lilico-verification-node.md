@@ -1,5 +1,5 @@
 ---
-Status: Proposed
+Status: Released
 Flip: 367
 Authors: Vishal Changrani
 Sponsor: Vishal Changrani
