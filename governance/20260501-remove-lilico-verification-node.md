@@ -3,7 +3,7 @@ Status: Released
 Flip: 367
 Authors: Vishal Changrani
 Sponsor: Vishal Changrani
-Updated: 2026-05-01
+Updated: 2026-05-13
 ---
 
 # FLIP 367: Remove unresponsive Lilico verification node from approved list
@@ -58,3 +58,6 @@ The Lilico verification node will be unstaked at the next epoch. No impact on ot
 ## Questions and Discussion
 
 Discussion will take place on the PR itself.
+
+## Transaction
+https://www.flowscan.io/tx/2887ef2f221291ec49b996cb26e73f472d55887278212a85ac8e05c3a7f27cb7
