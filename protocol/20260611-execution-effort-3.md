@@ -1,12 +1,12 @@
 ---
-status: Proposed
-flip: 369
+status: Accepted
+flip: 370
 authors: Janez Podhostnik (janez.podhostnik@flowfoundation.org)
 sponsor:
 updated: 2026-06-11
 ---
 
-# FLIP 369: Execution effort calibration III.
+# FLIP 370: Execution effort calibration III.
 
 ## Abstract
 
