@@ -1,5 +1,5 @@
 ---
-status: implemented
+status: released
 flip: 111
 authors: Deniz Mert Edincik (deniz@edincik.com) / Supun Setunga (supun.setunga@dapperlabs.com)
 sponsor: Deniz Mert Edincik (deniz@edincik.com) / Supun Setunga (supun.setunga@dapperlabs.com)
@@ -41,18 +41,18 @@ Suppose the `FungibleToken` is a contract, and has a `TokenWithdrawal` event dec
 
 With function pre/post conditions being able to emit events, the `withdraw` function would look like below.
 
-```cadence 
+```cadence
 pub contract FungibleToken {
-   
+
     pub event TokenWithdrawal(type: Type, amount: UFix64, from: Address?)
-   
-    pub resource interface Provider{ 
-        pub fun withdraw(amount: UFix64): @{FungibleToken.Vault} { 
-            post { 
+
+    pub resource interface Provider{
+        pub fun withdraw(amount: UFix64): @{FungibleToken.Vault} {
+            post {
                 result.balance == amount: "Withdrawal amount must be the same as the balance of the withdrawn Vault"
-                emit TokenWithdrawal(type:type, amount:amount, from:from) 
-            } 
-        } 
+                emit TokenWithdrawal(type:type, amount:amount, from:from)
+            }
+        }
     }
 }
 ```

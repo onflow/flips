@@ -1,5 +1,5 @@
 ---
-status: implemented
+status: released
 flip: 1043
 authors: Supun Setunga (supun.setunga@dapperlabs.com)
 sponsor: Supun Setunga (supun.setunga@dapperlabs.com)
@@ -120,7 +120,7 @@ Developers will have to update their code to remove the use of references to mov
 If they still want a reference to the resource after move, they will have to obtain a new reference.
 
 ### Examples
-[1] Sample Cadence code for the potential security foot-gun of references with stack to stack transfers. 
+[1] Sample Cadence code for the potential security foot-gun of references with stack to stack transfers.
 ```cadence
 access(all) contract Buyer {
 

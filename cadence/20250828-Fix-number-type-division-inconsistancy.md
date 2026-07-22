@@ -1,5 +1,5 @@
 ---
-status: accepted 
+status: released
 flip: 343
 authors: Supun Setunga (supun.setunga@flowfoundation.org), Dieter Shirley (dete@flowfoundation.com)
 sponsor: Dieter Shirley (dete@flowfoundation.com)
@@ -10,7 +10,7 @@ updated: 2025-09-08
 
 ## Objective
 
-Provide a well-defined, consistent behaviour for handling the least-significant digit in arithmetic operations for 
+Provide a well-defined, consistent behaviour for handling the least-significant digit in arithmetic operations for
 all Cadence numeric types.
 
 ## Motivation
@@ -106,7 +106,7 @@ Fix64(-0.00000005) / Fix64(-2.0) == Fix64(0.00000002)
 Note that this suggested change would only impact the **division (and saturation division) of negative values**
 for the above types.
 Division of non-negative numbers, as well as all the other arithmetics on both negative and non-negative numbers,
-would remain unchanged. 
+would remain unchanged.
 
 ### Drawbacks
 

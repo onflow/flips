@@ -1,5 +1,5 @@
 ---
-status: implemented
+status: released
 flip: 13
 authors: Bastian Müller (bastian@dapperlabs.com)
 sponsor: Bastian Müller (bastian@dapperlabs.com)

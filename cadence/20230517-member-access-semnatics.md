@@ -1,5 +1,5 @@
 ---
-status: implemented
+status: released
 flip: 89
 authors: Supun Setunga (supun.setunga@dapperlabs.com)
 sponsor: Supun Setunga (supun.setunga@dapperlabs.com)
@@ -13,7 +13,7 @@ updated: 2023-07-05
 This proposal suggest to return a reference when accessing a member of a container (field of a composite value,
 key of a map, index of an array), if the parent value is also a reference and the accessed member is a container type.
 
-## Motivation   
+## Motivation
 
 A previous version of Cadence ("Secure Cadence") restricted the potential foot-gun of mutating container-typed
 `let` fields/variables via the
@@ -88,7 +88,7 @@ var id: String = collection.id
 
 #### Case II: Code only has a reference to the container value
 
-Assume a reference to the collection `collectionRef` is available, and is of type `&Collection`. 
+Assume a reference to the collection `collectionRef` is available, and is of type `&Collection`.
 i.e. code doesn't own the value, but has only a reference to the value.
 
 ```cadence
@@ -118,7 +118,7 @@ pub resource MasterCollection {
 
 pub resource Collection {
     pub var ownedNFTs: @{UInt64: NonFungibleToken.NFT}
-    
+
     access(Withdraw) fun withdraw(withdrawID: UInt64): @NonFungibleToken.NFT {
         let token <- self.ownedNFTs.remove(key: withdrawID) ?? panic("missing NFT")
         emit Withdraw(id: token.id, from: self.owner?.address)
@@ -140,8 +140,8 @@ Previously, it was possible to withdraw from the inner collection, despite the `
 masterCollectionRef.kittyCollection.withdraw(24)    // OK
 ```
 
-With the proposed changes, this will be an error, since `masterCollectionRef.kittyCollection` is now return a 
-non-auth reference, and calling `withdraw` is prohibited because that reference doesn't have the `Withdraw` entitlement. 
+With the proposed changes, this will be an error, since `masterCollectionRef.kittyCollection` is now return a
+non-auth reference, and calling `withdraw` is prohibited because that reference doesn't have the `Withdraw` entitlement.
 
 ```cadence
 masterCollectionRef.kittyCollection.withdraw(24)    // Static Error

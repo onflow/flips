@@ -1,5 +1,5 @@
 ---
-status: approved
+status: released
 flip: 277
 authors: Supun Setunga (supun.setunga@flowfoundation.org)
 sponsor: Supun Setunga (supun.setunga@flowfoundation.org)
@@ -25,13 +25,13 @@ Otherwise, if someone only got a reference to the composite value, then they can
 and the entitlements would kick-in to limit what they can do with those fields.
 
 Unfortunately, one edge-case that was not considered during the evaluation of the [external mutability improvements FLIP](https://github.com/onflow/flips/pull/89) is that contracts are singletons, and importing a contract provides owned access to that contract value.
-The imported contract value behaves like a reference, but is not represented using a reference in the language semantics. 
+The imported contract value behaves like a reference, but is not represented using a reference in the language semantics.
 Because of that, if the contract has a container-typed field (e.g., array, dictionary, composite)  defined with public access (i.e., `access(all)`),
 then anyone could modify the content of that field, such as inserting/removing elements, etc.
 
 ```cadence
 access(all) contract Foo {
-    access(all) var array : [Int] // Can't set a new value to the array, but can "update" the content (insert/remove/etc) 
+    access(all) var array : [Int] // Can't set a new value to the array, but can "update" the content (insert/remove/etc)
 }
 ```
 
@@ -94,20 +94,20 @@ contract Foo {
     init() {
         self.array = []
     }
-    
+
     access(all) fun bar() {
         // Accessing the contract within itself would return the concrete value, not a reference.
-        
+
         var foo: Foo = Foo  // Type the contract value is `Foo` (not `&Foo)`
-        
+
         var array: [Int] = Foo.array  // Accessing field would also return a copy of the concrete value.
-        
+
         // Modifying fields within the contract is allowed.
         Foo.array[0] = 3
         Foo.array.append(42)
         Foo.array.remove(at: 0)
     }
-}            
+}
 ```
 ### Drawbacks
 

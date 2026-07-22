@@ -1,5 +1,5 @@
 ---
-status: implemented
+status: released
 flip: 86
 authors: Supun Setunga (supun.setunga@dapperlabs.com)
 sponsor: Supun Setunga (supun.setunga@dapperlabs.com)
@@ -133,7 +133,7 @@ mutableDictionaryRef.remove("John")             // OK
 
 Similar to functions, the assignment operator for arrays/dictionaries would also have the `Mutate` and `Insert`
 entitlements.
-Think of assignment as a built-in function with `Mutate` and `Insert` entitlements. 
+Think of assignment as a built-in function with `Mutate` and `Insert` entitlements.
 e.g:
 ```cadence
 access(Mutate | Insert) set(keyOrIndex, value) { ... }
@@ -192,7 +192,7 @@ those changes, and leaning towards an entitlement-based solution.
 
 ### Putting It All Together
 
-Now let's see how this solves the mutability foot-gun. 
+Now let's see how this solves the mutability foot-gun.
 Let's consider the `NonFungibleToken.Collection` example:
 
 ```cadence
@@ -208,7 +208,7 @@ pub resource Collection: NonFungibleToken.Collection {
 
 The original intention of the `Collection` resource is to make `ownedNFTs` readable to outsiders, but must not be mutable.
 
-```cadence    
+```cadence
 // `collection.ownedNFTs` result in a `&{UInt64: NonFungibleToken.NFT}`
 var ownedNFTsRef: &{UInt64: NonFungibleToken.NFT} = collection.ownedNFTs
 ```
@@ -216,7 +216,7 @@ var ownedNFTsRef: &{UInt64: NonFungibleToken.NFT} = collection.ownedNFTs
 The field `collection.ownedNFTs` is readable since it is `pub` access modifier.
 It is not mutable since it has no entitlements.
 
-```cadence 
+```cadence
 var len = ownedNFTsRef.length         // OK: read only operation
 
 ownedNFTsRef["someNFT"] <- someNft    // Static Error: `append` needs `Mutate` entitlement
@@ -272,9 +272,9 @@ pub resource Collection: NonFungibleToken.Collection {
 Assume the author set the access modifier of the `delete` method to be `pub` instead of `access(Mutate)`.
 Now anyone with an un-entitled reference to `Collection` can modify `ownedNFTs`.
 
-However, this is in a way a good thing to have, and eliminates the problem of the previous 
-[FLIP proposed to eliminate the mutability foot-gun](https://github.com/onflow/flips/pull/58), 
-where having to annotate each and every mutating function could quickly become an overkill. 
+However, this is in a way a good thing to have, and eliminates the problem of the previous
+[FLIP proposed to eliminate the mutability foot-gun](https://github.com/onflow/flips/pull/58),
+where having to annotate each and every mutating function could quickly become an overkill.
 Also, certain mutating operations are in-fact safe.
 For example: `deposit()` function of `Collection` does mutate the object, however, it is of no harm of anyone calling
 the `deposit()` function.

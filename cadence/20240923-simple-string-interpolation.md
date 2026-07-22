@@ -1,8 +1,8 @@
 ---
-status: accepted 
+status: released
 flip: 288
 authors: Raymond Zhang (raymond.zhang@flowfoundation.org)
-sponsor: Supun Setunga (supun.setunga@flowfoundation.org) 
+sponsor: Supun Setunga (supun.setunga@flowfoundation.org)
 updated: 2024-10-30
 ---
 
@@ -14,9 +14,9 @@ This FLIP proposes adding support for simple string interpolation limited to ide
 
 ## Motivation
 
-Currently Cadence has no support for string interpolation. It is convenient for developers to be able to inline variables in strings as opposed to the current solution of applying `concat` repeatedly. 
+Currently Cadence has no support for string interpolation. It is convenient for developers to be able to inline variables in strings as opposed to the current solution of applying `concat` repeatedly.
 
-In general many languages support string interpolation for readability and ease-of-use. 
+In general many languages support string interpolation for readability and ease-of-use.
 
 ## User Benefit
 
@@ -32,11 +32,11 @@ The proposed syntax for the string-literal with interpolation looks like follows
 "Variable = \(someVar)"
 ```
 
-The main constraint is backward compatibility, existing Cadence 1.0 code cannot be affected. This change is backwards compatible because `\(` is not currently a valid escape character. 
+The main constraint is backward compatibility, existing Cadence 1.0 code cannot be affected. This change is backwards compatible because `\(` is not currently a valid escape character.
 
 For this initial proposal there will be several limitations on `someVar`:
 - `someVar` will only be variable references with ability to be extended to expressions in the future
-- `someVar` must support the built-in function `toString()` meaning it must be either a `String`, `Number`, `Address`, `Character`, `Bool` or `Path`.  
+- `someVar` must support the built-in function `toString()` meaning it must be either a `String`, `Number`, `Address`, `Character`, `Bool` or `Path`.
 
 This is still useful for the first iteration since there are easy workarounds for these limitations such as extracting expressions into local variables.
 
@@ -74,7 +74,7 @@ None.
 
 ### Engineering Impact
 
-This change should be simple to implement. 
+This change should be simple to implement.
 
 ### Best Practices
 
@@ -82,11 +82,11 @@ It may be preferred to use string interpolation over concat once implemented.
 
 ### Compatibility
 
-Proposed changes are backwards compatible. 
+Proposed changes are backwards compatible.
 
 ### User Impact
 
-This is a feature addition, no impact. 
+This is a feature addition, no impact.
 
 ## Related Issues
 

@@ -1,5 +1,5 @@
 ---
-status: implemented
+status: released
 flip: 83
 authors: Supun Setunga (supun.setunga@dapperlabs.com)
 sponsor: Supun Setunga (supun.setunga@dapperlabs.com)
@@ -11,7 +11,7 @@ updated: 2023-06-19
 ## Objective
 
 This FLIP proposes to relax a restriction associated with interface conformance,
-by allowing conditions defined in other interfaces to coexist with a default function implementation coming from a 
+by allowing conditions defined in other interfaces to coexist with a default function implementation coming from a
 different interface.
 
 ## Motivation

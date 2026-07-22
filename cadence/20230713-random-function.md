@@ -1,8 +1,8 @@
 ---
-status: Released
+status: released
 flip: 120
 authors: Tarak Ben Youssef (tarak.benyoussef@dapperlabs.com)
-sponsor: 
+sponsor:
 updated: 2023-08-22
 ---
 
@@ -24,17 +24,17 @@ where `UnsignedInteger` covers all Cadence's fixed-size unsigned integer types, 
 
 #### Safe randomness
 
-The Flow Virtual Machine (FVM) provides the implementation of `unsafeRandom` as part of the Flow protocol. 
-The FVM implementation has been using the block hash as a source of entropy. 
+The Flow Virtual Machine (FVM) provides the implementation of `unsafeRandom` as part of the Flow protocol.
+The FVM implementation has been using the block hash as a source of entropy.
 This source can be manipulated by miners (i.e consensus nodes)
-and should not be relied on to derive secure randomness, 
+and should not be relied on to derive secure randomness,
 hence the `unsafe` suffix in the function name.
 
 FVM [underwent changes](https://github.com/onflow/flow-go/pull/4498) that update the source of entropy
 to rely on the secure distributed randomness generated within the Flow
-protocol by [the random beacon](https://arxiv.org/pdf/2002.07403.pdf) component. 
+protocol by [the random beacon](https://arxiv.org/pdf/2002.07403.pdf) component.
 The Flow beacon is designed to generate decentralized, unbiased, unpredictable and verifiable
-randomness. 
+randomness.
 Miners have negligible control to bias or predict the beacon
 output.
 
@@ -66,52 +66,52 @@ that calls an on-chain casino contract, that rolls a dice to find out if the
 transaction sender wins. The transaction can be written so that it triggers an
 error if the game outcome is a loss.
 Developers writing a similar casino contract should be aware of the transaction
-abortion scenario by non-trusted users. This limitation is inherent to any smart contract platform that allows transactions to roll back atomically and cannot be solved through safe randomness alone. 
+abortion scenario by non-trusted users. This limitation is inherent to any smart contract platform that allows transactions to roll back atomically and cannot be solved through safe randomness alone.
 Note that post-selection is not an issue when the transaction sender is trusted.
 
-Removing the `unsafe` prefix completely would suggest to developers that the function is immune to all exploits. 
-Users may not realize that post-selection needs to be addressed using other patterns or techniques without an explicit warning. 
-The FLIP suggests to replace the `unsafe` prefix by the `revertible` prefix. 
-`revertible` is descriptive of the remaining issue of the function, 
+Removing the `unsafe` prefix completely would suggest to developers that the function is immune to all exploits.
+Users may not realize that post-selection needs to be addressed using other patterns or techniques without an explicit warning.
+The FLIP suggests to replace the `unsafe` prefix by the `revertible` prefix.
+`revertible` is descriptive of the remaining issue of the function,
 and serves as a reminder to developers to read more about the function documentation and be aware of the post-selection issue.
 
 ### function generalized header
 
-Many applications require a random number less than an upper-bound `N` rather than a random number without constraints. For example, sampling a random element from an array requires picking a random index less than the array size. 
-`N` is commonly called the modulo. In security-sensitive applications, it is important to maintain a uniform distribution of the random output. 
-Returning the remainder of the division of a 64-bits number by `N` (using the modulo operation `%`) is known to result in a biased distribution where smaller outputs are more likely to be sampled than larger ones. 
-This is known as the "modulo bias". 
-There are safe solutions to avoid the modulo bias such as rejection sampling and large modulo reduction. Although these solutions can be implemented purely in Cadence, it is safer to provide the secure functions and abstract the complexity away from developers. 
-This also avoids using unsafe methods. The FLIP suggests to add an optional unsigned-integer argument `N` to the `revertibleRandom` function. 
-If `N` is provided, the returned random is uniformly sampled strictly less than `N`. The function errors if `N` is equal to `0`. 
+Many applications require a random number less than an upper-bound `N` rather than a random number without constraints. For example, sampling a random element from an array requires picking a random index less than the array size.
+`N` is commonly called the modulo. In security-sensitive applications, it is important to maintain a uniform distribution of the random output.
+Returning the remainder of the division of a 64-bits number by `N` (using the modulo operation `%`) is known to result in a biased distribution where smaller outputs are more likely to be sampled than larger ones.
+This is known as the "modulo bias".
+There are safe solutions to avoid the modulo bias such as rejection sampling and large modulo reduction. Although these solutions can be implemented purely in Cadence, it is safer to provide the secure functions and abstract the complexity away from developers.
+This also avoids using unsafe methods. The FLIP suggests to add an optional unsigned-integer argument `N` to the `revertibleRandom` function.
+If `N` is provided, the returned random is uniformly sampled strictly less than `N`. The function errors if `N` is equal to `0`.
 If `N` is not provided, the returned output has no constraints.
 
 A more convenient way of using `random` is to cover all fixed-size unsigned integer types (`UInt8`, `UInt16`, `UInt32`, `UInt64`, `UInt128`, `UInt256`, `Word8`, `Word16`, `Word32`, `Word64`).
-The type applies to the optional argument `modulo` as well as the returned value. 
-This would abstract the complexity of generating randoms of different types using 64-bits values as a building block. 
-The new suggested function signature is therefore `fun revertibleRandom<T: UnsignedInteger>([modulo: T]): T`, 
+The type applies to the optional argument `modulo` as well as the returned value.
+This would abstract the complexity of generating randoms of different types using 64-bits values as a building block.
+The new suggested function signature is therefore `fun revertibleRandom<T: UnsignedInteger>([modulo: T]): T`,
 where `T` can be any type from the above list.
 Note that `UInt` is a variable-size type and is not supported by the function.
 
 ## User Benefit
 
 Cadence uses the prefix `unsafe` to warn developers of the risks of using
-the random function. 
+the random function.
 
 Risks related to the safety of the random source are addressed by the FVM recent updates.
 However, post-selecting randoms after they are revealed is not addressed by the function and developers should be reminded of the remaining risk.
-Replacing `unsafe` by `revertible` clarifies the assumption about the random source safety while being descriptive of the possible issue. 
+Replacing `unsafe` by `revertible` clarifies the assumption about the random source safety while being descriptive of the possible issue.
 If developers are not familiar with using randomness, the prefix serves as an invitation to look at the documentation and learn about the function risks.
 
-The generalized function signature offers safe and more flexible ways to use randomness. 
+The generalized function signature offers safe and more flexible ways to use randomness.
 Without such change, developers are required to implement extra logic and take the risk of making mistakes.
 
 ## Design Proposal
 
 1. As a first step:
   - Update Cadence's [runtime interface](https://github.com/onflow/cadence/blob/8a128022e0a5171f4c3a173911944a2f43548b98/runtime/interface.go#L107) `UnsafeRandom() (uint64, error)` to `ReadRandom(byte[]) error`.
-  - Add a new Cadence function `fun revertibleRandom<T: UnsignedInteger>([modulo: T]): T`, backed by a safe FVM implementation. 
-    `fun unsafeRandom(): UInt64` remains available to avoid immediate breaking changes. 
+  - Add a new Cadence function `fun revertibleRandom<T: UnsignedInteger>([modulo: T]): T`, backed by a safe FVM implementation.
+    `fun unsafeRandom(): UInt64` remains available to avoid immediate breaking changes.
     Note that both functions will be backed by the same safe FVM implementation.
 2. As a second step, deprecate `fun unsafeRandom(): UInt64` as part of the
 Stable Cadence release (aka Cadence v1.0).
@@ -128,8 +128,8 @@ Renaming the random function to simply `random` has been considered. Below are s
   - A language should try to provide as-safe-as-possible tools, but it can't guarantee that any program written in that language is totally safe. There is always some responsibility that falls on the language developer. It is possible to write very unsafe contracts and Cadence can't prevent it (using the cryptography functions as an example).
 
 
-The generalized function signature could be omitted from the proposal because it is possible to implement `fun revertibleRandom<T: UnsignedInteger>([modulus; T]): T` purely on Cadence using `fun revertibleRandom(): UInt64`. 
-However, this requires developers to be familiar with safe low-level implementations and it may result in bugs and vulnerabilities. 
+The generalized function signature could be omitted from the proposal because it is possible to implement `fun revertibleRandom<T: UnsignedInteger>([modulus; T]): T` purely on Cadence using `fun revertibleRandom(): UInt64`.
+However, this requires developers to be familiar with safe low-level implementations and it may result in bugs and vulnerabilities.
 It is safer to have these tools provided natively by Cadence.
 
 ### Performance Implications
@@ -146,7 +146,7 @@ The Cadence repository needs to implement the generalized function signature (op
 
 ### Best Practices
 The current proposal and the new FVM implementation
-do not propose solutions for the transaction abortion issue. 
+do not propose solutions for the transaction abortion issue.
 Solutions to abortion such as safe design patterns and commit-reveal schemes can be discussed outside this FLIP (for instance this [separate FLIP](https://github.com/onflow/flips/pull/123) suggests a safe pattern to use randomness).
 
 
@@ -177,7 +177,7 @@ Please refer to [Best Practices](#best-practices) section.
 
 ### Randomness in script execution
 
-`executeScriptAtBlock` and `ExecuteScriptAtLatestBlock` are used to execute Cadence read-only code against the execution state at a past sealed block or the latest sealed blocked, respectively. 
+`executeScriptAtBlock` and `ExecuteScriptAtLatestBlock` are used to execute Cadence read-only code against the execution state at a past sealed block or the latest sealed blocked, respectively.
 The FVM implementation of `revertibleRandom` uses the transaction hash to diversify the random sequence per transaction. This does not add new entropy but prevents generating the same randoms for different transactions. For this reason, it is not possible to replicate Cadence's `revertibleRandom` behavior in scripts.
 
 The FLIP suggests to use the same source of randomness for scripts as for transactions, and to diversify the random sequence per script using the hash of the script code.

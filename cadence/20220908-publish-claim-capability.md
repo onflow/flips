@@ -1,5 +1,5 @@
 ---
-status: implemented
+status: released
 flip: 1122
 authors: Daniel Sainati (daniel.sainati@dapperlabs.com)
 sponsor: Daniel Sainati (daniel.sainati@dapperlabs.com)

@@ -1,5 +1,5 @@
 ---
-status: approved
+status: released
 flip: 293
 authors: Raymond Zhang (raymond.zhang@flowfoundation.org)
 sponsor: Supun Setunga (supun.setunga@flowfoundation.org)

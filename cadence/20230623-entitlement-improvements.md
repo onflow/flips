@@ -1,5 +1,5 @@
 ---
-status: implemented
+status: released
 flip: 94
 authors: Supun Setunga (supun.setunga@dapperlabs.com)
 sponsor: Supun Setunga (supun.setunga@dapperlabs.com)
@@ -117,7 +117,7 @@ var ownedNFTs: @{UInt64: NFT} <- collection.ownedNFTs
 
 ### Syntax for identity mapping
 
-The idea of this change is to introduce a syntax to represent "identity mapping", which denotes mapping of an arbitrary 
+The idea of this change is to introduce a syntax to represent "identity mapping", which denotes mapping of an arbitrary
 entitlement `E` to the same entitlement `E`, without having to explicitly specify what the source (domain) and the
 target (range) of the mapping are.
 This saves the trouble of developers having to map each and every such entitlement explicitly.

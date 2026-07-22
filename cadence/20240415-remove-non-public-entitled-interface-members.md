@@ -1,5 +1,5 @@
 ---
-status: approved
+status: released
 flip: 262
 authors: Bastian Müller (bastian.mueller@flowfoundation.org)
 updated: 2024-04-15
