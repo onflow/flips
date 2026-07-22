@@ -40,10 +40,10 @@ Interaction Template Cadence Doc supports the following format:
 
 - `language` declares the default BCP-47 language tag for all messages in the Interaction Template Cadence Doc (defaults to 'en-US').
 
-- `parameters` declares information about a transaction/script parameters
-  - `Parameter name` the name of the field that cooresponds to the name of the parameter in the transaction or script. 
-  - `Parameter title` the title of the field a human readable short message to associate with the parameter
-  - `Pparameter description` optional description of the field a human readable message to associate with the parameter
+`#interaction-param-<name>` pragma includes information about a transaction/script parameters, contains same as interaction metadata for the interaction. 
+- `title` the title of the field a human readable short message to associate with the parameter
+- `description` optional description of the field a human readable message to associate with the parameter
+- `language` declares the default BCP-47 language tag for all messages in the Interaction Template Cadence Doc (defaults to 'en-US').
 
 This is an example of Interaction Template Cadence Doc for a transaction:
 
@@ -56,19 +56,20 @@ import "FlowToken"
     title: "Transfer Tokens",
     description: "Transfer tokens from one account to another",
     language: "en-US",
-    parameters: [
-        Parameter(
-            name: "amount", 
-            title: "Amount", 
-            description: "The amount of FLOW tokens to send"
-        ),
-        Parameter(
-            name: "to", 
-            title: "To",
-            description: "The Flow account the tokens will go to"
-        )
-    ],
 )
+
+#interaction-param-amount(
+    title: "Amount", 
+    description: "Amount of Flow to transfer"
+    language: "en-US",
+)
+
+#interaciton-param-to(
+    title: "Reciever", 
+    description: "Destination address to receive Flow Tokens"
+    language: "en-US",
+)
+
 transaction(amount: UFix64, to: Address) {
 
   let vault: @FungibleToken.Vault
@@ -98,13 +99,12 @@ import "FlowToken"
     title: "Flow Token Balance",
     description: "Get account Flow Token balance",
     language: "en-US",
-    parameters: [
-        Parameter(
-            name: "address", 
-            title: "Address", 
-            description: "Get Flow token balance of Flow account"
-        )
-    ],
+)
+
+#interaction-param-address(
+    title: "Address", 
+    description: "Get Flow token balance of Flow account",
+    language: "en-US",
 )
 
 pub fun main(address: Address): UFix64 {
